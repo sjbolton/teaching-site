@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dr. Sarah J. Bolton | Teaching & Research</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    /* ---------- Base Styles ---------- */
+    :root {
+      --bg: #f7f8fb;
+      --bg-alt: #ffffff;
+      --text: #222222;
+      --muted: #555555;
+      --accent: #1e88e5;     /* modern tech blue */
+      --accent-light: #e3f2fd;
+      --border: #dde1ea;
+      --shadow-soft: 0 8px 20px rgba(15, 23, 42, 0.07);
+      --radius-lg: 14px;
+      --radius-sm: 8px;
+      --max-width: 1100px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+                   Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    img {
+      max-width: 100%;
+      display: block;
+    }
+
+    /* ---------- Layout ---------- */
+    .page {
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 1.25rem;
+    }
+
+    section {
+      padding: 4rem 0;
+    }
+
+    section:nth-of-type(odd) {
+      background: var(--bg);
+    }
+
+    section:nth-of-type(even) {
+      background: var(--bg-alt);
+    }
+
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 650;
+      margin-bottom: 0.75rem;
+    }
+
+    .section-subtitle {
+      font-size: 0.95rem;
+      color: var(--muted);
+      margin-bottom: 1.5rem;
+    }
+
+    .divider {
+      width: 70px;
+      height: 3px;
+      border-radius: 999px;
+      background: var(--accent);
+      margin-bottom: 2rem;
+    }
+
+    /* ---------- Nav Bar ---------- */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(12px);
+      background: rgba(247, 248, 251, 0.95);
+      border-bottom: 1px solid rgba(203, 213, 225, 0.8);
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.85rem 0;
+    }
+
+    .nav-left {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .nav-name {
+      font-weight: 650;
+      letter-spacing: 0.03em;
+      font-size: 0.95rem;
+      text-transform: uppercase;
+    }
+
+    .nav-role {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1.25rem;
+      font-size: 0.9rem;
+    }
+
+    .nav-links a {
+      position: relative;
+      font-weight: 500;
+      color: #334155;
+    }
+
+    .nav-links a::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: -4px;
+      width: 0;
+      height: 2px;
+      border-radius: 999px;
+      background: var(--accent);
+      transition: width 0.18s ease-out;
+    }
+
+    .nav-links a:hover::after {
+      width: 100%;
+    }
+
+    .nav-toggle {
+      display: none;
+      font-size: 1.5rem;
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+
+    /* ---------- Hero / About ---------- */
+    .hero {
+      padding-top: 3rem;
+      padding-bottom: 3rem;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 2.2fr) minmax(0, 1.5fr);
+      gap: 2.5rem;
+      align-items: center;
+    }
+
+    .hero-title {
+      font-size: 2.1rem;
+      font-weight: 700;
+      margin-bottom: 0.4rem;
+    }
+
+    .hero-subtitle {
+      font-size: 1rem;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    .hero-roles {
+      font-size: 0.95rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .hero-roles span {
+      display: block;
+    }
+
+    .hero-text {
+      font-size: 0.98rem;
+      margin-bottom: 1.75rem;
+      color: #374151;
+    }
+
+    .hero-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1.75rem;
+    }
+
+    .tag {
+      font-size: 0.78rem;
+      padding: 0.25rem 0.55rem;
+      border-radius: 999px;
+      background: var(--accent-light);
+      color: #0f4ea8;
+      border: 1px solid rgba(30, 136, 229, 0.12);
+      white-space: nowrap;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.55rem 1.1rem;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      border: 1px solid transparent;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.15s ease-out, color 0.15s ease-out,
+                  border-color 0.15s ease-out, box-shadow 0.15s ease-out;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #ffffff;
+      border-color: var(--accent);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .btn-primary:hover {
+      background: #1565c0;
+      border-color: #1565c0;
+      text-decoration: none;
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--accent);
+      border-color: rgba(15, 23, 42, 0.18);
+    }
+
+    .btn-outline:hover {
+      background: var(--accent-light);
+      text-decoration: none;
+    }
+
+    .hero-card {
+      background: var(--bg-alt);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-soft);
+      padding: 1.5rem 1.5rem 1.35rem;
+      border: 1px solid var(--border);
+    }
+
+    .hero-card-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.75rem;
+    }
+
+    .hero-list {
+      list-style: none;
+      font-size: 0.88rem;
+      color: #374151;
+    }
+
+    .hero-list li + li {
+      margin-top: 0.45rem;
+    }
+
+    /* ---------- Teaching ---------- */
+    .teaching-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.2fr);
+      gap: 2rem;
+    }
+
+    .course-list {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1rem;
+    }
+
+    .course-card {
+      background: var(--bg-alt);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      padding: 0.9rem 1rem;
+    }
+
+    .course-title {
+      font-size: 0.98rem;
+      font-weight: 600;
+      margin-bottom: 0.1rem;
+    }
+
+    .course-meta {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 0.4rem;
+    }
+
+    .course-desc {
+      font-size: 0.88rem;
+      color: #374151;
+    }
+
+    .teaching-highlights li {
+      font-size: 0.9rem;
+      color: #374151;
+      margin-bottom: 0.3rem;
+    }
+
+    .teaching-highlights {
+      padding-left: 1.1rem;
+      margin-top: 0.4rem;
+    }
+
+    /* ---------- Colloquium / ACCR ---------- */
+    .cols-split {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 2rem;
+    }
+
+    .box {
+      background: var(--bg-alt);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      padding: 1.35rem 1.5rem;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .box h3 {
+      font-size: 1.05rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .box ul {
+      margin-top: 0.5rem;
+      padding-left: 1.1rem;
+      font-size: 0.9rem;
+      color: #374151;
+    }
+
+    .box ul li + li {
+      margin-top: 0.2rem;
+    }
+
+    /* ---------- Research ---------- */
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .pill {
+      font-size: 0.8rem;
+      padding: 0.22rem 0.6rem;
+      border-radius: 999px;
+      background: #e5e7eb;
+      color: #111827;
+      white-space: nowrap;
+    }
+
+    .pub-list {
+      list-style: none;
+      font-size: 0.9rem;
+    }
+
+    .pub-list li + li {
+      margin-top: 0.55rem;
+    }
+
+    /* ---------- CV & Contact ---------- */
+    .card-simple {
+      background: var(--bg-alt);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      padding: 1.2rem 1.3rem;
+      margin-bottom: 1rem;
+    }
+
+    .card-simple h3 {
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .contact-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+      gap: 1.75rem;
+    }
+
+    .contact-list {
+      list-style: none;
+      font-size: 0.9rem;
+      color: #374151;
+    }
+
+    .contact-list li + li {
+      margin-top: 0.25rem;
+    }
+
+    footer {
+      padding: 1.8rem 0 2.2rem;
+      font-size: 0.8rem;
+      color: #6b7280;
+      text-align: center;
+    }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 900px) {
+      .hero-grid,
+      .teaching-grid,
+      .cols-split,
+      .contact-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .hero {
+        padding-top: 2.5rem;
+      }
+    }
+
+    @media (max-width: 750px) {
+      .nav-links {
+        display: none;
+      }
+
+      .nav-toggle {
+        display: block;
+      }
+
+      .nav-links.open {
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background: rgba(247, 248, 251, 0.98);
+        padding: 0.75rem 1.25rem 1rem;
+        border-left: 1px solid rgba(203, 213, 225, 0.8);
+        border-bottom: 1px solid rgba(203, 213, 225, 0.8);
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
+      }
+
+      .nav-links a {
+        padding: 0.25rem 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <!-- Header / Nav -->
+    <header>
+      <div class="container nav">
+        <div class="nav-left">
+          <div class="nav-name">SARAH J. BOLTON, PH.D.</div>
+          <div class="nav-role">Assistant Professor · Director, Academy Center for Cyberspace Research</div>
+        </div>
+        <button class="nav-toggle" aria-label="Toggle navigation" onclick="toggleNav()">☰</button>
+        <nav class="nav-links" id="navLinks">
+          <a href="#about">About</a>
+          <a href="#teaching">Teaching</a>
+          <a href="#colloquium">Colloquium & ACCR</a>
+          <a href="#research">Research</a>
+          <a href="#cv">CV & Materials</a>
+          <a href="#contact">Contact</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <!-- Hero / About -->
+      <section id="about" class="hero">
+        <div class="container hero-grid">
+          <div>
+            <h1 class="hero-title">Dr. Sarah J. Bolton</h1>
+            <p class="hero-subtitle">
+              Assistant Professor, Department of Computer & Cyber Sciences · United States Air Force Academy
+            </p>
+            <div class="hero-roles">
+              <span><strong>Director, Academy Center for Cyberspace Research (ACCR)</strong></span>
+              <span>24 years of U.S. Air Force service (officer & enlisted)</span>
+            </div>
+            <p class="hero-text">
+              I teach and design courses across the computer science and cyber curriculum, with a focus on
+              programming fundamentals, data structures, algorithms, languages and machines, and senior-level
+              colloquia. My work sits at the intersection of <strong>computer science education, cyber operations,</strong>
+              and <strong>applied machine learning</strong>, with an emphasis on preparing future officers to think clearly, build
+              robust systems, and lead in complex technical environments.
+            </p>
+
+            <div class="hero-tags">
+              <span class="tag">Computer Science Education</span>
+              <span class="tag">Programming in C & Python</span>
+              <span class="tag">Data Structures & Algorithms</span>
+              <span class="tag">Cyber Operations</span>
+              <span class="tag">AI & Machine Learning</span>
+            </div>
+
+            <div class="hero-actions">
+              <!-- Replace # with actual CV link when hosted -->
+              <a class="btn btn-primary" href="#cv">View CV</a>
+              <a class="btn btn-outline" href="#teaching">View Teaching Portfolio</a>
+            </div>
+          </div>
+
+          <aside class="hero-card">
+            <div class="hero-card-title">At a Glance</div>
+            <ul class="hero-list">
+              <li><strong>Current Roles:</strong> Assistant Professor; Director, ACCR</li>
+              <li><strong>Teaching:</strong> 16 courses taught or directed, including CS110, CS210, CS220, CS380, CS426, CS405/CyS405</li>
+              <li><strong>Pedagogy:</strong> Dean’s Teaching Certificate; Course Design Institute; MTCC Cohort 8</li>
+              <li><strong>Research:</strong> Applied ML for aerospace data; cyber operations; CS education</li>
+              <li><strong>Location:</strong> Colorado Springs, CO</li>
+            </ul>
+          </aside>
+        </div>
+      </section>
+
+      <!-- Teaching -->
+      <section id="teaching">
+        <div class="container">
+          <h2 class="section-title">Teaching</h2>
+          <p class="section-subtitle">
+            Conceptual foundations, real-world relevance, and structured support for future officers and technical leaders.
+          </p>
+          <div class="divider"></div>
+
+          <div class="teaching-grid">
+            <div>
+              <h3 style="font-size:1.05rem; margin-bottom:0.6rem;">Courses Taught & Directed</h3>
+              <div class="course-list">
+                <article class="course-card">
+                  <div class="course-title">CS110 — Introduction to Programming (Python)</div>
+                  <div class="course-meta">Foundations of programming · Problem solving & algorithmic thinking</div>
+                  <p class="course-desc">
+                    Introduces core programming constructs and problem-solving skills in Python. Emphasizes clear mental models
+                    for variables, control flow, functions, and basic data structures through frequent, low-stakes practice.
+                  </p>
+                </article>
+
+                <article class="course-card">
+                  <div class="course-title">CS210 — Programming in C</div>
+                  <div class="course-meta">Course Director · Systems programming & memory</div>
+                  <p class="course-desc">
+                    A second course in programming focusing on C, pointers, and memory management. As Course Director, I oversee
+                    course structure, assessments, and multi-section coordination to ensure consistent learning outcomes.
+                  </p>
+                </article>
+
+                <article class="course-card">
+                  <div class="course-title">CS220 — Data Structures & Systems Programming</div>
+                  <div class="course-meta">Course Director · Core CS sequence</div>
+                  <p class="course-desc">
+                    Covers arrays, lists, stacks, queues, trees, hash tables, and related systems concepts. I focus on helping
+                    students understand why specific data structures are chosen and how they affect performance and maintainability.
+                  </p>
+                </article>
+
+                <article class="course-card">
+                  <div class="course-title">CS380 — Design & Analysis of Algorithms</div>
+                  <div class="course-meta">Incoming Course Director · Complexity & design techniques</div>
+                  <p class="course-desc">
+                    Studies classic algorithm design paradigms and complexity analysis. Emphasizes reasoning about tradeoffs and
+                    connecting algorithms to cyber and operationally relevant scenarios.
+                  </p>
+                </article>
+
+                <article class="course-card">
+                  <div class="course-title">CS426 — Languages & Machines</div>
+                  <div class="course-meta">Compilers & automata theory</div>
+                  <p class="course-desc">
+                    Explores models of computation and their role in compilers and language design. Highlights how formal models
+                    underpin the tools and languages cadets will encounter in modern software and cyber environments.
+                  </p>
+                </article>
+
+                <article class="course-card">
+                  <div class="course-title">CS405 / CyS405 — Computer Science & Cyber Science Colloquium</div>
+                  <div class="course-meta">Senior-level colloquium · Speakers & professional development</div>
+                  <p class="course-desc">
+                    Colloquium series designed to broaden cadets’ understanding of computing and cyber careers, ethics, and
+                    professional life. See the Colloquium & ACCR section for details.
+                  </p>
+                </article>
+              </div>
+            </div>
+
+            <div>
+              <h3 style="font-size:1.05rem; margin-bottom:0.5rem;">Teaching Development & Recognition</h3>
+              <ul class="teaching-highlights">
+                <li>Dean’s Teaching Certificate, United States Air Force Academy</li>
+                <li>Course Design Institute (2025)</li>
+                <li>Mastery of Teaching Certification Community (MTCC), Cohort 8</li>
+              </ul>
+
+              <h3 style="font-size:1.05rem; margin:1.75rem 0 0.5rem;">Teaching Philosophy Highlights</h3>
+              <ul class="teaching-highlights">
+                <li>Emphasis on <strong>conceptual and framework-based learning</strong>, not just syntax.</li>
+                <li>Frequent, low-stakes practice and feedback to build confidence and skill over time.</li>
+                <li>Use of <strong>real-world and operational examples</strong> to reinforce relevance and transfer.</li>
+                <li>Clear structure, expectations, and scaffolding to support all learners.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Colloquium & ACCR -->
+      <section id="colloquium">
+        <div class="container">
+          <h2 class="section-title">Colloquium & ACCR</h2>
+          <p class="section-subtitle">
+            Connecting cadets with the broader computing and cyber community through speakers, research, and collaboration.
+          </p>
+          <div class="divider"></div>
+
+          <div class="cols-split">
+            <div class="box">
+              <h3>CS405 / CyS405 Colloquium</h3>
+              <p style="font-size:0.92rem; color:#374151; margin-bottom:0.7rem;">
+                The Computer Science and Cyber Science Colloquium (CS405 / CyS405) brings in guest speakers from across the
+                Department of Defense, industry, government, and academia to broaden cadets’ perspectives on technical careers,
+                leadership, and professional life.
+              </p>
+              <p style="font-size:0.9rem; color:#374151; margin-bottom:0.4rem;">
+                As the faculty lead, I curate speakers and topics that:
+              </p>
+              <ul>
+                <li>Connect classroom concepts to real missions and operational environments</li>
+                <li>Highlight diverse career paths in computing and cyber</li>
+                <li>Address ethics, decision-making, and leadership challenges</li>
+                <li>Provide practical life skills and guidance beyond graduation</li>
+              </ul>
+            </div>
+
+            <div class="box">
+              <h3>Academy Center for Cyberspace Research (ACCR)</h3>
+              <p style="font-size:0.92rem; color:#374151; margin-bottom:0.7rem;">
+                As Director of the Academy Center for Cyberspace Research, I coordinate cyberspace-related research across the
+                Academy, connecting cadets and faculty with external partners and opportunities.
+              </p>
+              <p style="font-size:0.9rem; color:#374151; margin-bottom:0.4rem;">
+                ACCR supports work in:
+              </p>
+              <ul>
+                <li>Cyber operations and network defense</li>
+                <li>AI/ML and data analysis for cyber and aerospace domains</li>
+                <li>Human–machine teaming and decision support</li>
+              </ul>
+              <p style="font-size:0.9rem; color:#374151; margin-top:0.7rem;">
+                My role includes managing research collaborations and CRADAs, supporting cadet and faculty projects,
+                facilitating summer research placements, and integrating research back into the classroom and colloquium.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Research -->
+      <section id="research">
+        <div class="container">
+          <h2 class="section-title">Research</h2>
+          <p class="section-subtitle">
+            Applied machine learning, aerospace and cyber data, and computer science education.
+          </p>
+          <div class="divider"></div>
+
+          <div style="display:grid; grid-template-columns:minmax(0,1.5fr) minmax(0,1.1fr); gap:2rem;">
+            <div>
+              <p style="font-size:0.95rem; color:#374151; margin-bottom:1rem;">
+                My research interests lie at the intersection of <strong>machine learning, aerospace systems,
+                cyber operations,</strong> and <strong>computer science education</strong>. I am particularly interested in how we can
+                use data and AI techniques to support operational decision making, and how we can design learning experiences
+                that produce adaptive, resilient technical leaders.
+              </p>
+              <div class="pill-row">
+                <span class="pill">AI & Machine Learning</span>
+                <span class="pill">Aerospace Data</span>
+                <span class="pill">Cyber Operations</span>
+                <span class="pill">CS Education</span>
+                <span class="pill">Human–Machine Teaming</span>
+              </div>
+
+              <h3 style="font-size:1.02rem; margin:1.2rem 0 0.4rem;">Selected Publications</h3>
+              <ul class="pub-list">
+                <li>
+                  Bolton, S. et al. “ADS-B classification using multivariate LSTM–FCN models.”
+                  <em>Journal of Supercomputing</em>, 2023.
+                </li>
+                <li>
+                  Bolton, S. et al. “Multi-Sensor Aircraft Classification.” CSCE 2023.
+                </li>
+                <li>
+                  Bolton, S. et al. “Aircraft Classification Using Flight Phase Identification.” IEEE NAECON 2023.
+                </li>
+              </ul>
+            </div>
+
+            <div class="card-simple">
+              <h3>Student Research & Mentoring</h3>
+              <p style="font-size:0.9rem; color:#374151; margin-bottom:0.65rem;">
+                I mentor cadet research projects that combine programming, data analysis, and cyber or aerospace applications.
+                When possible, I encourage students to present their work at internal symposia or external venues, and to think
+                about how research can inform their future roles as officers.
+              </p>
+              <p style="font-size:0.9rem; color:#374151;">
+                I am also interested in collaborations related to cyberspace operations, AI/ML in operational contexts, and
+                computing education research.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CV & Materials -->
+      <section id="cv">
+        <div class="container">
+          <h2 class="section-title">CV & Materials</h2>
+          <p class="section-subtitle">
+            Curriculum vitae and selected materials for teaching and collaboration.
+          </p>
+          <div class="divider"></div>
+
+          <div class="card-simple">
+            <h3>Curriculum Vitae</h3>
+            <p style="font-size:0.9rem; color:#374151; margin-bottom:0.8rem;">
+              You can download my current CV and teaching-focused CV below. These include a full list of courses taught,
+              academic and military experience, publications, and professional activities.
+            </p>
+            <div style="display:flex; flex-wrap:wrap; gap:0.75rem;">
+              <!-- Replace href="#" with actual links to your hosted PDFs -->
+              <a class="btn btn-primary" href="#" target="_blank" rel="noopener">
+                Download Academic CV (PDF)
+              </a>
+              <a class="btn btn-outline" href="#" target="_blank" rel="noopener">
+                Download Teaching-Focused CV (PDF)
+              </a>
+            </div>
+          </div>
+
+          <div class="card-simple">
+            <h3>Additional Materials (Optional)</h3>
+            <p style="font-size:0.9rem; color:#374151;">
+              Over time, this section can include sample syllabi, project descriptions, or talk slides related to teaching,
+              cyber operations, or computer science education.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Contact -->
+      <section id="contact">
+        <div class="container">
+          <h2 class="section-title">Contact</h2>
+          <p class="section-subtitle">
+            For academic collaborations, speaking invitations, or questions about my teaching and research.
+          </p>
+          <div class="divider"></div>
+
+          <div class="contact-grid">
+            <div>
+              <p style="font-size:0.95rem; color:#374151; margin-bottom:0.8rem;">
+                The best way to reach me for academic collaborations, speaking opportunities, or questions about my teaching and
+                research is by email. I am especially interested in work related to cyberspace operations and education, applied
+                ML in aerospace or cyber contexts, and computer science education research.
+              </p>
+              <ul class="contact-list">
+                <li><strong>Email:</strong> <a href="mailto:sarah.bolton.compsci@gmail.com">sarah.bolton.compsci@gmail.com</a></li>
+                <li><strong>Location:</strong> Colorado Springs, CO</li>
+              </ul>
+            </div>
+
+            <div class="card-simple">
+              <h3>Links</h3>
+              <ul class="contact-list">
+                <li><strong>Google Scholar:</strong> <a href="https://scholar.google.com" target="_blank" rel="noopener">View profile</a></li>
+                <li><strong>ResearchGate:</strong> <a href="https://www.researchgate.net" target="_blank" rel="noopener">View profile</a></li>
+                <li><strong>LinkedIn:</strong> <a href="https://www.linkedin.com" target="_blank" rel="noopener">View profile</a></li>
+                <!-- Replace the above URLs with your actual profile links -->
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      © <span id="year"></span> Sarah J. Bolton · Teaching & Research Portfolio
+    </footer>
+  </div>
+
+  <script>
+    // Mobile nav toggle
+    function toggleNav() {
+      var nav = document.getElementById("navLinks");
+      nav.classList.toggle("open");
+    }
+
+    // Set current year in footer
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
