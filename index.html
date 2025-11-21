@@ -6,472 +6,192 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <style>
-    /* ---------- Base Styles ---------- */
+    /* ---------- Light Theme (default) ---------- */
     :root {
       --bg: #f7f8fb;
       --bg-alt: #ffffff;
       --text: #222222;
       --muted: #555555;
-      --accent: #1e88e5;     /* modern tech blue */
+      --accent: #1e88e5;
       --accent-light: #e3f2fd;
       --border: #dde1ea;
       --shadow-soft: 0 8px 20px rgba(15, 23, 42, 0.07);
       --radius-lg: 14px;
       --radius-sm: 8px;
       --max-width: 1100px;
+      --nav-bg: rgba(247, 248, 251, 0.95);
+      --nav-border: rgba(203, 213, 225, 0.8);
+      --link: #334155;
+      --pill: #e5e7eb;
+      --pill-text: #111827;
+      --tag-text: #0f4ea8;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
+    /* ---------- Dark Theme (activated by body.dark) ---------- */
+    body.dark {
+      --bg: #0b1220;
+      --bg-alt: #0f172a;
+      --text: #e5e7eb;
+      --muted: #a6adbb;
+      --accent: #60a5fa;
+      --accent-light: rgba(96,165,250,0.18);
+      --border: #243045;
+      --shadow-soft: 0 8px 20px rgba(0,0,0,0.35);
+      --nav-bg: rgba(15, 23, 42, 0.9);
+      --nav-border: rgba(30, 41, 59, 0.9);
+      --link: #cbd5e1;
+      --pill: #1f2937;
+      --pill-text: #e5e7eb;
+      --tag-text: #cfe1ff;
     }
 
+    /* System preference: start dark if user prefers dark and no saved choice yet */
+    @media (prefers-color-scheme: dark) {
+      body:not(.light):not(.dark) {
+        --bg: #0b1220;
+        --bg-alt: #0f172a;
+        --text: #e5e7eb;
+        --muted: #a6adbb;
+        --accent: #60a5fa;
+        --accent-light: rgba(96,165,250,0.18);
+        --border: #243045;
+        --shadow-soft: 0 8px 20px rgba(0,0,0,0.35);
+        --nav-bg: rgba(15, 23, 42, 0.9);
+        --nav-border: rgba(30, 41, 59, 0.9);
+        --link: #cbd5e1;
+        --pill: #1f2937;
+        --pill-text: #e5e7eb;
+        --tag-text: #cfe1ff;
+      }
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
                    Roboto, Helvetica, Arial, sans-serif;
       background: var(--bg);
       color: var(--text);
       line-height: 1.6;
+      transition: background 0.25s ease, color 0.25s ease;
     }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    img { max-width: 100%; display: block; }
 
-    a {
-      color: var(--accent);
-      text-decoration: none;
-    }
+    .page { min-height: 100vh; }
+    .container { max-width: var(--max-width); margin: 0 auto; padding: 0 1.25rem; }
+    section { padding: 4rem 0; }
+    section:nth-of-type(odd) { background: var(--bg); }
+    section:nth-of-type(even) { background: var(--bg-alt); }
+    .section-title { font-size: 1.5rem; font-weight: 650; margin-bottom: 0.75rem; }
+    .section-subtitle { font-size: 0.95rem; color: var(--muted); margin-bottom: 1.5rem; }
+    .divider { width: 70px; height: 3px; border-radius: 999px; background: var(--accent); margin-bottom: 2rem; }
 
-    a:hover {
-      text-decoration: underline;
-    }
-
-    img {
-      max-width: 100%;
-      display: block;
-    }
-
-    /* ---------- Layout ---------- */
-    .page {
-      min-height: 100vh;
-    }
-
-    .container {
-      max-width: var(--max-width);
-      margin: 0 auto;
-      padding: 0 1.25rem;
-    }
-
-    section {
-      padding: 4rem 0;
-    }
-
-    section:nth-of-type(odd) {
-      background: var(--bg);
-    }
-
-    section:nth-of-type(even) {
-      background: var(--bg-alt);
-    }
-
-    .section-title {
-      font-size: 1.5rem;
-      font-weight: 650;
-      margin-bottom: 0.75rem;
-    }
-
-    .section-subtitle {
-      font-size: 0.95rem;
-      color: var(--muted);
-      margin-bottom: 1.5rem;
-    }
-
-    .divider {
-      width: 70px;
-      height: 3px;
-      border-radius: 999px;
-      background: var(--accent);
-      margin-bottom: 2rem;
-    }
-
-    /* ---------- Nav Bar ---------- */
+    /* ---------- Nav Bar + Toggle ---------- */
     header {
-      position: sticky;
-      top: 0;
-      z-index: 50;
+      position: sticky; top: 0; z-index: 50;
       backdrop-filter: blur(12px);
-      background: rgba(247, 248, 251, 0.95);
-      border-bottom: 1px solid rgba(203, 213, 225, 0.8);
+      background: var(--nav-bg);
+      border-bottom: 1px solid var(--nav-border);
+      transition: background 0.25s ease, border-color 0.25s ease;
     }
-
-    .nav {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.85rem 0;
-    }
-
-    .nav-left {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .nav-name {
-      font-weight: 650;
-      letter-spacing: 0.03em;
-      font-size: 0.95rem;
-      text-transform: uppercase;
-    }
-
-    .nav-role {
-      font-size: 0.8rem;
-      color: var(--muted);
-    }
-
-    .nav-links {
-      display: flex;
-      gap: 1.25rem;
-      font-size: 0.9rem;
-    }
-
-    .nav-links a {
-      position: relative;
-      font-weight: 500;
-      color: #334155;
-    }
-
+    .nav { display: flex; align-items: center; justify-content: space-between; padding: 0.85rem 0; }
+    .nav-left { display: flex; flex-direction: column; }
+    .nav-name { font-weight: 650; letter-spacing: 0.03em; font-size: 0.95rem; text-transform: uppercase; }
+    .nav-role { font-size: 0.8rem; color: var(--muted); }
+    .nav-links { display: flex; gap: 1.25rem; font-size: 0.9rem; }
+    .nav-links a { position: relative; font-weight: 500; color: var(--link); }
     .nav-links a::after {
-      content: "";
-      position: absolute;
-      left: 0;
-      bottom: -4px;
-      width: 0;
-      height: 2px;
-      border-radius: 999px;
-      background: var(--accent);
-      transition: width 0.18s ease-out;
+      content: ""; position: absolute; left: 0; bottom: -4px; width: 0; height: 2px;
+      border-radius: 999px; background: var(--accent); transition: width 0.18s ease-out;
     }
+    .nav-links a:hover::after { width: 100%; }
+    .nav-toggle { display: none; font-size: 1.5rem; background: none; border: none; cursor: pointer; color: var(--text); }
 
-    .nav-links a:hover::after {
-      width: 100%;
+    .theme-toggle {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      background: transparent; border: 1px solid var(--border); color: var(--text);
+      border-radius: 999px; padding: 0.35rem 0.7rem; font-size: 0.86rem; cursor: pointer;
+      transition: background 0.2s ease, border-color 0.2s ease;
     }
-
-    .nav-toggle {
-      display: none;
-      font-size: 1.5rem;
-      background: none;
-      border: none;
-      cursor: pointer;
-    }
+    .theme-toggle:hover { background: var(--accent-light); }
+    .theme-toggle svg { width: 18px; height: 18px; }
 
     /* ---------- Hero / About ---------- */
-    .hero {
-      padding-top: 3rem;
-      padding-bottom: 3rem;
-    }
-
-    .hero-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 2.2fr) minmax(0, 1.5fr);
-      gap: 2.5rem;
-      align-items: center;
-    }
-
-    .hero-title {
-      font-size: 2.1rem;
-      font-weight: 700;
-      margin-bottom: 0.4rem;
-    }
-
-    .hero-subtitle {
-      font-size: 1rem;
-      color: var(--muted);
-      margin-bottom: 1rem;
-    }
-
-    .hero-roles {
-      font-size: 0.95rem;
-      margin-bottom: 1.2rem;
-    }
-
-    .hero-roles span {
-      display: block;
-    }
-
-    .hero-text {
-      font-size: 0.98rem;
-      margin-bottom: 1.75rem;
-      color: #374151;
-    }
-
-    .hero-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      margin-bottom: 1.75rem;
-    }
-
+    .hero { padding-top: 3rem; padding-bottom: 3rem; }
+    .hero-grid { display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(0, 1.5fr); gap: 2.5rem; align-items: center; }
+    .hero-title { font-size: 2.1rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .hero-subtitle { font-size: 1rem; color: var(--muted); margin-bottom: 1rem; }
+    .hero-roles { font-size: 0.95rem; margin-bottom: 1.2rem; }
+    .hero-roles span { display: block; }
+    .hero-text { font-size: 0.98rem; margin-bottom: 1.75rem; color: var(--text); }
+    .hero-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.75rem; }
     .tag {
-      font-size: 0.78rem;
-      padding: 0.25rem 0.55rem;
-      border-radius: 999px;
-      background: var(--accent-light);
-      color: #0f4ea8;
-      border: 1px solid rgba(30, 136, 229, 0.12);
-      white-space: nowrap;
+      font-size: 0.78rem; padding: 0.25rem 0.55rem; border-radius: 999px;
+      background: var(--accent-light); color: var(--tag-text);
+      border: 1px solid rgba(30, 136, 229, 0.12); white-space: nowrap;
     }
-
-    .hero-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.75rem;
-    }
-
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
     .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0.55rem 1.1rem;
-      border-radius: 999px;
-      font-size: 0.9rem;
-      font-weight: 500;
-      border: 1px solid transparent;
-      cursor: pointer;
-      text-decoration: none;
-      transition: background 0.15s ease-out, color 0.15s ease-out,
-                  border-color 0.15s ease-out, box-shadow 0.15s ease-out;
+      display: inline-flex; align-items: center; justify-content: center; padding: 0.55rem 1.1rem;
+      border-radius: 999px; font-size: 0.9rem; font-weight: 500; border: 1px solid transparent;
+      cursor: pointer; text-decoration: none; transition: background 0.15s, color 0.15s, border-color 0.15s, box-shadow 0.15s;
     }
-
-    .btn-primary {
-      background: var(--accent);
-      color: #ffffff;
-      border-color: var(--accent);
-      box-shadow: var(--shadow-soft);
-    }
-
-    .btn-primary:hover {
-      background: #1565c0;
-      border-color: #1565c0;
-      text-decoration: none;
-    }
-
-    .btn-outline {
-      background: transparent;
-      color: var(--accent);
-      border-color: rgba(15, 23, 42, 0.18);
-    }
-
-    .btn-outline:hover {
-      background: var(--accent-light);
-      text-decoration: none;
-    }
-
-    .hero-card {
-      background: var(--bg-alt);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-soft);
-      padding: 1.5rem 1.5rem 1.35rem;
-      border: 1px solid var(--border);
-    }
-
-    .hero-card-title {
-      font-size: 0.9rem;
-      font-weight: 600;
-      letter-spacing: 0.07em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 0.75rem;
-    }
-
-    .hero-list {
-      list-style: none;
-      font-size: 0.88rem;
-      color: #374151;
-    }
-
-    .hero-list li + li {
-      margin-top: 0.45rem;
-    }
+    .btn-primary { background: var(--accent); color: #ffffff; border-color: var(--accent); box-shadow: var(--shadow-soft); }
+    .btn-primary:hover { background: #1565c0; border-color: #1565c0; text-decoration: none; }
+    .btn-outline { background: transparent; color: var(--accent); border-color: rgba(15,23,42,0.18); }
+    .btn-outline:hover { background: var(--accent-light); text-decoration: none; }
+    .hero-card { background: var(--bg-alt); border-radius: var(--radius-lg); box-shadow: var(--shadow-soft); padding: 1.5rem 1.5rem 1.35rem; border: 1px solid var(--border); }
+    .hero-card-title { font-size: 0.9rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.75rem; }
+    .hero-list { list-style: none; font-size: 0.88rem; color: var(--text); }
+    .hero-list li + li { margin-top: 0.45rem; }
 
     /* ---------- Teaching ---------- */
-    .teaching-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.2fr);
-      gap: 2rem;
-    }
-
-    .course-list {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr);
-      gap: 1rem;
-    }
-
-    .course-card {
-      background: var(--bg-alt);
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--border);
-      padding: 0.9rem 1rem;
-    }
-
-    .course-title {
-      font-size: 0.98rem;
-      font-weight: 600;
-      margin-bottom: 0.1rem;
-    }
-
-    .course-meta {
-      font-size: 0.8rem;
-      color: var(--muted);
-      margin-bottom: 0.4rem;
-    }
-
-    .course-desc {
-      font-size: 0.88rem;
-      color: #374151;
-    }
-
-    .teaching-highlights li {
-      font-size: 0.9rem;
-      color: #374151;
-      margin-bottom: 0.3rem;
-    }
-
-    .teaching-highlights {
-      padding-left: 1.1rem;
-      margin-top: 0.4rem;
-    }
+    .teaching-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.2fr); gap: 2rem; }
+    .course-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+    .course-card { background: var(--bg-alt); border-radius: var(--radius-sm); border: 1px solid var(--border); padding: 0.9rem 1rem; }
+    .course-title { font-size: 0.98rem; font-weight: 600; margin-bottom: 0.1rem; }
+    .course-meta { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.4rem; }
+    .course-desc { font-size: 0.88rem; color: var(--text); }
+    .teaching-highlights li { font-size: 0.9rem; color: var(--text); margin-bottom: 0.3rem; }
+    .teaching-highlights { padding-left: 1.1rem; margin-top: 0.4rem; }
 
     /* ---------- Colloquium / ACCR ---------- */
-    .cols-split {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: 2rem;
-    }
-
-    .box {
-      background: var(--bg-alt);
-      border-radius: var(--radius-lg);
-      border: 1px solid var(--border);
-      padding: 1.35rem 1.5rem;
-      box-shadow: var(--shadow-soft);
-    }
-
-    .box h3 {
-      font-size: 1.05rem;
-      margin-bottom: 0.6rem;
-    }
-
-    .box ul {
-      margin-top: 0.5rem;
-      padding-left: 1.1rem;
-      font-size: 0.9rem;
-      color: #374151;
-    }
-
-    .box ul li + li {
-      margin-top: 0.2rem;
-    }
+    .cols-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2rem; }
+    .box { background: var(--bg-alt); border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 1.35rem 1.5rem; box-shadow: var(--shadow-soft); }
+    .box h3 { font-size: 1.05rem; margin-bottom: 0.6rem; }
+    .box ul { margin-top: 0.5rem; padding-left: 1.1rem; font-size: 0.9rem; color: var(--text); }
+    .box ul li + li { margin-top: 0.2rem; }
 
     /* ---------- Research ---------- */
-    .pill-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.4rem;
-      margin-bottom: 1.25rem;
-    }
-
-    .pill {
-      font-size: 0.8rem;
-      padding: 0.22rem 0.6rem;
-      border-radius: 999px;
-      background: #e5e7eb;
-      color: #111827;
-      white-space: nowrap;
-    }
-
-    .pub-list {
-      list-style: none;
-      font-size: 0.9rem;
-    }
-
-    .pub-list li + li {
-      margin-top: 0.55rem;
-    }
+    .pill-row { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.25rem; }
+    .pill { font-size: 0.8rem; padding: 0.22rem 0.6rem; border-radius: 999px; background: var(--pill); color: var(--pill-text); white-space: nowrap; }
+    .pub-list { list-style: none; font-size: 0.9rem; }
+    .pub-list li + li { margin-top: 0.55rem; }
 
     /* ---------- CV & Contact ---------- */
-    .card-simple {
-      background: var(--bg-alt);
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--border);
-      padding: 1.2rem 1.3rem;
-      margin-bottom: 1rem;
-    }
+    .card-simple { background: var(--bg-alt); border-radius: var(--radius-sm); border: 1px solid var(--border); padding: 1.2rem 1.3rem; margin-bottom: 1rem; }
+    .card-simple h3 { font-size: 1rem; margin-bottom: 0.5rem; }
+    .contact-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 1.75rem; }
+    .contact-list { list-style: none; font-size: 0.9rem; color: var(--text); }
+    .contact-list li + li { margin-top: 0.25rem; }
 
-    .card-simple h3 {
-      font-size: 1rem;
-      margin-bottom: 0.5rem;
-    }
-
-    .contact-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
-      gap: 1.75rem;
-    }
-
-    .contact-list {
-      list-style: none;
-      font-size: 0.9rem;
-      color: #374151;
-    }
-
-    .contact-list li + li {
-      margin-top: 0.25rem;
-    }
-
-    footer {
-      padding: 1.8rem 0 2.2rem;
-      font-size: 0.8rem;
-      color: #6b7280;
-      text-align: center;
-    }
+    footer { padding: 1.8rem 0 2.2rem; font-size: 0.8rem; color: var(--muted); text-align: center; }
 
     /* ---------- Responsive ---------- */
     @media (max-width: 900px) {
-      .hero-grid,
-      .teaching-grid,
-      .cols-split,
-      .contact-grid {
-        grid-template-columns: minmax(0, 1fr);
-      }
-
-      .hero {
-        padding-top: 2.5rem;
-      }
+      .hero-grid, .teaching-grid, .cols-split, .contact-grid { grid-template-columns: minmax(0, 1fr); }
+      .hero { padding-top: 2.5rem; }
     }
-
     @media (max-width: 750px) {
-      .nav-links {
-        display: none;
-      }
-
-      .nav-toggle {
-        display: block;
-      }
-
+      .nav-links { display: none; }
+      .nav-toggle { display: block; }
       .nav-links.open {
-        display: flex;
-        flex-direction: column;
-        position: absolute;
-        top: 100%;
-        right: 0;
-        background: rgba(247, 248, 251, 0.98);
-        padding: 0.75rem 1.25rem 1rem;
-        border-left: 1px solid rgba(203, 213, 225, 0.8);
-        border-bottom: 1px solid rgba(203, 213, 225, 0.8);
-        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
+        display: flex; flex-direction: column; position: absolute; top: 100%; right: 0;
+        background: var(--nav-bg); padding: 0.75rem 1.25rem 1rem; border-left: 1px solid var(--nav-border);
+        border-bottom: 1px solid var(--nav-border); box-shadow: 0 10px 25px rgba(15, 23, 42, 0.35);
       }
-
-      .nav-links a {
-        padding: 0.25rem 0;
-      }
+      .nav-links a { padding: 0.25rem 0; }
     }
   </style>
 </head>
@@ -484,7 +204,27 @@
           <div class="nav-name">SARAH J. BOLTON, PH.D.</div>
           <div class="nav-role">Assistant Professor · Director, Academy Center for Cyberspace Research</div>
         </div>
-        <button class="nav-toggle" aria-label="Toggle navigation" onclick="toggleNav()">☰</button>
+
+        <div style="display:flex; align-items:center; gap:0.6rem;">
+          <button class="theme-toggle" id="themeToggle" aria-label="Toggle color theme">
+            <!-- Sun / Moon icons; we toggle visibility with JS -->
+            <span id="iconSun" aria-hidden="true" style="display:none;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="4"></circle>
+                <path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+              </svg>
+            </span>
+            <span id="iconMoon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+              </svg>
+            </span>
+            <span id="themeLabel">Dark</span>
+          </button>
+
+          <button class="nav-toggle" aria-label="Toggle navigation" onclick="toggleNav()">☰</button>
+        </div>
+
         <nav class="nav-links" id="navLinks">
           <a href="#about">About</a>
           <a href="#teaching">Teaching</a>
@@ -526,7 +266,6 @@
             </div>
 
             <div class="hero-actions">
-              <!-- Replace # with actual CV link when hosted -->
               <a class="btn btn-primary" href="#cv">View CV</a>
               <a class="btn btn-outline" href="#teaching">View Teaching Portfolio</a>
             </div>
@@ -646,12 +385,12 @@
           <div class="cols-split">
             <div class="box">
               <h3>CS405 / CyS405 Colloquium</h3>
-              <p style="font-size:0.92rem; color:#374151; margin-bottom:0.7rem;">
+              <p style="font-size:0.92rem; color:var(--text); margin-bottom:0.7rem;">
                 The Computer Science and Cyber Science Colloquium (CS405 / CyS405) brings in guest speakers from across the
                 Department of Defense, industry, government, and academia to broaden cadets’ perspectives on technical careers,
                 leadership, and professional life.
               </p>
-              <p style="font-size:0.9rem; color:#374151; margin-bottom:0.4rem;">
+              <p style="font-size:0.9rem; color:var(--text); margin-bottom:0.4rem;">
                 As the faculty lead, I curate speakers and topics that:
               </p>
               <ul>
@@ -664,11 +403,11 @@
 
             <div class="box">
               <h3>Academy Center for Cyberspace Research (ACCR)</h3>
-              <p style="font-size:0.92rem; color:#374151; margin-bottom:0.7rem;">
+              <p style="font-size:0.92rem; color:var(--text); margin-bottom:0.7rem;">
                 As Director of the Academy Center for Cyberspace Research, I coordinate cyberspace-related research across the
                 Academy, connecting cadets and faculty with external partners and opportunities.
               </p>
-              <p style="font-size:0.9rem; color:#374151; margin-bottom:0.4rem;">
+              <p style="font-size:0.9rem; color:var(--text); margin-bottom:0.4rem;">
                 ACCR supports work in:
               </p>
               <ul>
@@ -676,7 +415,7 @@
                 <li>AI/ML and data analysis for cyber and aerospace domains</li>
                 <li>Human–machine teaming and decision support</li>
               </ul>
-              <p style="font-size:0.9rem; color:#374151; margin-top:0.7rem;">
+              <p style="font-size:0.9rem; color:var(--text); margin-top:0.7rem;">
                 My role includes managing research collaborations and CRADAs, supporting cadet and faculty projects,
                 facilitating summer research placements, and integrating research back into the classroom and colloquium.
               </p>
@@ -689,14 +428,14 @@
       <section id="research">
         <div class="container">
           <h2 class="section-title">Research</h2>
-          <p class="section-subtitle">
+        <p class="section-subtitle">
             Applied machine learning, aerospace and cyber data, and computer science education.
           </p>
           <div class="divider"></div>
 
           <div style="display:grid; grid-template-columns:minmax(0,1.5fr) minmax(0,1.1fr); gap:2rem;">
             <div>
-              <p style="font-size:0.95rem; color:#374151; margin-bottom:1rem;">
+              <p style="font-size:0.95rem; color:var(--text); margin-bottom:1rem;">
                 My research interests lie at the intersection of <strong>machine learning, aerospace systems,
                 cyber operations,</strong> and <strong>computer science education</strong>. I am particularly interested in how we can
                 use data and AI techniques to support operational decision making, and how we can design learning experiences
@@ -712,27 +451,20 @@
 
               <h3 style="font-size:1.02rem; margin:1.2rem 0 0.4rem;">Selected Publications</h3>
               <ul class="pub-list">
-                <li>
-                  Bolton, S. et al. “ADS-B classification using multivariate LSTM–FCN models.”
-                  <em>Journal of Supercomputing</em>, 2023.
-                </li>
-                <li>
-                  Bolton, S. et al. “Multi-Sensor Aircraft Classification.” CSCE 2023.
-                </li>
-                <li>
-                  Bolton, S. et al. “Aircraft Classification Using Flight Phase Identification.” IEEE NAECON 2023.
-                </li>
+                <li>Bolton, S. et al. “ADS-B classification using multivariate LSTM–FCN models.” <em>Journal of Supercomputing</em>, 2023.</li>
+                <li>Bolton, S. et al. “Multi-Sensor Aircraft Classification.” CSCE 2023.</li>
+                <li>Bolton, S. et al. “Aircraft Classification Using Flight Phase Identification.” IEEE NAECON 2023.</li>
               </ul>
             </div>
 
             <div class="card-simple">
               <h3>Student Research & Mentoring</h3>
-              <p style="font-size:0.9rem; color:#374151; margin-bottom:0.65rem;">
+              <p style="font-size:0.9rem; color:var(--text); margin-bottom:0.65rem;">
                 I mentor cadet research projects that combine programming, data analysis, and cyber or aerospace applications.
                 When possible, I encourage students to present their work at internal symposia or external venues, and to think
                 about how research can inform their future roles as officers.
               </p>
-              <p style="font-size:0.9rem; color:#374151;">
+              <p style="font-size:0.9rem; color:var(--text);">
                 I am also interested in collaborations related to cyberspace operations, AI/ML in operational contexts, and
                 computing education research.
               </p>
@@ -752,24 +484,19 @@
 
           <div class="card-simple">
             <h3>Curriculum Vitae</h3>
-            <p style="font-size:0.9rem; color:#374151; margin-bottom:0.8rem;">
+            <p style="font-size:0.9rem; color:var(--text); margin-bottom:0.8rem;">
               You can download my current CV and teaching-focused CV below. These include a full list of courses taught,
               academic and military experience, publications, and professional activities.
             </p>
             <div style="display:flex; flex-wrap:wrap; gap:0.75rem;">
-              <!-- Replace href="#" with actual links to your hosted PDFs -->
-              <a class="btn btn-primary" href="#" target="_blank" rel="noopener">
-                Download Academic CV (PDF)
-              </a>
-              <a class="btn btn-outline" href="#" target="_blank" rel="noopener">
-                Download Teaching-Focused CV (PDF)
-              </a>
+              <a class="btn btn-primary" href="docs/Bolton_CV_Academic.pdf" target="_blank" rel="noopener">Download Academic CV (PDF)</a>
+              <a class="btn btn-outline" href="docs/Bolton_CV_Teaching.pdf" target="_blank" rel="noopener">Download Teaching-Focused CV (PDF)</a>
             </div>
           </div>
 
           <div class="card-simple">
             <h3>Additional Materials (Optional)</h3>
-            <p style="font-size:0.9rem; color:#374151;">
+            <p style="font-size:0.9rem; color:var(--text);">
               Over time, this section can include sample syllabi, project descriptions, or talk slides related to teaching,
               cyber operations, or computer science education.
             </p>
@@ -788,7 +515,7 @@
 
           <div class="contact-grid">
             <div>
-              <p style="font-size:0.95rem; color:#374151; margin-bottom:0.8rem;">
+              <p style="font-size:0.95rem; color:var(--text); margin-bottom:0.8rem;">
                 The best way to reach me for academic collaborations, speaking opportunities, or questions about my teaching and
                 research is by email. I am especially interested in work related to cyberspace operations and education, applied
                 ML in aerospace or cyber contexts, and computer science education research.
@@ -802,10 +529,9 @@
             <div class="card-simple">
               <h3>Links</h3>
               <ul class="contact-list">
-                <li><strong>Google Scholar:</strong> <a href="https://scholar.google.com" target="_blank" rel="noopener">View profile</a></li>
-                <li><strong>ResearchGate:</strong> <a href="https://www.researchgate.net" target="_blank" rel="noopener">View profile</a></li>
-                <li><strong>LinkedIn:</strong> <a href="https://www.linkedin.com" target="_blank" rel="noopener">View profile</a></li>
-                <!-- Replace the above URLs with your actual profile links -->
+                <li><strong>Google Scholar:</strong> <a href="https://scholar.google.com/citations?user=2_rtff4AAAAJ&hl" target="_blank" rel="noopener">View profile</a></li>
+                <li><strong>ResearchGate:</strong> <a href="https://www.researchgate.net/scientific-contributions/Sarah-Bolton-2228137423" target="_blank" rel="noopener">View profile</a></li>
+                <li><strong>LinkedIn:</strong> <a href="https://www.linkedin.com/in/sarah-bolton-547a2019" target="_blank" rel="noopener">View profile</a></li>
               </ul>
             </div>
           </div>
@@ -825,7 +551,64 @@
       nav.classList.toggle("open");
     }
 
-    // Set current year in footer
+    // Theme handling
+    const STORAGE_KEY = "theme-preference";
+    const body = document.body;
+    const iconSun = document.getElementById("iconSun");
+    const iconMoon = document.getElementById("iconMoon");
+    const themeLabel = document.getElementById("themeLabel");
+
+    function setTheme(theme) {
+      if (theme === "dark") {
+        body.classList.add("dark");
+        body.classList.remove("light");
+        iconSun.style.display = "block";
+        iconMoon.style.display = "none";
+        themeLabel.textContent = "Light";
+      } else if (theme === "light") {
+        body.classList.remove("dark");
+        body.classList.add("light");
+        iconSun.style.display = "none";
+        iconMoon.style.display = "block";
+        themeLabel.textContent = "Dark";
+      } else {
+        // auto (system)
+        body.classList.remove("dark");
+        body.classList.remove("light");
+        const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+        prefersDark ? setTheme("dark") : setTheme("light");
+        return;
+      }
+      try { localStorage.setItem(STORAGE_KEY, theme); } catch(e) {}
+    }
+
+    // Initialize theme from storage or system preference
+    (function initTheme(){
+      let saved = null;
+      try { saved = localStorage.getItem(STORAGE_KEY); } catch(e) {}
+      if (saved === "dark" || saved === "light") {
+        setTheme(saved);
+      } else {
+        // No saved preference → defer to system
+        const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+        setTheme(prefersDark ? "dark" : "light");
+      }
+      // Update when system preference changes (only if user hasn't explicitly chosen)
+      const media = window.matchMedia("(prefers-color-scheme: dark)");
+      media.addEventListener && media.addEventListener("change", (e) => {
+        let savedPref = null;
+        try { savedPref = localStorage.getItem(STORAGE_KEY); } catch(err) {}
+        if (!savedPref) setTheme(e.matches ? "dark" : "light");
+      });
+    })();
+
+    // Toggle click
+    document.getElementById("themeToggle").addEventListener("click", function(){
+      const isDark = body.classList.contains("dark");
+      setTheme(isDark ? "light" : "dark");
+    });
+
+    // Footer year
     document.getElementById("year").textContent = new Date().getFullYear();
   </script>
 </body>
