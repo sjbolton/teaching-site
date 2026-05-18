@@ -530,19 +530,54 @@
     }
     .pub-list em { color: var(--ink); font-style: italic; }
 
-    /* Action photo placeholder */
-    .photo-placeholder {
-      background: var(--bg-soft);
-      border: 2px dashed var(--rule);
-      border-radius: var(--radius);
-      padding: 3rem 2rem;
-      text-align: center;
-      color: var(--ink-mute);
-      margin: 2rem 0;
+    /* Action photo */
+    .action-photo {
+      margin: 2.5rem 0 1rem;
       max-width: 100%;
     }
-    .photo-placeholder strong { color: var(--ink-soft); display: block; margin-bottom: 0.4rem; font-family: 'Fraunces', serif; }
-    .photo-placeholder span { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; }
+    .action-photo img {
+      width: 100%;
+      height: auto;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      display: block;
+    }
+    .action-photo figcaption {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--ink-mute);
+      text-align: center;
+      margin-top: 0.75rem;
+      letter-spacing: 0.02em;
+    }
+
+    /* Focus areas list for ACCR */
+    .focus-list { list-style: none; margin-top: 0.5rem; }
+    .focus-list > li {
+      padding: 0.6rem 0 0.6rem 1.1rem;
+      position: relative;
+      border-bottom: 1px dashed var(--rule);
+    }
+    .focus-list > li:last-child { border-bottom: none; }
+    .focus-list > li::before {
+      content: "›";
+      position: absolute;
+      left: 0;
+      color: var(--gold);
+      font-weight: 700;
+    }
+    .focus-list .focus-title {
+      font-weight: 600;
+      color: var(--ink);
+      display: block;
+      margin-bottom: 0.15rem;
+    }
+    .focus-list .focus-sub {
+      font-size: 0.88rem;
+      color: var(--ink-mute);
+      display: block;
+      line-height: 1.5;
+    }
 
     /* Contact */
     .contact-grid {
@@ -660,8 +695,8 @@
         <div class="glance">
           <h4>At a Glance</h4>
           <ul>
-            <li><strong>Current Roles</strong><span>Assistant Professor; Director, ACCR</span></li>
-            <li><strong>Teaching</strong><span>16 course offerings across 7 distinct courses</span></li>
+            <li><strong>Current Roles</strong><span>Assistant Professor, USAFA; Director, ACCR; Dissertation Chair, Capitol Technology University</span></li>
+            <li><strong>Teaching</strong><span>18 course offerings across 8 distinct courses</span></li>
             <li><strong>Pedagogy</strong><span>Dean's Teaching Certificate; Course Design Institute; MTCC Cohort 8</span></li>
             <li><strong>Research</strong><span>Applied ML for aerospace data; cyber operations; CS education</span></li>
             <li><strong>Location</strong><span>Colorado Springs, Colorado</span></li>
@@ -674,9 +709,11 @@
             <span class="currently-date">Spring 2026</span>
           </div>
           <ul>
-            <li>Rebuilding CS210 (Programming in C) as incoming Course Director</li>
+            <li>Rebuilding CS210 (Programming in C) in my second year as Course Director</li>
+            <li>Chairing two doctoral dissertations and serving on five committees at Capitol Technology University</li>
             <li>Co-authored NAECON 2026 submission with cadet mentees (under review)</li>
             <li>Presented SoTL poster on retrieval practice in CS110 (USAFA SoTL Conference, 2026)</li>
+            <li>Scoping a new SoTL research project for MTCC, with results to present in 2027</li>
             <li>Preparing for the runDisney Dopey Challenge, January 2027</li>
           </ul>
         </div>
@@ -695,12 +732,12 @@
     <h2>Courses Taught &amp; Directed</h2>
     <p class="section-intro">
       Conceptual foundations, real-world relevance, and structured support for future officers and technical leaders.
-      Across my time at USAFA I have delivered <strong>16 course offerings</strong> spanning seven distinct courses in the
+      Across my time at USAFA I have delivered <strong>18 course offerings</strong> spanning eight distinct courses in the
       computer science and cyber curriculum.
     </p>
 
     <div class="fall-banner">
-      <strong>Scheduled for Fall 2026:</strong> CS210 (Programming in C) · CS426 (Languages &amp; Machines) · CS405 / CyS405 (Senior Colloquium)
+      <strong>Scheduled for Fall 2026:</strong> CS210 (Programming in C) · CS426 (Languages &amp; Machines) · CS405 / CyS405 (Fall Colloquium) · CS453 (Capstone, fall half)
     </div>
 
     <div class="courses-grid">
@@ -727,7 +764,8 @@
         <div class="course-role">Course Director · Systems programming &amp; memory</div>
         <p class="course-desc">
           A second course in programming focusing on C, pointers, and memory management. As Course Director,
-          I oversee course structure, assessments, and multi-section coordination to ensure consistent learning outcomes.
+          I lead a team of three to four instructors plus myself, overseeing course structure, assessments,
+          and multi-section coordination to ensure consistent learning outcomes across all sections.
         </p>
       </div>
 
@@ -739,8 +777,10 @@
         <div class="course-title">Data Structures &amp; Systems Programming</div>
         <div class="course-role">Course Director · Core CS sequence</div>
         <p class="course-desc">
-          Covers arrays, lists, stacks, queues, trees, hash tables, and related systems concepts. I focus on
-          helping students understand why specific data structures are chosen and how they affect performance and maintainability.
+          Covers arrays, lists, stacks, queues, trees, hash tables, and related systems concepts. As
+          Course Director, I lead a team of three to four instructors plus myself, and focus on helping
+          students understand why specific data structures are chosen and how they affect performance and
+          maintainability.
         </p>
       </div>
 
@@ -750,7 +790,7 @@
           <span class="course-count">1 offering</span>
         </div>
         <div class="course-title">Design &amp; Analysis of Algorithms</div>
-        <div class="course-role">Incoming Course Director · Complexity &amp; design</div>
+        <div class="course-role">Complexity &amp; algorithm design</div>
         <p class="course-desc">
           Studies classic algorithm design paradigms and complexity analysis. Emphasizes reasoning about
           tradeoffs and connecting algorithms to cyber and operationally relevant scenarios.
@@ -776,11 +816,12 @@
           <span class="course-code">CS405 / CyS405</span>
           <span class="course-count">1 offering</span>
         </div>
-        <div class="course-title">CS &amp; Cyber Science Colloquium</div>
-        <div class="course-role">Senior-level colloquium · Speakers &amp; professional development</div>
+        <div class="course-title">CS &amp; Cyber Science Colloquium (Fall)</div>
+        <div class="course-role">Course Director · Fall half of the year-long colloquium</div>
         <p class="course-desc">
-          Senior-level colloquium series designed to broaden cadets' understanding of computing and cyber careers,
-          ethics, and professional life. See the Colloquium &amp; ACCR section for details.
+          Fall half of a year-long senior-level colloquium series designed to broaden cadets' understanding
+          of computing and cyber careers, ethics, and professional life. See the Colloquium &amp; ACCR
+          section for details. Continues in the spring as CS406/CyS406.
         </p>
       </div>
 
@@ -789,11 +830,26 @@
           <span class="course-code">CS406 / CyS406</span>
           <span class="course-count">1 offering</span>
         </div>
-        <div class="course-title">CS &amp; Cyber Science Capstone</div>
-        <div class="course-role">Capstone experience · Applied projects</div>
+        <div class="course-title">CS &amp; Cyber Science Colloquium (Spring)</div>
+        <div class="course-role">Course Director · Spring half of the year-long colloquium</div>
         <p class="course-desc">
-          Senior capstone supporting applied project work that integrates the breadth of the CS and cyber
-          curriculum and prepares cadets to translate technical skills into operational impact.
+          Spring continuation of the senior-level colloquium series begun in CS405/CyS405 in the fall.
+          Together the two courses form a year-long arc of speakers, professional development, and
+          reflection on careers in computing and cyber.
+        </p>
+      </div>
+
+      <div class="course-card">
+        <div class="course-header">
+          <span class="course-code">CS453 / CS454</span>
+          <span class="course-count">2 offerings</span>
+        </div>
+        <div class="course-title">CS &amp; Cyber Science Capstone</div>
+        <div class="course-role">Capstone mentor · Applied projects</div>
+        <p class="course-desc">
+          Year-long senior capstone (CS453 in fall, CS454 in spring) supporting applied project work that
+          integrates the breadth of the CS and cyber curriculum. I mentor capstone teams as their work
+          translates technical skills into operational impact.
         </p>
       </div>
 
@@ -819,10 +875,10 @@
       </div>
     </div>
 
-    <div class="photo-placeholder">
-      <strong>[Action photo to be added]</strong>
-      <span>Reserved space for a CS/CyS406 capstone photo</span>
-    </div>
+    <figure class="action-photo">
+      <img src="images/actionPhoto.jpeg" alt="Teaching cadets in a USAFA classroom, mountain view through the window" loading="lazy" />
+      <figcaption>Teaching at USAFA, with the Front Range visible through the window.</figcaption>
+    </figure>
 
   </div>
 </section>
@@ -856,16 +912,30 @@
       <div class="panel">
         <h3>Academy Center for Cyberspace Research</h3>
         <p>
-          As Director of ACCR, I coordinate cyberspace-related research across the Academy, connecting
-          cadets and faculty with external partners and opportunities.
+          As Director of the <a href="https://www.usafa.edu/research/research-centers/academy-center-cyberspace-research/" target="_blank" rel="noopener">Academy Center for Cyberspace Research (ACCR)</a>,
+          I coordinate cyberspace-related research across the Academy, connecting cadets and faculty with
+          external partners and opportunities.
         </p>
-        <p style="margin-top:0.5rem;"><strong>ACCR supports work in:</strong></p>
-        <ul>
-          <li>Cyber operations and network defense</li>
-          <li>AI/ML and data analysis for cyber and aerospace domains</li>
-          <li>Human–Machine Teaming and decision support</li>
+        <p style="margin-top:0.5rem;"><strong>Research Focus Areas:</strong></p>
+        <ul class="focus-list">
+          <li>
+            <span class="focus-title">System Security Analysis</span>
+            <span class="focus-sub">Network and platform red team assessments; provably secure software; objective network security stack security and availability measurement</span>
+          </li>
+          <li>
+            <span class="focus-title">Immersive Environments</span>
+            <span class="focus-sub">Education; command and control; directed engagements</span>
+          </li>
+          <li>
+            <span class="focus-title">Artificial Intelligence &amp; Autonomy</span>
+            <span class="focus-sub">Multi-vehicle cooperation; swarm area defense and ISR</span>
+          </li>
+          <li>
+            <span class="focus-title">Business Process Automation</span>
+            <span class="focus-sub">Workflow analysis and encoding</span>
+          </li>
         </ul>
-        <p style="margin-top:0.75rem;">
+        <p style="margin-top:1rem;">
           My role includes managing research collaborations and CRADAs, supporting cadet and faculty projects,
           facilitating summer research placements, and integrating research back into the classroom and colloquium.
         </p>
@@ -927,6 +997,11 @@
       I mentor cadet research projects that combine programming, data analysis, and cyber or aerospace
       applications. When possible, I encourage students to present their work at internal symposia or external
       venues, and to think about how research can inform their future roles as officers.
+    </p>
+    <p>
+      Since January 2026, I have also served as a <strong>Dissertation Chair at <a href="https://www.captechu.edu/" target="_blank" rel="noopener">Capitol Technology University</a></strong>,
+      currently chairing two doctoral advisees and serving on the committees of five additional candidates
+      in computer science and cyber-related disciplines.
     </p>
     <p>
       I am also interested in collaborations related to cyberspace operations, AI/ML in operational contexts,
