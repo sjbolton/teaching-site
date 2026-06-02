@@ -1,0 +1,4047 @@
+<!-- ============================================================
+     CS210 — Lesson 31
+     Stacks and Queues
+     Self-contained: all CSS inline. Native <details> for collapsing.
+     Two widgets embedded inline in Section 5:
+       <!-- ============================================================
+     CS210 Lesson 31 - Stacks and Queues Walkthrough Widget
+     Box-and-arrow node-chain visualization. Native HTML/CSS + scoped JS.
+     Paste as a block; runs anywhere the parent page allows <script>.
+     ============================================================ -->
+<style>
+.cs210-sqflow * { box-sizing: border-box; }
+.cs210-sqflow {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-sqflow h1 { color: #00205B; font-size: 24px; margin: 0 0 6px 0; }
+.cs210-sqflow .subtitle { color: #4A5568; font-size: 14px; margin-bottom: 22px; }
+.cs210-sqflow .progress-bar { background: #E5E7EB; border-radius: 3px; height: 8px; overflow: hidden; margin-bottom: 6px; }
+.cs210-sqflow .progress-fill { background: #003087; height: 100%; transition: width 0.3s ease; }
+.cs210-sqflow .progress-label { font-size: 12px; color: #6B7280; margin-bottom: 18px; }
+.cs210-sqflow .section-header {
+  background: #E8EDF5; color: #00205B; padding: 8px 14px; border-radius: 3px;
+  font-size: 13px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px;
+}
+.cs210-sqflow .task-card {
+  background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 14px; border-radius: 3px;
+}
+.cs210-sqflow .task-card.complete { background: #E6F4EA; border-left-color: #2E7D32; }
+.cs210-sqflow .task-label {
+  font-size: 12px; letter-spacing: 1.5px; color: #6B5300; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;
+}
+.cs210-sqflow .task-card.complete .task-label { color: #1B5E20; }
+.cs210-sqflow .task-text { font-size: 15px; color: #1a1a1a; }
+.cs210-sqflow .task-hint { font-size: 12.5px; color: #6B7280; margin-top: 6px; font-style: italic; }
+
+.cs210-sqflow .panes { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 12px; }
+@media (max-width: 760px) { .cs210-sqflow .panes { grid-template-columns: 1fr; } }
+.cs210-sqflow .terminal {
+  background: #1E2A3A; color: #E8EDF5; font-family: Consolas, 'Courier New', monospace;
+  font-size: 13.5px; line-height: 1.5; border-radius: 4px; padding: 14px 18px;
+  min-height: 380px; max-height: 440px; overflow-y: auto; white-space: pre-wrap; word-break: break-word;
+}
+.cs210-sqflow .terminal .prompt { color: #7FB3D5; }
+.cs210-sqflow .terminal .typed { color: #FFFFFF; }
+.cs210-sqflow .terminal .out { color: #B5BEC8; }
+.cs210-sqflow .terminal .note { color: #F0B92C; }
+.cs210-sqflow .terminal .err { color: #F47A7A; }
+.cs210-sqflow .terminal .ok { color: #7FD17F; }
+.cs210-sqflow .terminal .dim { color: #6B7280; }
+
+.cs210-sqflow .struct-pane {
+  background: #ffffff; border: 1px solid #D0D5DD; border-radius: 4px; padding: 14px 16px;
+  min-height: 380px; max-height: 440px; overflow-y: auto;
+}
+.cs210-sqflow .struct-pane-header {
+  font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; font-weight: 600;
+  margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #E5E7EB;
+}
+.cs210-sqflow .struct-kind {
+  font-family: Consolas, monospace; font-size: 12px; color: #00205B; font-weight: 700; margin-bottom: 4px;
+}
+.cs210-sqflow .struct-meta { font-family: Consolas, monospace; font-size: 11px; color: #6B7280; margin-bottom: 12px; }
+.cs210-sqflow .struct-empty { color: #6B7280; font-style: italic; font-size: 13px; text-align: center; padding: 50px 10px; }
+
+/* Node chain: boxes flowing left to right with arrows */
+.cs210-sqflow .chain { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 2px; row-gap: 26px; padding-top: 22px; }
+.cs210-sqflow .node-wrap { position: relative; display: flex; align-items: center; }
+.cs210-sqflow .node {
+  border: 1px solid #C7CFD9; border-radius: 4px; background: #F8FAFC; min-width: 92px; max-width: 132px;
+  text-align: center; padding: 6px 6px 7px 6px; transition: background 0.4s ease, border-color 0.4s ease;
+}
+.cs210-sqflow .node .data {
+  display: block; font-family: Consolas, monospace; font-size: 12.5px; color: #00205B; font-weight: 700;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cs210-sqflow .node .addr { display: block; font-family: Consolas, monospace; font-size: 9px; color: #6B7280; margin-top: 2px; }
+.cs210-sqflow .node.flash-write { background: #FFF1C7; border-color: #F0B92C; }
+.cs210-sqflow .node-arrow { font-family: Consolas, monospace; font-size: 15px; color: #6B7280; padding: 0 3px; align-self: center; }
+.cs210-sqflow .null-cap {
+  font-family: Consolas, monospace; font-size: 13px; color: #B8002F; align-self: center; padding-left: 3px; font-weight: 700;
+}
+.cs210-sqflow .ptr-tags {
+  position: absolute; top: -22px; left: 0; right: 0; font-family: Consolas, monospace; font-size: 10.5px;
+  color: #003087; font-weight: 700; text-align: center; white-space: nowrap;
+}
+.cs210-sqflow .ptr-tags .tag-front { color: #1B5E20; }
+.cs210-sqflow .ptr-tags .tag-back  { color: #8A4B00; }
+.cs210-sqflow .ptr-tags .tag-top   { color: #003087; }
+.cs210-sqflow .node.targeted { border-color: #003087; border-width: 2px; padding: 5px 5px 6px 5px; }
+
+.cs210-sqflow .ptr-summary {
+  margin-top: 16px; padding-top: 10px; border-top: 1px dashed #D0D5DD;
+  font-family: Consolas, monospace; font-size: 12px; color: #1a1a1a;
+}
+.cs210-sqflow .ptr-summary .row { margin-bottom: 3px; }
+.cs210-sqflow .ptr-summary .nm { color: #00205B; font-weight: 700; }
+.cs210-sqflow .ptr-summary .nullv { color: #B8002F; font-style: italic; }
+
+.cs210-sqflow .return-card {
+  background: #ffffff; border: 2px solid #003087; border-radius: 4px; padding: 9px 12px; margin-top: 14px; text-align: center;
+}
+.cs210-sqflow .return-card .r-op { font-family: Consolas, monospace; font-size: 12px; color: #6B7280; margin-bottom: 3px; }
+.cs210-sqflow .return-card .r-val { font-family: Consolas, monospace; font-size: 17px; color: #003087; font-weight: 700; }
+.cs210-sqflow .return-card .r-val.nullv { color: #B8002F; }
+
+.cs210-sqflow .input-row {
+  display: flex; background: #1E2A3A; border-radius: 4px; padding: 8px 14px; margin-bottom: 14px; border: 1px solid #003087;
+}
+.cs210-sqflow .input-prompt {
+  color: #7FB3D5; font-family: Consolas, monospace; font-size: 14px; margin-right: 8px; align-self: center; white-space: nowrap;
+}
+.cs210-sqflow .input-row input {
+  flex: 1; background: transparent; color: #FFFFFF; border: none; outline: none;
+  font-family: Consolas, monospace; font-size: 14px; padding: 4px 0;
+}
+.cs210-sqflow .controls { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+.cs210-sqflow .btn {
+  background: #ffffff; border: 1px solid #C7CFD9; padding: 6px 14px; border-radius: 3px; font-size: 13px;
+  cursor: pointer; color: #00205B; font-family: inherit; transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.cs210-sqflow .btn:hover { background: #F5F7FA; }
+@keyframes cs210-sqflow-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(240, 185, 44, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0); }
+}
+.cs210-sqflow .btn.pulse { background: #FFF8E1; border-color: #F0B92C; color: #6B5300; font-weight: 600; animation: cs210-sqflow-pulse 1.5s infinite; }
+.cs210-sqflow .help-note {
+  background: #F5F7FA; border: 1px solid #D0D5DD; padding: 12px 16px; border-radius: 3px; font-size: 13px; color: #4A5568; margin-top: 12px;
+}
+.cs210-sqflow .help-note strong { color: #00205B; }
+.cs210-sqflow .inline-code-footer {
+  background: #F0F4FA; border: 1px solid #C7D2E1; padding: 10px 14px; border-radius: 3px; margin-top: 10px;
+  font-size: 13px; color: #00205B; font-family: Consolas, monospace;
+}
+.cs210-sqflow .inline-code-footer .label {
+  text-transform: uppercase; letter-spacing: 1.5px; font-size: 11px; color: #6B7280;
+  font-family: 'Segoe UI', Arial, sans-serif; margin-right: 6px;
+}
+/* Name modal overlay */
+.cs210-sqflow .name-modal-backdrop {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 32, 91, 0.55);
+  display: flex; align-items: center; justify-content: center; z-index: 9999;
+}
+.cs210-sqflow .name-modal {
+  background: #ffffff; border-radius: 6px; padding: 28px 32px; max-width: 440px; width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25); font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-sqflow .name-modal h2 { color: #00205B; font-size: 20px; margin: 0 0 10px 0; }
+.cs210-sqflow .name-modal p { color: #4A5568; font-size: 14px; line-height: 1.5; margin: 0 0 16px 0; }
+.cs210-sqflow .name-modal input {
+  width: 100%; padding: 10px 12px; font-size: 15px; border: 1px solid #CBD5E0; border-radius: 4px; margin-bottom: 14px; font-family: inherit;
+}
+.cs210-sqflow .name-modal input:focus { outline: none; border-color: #003087; box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15); }
+.cs210-sqflow .name-modal-btn {
+  background: #003087; color: #ffffff; border: none; padding: 10px 20px; border-radius: 4px; font-size: 14px;
+  font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.cs210-sqflow .name-modal-btn:disabled { background: #A0AEC0; cursor: not-allowed; }
+.cs210-sqflow .name-modal-btn:not(:disabled):hover { background: #00205B; }
+</style>
+
+<div class="cs210-sqflow">
+
+<div class="name-modal-backdrop" id="sqf-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Blackboard reflection.</p>
+    <input type="text" id="sqf-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="sqf-cadet-name-btn" disabled>Start the walkthrough</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 31 &middot; Stacks and Queues Walkthrough</h1>
+<div class="subtitle">Seventeen tasks across three sections. The terminal shows what each operation did; the structure pane draws the node chain, the pointers that track its ends, and the value each removal hands back.</div>
+
+<div class="progress-bar"><div class="progress-fill" id="sqf-progress-fill" style="width: 0%;"></div></div>
+<div class="progress-label" id="sqf-progress-label">Task 0 of 17</div>
+
+<div class="section-header" id="sqf-section-header">Section 1: Stack &mdash; last in, first out</div>
+
+<div class="task-card" id="sqf-task-card">
+  <div class="task-label" id="sqf-task-label">Current task</div>
+  <div class="task-text" id="sqf-task-text">Loading...</div>
+  <div class="task-hint" id="sqf-task-hint"></div>
+</div>
+
+<div class="panes">
+  <div class="terminal" id="sqf-terminal"></div>
+  <div class="struct-pane">
+    <div class="struct-pane-header">Structure</div>
+    <div id="sqf-struct-area">
+      <div class="struct-empty">Nothing built yet.<br>Type the first operation on the left.</div>
+    </div>
+  </div>
+</div>
+
+<div class="input-row">
+  <span class="input-prompt">adt&gt;</span>
+  <input type="text" id="sqf-cli-input" autocomplete="off" spellcheck="false" placeholder="follow the task above">
+</div>
+
+<div class="controls">
+  <button class="btn" id="sqf-hint-btn">Show hint</button>
+  <button class="btn" id="sqf-reset-btn">Reset</button>
+  <button class="btn" id="sqf-mode-btn">Switch to free mode</button>
+</div>
+
+<div class="help-note">
+  <strong>How this works:</strong> This is a teaching tool, not a compiler. It runs one stack and one queue built on the same kind of node. The task card tells you what to type; in walkthrough mode only the expected operation advances. Mistype twice and the hint button will pulse. After all tasks are complete, free mode unlocks so you can push, pop, enqueue, and dequeue freely.
+</div>
+
+<div id="sqf-completion-area"></div>
+
+</div>
+
+<script>
+(function () {
+  const root = document.querySelector('.cs210-sqflow');
+  if (!root) return;
+
+  // ============================================================
+  // CS210 widget completion utilities
+  // Salt -> deterministic 6-char code via FNV-1a.
+  // ============================================================
+  const CS210_SALT = "lesson31_stackqueue_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#sqf-name-modal-backdrop');
+    const input = root.querySelector('#sqf-cadet-name-input');
+    const btn = root.querySelector('#sqf-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length > 0) {
+        cs210CadetName = stored.trim();
+        backdrop.style.display = 'none';
+        return;
+      }
+    } catch (e) {}
+    function updateBtn() { btn.disabled = input.value.trim().length === 0; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', () => {
+      const name = input.value.trim();
+      if (!name) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+      const siblings = document.querySelectorAll(
+        '#sqquiz-name-modal-backdrop, #name-modal-backdrop, #duality-name-modal-backdrop'
+      );
+      siblings.forEach((m) => { m.style.display = 'none'; });
+      const cli = root.querySelector('#sqf-cli-input');
+      if (cli) cli.focus();
+    });
+    setTimeout(() => { try { input.focus(); } catch (e) {} }, 50);
+  })();
+
+  function cs210RenderCompletion(area) {
+    if (root.querySelector('#cs210-sqf-completion-overlay')) return;
+    const now = new Date();
+    const pad = (n) => n.toString().padStart(2, '0');
+    const ts = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate()) +
+               ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+    const overlay = document.createElement('div');
+    overlay.id = 'cs210-sqf-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">Walkthrough complete</h2>' +
+        '<p>You drove a stack through push, pop, peek, and the empty guard, then a queue through enqueue and dequeue with both a front and a back pointer, including the dangling-back trap. Take a screenshot of this card and include it with your Blackboard reflection.</p>' +
+        '<div style="background:#F0F4FA;border:1px solid #003087;border-radius:4px;padding:14px 18px;margin-bottom:14px;">' +
+          '<div style="font-size:12px;letter-spacing:1.5px;color:#4A5568;margin-bottom:4px;text-transform:uppercase;">Completion code</div>' +
+          '<div style="font-family:Consolas,monospace;font-size:26px;font-weight:700;color:#00205B;letter-spacing:3px;">' + CS210_CODE + '</div>' +
+        '</div>' +
+        '<div style="font-size:14px;color:#1a1a1a;margin-bottom:6px;"><strong style="color:#00205B;">' + escapeHtml(cs210CadetName || '(name not set)') + '</strong></div>' +
+        '<div style="font-size:13px;color:#6B7280;margin-bottom:14px;">' + ts + '</div>' +
+        '<div style="background:#FFF8E1;border-left:4px solid #F0B92C;padding:10px 14px;border-radius:3px;font-size:13.5px;color:#6B5300;margin-bottom:14px;">' +
+          '<strong style="color:#4A3A00;">Reminder:</strong> Submit this code on the Lesson 31 reflection in Blackboard. The fill-in-the-blank question asks for the 6-character completion code; a screenshot of this card is your backup.' +
+        '</div>' +
+        '<div style="display:flex;gap:8px;">' +
+          '<button class="name-modal-btn" id="cs-sqf-copy-btn" type="button" style="background:#003087;">Copy code</button>' +
+          '<button class="name-modal-btn" id="cs-sqf-overlay-close" type="button" style="background:#2E7D32;">Got it &mdash; close this</button>' +
+        '</div>' +
+      '</div>';
+    root.appendChild(overlay);
+    overlay.querySelector('#cs-sqf-overlay-close').addEventListener('click', () => { overlay.remove(); });
+    overlay.querySelector('#cs-sqf-copy-btn').addEventListener('click', (e) => {
+      const btn = e.currentTarget;
+      const ok = cs210Copy(CS210_CODE);
+      btn.textContent = ok ? 'Copied!' : 'Copy failed';
+      btn.style.background = ok ? '#2E7D32' : '#B8002F';
+      setTimeout(() => { btn.textContent = 'Copy code'; btn.style.background = '#003087'; }, 1500);
+    });
+    if (area) {
+      area.innerHTML =
+        '<div class="inline-code-footer">' +
+          '<span class="label">Completion code</span>' +
+          '<strong>' + CS210_CODE + '</strong>' +
+          '<span style="color:#6B7280;margin-left:14px;font-family:\'Segoe UI\',Arial,sans-serif;">' +
+            escapeHtml(cs210CadetName || '(name not set)') + ' &middot; ' + ts +
+          '</span>' +
+        '</div>';
+    }
+  }
+
+  function cs210Copy(text) {
+    try { if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text); return true; } } catch (e) {}
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+      return true;
+    } catch (e) { return false; }
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+  }
+
+  // ============================================================
+  // Element refs
+  // ============================================================
+  const terminalEl   = root.querySelector('#sqf-terminal');
+  const structEl     = root.querySelector('#sqf-struct-area');
+  const inputEl      = root.querySelector('#sqf-cli-input');
+  const completionEl = root.querySelector('#sqf-completion-area');
+
+  // ============================================================
+  // Structure model
+  // One chain of nodes; kind is 'stack' or 'queue'.
+  //   stack: head = top. push prepends, pop removes head.
+  //   queue: head = front, tail = back. enqueue appends (O(1) via back), dequeue removes head.
+  // ============================================================
+  const NODE_BASE = 0x5000;
+  const NODE_STRIDE = 0x20;
+  let nextAddr = NODE_BASE;
+
+  let kind = null;             // 'stack' | 'queue' | null
+  let head = null;             // node id
+  let tail = null;             // node id (back, queue only)
+  let count = 0;
+  let nodes = new Map();       // id -> { id, data, next, addr }
+  let nextId = 1;
+  let lastReturn = null;       // { op, value, isNull }
+  let flashNodeId = null;
+
+  let currentTaskIndex = 0;
+  let consecutiveFails = 0;
+  let mode = "walkthrough";
+
+  function makeNode(data) {
+    const id = nextId++;
+    const addr = nextAddr; nextAddr += NODE_STRIDE;
+    const n = { id, data, next: null, addr };
+    nodes.set(id, n);
+    return n;
+  }
+  function hexAddr(a) { return '0x' + a.toString(16).toUpperCase(); }
+
+  // ============================================================
+  // Operations (return a result object the printer understands)
+  // ============================================================
+  function opPush(data) {
+    if (kind === 'queue' && count > 0) return { kind: 'rejected', message: 'A queue is already built. Reset, or finish it with dequeue, before switching to a stack.' };
+    kind = 'stack';
+    const n = makeNode(data);
+    n.next = head;
+    head = n.id;
+    count++;
+    flashNodeId = n.id;
+    return { kind: 'pushed', node: n };
+  }
+  function opPop() {
+    if (kind !== 'stack') return { kind: 'rejected', message: 'pop() is a stack operation. Build a stack with push() first.' };
+    if (head === null) {
+      lastReturn = { op: 'pop()', value: 'NULL', isNull: true };
+      return { kind: 'empty-pop' };
+    }
+    const n = nodes.get(head);
+    head = n.next;
+    nodes.delete(n.id);
+    count--;
+    lastReturn = { op: 'pop()', value: n.data, isNull: false };
+    return { kind: 'popped', data: n.data, addr: n.addr };
+  }
+  function opEnqueue(data) {
+    if (kind === 'stack' && count > 0) return { kind: 'rejected', message: 'A stack is already built. Reset, or empty it with pop(), before switching to a queue.' };
+    kind = 'queue';
+    const n = makeNode(data);
+    const wasEmpty = (head === null);
+    if (wasEmpty) {
+      head = n.id; tail = n.id;
+    } else {
+      nodes.get(tail).next = n.id;
+      tail = n.id;
+    }
+    count++;
+    flashNodeId = n.id;
+    return { kind: 'enqueued', node: n, wasEmpty };
+  }
+  function opDequeue() {
+    if (kind !== 'queue') return { kind: 'rejected', message: 'dequeue() is a queue operation. Build a queue with enqueue() first.' };
+    if (head === null) {
+      lastReturn = { op: 'dequeue()', value: 'NULL', isNull: true };
+      return { kind: 'empty-dequeue' };
+    }
+    const n = nodes.get(head);
+    head = n.next;
+    nodes.delete(n.id);
+    count--;
+    let resetBack = false;
+    if (head === null) { tail = null; resetBack = true; }  // CRITICAL: reset back when the queue empties
+    lastReturn = { op: 'dequeue()', value: n.data, isNull: false };
+    return { kind: 'dequeued', data: n.data, addr: n.addr, resetBack };
+  }
+  function opPeek() {
+    if (head === null) {
+      lastReturn = { op: 'peek()', value: 'NULL', isNull: true };
+      return { kind: 'peek-empty' };
+    }
+    const n = nodes.get(head);
+    const where = (kind === 'queue') ? 'front' : 'top';
+    lastReturn = { op: 'peek()', value: n.data, isNull: false };
+    return { kind: 'peeked', data: n.data, where };
+  }
+  function opIsEmpty() {
+    const v = (count === 0) ? 1 : 0;
+    lastReturn = { op: 'is_empty()', value: String(v), isNull: false };
+    return { kind: 'is-empty', value: v };
+  }
+  function doClear() {
+    kind = null; head = null; tail = null; count = 0;
+    nodes = new Map(); nextId = 1; nextAddr = NODE_BASE; lastReturn = null; flashNodeId = null;
+  }
+
+  // ============================================================
+  // Parser: a tiny set of named operations.
+  //   push("x") | push(x)   pop()   peek()   is_empty()
+  //   enqueue("x") | enqueue(x)   dequeue()
+  //   clear | help
+  // ============================================================
+  function norm(s) { return s.replace(/\s+/g, ' ').trim(); }
+  function parseArg(raw) {
+    let s = raw.trim();
+    const q = s.match(/^"(.*)"$/) || s.match(/^'(.*)'$/);
+    if (q) return q[1];
+    return s;
+  }
+  function parseCommand(line) {
+    const t = norm(line).replace(/;\s*$/, '');
+    let m;
+    m = t.match(/^push\s*\(\s*(.*?)\s*\)$/i);
+    if (m) { const a = parseArg(m[1]); return a.length ? { op: 'push', arg: a } : { error: 'push needs a value, e.g. push("usafa.edu").' }; }
+    if (/^pop\s*\(\s*\)$/i.test(t)) return { op: 'pop' };
+    if (/^peek\s*\(\s*\)$/i.test(t)) return { op: 'peek' };
+    if (/^is_empty\s*\(\s*\)$/i.test(t)) return { op: 'is_empty' };
+    m = t.match(/^enqueue\s*\(\s*(.*?)\s*\)$/i);
+    if (m) { const a = parseArg(m[1]); return a.length ? { op: 'enqueue', arg: a } : { error: 'enqueue needs a value, e.g. enqueue("printer jam").' }; }
+    if (/^dequeue\s*\(\s*\)$/i.test(t)) return { op: 'dequeue' };
+    if (/^(clear|reset)$/i.test(t)) return { op: 'clear' };
+    if (/^help$/i.test(t)) return { op: 'help' };
+    return { error: 'Unrecognized operation. Try push("x"), pop(), peek(), is_empty(), enqueue("x"), dequeue(), or help.' };
+  }
+
+  function runCommand(line) {
+    const parsed = parseCommand(line);
+    if (parsed.error) return { kind: 'error', message: parsed.error };
+    switch (parsed.op) {
+      case 'push':     return opPush(parsed.arg);
+      case 'pop':      return opPop();
+      case 'peek':     return opPeek();
+      case 'is_empty': return opIsEmpty();
+      case 'enqueue':  return opEnqueue(parsed.arg);
+      case 'dequeue':  return opDequeue();
+      case 'clear':    doClear(); return { kind: 'cleared' };
+      case 'help':     return { kind: 'help' };
+    }
+    return { kind: 'error', message: 'Could not run that.' };
+  }
+
+  // ============================================================
+  // Terminal output
+  // ============================================================
+  function termWrite(text, cls) {
+    const span = document.createElement('span');
+    if (cls) span.className = cls;
+    span.textContent = text;
+    terminalEl.appendChild(span);
+  }
+  function termLine(text, cls) {
+    termWrite(text, cls);
+    terminalEl.appendChild(document.createElement('br'));
+    terminalEl.scrollTop = terminalEl.scrollHeight;
+  }
+  function echoCommand(cmd) { termWrite('adt> ', 'prompt'); termLine(cmd, 'typed'); }
+
+  // ============================================================
+  // Structure pane rendering
+  // ============================================================
+  function orderedNodes() {
+    const out = [];
+    let cur = head;
+    let guard = 0;
+    while (cur !== null && guard < 100) { const n = nodes.get(cur); if (!n) break; out.push(n); cur = n.next; guard++; }
+    return out;
+  }
+
+  function renderStruct() {
+    if (kind === null && count === 0 && !lastReturn) {
+      structEl.innerHTML = '<div class="struct-empty">Nothing built yet.<br>Type the first operation on the left.</div>';
+      return;
+    }
+    const chain = orderedNodes();
+    const isQueue = (kind === 'queue');
+    const kindLabel = isQueue ? 'queue (FIFO)' : (kind === 'stack' ? 'stack (LIFO)' : '(empty)');
+    let html = '';
+    html += '<div class="struct-kind">' + kindLabel + '</div>';
+    if (isQueue) html += '<div class="struct-meta">front, back, count = ' + count + '</div>';
+    else if (kind === 'stack') html += '<div class="struct-meta">top, count = ' + count + '</div>';
+    else html += '<div class="struct-meta">count = 0</div>';
+
+    if (chain.length === 0) {
+      html += '<div style="font-family:Consolas,monospace;font-size:13px;color:#6B7280;padding:18px 0;">';
+      if (isQueue) html += 'front &rarr; <span style="color:#B8002F;">NULL</span><br>back &nbsp;&rarr; <span style="color:#B8002F;">NULL</span>';
+      else html += 'top &rarr; <span style="color:#B8002F;">NULL</span>';
+      html += '</div>';
+    } else {
+      html += '<div class="chain">';
+      for (let i = 0; i < chain.length; i++) {
+        const n = chain[i];
+        let tags = '';
+        if (isQueue) {
+          const isFront = (i === 0), isBack = (i === chain.length - 1);
+          if (isFront && isBack) tags = '<span class="tag-front">&darr; front</span> <span class="tag-back">/ back</span>';
+          else if (isFront) tags = '<span class="tag-front">&darr; front</span>';
+          else if (isBack) tags = '<span class="tag-back">&darr; back</span>';
+        } else {
+          if (i === 0) tags = '<span class="tag-top">&darr; top</span>';
+        }
+        const targeted = tags ? ' targeted' : '';
+        html += '<div class="node-wrap">';
+        html += '<div class="node' + targeted + '" data-id="' + n.id + '">';
+        if (tags) html += '<div class="ptr-tags">' + tags + '</div>';
+        html += '<span class="data">"' + escapeHtml(String(n.data)) + '"</span>';
+        html += '<span class="addr">' + hexAddr(n.addr) + '</span>';
+        html += '</div>';
+        if (i < chain.length - 1) html += '<span class="node-arrow">&rarr;</span>';
+        else html += '<span class="node-arrow">&rarr;</span><span class="null-cap">&empty;</span>';
+        html += '</div>';
+      }
+      html += '</div>';
+    }
+
+    if (lastReturn) {
+      html += '<div class="return-card">' +
+        '<div class="r-op">' + escapeHtml(lastReturn.op) + ' returned</div>' +
+        '<div class="r-val' + (lastReturn.isNull ? ' nullv' : '') + '">' +
+          (lastReturn.isNull ? 'NULL' : '"' + escapeHtml(String(lastReturn.value)) + '"') +
+        '</div></div>';
+    }
+
+    structEl.innerHTML = html;
+
+    if (flashNodeId !== null) {
+      const el = structEl.querySelector('.node[data-id="' + flashNodeId + '"]');
+      if (el) { el.classList.add('flash-write'); setTimeout(() => { el.classList.remove('flash-write'); }, 700); }
+      flashNodeId = null;
+    }
+  }
+
+  // ============================================================
+  // Process a command and print results
+  // ============================================================
+  function process(line) {
+    echoCommand(line);
+    try {
+      const r = runCommand(line);
+      if (!r) return;
+      switch (r.kind) {
+        case 'pushed':
+          termLine('  pushed "' + r.node.data + '" at ' + hexAddr(r.node.addr) + '; top now points here. count = ' + count, 'out');
+          break;
+        case 'popped':
+          termLine('  popped "' + r.data + '" (freed ' + hexAddr(r.addr) + '); returned the string to the caller. count = ' + count, 'out');
+          break;
+        case 'empty-pop':
+          termLine('  stack is empty: pop() returned NULL and did not touch the chain. No crash. count = 0', 'out');
+          break;
+        case 'enqueued':
+          if (r.wasEmpty) termLine('  enqueued "' + r.node.data + '" at ' + hexAddr(r.node.addr) + '; queue was empty, so front AND back point here. count = ' + count, 'out');
+          else termLine('  enqueued "' + r.node.data + '" at ' + hexAddr(r.node.addr) + '; linked after the old back, back advanced here. front unchanged. count = ' + count, 'out');
+          break;
+        case 'dequeued':
+          termLine('  dequeued "' + r.data + '" (freed ' + hexAddr(r.addr) + ') from the front; returned the string. count = ' + count, 'out');
+          if (r.resetBack) termLine('  queue is now empty: front AND back reset to NULL.', 'out');
+          break;
+        case 'empty-dequeue':
+          termLine('  queue is empty: dequeue() returned NULL, front and back stay NULL. No crash. count = 0', 'out');
+          break;
+        case 'peeked':
+          termLine('  peek() read the ' + r.where + ' value "' + r.data + '" without removing it. count = ' + count, 'out');
+          break;
+        case 'peek-empty':
+          termLine('  empty: peek() returned NULL.', 'out');
+          break;
+        case 'is-empty':
+          termLine('  is_empty() returned ' + r.value + ' (' + (r.value ? 'empty' : 'not empty') + ').', 'out');
+          break;
+        case 'cleared':
+          termLine('  structure cleared.', 'out');
+          break;
+        case 'help':
+          termLine('  stack:  push("x")   pop()   peek()   is_empty()', 'out');
+          termLine('  queue:  enqueue("x")   dequeue()   peek()   is_empty()', 'out');
+          termLine('  meta:   clear   help', 'out');
+          break;
+        case 'rejected':
+          termLine('  ' + r.message, 'err');
+          break;
+        case 'error':
+          termLine('  ' + r.message, 'err');
+          break;
+      }
+      renderStruct();
+    } catch (e) {
+      termLine('  unexpected error: ' + e.message, 'err');
+    }
+  }
+
+  // ============================================================
+  // Task slate
+  // ============================================================
+  const PUSH_RE = /^push\s*\(\s*\S.*\)\s*;?$/i;
+  const ENQ_RE  = /^enqueue\s*\(\s*\S.*\)\s*;?$/i;
+  const POP_RE  = /^pop\s*\(\s*\)\s*;?$/i;
+  const DEQ_RE  = /^dequeue\s*\(\s*\)\s*;?$/i;
+  const PEEK_RE = /^peek\s*\(\s*\)\s*;?$/i;
+  const ISE_RE  = /^is_empty\s*\(\s*\)\s*;?$/i;
+
+  const tasks = [
+    // ---- Section 1: Stack ----
+    { section: 'Section 1: Stack &mdash; last in, first out',
+      label: 'Task 1 of 17',
+      text: 'You are modeling a browser back button. Every page you visit is pushed onto a history stack. Visit the first page: push("usafa.edu").',
+      hint: 'Type:  push("usafa.edu")',
+      match: (c) => PUSH_RE.test(norm(c)),
+      note: 'A stack needs exactly one pointer: top. It points at the most recent node, and that node links to the one below it. Insertion happens only at the top, which is why push is O(1) with no walk to the end.' },
+    { label: 'Task 2 of 17',
+      text: 'Visit a second page. The newest page goes on top: push("/admissions").',
+      hint: 'Type:  push("/admissions")',
+      match: (c) => PUSH_RE.test(norm(c)),
+      note: 'The new node became the head, and its next points at the old top. Newest on top, oldest on the bottom. This is exactly insert-at-head from Lesson 29, renamed push.' },
+    { label: 'Task 3 of 17',
+      text: 'Visit a third page: push("/admissions/apply").',
+      hint: 'Type:  push("/admissions/apply")',
+      match: (c) => PUSH_RE.test(norm(c)),
+      note: 'Three pages, last in on top. The order you would press Back through is exactly the reverse of the order you pushed.' },
+    { label: 'Task 4 of 17',
+      text: 'Where does Back lead right now? Read the top without removing it: peek().',
+      hint: 'Type:  peek()',
+      match: (c) => PEEK_RE.test(norm(c)),
+      note: 'peek returns the top value but leaves the stack unchanged. Use it when you need to look at what is next without committing to removing it.' },
+    { label: 'Task 5 of 17',
+      text: 'Press Back. Remove the top page and get it back: pop().',
+      hint: 'Type:  pop()',
+      match: (c) => POP_RE.test(norm(c)),
+      note: 'pop did two jobs: it unlinked the top node and returned its value to the caller. In your lab, pop hands back the heap string and the caller owns it from then on. The node itself is freed.' },
+    { label: 'Task 6 of 17',
+      text: 'Is there any history left? Ask the stack: is_empty().',
+      hint: 'Type:  is_empty()',
+      match: (c) => ISE_RE.test(norm(c)),
+      note: 'is_empty just checks whether top is NULL (or count is 0). One line, but it is the guard every other operation leans on.' },
+    { label: 'Task 7 of 17',
+      text: 'Press Back again: pop().',
+      hint: 'Type:  pop()',
+      match: (c) => POP_RE.test(norm(c)),
+      note: 'top walked down to the oldest page. Each pop moves top to the node below and frees the one that left.' },
+    { label: 'Task 8 of 17',
+      text: 'One page left. Press Back once more: pop().',
+      hint: 'Type:  pop()',
+      match: (c) => POP_RE.test(norm(c)),
+      note: 'The stack is now empty: top is NULL. Watch what happens if you pop one more time.' },
+    { label: 'Task 9 of 17',
+      text: 'The stack is empty. Predict: what should pop() do now? Then run pop() to check.',
+      hint: 'Type:  pop()',
+      match: (c) => POP_RE.test(norm(c)),
+      note: 'THE STACK GUARD. Popping an empty stack must return NULL and leave the chain alone, never dereference a NULL top. Skip this check in real code and the back button crashes when there is no history left.' },
+    // ---- Section 2: Queue ----
+    { section: 'Section 2: Queue &mdash; first in, first out',
+      label: 'Task 10 of 17',
+      text: 'New structure: a help-desk ticket queue. Tickets are served in the order they arrive. File the first ticket: enqueue("printer jam").',
+      hint: 'Type:  enqueue("printer jam")',
+      match: (c) => ENQ_RE.test(norm(c)),
+      note: 'A queue tracks TWO ends. On the very first node both front and back point at it. That empty-queue special case is the one new wrinkle versus a plain list.' },
+    { label: 'Task 11 of 17',
+      text: 'A second ticket comes in: enqueue("vpn down").',
+      hint: 'Type:  enqueue("vpn down")',
+      match: (c) => ENQ_RE.test(norm(c)),
+      note: 'enqueue linked the new node after the old back, then advanced back to it. front did not move. Because you kept a back pointer, you reached the end in one step. Without back you would walk the whole list every time, turning O(1) into O(n).' },
+    { label: 'Task 12 of 17',
+      text: 'A third ticket: enqueue("email broken").',
+      hint: 'Type:  enqueue("email broken")',
+      match: (c) => ENQ_RE.test(norm(c)),
+      note: 'Three tickets. front is the oldest (printer jam), back is the newest (email broken). New work always joins at back.' },
+    { label: 'Task 13 of 17',
+      text: 'Which ticket gets worked next? Look at the front: peek().',
+      hint: 'Type:  peek()',
+      match: (c) => PEEK_RE.test(norm(c)),
+      note: 'In a queue, peek reads the FRONT, the oldest item. First in, first out: the printer jam came in first, so it is served first.' },
+    { label: 'Task 14 of 17',
+      text: 'Work the oldest ticket. Remove it from the front: dequeue().',
+      hint: 'Type:  dequeue()',
+      match: (c) => DEQ_RE.test(norm(c)),
+      note: 'dequeue removes from the FRONT, the opposite end from where enqueue adds. That split, add at one end and remove at the other, is the entire difference between a queue and a stack. Same node type, opposite access pattern.' },
+    { label: 'Task 15 of 17',
+      text: 'Work the next one: dequeue().',
+      hint: 'Type:  dequeue()',
+      match: (c) => DEQ_RE.test(norm(c)),
+      note: 'front advanced to "email broken", the last ticket standing. back has not moved yet.' },
+    { label: 'Task 16 of 17',
+      text: 'One ticket left. Before you run it, predict: after this dequeue empties the queue, where must back point? Then run dequeue().',
+      hint: 'Type:  dequeue()',
+      match: (c) => DEQ_RE.test(norm(c)),
+      note: 'THE DANGLING-BACK TRAP. When the last node leaves, you must reset BOTH front and back to NULL. If you only null out front and leave back pointing at the node you just freed, the next enqueue dereferences a freed pointer. This is the headline queue bug and the autograder checks for it.' },
+    { label: 'Task 17 of 17',
+      text: 'The queue is empty. Predict what dequeue() does now, then run dequeue().',
+      hint: 'Type:  dequeue()',
+      match: (c) => DEQ_RE.test(norm(c)),
+      note: 'THE QUEUE GUARD, the mirror of the stack guard. dequeue on an empty queue returns NULL with front and back both NULL, and no crash. Same nodes, different ends: a stack pushes and pops at one end, a queue enqueues at back and dequeues at front. That one design choice is what you reach for when you decide which ADT a problem needs. Walkthrough complete.' },
+  ];
+
+  // ============================================================
+  // Controller
+  // ============================================================
+  function checkTask(rawCmd) {
+    if (mode === "free" || currentTaskIndex >= tasks.length) return null;
+    const t = tasks[currentTaskIndex];
+    if (t.match(rawCmd)) {
+      process(rawCmd);
+      if (t.note) { termLine('', 'out'); termLine('  ' + decodeEntities(t.note), 'note'); }
+      currentTaskIndex++;
+      consecutiveFails = 0;
+      hideHintPulse();
+      renderTask();
+      if (currentTaskIndex >= tasks.length) {
+        setMode("free");
+        termLine('', 'out');
+        termLine('  Walkthrough complete. Free mode unlocked. Type any stack or queue operation to keep exploring.', 'note');
+      }
+      return true;
+    } else {
+      echoCommand(rawCmd);
+      const d = diagnose(rawCmd, t);
+      if (d) termLine('  ' + d, 'err');
+      else termLine("  Not what this task is asking for. Look at the task card above, or click 'Show hint'.", 'err');
+      consecutiveFails++;
+      if (consecutiveFails >= 2) showHintPulse();
+      return false;
+    }
+  }
+
+  function diagnose(cmd, t) {
+    const c = norm(cmd);
+    // Missing parentheses on a no-arg op
+    if (/^(pop|peek|dequeue|is_empty)\s*$/i.test(c)) return 'Almost. These are function calls; add the empty parentheses, e.g. ' + c.trim() + '().';
+    // Used the wrong family for the section
+    if (t.match === undefined) return null;
+    const wantPush = (t.match === undefined) ? false : (t.hint || '').toLowerCase().includes('push');
+    if (PUSH_RE.test(c) && (DEQ_RE.test('dequeue()') && (t.hint||'').includes('enqueue'))) { /* no-op */ }
+    if ((t.hint||'').includes('enqueue') && PUSH_RE.test(c)) return 'This section builds a queue. Use enqueue(...) to add, not push(...).';
+    if ((t.hint||'').includes('push(') && ENQ_RE.test(c)) return 'This section builds a stack. Use push(...) to add, not enqueue(...).';
+    if ((t.hint||'').includes('dequeue') && POP_RE.test(c)) return 'You are working a queue here. Remove from the front with dequeue(), not pop().';
+    if ((t.hint||'').startsWith('Type:  pop') && DEQ_RE.test(c)) return 'You are working a stack here. Remove the top with pop(), not dequeue().';
+    return null;
+  }
+
+  function decodeEntities(s) {
+    return String(s).replace(/&mdash;/g, '\u2014').replace(/&rarr;/g, '\u2192').replace(/&darr;/g, '\u2193').replace(/&amp;/g, '&');
+  }
+
+  function renderTask() {
+    const fill  = root.querySelector('#sqf-progress-fill');
+    const label = root.querySelector('#sqf-progress-label');
+    const card  = root.querySelector('#sqf-task-card');
+    const labelEl = root.querySelector('#sqf-task-label');
+    const textEl  = root.querySelector('#sqf-task-text');
+    const hintEl  = root.querySelector('#sqf-task-hint');
+    const sectionEl = root.querySelector('#sqf-section-header');
+
+    const pct = (currentTaskIndex / tasks.length) * 100;
+    fill.style.width = pct + '%';
+    label.textContent = 'Task ' + Math.min(currentTaskIndex + 1, tasks.length) + ' of ' + tasks.length;
+
+    if (currentTaskIndex >= tasks.length) {
+      card.className = 'task-card complete';
+      labelEl.textContent = 'Complete';
+      textEl.textContent = "You built a stack and a queue on the same kind of node, drove every core operation including both empty guards and the dangling-back trap, and saw why a queue keeps a back pointer. You're ready for the Stack & Queue Self-Check and the two labs.";
+      hintEl.textContent = '';
+      fill.style.width = '100%';
+      label.textContent = 'All tasks complete';
+      sectionEl.innerHTML = 'All done';
+      completionEl.innerHTML = '';
+      cs210RenderCompletion(completionEl);
+      return;
+    }
+    completionEl.innerHTML = '';
+    card.className = 'task-card';
+    const t = tasks[currentTaskIndex];
+    if (t.section) sectionEl.innerHTML = t.section;
+    labelEl.textContent = t.label;
+    textEl.innerHTML = t.text;
+    hintEl.textContent = '';
+  }
+
+  function showHint() {
+    if (currentTaskIndex >= tasks.length) return;
+    const t = tasks[currentTaskIndex];
+    root.querySelector('#sqf-task-hint').textContent = 'Hint: ' + (t.hint || '');
+    hideHintPulse();
+  }
+  function showHintPulse() { root.querySelector('#sqf-hint-btn').classList.add('pulse'); }
+  function hideHintPulse() { root.querySelector('#sqf-hint-btn').classList.remove('pulse'); }
+
+  function reset() {
+    doClear();
+    currentTaskIndex = 0;
+    consecutiveFails = 0;
+    hideHintPulse();
+    setMode("walkthrough");
+    terminalEl.innerHTML = '';
+    termLine('Welcome to the stacks and queues walkthrough.', 'dim');
+    termLine('Follow the task card above. Type operations like push("x") or dequeue() at the prompt.', 'dim');
+    termLine('', 'out');
+    renderStruct();
+    renderTask();
+  }
+
+  function setMode(newMode) {
+    mode = newMode;
+    const btn = root.querySelector('#sqf-mode-btn');
+    if (mode === "free") {
+      btn.textContent = 'Return to walkthrough';
+      btn.style.background = '#E6F4EA';
+      btn.style.borderColor = '#2E7D32';
+      btn.style.color = '#1B5E20';
+      inputEl.placeholder = 'free mode: push/pop/peek/enqueue/dequeue/is_empty';
+    } else {
+      btn.textContent = 'Switch to free mode';
+      btn.style.background = '';
+      btn.style.borderColor = '';
+      btn.style.color = '';
+      inputEl.placeholder = 'follow the task above';
+    }
+  }
+
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const v = inputEl.value;
+      inputEl.value = '';
+      if (!v.trim()) return;
+      if (mode === "walkthrough") checkTask(v);
+      else process(v);
+    }
+  });
+  root.querySelector('#sqf-hint-btn').addEventListener('click', showHint);
+  root.querySelector('#sqf-reset-btn').addEventListener('click', reset);
+  root.querySelector('#sqf-mode-btn').addEventListener('click', () => {
+    if (mode === "walkthrough") {
+      setMode("free");
+      termLine('', 'out');
+      termLine('  Free mode. Type any stack or queue operation. Use clear to start over.', 'note');
+    } else {
+      setMode("walkthrough");
+      termLine('', 'out');
+      termLine('  Walkthrough mode. Follow the task card above.', 'note');
+    }
+  });
+
+  // Boot
+  reset();
+})();
+</script>
+   stack/queue box-and-arrow walkthrough
+       <!-- ============================================================
+     CS210 Lesson 31 - Stack & Queue Self-Check Quiz Widget
+     Card/slide flow: one question per card, Submit + Next/Back.
+     Score card at the end with per-question recap and two-salt
+     completion code (passing >= 70% uses _completed salt;
+     non-passing uses _incomplete salt).
+     ============================================================ -->
+<style>
+.cs210-sqquiz * { box-sizing: border-box; }
+.cs210-sqquiz {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-sqquiz h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-sqquiz .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+
+.cs210-sqquiz .dots {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+.cs210-sqquiz .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #E5E7EB;
+  border: 1px solid #C7CFD9;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.cs210-sqquiz .dot.current {
+  background: #003087;
+  border-color: #00205B;
+  transform: scale(1.25);
+}
+.cs210-sqquiz .dot.correct {
+  background: #2E7D32;
+  border-color: #1B5E20;
+}
+.cs210-sqquiz .dot.incorrect {
+  background: #B8002F;
+  border-color: #6B0000;
+}
+.cs210-sqquiz .dot.score {
+  width: 16px;
+  height: 12px;
+  border-radius: 3px;
+  background: #F0B92C;
+  border-color: #6B5300;
+}
+
+.cs210-sqquiz .card {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 6px;
+  padding: 22px 24px;
+  margin-bottom: 14px;
+}
+.cs210-sqquiz .q-label {
+  font-size: 11.5px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.cs210-sqquiz .q-text {
+  font-size: 15.5px;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+}
+.cs210-sqquiz .q-text code {
+  background: #F0F2F5;
+  padding: 1px 6px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13.5px;
+}
+.cs210-sqquiz pre.q-code {
+  background: #1E2A3A;
+  color: #E8EDF5;
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 0 0 16px 0;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.cs210-sqquiz .choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.cs210-sqquiz .choice {
+  display: block;
+  padding: 10px 14px;
+  border: 1px solid #C7CFD9;
+  border-radius: 4px;
+  background: #ffffff;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: inherit;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.cs210-sqquiz .choice:hover { background: #F5F7FA; }
+.cs210-sqquiz .choice.selected {
+  background: #E8EDF5;
+  border-color: #003087;
+}
+.cs210-sqquiz .choice.locked { cursor: default; }
+.cs210-sqquiz .choice.locked:hover { background: inherit; }
+.cs210-sqquiz .choice.correct {
+  background: #E6F4EA;
+  border-color: #2E7D32;
+  color: #1B5E20;
+  font-weight: 600;
+}
+.cs210-sqquiz .choice.incorrect {
+  background: #FCE7EA;
+  border-color: #B8002F;
+  color: #6B0000;
+  font-weight: 600;
+}
+.cs210-sqquiz .choice code {
+  background: #F0F2F5;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+}
+
+.cs210-sqquiz .text-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: Consolas, monospace;
+}
+.cs210-sqquiz .text-input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-sqquiz .text-input:disabled {
+  background: #F5F7FA;
+  color: #4A5568;
+}
+
+.cs210-sqquiz .feedback {
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  margin-bottom: 14px;
+  display: none;
+}
+.cs210-sqquiz .feedback.visible { display: block; }
+.cs210-sqquiz .feedback.correct {
+  background: #E6F4EA;
+  border-left: 4px solid #2E7D32;
+  color: #1B5E20;
+}
+.cs210-sqquiz .feedback.incorrect {
+  background: #FCE7EA;
+  border-left: 4px solid #B8002F;
+  color: #6B0000;
+}
+.cs210-sqquiz .feedback code {
+  background: rgba(255,255,255,0.6);
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+}
+
+.cs210-sqquiz .btn-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+.cs210-sqquiz .submit-btn,
+.cs210-sqquiz .nav-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 9px 18px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-sqquiz .submit-btn:hover,
+.cs210-sqquiz .nav-btn:hover { background: #00205B; }
+.cs210-sqquiz .submit-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-sqquiz .nav-btn.back {
+  background: #ffffff;
+  color: #003087;
+  border: 1px solid #C7CFD9;
+}
+.cs210-sqquiz .nav-btn.back:hover { background: #F5F7FA; color: #00205B; }
+.cs210-sqquiz .nav-row { display: flex; gap: 8px; }
+
+/* Score card */
+.cs210-sqquiz .score-card { text-align: center; }
+.cs210-sqquiz .score-big {
+  font-size: 48px;
+  font-weight: 700;
+  color: #003087;
+  margin: 10px 0 4px 0;
+}
+.cs210-sqquiz .score-card.full-correct .score-big { color: #1B5E20; }
+.cs210-sqquiz .score-card.passing .score-big      { color: #2E7D32; }
+.cs210-sqquiz .score-card.not-passing .score-big  { color: #6B0000; }
+.cs210-sqquiz .score-label {
+  font-size: 13px;
+  color: #6B7280;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.cs210-sqquiz .score-message {
+  font-size: 15px;
+  color: #4A5568;
+  margin-bottom: 18px;
+}
+.cs210-sqquiz .score-message.good-job {
+  color: #1B5E20;
+  font-weight: 600;
+}
+.cs210-sqquiz .recap {
+  text-align: left;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #E5E7EB;
+}
+.cs210-sqquiz .recap-title {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.cs210-sqquiz .recap-item {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #F0F2F5;
+}
+.cs210-sqquiz .recap-item:last-child { border-bottom: none; }
+.cs210-sqquiz .recap-icon {
+  flex: 0 0 22px;
+  font-size: 16px;
+  font-weight: 700;
+}
+.cs210-sqquiz .recap-icon.correct { color: #2E7D32; }
+.cs210-sqquiz .recap-icon.incorrect { color: #B8002F; }
+.cs210-sqquiz .recap-body { flex: 1; font-size: 13.5px; }
+.cs210-sqquiz .recap-question { color: #1a1a1a; margin-bottom: 3px; }
+.cs210-sqquiz .recap-explanation { color: #4A5568; font-size: 13px; }
+.cs210-sqquiz .recap-explanation code {
+  background: #F0F2F5;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 12.5px;
+}
+.cs210-sqquiz .reset-row {
+  margin-top: 18px;
+  display: flex;
+  justify-content: center;
+}
+.cs210-sqquiz .reset-btn {
+  background: #ffffff;
+  border: 1px solid #003087;
+  color: #003087;
+  padding: 8px 18px;
+  border-radius: 4px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-sqquiz .reset-btn:hover { background: #F5F7FA; }
+
+.cs210-sqquiz .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #4A5568;
+  margin-top: 12px;
+}
+.cs210-sqquiz .help-note strong { color: #00205B; }
+
+/* Completion code block on the score card */
+.cs210-sqquiz .code-block {
+  background: #F0F4FA;
+  border: 1px solid #003087;
+  border-radius: 4px;
+  padding: 14px 18px;
+  margin: 14px 0 6px 0;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.cs210-sqquiz .code-block.fail {
+  background: #FFF1F3;
+  border-color: #B8002F;
+}
+.cs210-sqquiz .code-block .code-left { text-align: left; }
+.cs210-sqquiz .code-block .code-label {
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #4A5568;
+}
+.cs210-sqquiz .code-block .code-value {
+  font-family: Consolas, monospace;
+  font-size: 26px;
+  font-weight: 700;
+  color: #00205B;
+  letter-spacing: 3px;
+}
+.cs210-sqquiz .code-block.fail .code-value { color: #6B0000; }
+.cs210-sqquiz .code-block .copy-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-sqquiz .code-block .copy-btn:hover { background: #00205B; }
+.cs210-sqquiz .code-block .copy-btn.copied { background: #2E7D32; }
+.cs210-sqquiz .code-block.fail .copy-btn { background: #6B0000; }
+.cs210-sqquiz .inline-code-footer {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 8px 12px;
+  border-radius: 3px;
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: #4A5568;
+  font-family: Consolas, monospace;
+}
+
+/* Name modal overlay */
+.cs210-sqquiz .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.cs210-sqquiz .name-modal {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-sqquiz .name-modal h2 {
+  color: #00205B;
+  font-size: 20px;
+  margin: 0 0 10px 0;
+}
+.cs210-sqquiz .name-modal p {
+  color: #4A5568;
+  font-size: 14px;
+  margin: 0 0 16px 0;
+}
+.cs210-sqquiz .name-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-sqquiz .name-modal input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-sqquiz .name-modal-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-sqquiz .name-modal-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-sqquiz .name-modal-btn:not(:disabled):hover {
+  background: #00205B;
+}
+</style>
+
+<div class="cs210-sqquiz">
+
+<div class="name-modal-backdrop" id="sqquiz-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the score card so you can include it in your screenshot for the Blackboard reflection.</p>
+    <input type="text" id="sqquiz-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="sqquiz-cadet-name-btn" disabled>Start the quiz</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 31 &middot; Stack &amp; Queue Self-Check</h1>
+<div class="subtitle">Six questions on choosing between a stack and a queue, tracing LIFO and FIFO removal, and the two implementation details that trip people up: the back pointer and the empty-queue reset. Pass at 70% or above; below that, take it again after reviewing.</div>
+
+<div class="dots" id="sqquiz-dots"></div>
+
+<div id="sqquiz-card-area"></div>
+
+<div class="help-note">
+  <strong>How this works:</strong> One question per card. Pick or type your answer and click Submit. Feedback appears, then click Next to move on. Answers lock once submitted, so think before you submit. After all six, you get a score, a completion code, and a per-question recap.
+</div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-sqquiz');
+  if (!root) return;
+
+  // ============================================================
+  // Completion code generation (two-salt scheme: pass vs. fail)
+  // ============================================================
+  const CS210_SALT_PASS = "lesson31_stackqueuequiz_completed";
+  const CS210_SALT_FAIL = "lesson31_stackqueuequiz_incomplete";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const PASSING_THRESHOLD = 0.70;
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE_PASS = cs210CodeFromSalt(CS210_SALT_PASS);
+  const CS210_CODE_FAIL = cs210CodeFromSalt(CS210_SALT_FAIL);
+  let cadetName = '';
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+  function cs210Copy(text) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch (e) {}
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      return true;
+    } catch (e) { return false; }
+  }
+
+  // ============================================================
+  // Name modal
+  // ============================================================
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#sqquiz-name-modal-backdrop');
+    const input = root.querySelector('#sqquiz-cadet-name-input');
+    const btn = root.querySelector('#sqquiz-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length > 0) {
+        // Name already known from a previous widget or visit. Skip the modal.
+        cadetName = stored.trim();
+        backdrop.style.display = 'none';
+        return;
+      }
+    } catch (e) {}
+    function updateBtn() { btn.disabled = input.value.trim().length === 0; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', () => {
+      const n = input.value.trim();
+      if (!n) return;
+      cadetName = n;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', n); } catch (e) {}
+      backdrop.style.display = 'none';
+      // Dismiss any sibling widget modals on the same page.
+      const siblings = document.querySelectorAll(
+        '#sqf-name-modal-backdrop, #name-modal-backdrop'
+      );
+      siblings.forEach(function(m) { m.style.display = 'none'; });
+    });
+    setTimeout(() => { try { input.focus(); } catch (e) {} }, 50);
+  })();
+
+  // ============================================================
+  // Questions
+  // ============================================================
+  const questions = [
+    {
+      id: 'q1',
+      type: 'choice',
+      text: 'A help-desk works tickets in the order they arrive: the ticket that has been waiting longest is handled first. Which ADT models this?',
+      options: [
+        'A stack: last in, first out.',
+        'A queue: first in, first out.',
+        'Either one works equally well; the order does not matter.',
+        'Neither; this needs a sorted list.',
+      ],
+      correct: 1,
+      correctFeedback: 'Right. Oldest served first is first in, first out, which is exactly a queue. Tickets join at the back and are worked from the front.',
+      incorrectFeedback: 'The correct answer is the queue. "Longest waiting handled first" is first in, first out: items leave in the same order they arrived. That is the defining behavior of a queue, not a stack.',
+      shortLabel: 'Which ADT for a help-desk ticket line?',
+    },
+    {
+      id: 'q2',
+      type: 'choice',
+      text: 'A browser Back button returns you to the page you visited most recently, then the one before that, and so on. Which ADT models the page history?',
+      options: [
+        'A queue: first in, first out.',
+        'A stack: last in, first out.',
+        'A sorted list ordered by URL.',
+        'Two queues, one for forward and one for back.',
+      ],
+      correct: 1,
+      correctFeedback: 'Right. Most recent first is last in, first out: the page you pushed last is the first one Back pops. That is a stack.',
+      incorrectFeedback: 'The correct answer is the stack. Back returns the most recently visited page first, which is last in, first out. You push each page as you visit it and pop the top when Back is pressed.',
+      shortLabel: 'Which ADT for a browser Back button?',
+    },
+    {
+      id: 'q3',
+      type: 'text',
+      text: 'You push <code>3</code>, then <code>5</code>, then <code>8</code> onto an empty stack, then call <code>pop()</code> once. What value does <code>pop()</code> return? Type just the number.',
+      correct: ['8'],
+      normalize: s => s.trim(),
+      placeholder: 'e.g. 4',
+      correctFeedback: 'Right. A stack pops the most recently pushed value first. <code>8</code> went on last, so it comes off first.',
+      incorrectFeedback: 'The correct answer is <code>8</code>. push order was 3, 5, 8, so 8 is on top. A stack is last in, first out, so the first pop returns 8.',
+      shortLabel: 'pop() after pushing 3, 5, 8',
+    },
+    {
+      id: 'q4',
+      type: 'text',
+      text: 'You enqueue <code>3</code>, then <code>5</code>, then <code>8</code> onto an empty queue, then call <code>dequeue()</code> once. What value does <code>dequeue()</code> return? Type just the number.',
+      correct: ['3'],
+      normalize: s => s.trim(),
+      placeholder: 'e.g. 4',
+      correctFeedback: 'Right. A queue dequeues the oldest value first. <code>3</code> went in first, so it comes out first.',
+      incorrectFeedback: 'The correct answer is <code>3</code>. enqueue order was 3, 5, 8, so 3 is at the front. A queue is first in, first out, so the first dequeue returns 3. Compare this with the stack in the previous question: same inputs, opposite end.',
+      shortLabel: 'dequeue() after enqueuing 3, 5, 8',
+    },
+    {
+      id: 'q5',
+      type: 'choice',
+      text: 'A linked-list queue keeps a <code>back</code> (tail) pointer in addition to <code>front</code>. Why?',
+      options: [
+        'So <code>enqueue</code> can add at the end in O(1) without walking the whole list to find it.',
+        'So <code>dequeue</code> can remove from the end of the list.',
+        'Because a queue stores two values in every node.',
+        'So the code can detect when the list contains a cycle.',
+      ],
+      correct: 0,
+      correctFeedback: 'Right. Without a back pointer you would walk from front to the end on every enqueue, making it O(n). The back pointer lets you append in one step, O(1).',
+      incorrectFeedback: 'The correct answer is the first one. The back pointer exists so enqueue can reach the end in one step. Without it, each enqueue walks the entire list (O(n)); with it, enqueue is O(1). dequeue still works from the front.',
+      shortLabel: 'Why a queue keeps a back pointer',
+    },
+    {
+      id: 'q6',
+      type: 'choice',
+      text: 'You <code>dequeue</code> the last remaining node from a queue. Besides unlinking it from <code>front</code>, freeing it, and returning its value, what else must the code do?',
+      options: [
+        'Set <code>front</code> to NULL but leave <code>back</code> pointing at the node you just freed.',
+        'Set both <code>front</code> and <code>back</code> to NULL.',
+        'Set <code>back</code> to NULL but leave <code>front</code> unchanged.',
+        'Nothing else; the next <code>enqueue</code> will repair the pointers.',
+      ],
+      correct: 1,
+      correctFeedback: 'Right. When the queue empties, both ends must become NULL. Leaving <code>back</code> aimed at the freed node means the next <code>enqueue</code> dereferences a dangling pointer.',
+      incorrectFeedback: 'The correct answer is to set both <code>front</code> and <code>back</code> to NULL. If you null only <code>front</code> and leave <code>back</code> pointing at the node you just freed, the next <code>enqueue</code> writes through a dangling pointer. This is the queue bug the lab autograder checks for.',
+      shortLabel: 'Emptying a queue: resetting back',
+    },
+  ];
+
+  // ============================================================
+  // State
+  // ============================================================
+  const state = questions.map(() => ({ answered: false, correct: false, choice: null, value: '' }));
+  let currentIndex = 0;
+
+  const dotsArea = root.querySelector('#sqquiz-dots');
+  const cardArea = root.querySelector('#sqquiz-card-area');
+
+  // ============================================================
+  // Rendering: dots
+  // ============================================================
+  function renderDots() {
+    dotsArea.innerHTML = '';
+    for (let i = 0; i < questions.length; i++) {
+      const d = document.createElement('div');
+      d.className = 'dot';
+      if (i === currentIndex) d.classList.add('current');
+      if (state[i].answered) {
+        d.classList.add(state[i].correct ? 'correct' : 'incorrect');
+      }
+      dotsArea.appendChild(d);
+    }
+    const scoreDot = document.createElement('div');
+    scoreDot.className = 'dot score';
+    if (currentIndex === questions.length) scoreDot.classList.add('current');
+    dotsArea.appendChild(scoreDot);
+  }
+
+  // ============================================================
+  // Rendering: question card
+  // ============================================================
+  function buildQuestionCard(i) {
+    const q = questions[i];
+    const s = state[i];
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    const label = document.createElement('div');
+    label.className = 'q-label';
+    label.textContent = 'Question ' + (i + 1) + ' of ' + questions.length;
+    card.appendChild(label);
+
+    const text = document.createElement('div');
+    text.className = 'q-text';
+    text.innerHTML = q.text;
+    card.appendChild(text);
+
+    if (q.code) {
+      const pre = document.createElement('pre');
+      pre.className = 'q-code';
+      pre.textContent = q.code;
+      card.appendChild(pre);
+    }
+
+    // Answer surface
+    let getAnswer; // closure returning chosen index (choice) or string (text)
+    if (q.type === 'choice') {
+      const choices = document.createElement('div');
+      choices.className = 'choices';
+      const buttons = [];
+      q.options.forEach((opt, idx) => {
+        const b = document.createElement('button');
+        b.className = 'choice';
+        b.innerHTML = opt;
+        b.type = 'button';
+        b.addEventListener('click', () => {
+          if (s.answered) return;
+          buttons.forEach(x => x.classList.remove('selected'));
+          b.classList.add('selected');
+          s.choice = idx;
+          submitBtn.disabled = false;
+        });
+        if (s.choice === idx) b.classList.add('selected');
+        if (s.answered) {
+          b.classList.add('locked');
+          if (idx === q.correct) b.classList.add('correct');
+          else if (idx === s.choice) b.classList.add('incorrect');
+        }
+        choices.appendChild(b);
+        buttons.push(b);
+      });
+      card.appendChild(choices);
+      getAnswer = () => s.choice;
+    } else {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'text-input';
+      input.placeholder = q.placeholder || '';
+      input.value = s.value || '';
+      input.spellcheck = false;
+      input.autocomplete = 'off';
+      input.addEventListener('input', () => {
+        if (s.answered) return;
+        s.value = input.value;
+        submitBtn.disabled = input.value.trim().length === 0;
+      });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !s.answered && input.value.trim().length > 0) {
+          e.preventDefault();
+          submitBtn.click();
+        }
+      });
+      if (s.answered) input.disabled = true;
+      card.appendChild(input);
+      getAnswer = () => input.value;
+      setTimeout(() => { try { input.focus(); } catch (e) {} }, 50);
+    }
+
+    // Feedback
+    const fb = document.createElement('div');
+    fb.className = 'feedback';
+    if (s.answered) {
+      fb.classList.add('visible');
+      fb.classList.add(s.correct ? 'correct' : 'incorrect');
+      fb.innerHTML = s.correct ? q.correctFeedback : q.incorrectFeedback;
+    }
+    card.appendChild(fb);
+
+    // Button row
+    const row = document.createElement('div');
+    row.className = 'btn-row';
+
+    const navL = document.createElement('div');
+    navL.className = 'nav-row';
+    if (i > 0) {
+      const back = document.createElement('button');
+      back.className = 'nav-btn back';
+      back.type = 'button';
+      back.innerHTML = '&larr; Back';
+      back.addEventListener('click', () => { currentIndex = i - 1; render(); });
+      navL.appendChild(back);
+    }
+    row.appendChild(navL);
+
+    const submitBtn = document.createElement('button');
+    submitBtn.type = 'button';
+    if (s.answered) {
+      submitBtn.className = 'nav-btn';
+      submitBtn.innerHTML = (i === questions.length - 1) ? 'See score &rarr;' : 'Next &rarr;';
+      submitBtn.addEventListener('click', () => { currentIndex = i + 1; render(); });
+    } else {
+      submitBtn.className = 'submit-btn';
+      submitBtn.textContent = 'Submit';
+      // Enable state
+      if (q.type === 'choice') submitBtn.disabled = (s.choice === null);
+      else submitBtn.disabled = (!s.value || s.value.trim().length === 0);
+      submitBtn.addEventListener('click', () => {
+        const ans = getAnswer();
+        let correct = false;
+        if (q.type === 'choice') {
+          correct = (ans === q.correct);
+        } else {
+          const v = q.normalize ? q.normalize(ans) : ans;
+          correct = q.correct.some(c => (q.normalize ? q.normalize(c) : c) === v);
+        }
+        s.answered = true;
+        s.correct = correct;
+        render();
+      });
+    }
+    row.appendChild(submitBtn);
+    card.appendChild(row);
+
+    return card;
+  }
+
+  // ============================================================
+  // Rendering: score card
+  // ============================================================
+  function buildScoreCard() {
+    const card = document.createElement('div');
+    card.className = 'card score-card';
+    const correctCount = state.filter(s => s.correct).length;
+    const pct = correctCount / questions.length;
+    const passed = pct >= PASSING_THRESHOLD;
+
+    if (correctCount === questions.length) card.classList.add('full-correct');
+    else if (passed) card.classList.add('passing');
+    else card.classList.add('not-passing');
+
+    const label = document.createElement('div');
+    label.className = 'q-label';
+    label.textContent = 'Quiz complete';
+    card.appendChild(label);
+
+    const msg = document.createElement('div');
+    msg.className = 'score-message';
+    if (correctCount === questions.length) {
+      msg.className = 'score-message good-job';
+      msg.textContent = 'Perfect score. Stacks and queues are locked in.';
+    } else if (passed) {
+      msg.className = 'score-message good-job';
+      msg.textContent = 'Passed.';
+    } else {
+      msg.style.color = '#6B0000';
+      msg.textContent = 'Below the 70% threshold. Review and try again.';
+    }
+    card.appendChild(msg);
+
+    const scoreBig = document.createElement('div');
+    scoreBig.className = 'score-big';
+    scoreBig.textContent = correctCount + ' / ' + questions.length;
+    card.appendChild(scoreBig);
+
+    const scoreLabel = document.createElement('div');
+    scoreLabel.className = 'score-label';
+    scoreLabel.textContent = 'questions correct (' + Math.round(pct * 100) + '%)';
+    card.appendChild(scoreLabel);
+
+    // Detail message
+    const detail = document.createElement('div');
+    detail.className = 'score-message';
+    if (correctCount === questions.length) {
+      detail.textContent = 'You can tell a stack from a queue, trace both, and you know the back-pointer and empty-reset details. Move on to the two labs.';
+    } else if (passed) {
+      detail.textContent = 'You crossed the threshold. Review the questions you missed below before the labs.';
+    } else {
+      detail.textContent = 'Re-read the stacks and queues section in the lesson materials. The walkthrough widget is also there if you want to replay it.';
+    }
+    card.appendChild(detail);
+
+    // Completion code block — passing vs non-passing salt
+    const code = passed ? CS210_CODE_PASS : CS210_CODE_FAIL;
+    const codeBlock = document.createElement('div');
+    codeBlock.className = 'code-block' + (passed ? '' : ' fail');
+    const left = document.createElement('div');
+    left.className = 'code-left';
+    const codeLabel = document.createElement('div');
+    codeLabel.className = 'code-label';
+    codeLabel.textContent = passed ? 'Passing code' : 'Non-passing code';
+    left.appendChild(codeLabel);
+    const codeValue = document.createElement('div');
+    codeValue.className = 'code-value';
+    codeValue.textContent = code;
+    left.appendChild(codeValue);
+    codeBlock.appendChild(left);
+    const copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.className = 'copy-btn';
+    copyBtn.textContent = 'Copy';
+    copyBtn.addEventListener('click', () => {
+      const ok = cs210Copy(code);
+      copyBtn.textContent = ok ? 'Copied!' : 'Copy failed';
+      if (ok) copyBtn.classList.add('copied');
+      setTimeout(() => { copyBtn.textContent = 'Copy'; copyBtn.classList.remove('copied'); }, 1500);
+    });
+    codeBlock.appendChild(copyBtn);
+    card.appendChild(codeBlock);
+
+    const now = new Date();
+    const pad = (n) => n.toString().padStart(2, '0');
+    const ts = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate()) +
+               ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+
+    const footer = document.createElement('div');
+    footer.className = 'inline-code-footer';
+    footer.innerHTML = '<strong>' + escapeHtml(cadetName || '(name not set)') + '</strong> &middot; ' + ts +
+                       (passed ? ' &middot; passing' : ' &middot; non-passing');
+    card.appendChild(footer);
+
+    // Recap
+    const recap = document.createElement('div');
+    recap.className = 'recap';
+    const recapTitle = document.createElement('div');
+    recapTitle.className = 'recap-title';
+    recapTitle.textContent = 'Question recap';
+    recap.appendChild(recapTitle);
+
+    state.forEach((s, i) => {
+      const item = document.createElement('div');
+      item.className = 'recap-item';
+      const icon = document.createElement('div');
+      icon.className = 'recap-icon ' + (s.correct ? 'correct' : 'incorrect');
+      icon.textContent = s.correct ? '\u2713' : '\u2717';
+      item.appendChild(icon);
+      const body = document.createElement('div');
+      body.className = 'recap-body';
+      const q = questions[i];
+      const qLine = document.createElement('div');
+      qLine.className = 'recap-question';
+      qLine.innerHTML = '<strong>Q' + (i + 1) + '.</strong> ' + q.shortLabel;
+      body.appendChild(qLine);
+      if (!s.correct) {
+        const exp = document.createElement('div');
+        exp.className = 'recap-explanation';
+        exp.innerHTML = q.incorrectFeedback;
+        body.appendChild(exp);
+      }
+      item.appendChild(body);
+      recap.appendChild(item);
+    });
+    card.appendChild(recap);
+
+    const resetRow = document.createElement('div');
+    resetRow.className = 'reset-row';
+    const resetBtn = document.createElement('button');
+    resetBtn.type = 'button';
+    resetBtn.className = 'reset-btn';
+    resetBtn.textContent = 'Take the quiz again';
+    resetBtn.addEventListener('click', reset);
+    resetRow.appendChild(resetBtn);
+    card.appendChild(resetRow);
+
+    return card;
+  }
+
+  function render() {
+    renderDots();
+    cardArea.innerHTML = '';
+    if (currentIndex >= questions.length) {
+      cardArea.appendChild(buildScoreCard());
+    } else {
+      cardArea.appendChild(buildQuestionCard(currentIndex));
+    }
+  }
+
+  function reset() {
+    state.forEach(s => { s.answered = false; s.correct = false; s.choice = null; s.value = ''; });
+    currentIndex = 0;
+    render();
+  }
+
+  // Boot
+  render();
+})();
+</script>   stack/queue self-check quiz
+     Paste into Blackboard Ultra via Document → Add HTML block.
+     ============================================================ -->
+
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 980px; margin: 0 auto; line-height: 1.6;">
+
+  <!-- ===================== LIGHT HEADER ===================== -->
+  <div style="border-left: 5px solid #003087; padding: 8px 0 8px 18px; margin-bottom: 24px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 2px;">CS210 &middot; Block 4 &middot; Lesson 31</div>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 600; color: #00205B;">Stacks and Queues</h1>
+    <div style="font-size: 14px; color: #4A5568; margin-top: 4px;">Stack ADT &middot; push / pop / peek &middot; Queue ADT &middot; enqueue / dequeue &middot; the back pointer &middot; choosing between them</div>
+  </div>
+
+  <!-- ===================== AT A GLANCE ===================== -->
+  <div style="background: #F5F7FA; border-left: 4px solid #B5B7BA; padding: 14px 18px; margin-bottom: 22px; font-size: 14px;">
+    <strong style="color: #00205B;">At a glance:</strong> The same linked-list node you built the last two lessons, now wearing two different rules. A stack adds and removes at one end (last in, first out); a queue adds at the back and removes at the front (first in, first out). Today is about that one design choice and the two implementation details that follow from it: why a queue keeps a back pointer, and why emptying a queue means resetting both ends.
+  </div>
+
+  <!-- ===================== TABLE OF CONTENTS ===================== -->
+  <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 20px; margin-bottom: 24px; border-radius: 3px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Contents</div>
+    <ol style="margin: 0; padding-left: 22px; font-size: 14px;">
+      <li style="margin-bottom: 4px;"><a href="#objectives" style="color: #003087; text-decoration: none;">Lesson Objectives</a></li>
+      <li style="margin-bottom: 4px;"><a href="#readings" style="color: #003087; text-decoration: none;">Assigned Readings</a></li>
+      <li style="margin-bottom: 4px;"><a href="#pre-class" style="color: #003087; text-decoration: none;">Pre-Class Work</a></li>
+      <li style="margin-bottom: 4px;"><a href="#materials" style="color: #003087; text-decoration: none;">Lesson Materials and Overview</a></li>
+      <li style="margin-bottom: 4px;"><a href="#in-class" style="color: #003087; text-decoration: none;">In-Class Work</a></li>
+      <li style="margin-bottom: 0;"><a href="#after-class" style="color: #003087; text-decoration: none;">After Class</a></li>
+    </ol>
+  </div>
+
+  <!-- ===================== 1. OBJECTIVES ===================== -->
+  <details id="objectives" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      1. Lesson Objectives
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 10px 0; font-style: italic;">By the end of this lesson, cadets will be able to:</p>
+      <ol style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Implement a stack ADT with push, pop, and peek operations on a linked list. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+        <li style="margin-bottom: 6px;">Implement a queue ADT with enqueue and dequeue operations on a linked list. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+        <li style="margin-bottom: 0;">Choose between a stack and a queue based on the order a problem requires. <span style="color: #6B7280; font-size: 12px;">(Outcomes 2, 3)</span></li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 2. READINGS ===================== -->
+  <details id="readings" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      2. Assigned Readings
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 12px 0;">Complete before class. There is no Beej chapter for this lesson; the supplementary notes are your reading.</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <thead>
+          <tr style="background: #E8EDF5; color: #00205B;">
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 200px;">Source</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9;">Sections</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 220px;">Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Lesson 31 supplementary notes (instructor-written)</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">All seven sections</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Stacks and queues on linked lists, the back pointer, the empty-queue reset</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <!-- ===================== 3. PRE-CLASS ===================== -->
+  <details id="pre-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      3. Pre-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 12px 16px; margin-bottom: 20px; border-radius: 3px;">
+        <strong style="color: #6B5300;">Do this first.</strong> <span style="font-size: 14px; color: #6B5300;">About 25 minutes. Two readings and one prediction. Quiz 9 is in class today and covers Lessons 29 and 30, so review those too.</span>
+      </div>
+
+      <ol style="margin: 0; padding-left: 0; list-style: none; counter-reset: pc;">
+        <li style="position: relative; padding: 14px 16px 14px 56px; margin-bottom: 12px; background: #ffffff; border-left: 3px solid #003087; border-top: 1px solid #E5E7EB; border-right: 1px solid #E5E7EB; border-bottom: 1px solid #E5E7EB; border-radius: 3px;">
+          <span style="position: absolute; left: 14px; top: 14px; width: 28px; height: 28px; background: #003087; color: #fff; border-radius: 50%; text-align: center; line-height: 28px; font-weight: 700; font-size: 14px;">1</span>
+          <strong style="color: #00205B;">Read the Lesson 31 supplementary notes.</strong>
+          <p style="font-size: 14px; margin: 6px 0 0 0; color: #4A5568;">They walk through the stack, the queue, the back pointer, and the two empty-queue special cases. They are short and they are the reading; do not skip them.</p>
+        </li>
+        <li style="position: relative; padding: 14px 16px 14px 56px; margin-bottom: 12px; background: #ffffff; border-left: 3px solid #003087; border-top: 1px solid #E5E7EB; border-right: 1px solid #E5E7EB; border-bottom: 1px solid #E5E7EB; border-radius: 3px;">
+          <span style="position: absolute; left: 14px; top: 14px; width: 28px; height: 28px; background: #003087; color: #fff; border-radius: 50%; text-align: center; line-height: 28px; font-weight: 700; font-size: 14px;">2</span>
+          <strong style="color: #00205B;">Predict the output.</strong>
+          <p style="font-size: 14px; margin: 6px 0 8px 0; color: #4A5568;">You push <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">3</code>, then <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">5</code>, then <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">8</code> onto a stack, then pop once. What comes back? Now enqueue the same three values onto a queue and dequeue once. What comes back?</p>
+          <details style="font-size: 14px;">
+            <summary style="cursor: pointer; color: #003087; font-weight: 600;">Click for the answer</summary>
+            <p style="font-size: 14px; margin: 8px 0 0 0; color: #4A5568;">The stack returns <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">8</code> (last in, first out). The queue returns <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">3</code> (first in, first out). Same three inputs, opposite ends. That contrast is the whole lesson.</p>
+          </details>
+        </li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 4. MATERIALS ===================== -->
+  <details id="materials" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      4. Lesson Materials and Overview
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 18px 0;">For two lessons you have built and modified a singly linked list. Today the node does not change at all; what changes is the rule about where you add and remove. That single rule turns a plain list into a stack or a queue, the two most common ADTs in everyday programming. The reference below covers what you will see in lecture and practice in the two widgets.</p>
+
+      <!-- Subsection navigation -->
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 18px; margin-bottom: 22px; border-radius: 3px;">
+        <div style="font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">Jump to</div>
+        <div style="font-size: 13.5px;">
+          <a href="#slides" style="color: #003087; text-decoration: none; margin-right: 14px;">Slides</a>
+          <a href="#stack" style="color: #003087; text-decoration: none; margin-right: 14px;">The Stack</a>
+          <a href="#queue" style="color: #003087; text-decoration: none; margin-right: 14px;">The Queue</a>
+          <a href="#back-pointer" style="color: #003087; text-decoration: none; margin-right: 14px;">The Back Pointer</a>
+          <a href="#choosing" style="color: #003087; text-decoration: none;">Choosing Between Them</a>
+        </div>
+      </div>
+
+      <!-- Slides -->
+      <h3 id="slides" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0; scroll-margin-top: 16px;">Slides</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">The Lesson 31 deck covers the stack, the queue, why the queue needs a back pointer, the two empty-queue special cases, and how to choose between the two ADTs. The slides are the spine of the lecture; the two widgets are where you practice.</p>
+
+      <!-- =========================================================
+           EDIT ME: Lesson 31 slide deck link
+           Replace href="#" below with the SharePoint share URL once the
+           deck is published. Leave target="_blank" and rel="noopener".
+           ========================================================= -->
+      <p style="margin: 0 0 18px 0;">
+        <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 10px 20px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 14px;">Open Lesson 31 slides &rarr;</a>
+      </p>
+
+      <!-- The Stack -->
+      <h3 id="stack" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">The stack: one end, last in first out</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">A stack tracks a single pointer, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">top</code>, aimed at the most recently added node. <strong>push</strong> makes a new node, points its <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">next</code> at the old top, and becomes the new top. <strong>pop</strong> removes the top, moves the pointer down, and returns the value. <strong>peek</strong> reads the top without removing it. Every operation touches only the top, so all three are O(1) with no walk down the chain. This is the insert-at-head from Lesson 29, renamed.</p>
+      <div style="background: #1E2A3A; border-radius: 4px; padding: 14px 16px; margin: 0 0 18px 0; overflow-x: auto;">
+        <pre style="margin: 0; font-family: Consolas, 'Courier New', monospace; font-size: 13px; color: #E8EDF5; line-height: 1.5;"><span style="color: #7FB3D5;">void</span> history_push(history_t *h, <span style="color: #7FB3D5;">const char</span> *url) {
+    page_t *node = malloc(<span style="color: #7FB3D5;">sizeof</span>(page_t));
+    node->url  = copy_string(url);   <span style="color: #6B7280;">/* your own heap copy */</span>
+    node->next = h->top;             <span style="color: #6B7280;">/* point at the old top */</span>
+    h->top     = node;               <span style="color: #6B7280;">/* become the new top  */</span>
+    h->count++;
+}</pre>
+      </div>
+
+      <!-- The Queue -->
+      <h3 id="queue" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">The queue: two ends, first in first out</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">A queue adds at the back and removes from the front. <strong>enqueue</strong> links a new node after the current back and advances the back to it. <strong>dequeue</strong> removes the front node and returns its value. <strong>peek</strong> reads the front. The split, adding at one end and removing at the other, is the entire difference from a stack. Same node, opposite access pattern.</p>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">Two moments need care. Enqueuing into an empty queue must set <em>both</em> <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">front</code> and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">back</code> to the new node, since there is no old back to link after. And dequeuing the last node must reset <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">back</code> to NULL along with <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">front</code>; see the next subsection.</p>
+
+      <!-- The Back Pointer -->
+      <h3 id="back-pointer" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Why the queue keeps a back pointer</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Removing from the front is easy: <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">front</code> is right there. Adding at the back is the problem. With only a front pointer, every enqueue would walk the whole chain to find the last node, which is O(n). A second pointer that always aims at the last node makes enqueue a single step, O(1). That is the whole reason a queue carries <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">back</code>.</p>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">The trap that follows: when the last node leaves and the queue empties, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">front</code> becomes NULL but <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">back</code> is left pointing at the node you just freed. The queue looks empty by <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">front</code>, but the next enqueue writes through that dangling <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">back</code> and corrupts memory. <strong>When the queue empties, reset both ends.</strong></p>
+      <div style="background: #1E2A3A; border-radius: 4px; padding: 14px 16px; margin: 0 0 18px 0; overflow-x: auto;">
+        <pre style="margin: 0; font-family: Consolas, 'Courier New', monospace; font-size: 13px; color: #E8EDF5; line-height: 1.5;"><span style="color: #7FB3D5;">char</span> *dequeue(queue_t *q) {
+    <span style="color: #7FB3D5;">if</span> (queue_is_empty(q)) <span style="color: #7FB3D5;">return</span> NULL;
+    ticket_t *node = q->front;
+    <span style="color: #7FB3D5;">char</span> *summary = node->summary;  <span style="color: #6B7280;">/* hand value to caller */</span>
+    q->front = node->next;
+    <span style="color: #7FB3D5;">if</span> (q->front == NULL) q->back = NULL;  <span style="color: #6B7280;">/* reset back too! */</span>
+    q->count--;
+    free(node);                      <span style="color: #6B7280;">/* free node, not the string */</span>
+    <span style="color: #7FB3D5;">return</span> summary;
+}</pre>
+      </div>
+
+      <!-- Choosing Between Them -->
+      <h3 id="choosing" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Choosing between them</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Ask one question: in what order should things come back out? Most recent first, or "undo the last thing," means a <strong>stack</strong>. Oldest first, or "serve in arrival order," means a <strong>queue</strong>. The order the problem demands picks the structure. Both are O(1) on a linked list, so you are choosing on meaning, not speed.</p>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Today's two labs make the contrast concrete: a browser Back button is a stack (most recent page first), and a help-desk ticket line is a queue (oldest ticket served first).</p>
+
+      <p style="font-size: 13.5px; margin: 18px 0 0 0; color: #4A5568;">Lesson 31 introduces no new DFCS C Programming Standard section. The memory-cleanup rule (&sect;8.5, free what you allocate) still applies and is checked in both labs with valgrind, but it was introduced earlier and is enforced here, not retaught. The full standard lives in the course Resources section.</p>
+
+    </div>
+  </details>
+
+  <!-- ===================== 5. IN-CLASS ===================== -->
+  <details id="in-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      5. In-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 16px 0;">Five things to do in class. Use the checklist to track your progress.</p>
+
+      <ul style="list-style: none; padding: 0; margin: 0 0 24px 0; font-size: 14.5px;">
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Take Quiz 9.</strong>
+          <span style="color: #4A5568;">Covers linked lists from Lessons 29 and 30. Delivered through Git per your instructor's setup. 20 minutes max.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Work through the stacks and queues walkthrough below.</strong>
+          <span style="color: #4A5568;">Seventeen guided tasks: drive a stack through push, pop, peek, and the empty guard, then a queue through enqueue and dequeue with both the back pointer and the empty-queue reset. About 25 minutes.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Take the stack &amp; queue self-check.</strong>
+          <span style="color: #4A5568;">Six questions on choosing an ADT, tracing LIFO and FIFO, the back pointer, and the empty-queue reset. About 10 minutes.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Complete Lab 1: Browser Back Button (stack).</strong>
+          <span style="color: #4A5568;">Build a history stack with push, pop, peek, and the empty guards. Auto-graded through GitHub Classroom; worth 1 point.</span>
+          <!-- =========================================================
+               EDIT ME: Lesson 31 Lab 1 GitHub Classroom assignment link
+               Replace href="#" with the classroom.github.com/a/... invite
+               URL once the assignment is published.
+               ========================================================= -->
+          <div style="margin-top: 8px; margin-left: 28px;">
+            <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 6px 14px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 13px;">Accept Lab 1 on GitHub Classroom &rarr;</a>
+          </div>
+        </li>
+        <li style="margin-bottom: 0; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Complete Lab 2: Help-Desk Ticket Queue (queue).</strong>
+          <span style="color: #4A5568;">Build a ticket queue with enqueue, dequeue, peek, the back pointer, and the empty-queue reset. Auto-graded through GitHub Classroom; worth 1 point.</span>
+          <!-- =========================================================
+               EDIT ME: Lesson 31 Lab 2 GitHub Classroom assignment link
+               Replace href="#" with the classroom.github.com/a/... invite
+               URL once the assignment is published.
+               ========================================================= -->
+          <div style="margin-top: 8px; margin-left: 28px;">
+            <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 6px 14px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 13px;">Accept Lab 2 on GitHub Classroom &rarr;</a>
+          </div>
+        </li>
+      </ul>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 18px 0 10px 0;">Stacks and Queues Walkthrough</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Seventeen tasks across three sections. Type each operation at the prompt. The terminal shows what the operation did; the structure pane draws the node chain, the pointers tracking its ends, and the value each removal hands back.</p>
+
+<!-- ============================================================
+     CS210 Lesson 31 - Stacks and Queues Walkthrough Widget
+     Box-and-arrow node-chain visualization. Native HTML/CSS + scoped JS.
+     Paste as a block; runs anywhere the parent page allows <script>.
+     ============================================================ -->
+<style>
+.cs210-sqflow * { box-sizing: border-box; }
+.cs210-sqflow {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-sqflow h1 { color: #00205B; font-size: 24px; margin: 0 0 6px 0; }
+.cs210-sqflow .subtitle { color: #4A5568; font-size: 14px; margin-bottom: 22px; }
+.cs210-sqflow .progress-bar { background: #E5E7EB; border-radius: 3px; height: 8px; overflow: hidden; margin-bottom: 6px; }
+.cs210-sqflow .progress-fill { background: #003087; height: 100%; transition: width 0.3s ease; }
+.cs210-sqflow .progress-label { font-size: 12px; color: #6B7280; margin-bottom: 18px; }
+.cs210-sqflow .section-header {
+  background: #E8EDF5; color: #00205B; padding: 8px 14px; border-radius: 3px;
+  font-size: 13px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px;
+}
+.cs210-sqflow .task-card {
+  background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 14px; border-radius: 3px;
+}
+.cs210-sqflow .task-card.complete { background: #E6F4EA; border-left-color: #2E7D32; }
+.cs210-sqflow .task-label {
+  font-size: 12px; letter-spacing: 1.5px; color: #6B5300; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;
+}
+.cs210-sqflow .task-card.complete .task-label { color: #1B5E20; }
+.cs210-sqflow .task-text { font-size: 15px; color: #1a1a1a; }
+.cs210-sqflow .task-hint { font-size: 12.5px; color: #6B7280; margin-top: 6px; font-style: italic; }
+
+.cs210-sqflow .panes { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 12px; }
+@media (max-width: 760px) { .cs210-sqflow .panes { grid-template-columns: 1fr; } }
+.cs210-sqflow .terminal {
+  background: #1E2A3A; color: #E8EDF5; font-family: Consolas, 'Courier New', monospace;
+  font-size: 13.5px; line-height: 1.5; border-radius: 4px; padding: 14px 18px;
+  min-height: 380px; max-height: 440px; overflow-y: auto; white-space: pre-wrap; word-break: break-word;
+}
+.cs210-sqflow .terminal .prompt { color: #7FB3D5; }
+.cs210-sqflow .terminal .typed { color: #FFFFFF; }
+.cs210-sqflow .terminal .out { color: #B5BEC8; }
+.cs210-sqflow .terminal .note { color: #F0B92C; }
+.cs210-sqflow .terminal .err { color: #F47A7A; }
+.cs210-sqflow .terminal .ok { color: #7FD17F; }
+.cs210-sqflow .terminal .dim { color: #6B7280; }
+
+.cs210-sqflow .struct-pane {
+  background: #ffffff; border: 1px solid #D0D5DD; border-radius: 4px; padding: 14px 16px;
+  min-height: 380px; max-height: 440px; overflow-y: auto;
+}
+.cs210-sqflow .struct-pane-header {
+  font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; font-weight: 600;
+  margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #E5E7EB;
+}
+.cs210-sqflow .struct-kind {
+  font-family: Consolas, monospace; font-size: 12px; color: #00205B; font-weight: 700; margin-bottom: 4px;
+}
+.cs210-sqflow .struct-meta { font-family: Consolas, monospace; font-size: 11px; color: #6B7280; margin-bottom: 12px; }
+.cs210-sqflow .struct-empty { color: #6B7280; font-style: italic; font-size: 13px; text-align: center; padding: 50px 10px; }
+
+/* Node chain: boxes flowing left to right with arrows */
+.cs210-sqflow .chain { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 2px; row-gap: 26px; padding-top: 22px; }
+.cs210-sqflow .node-wrap { position: relative; display: flex; align-items: center; }
+.cs210-sqflow .node {
+  border: 1px solid #C7CFD9; border-radius: 4px; background: #F8FAFC; min-width: 92px; max-width: 132px;
+  text-align: center; padding: 6px 6px 7px 6px; transition: background 0.4s ease, border-color 0.4s ease;
+}
+.cs210-sqflow .node .data {
+  display: block; font-family: Consolas, monospace; font-size: 12.5px; color: #00205B; font-weight: 700;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cs210-sqflow .node .addr { display: block; font-family: Consolas, monospace; font-size: 9px; color: #6B7280; margin-top: 2px; }
+.cs210-sqflow .node.flash-write { background: #FFF1C7; border-color: #F0B92C; }
+.cs210-sqflow .node-arrow { font-family: Consolas, monospace; font-size: 15px; color: #6B7280; padding: 0 3px; align-self: center; }
+.cs210-sqflow .null-cap {
+  font-family: Consolas, monospace; font-size: 13px; color: #B8002F; align-self: center; padding-left: 3px; font-weight: 700;
+}
+.cs210-sqflow .ptr-tags {
+  position: absolute; top: -22px; left: 0; right: 0; font-family: Consolas, monospace; font-size: 10.5px;
+  color: #003087; font-weight: 700; text-align: center; white-space: nowrap;
+}
+.cs210-sqflow .ptr-tags .tag-front { color: #1B5E20; }
+.cs210-sqflow .ptr-tags .tag-back  { color: #8A4B00; }
+.cs210-sqflow .ptr-tags .tag-top   { color: #003087; }
+.cs210-sqflow .node.targeted { border-color: #003087; border-width: 2px; padding: 5px 5px 6px 5px; }
+
+.cs210-sqflow .ptr-summary {
+  margin-top: 16px; padding-top: 10px; border-top: 1px dashed #D0D5DD;
+  font-family: Consolas, monospace; font-size: 12px; color: #1a1a1a;
+}
+.cs210-sqflow .ptr-summary .row { margin-bottom: 3px; }
+.cs210-sqflow .ptr-summary .nm { color: #00205B; font-weight: 700; }
+.cs210-sqflow .ptr-summary .nullv { color: #B8002F; font-style: italic; }
+
+.cs210-sqflow .return-card {
+  background: #ffffff; border: 2px solid #003087; border-radius: 4px; padding: 9px 12px; margin-top: 14px; text-align: center;
+}
+.cs210-sqflow .return-card .r-op { font-family: Consolas, monospace; font-size: 12px; color: #6B7280; margin-bottom: 3px; }
+.cs210-sqflow .return-card .r-val { font-family: Consolas, monospace; font-size: 17px; color: #003087; font-weight: 700; }
+.cs210-sqflow .return-card .r-val.nullv { color: #B8002F; }
+
+.cs210-sqflow .input-row {
+  display: flex; background: #1E2A3A; border-radius: 4px; padding: 8px 14px; margin-bottom: 14px; border: 1px solid #003087;
+}
+.cs210-sqflow .input-prompt {
+  color: #7FB3D5; font-family: Consolas, monospace; font-size: 14px; margin-right: 8px; align-self: center; white-space: nowrap;
+}
+.cs210-sqflow .input-row input {
+  flex: 1; background: transparent; color: #FFFFFF; border: none; outline: none;
+  font-family: Consolas, monospace; font-size: 14px; padding: 4px 0;
+}
+.cs210-sqflow .controls { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+.cs210-sqflow .btn {
+  background: #ffffff; border: 1px solid #C7CFD9; padding: 6px 14px; border-radius: 3px; font-size: 13px;
+  cursor: pointer; color: #00205B; font-family: inherit; transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.cs210-sqflow .btn:hover { background: #F5F7FA; }
+@keyframes cs210-sqflow-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(240, 185, 44, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0); }
+}
+.cs210-sqflow .btn.pulse { background: #FFF8E1; border-color: #F0B92C; color: #6B5300; font-weight: 600; animation: cs210-sqflow-pulse 1.5s infinite; }
+.cs210-sqflow .help-note {
+  background: #F5F7FA; border: 1px solid #D0D5DD; padding: 12px 16px; border-radius: 3px; font-size: 13px; color: #4A5568; margin-top: 12px;
+}
+.cs210-sqflow .help-note strong { color: #00205B; }
+.cs210-sqflow .inline-code-footer {
+  background: #F0F4FA; border: 1px solid #C7D2E1; padding: 10px 14px; border-radius: 3px; margin-top: 10px;
+  font-size: 13px; color: #00205B; font-family: Consolas, monospace;
+}
+.cs210-sqflow .inline-code-footer .label {
+  text-transform: uppercase; letter-spacing: 1.5px; font-size: 11px; color: #6B7280;
+  font-family: 'Segoe UI', Arial, sans-serif; margin-right: 6px;
+}
+/* Name modal overlay */
+.cs210-sqflow .name-modal-backdrop {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 32, 91, 0.55);
+  display: flex; align-items: center; justify-content: center; z-index: 9999;
+}
+.cs210-sqflow .name-modal {
+  background: #ffffff; border-radius: 6px; padding: 28px 32px; max-width: 440px; width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25); font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-sqflow .name-modal h2 { color: #00205B; font-size: 20px; margin: 0 0 10px 0; }
+.cs210-sqflow .name-modal p { color: #4A5568; font-size: 14px; line-height: 1.5; margin: 0 0 16px 0; }
+.cs210-sqflow .name-modal input {
+  width: 100%; padding: 10px 12px; font-size: 15px; border: 1px solid #CBD5E0; border-radius: 4px; margin-bottom: 14px; font-family: inherit;
+}
+.cs210-sqflow .name-modal input:focus { outline: none; border-color: #003087; box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15); }
+.cs210-sqflow .name-modal-btn {
+  background: #003087; color: #ffffff; border: none; padding: 10px 20px; border-radius: 4px; font-size: 14px;
+  font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.cs210-sqflow .name-modal-btn:disabled { background: #A0AEC0; cursor: not-allowed; }
+.cs210-sqflow .name-modal-btn:not(:disabled):hover { background: #00205B; }
+</style>
+
+<div class="cs210-sqflow">
+
+<div class="name-modal-backdrop" id="sqf-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Blackboard reflection.</p>
+    <input type="text" id="sqf-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="sqf-cadet-name-btn" disabled>Start the walkthrough</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 31 &middot; Stacks and Queues Walkthrough</h1>
+<div class="subtitle">Seventeen tasks across three sections. The terminal shows what each operation did; the structure pane draws the node chain, the pointers that track its ends, and the value each removal hands back.</div>
+
+<div class="progress-bar"><div class="progress-fill" id="sqf-progress-fill" style="width: 0%;"></div></div>
+<div class="progress-label" id="sqf-progress-label">Task 0 of 17</div>
+
+<div class="section-header" id="sqf-section-header">Section 1: Stack &mdash; last in, first out</div>
+
+<div class="task-card" id="sqf-task-card">
+  <div class="task-label" id="sqf-task-label">Current task</div>
+  <div class="task-text" id="sqf-task-text">Loading...</div>
+  <div class="task-hint" id="sqf-task-hint"></div>
+</div>
+
+<div class="panes">
+  <div class="terminal" id="sqf-terminal"></div>
+  <div class="struct-pane">
+    <div class="struct-pane-header">Structure</div>
+    <div id="sqf-struct-area">
+      <div class="struct-empty">Nothing built yet.<br>Type the first operation on the left.</div>
+    </div>
+  </div>
+</div>
+
+<div class="input-row">
+  <span class="input-prompt">adt&gt;</span>
+  <input type="text" id="sqf-cli-input" autocomplete="off" spellcheck="false" placeholder="follow the task above">
+</div>
+
+<div class="controls">
+  <button class="btn" id="sqf-hint-btn">Show hint</button>
+  <button class="btn" id="sqf-reset-btn">Reset</button>
+  <button class="btn" id="sqf-mode-btn">Switch to free mode</button>
+</div>
+
+<div class="help-note">
+  <strong>How this works:</strong> This is a teaching tool, not a compiler. It runs one stack and one queue built on the same kind of node. The task card tells you what to type; in walkthrough mode only the expected operation advances. Mistype twice and the hint button will pulse. After all tasks are complete, free mode unlocks so you can push, pop, enqueue, and dequeue freely.
+</div>
+
+<div id="sqf-completion-area"></div>
+
+</div>
+
+<script>
+(function () {
+  const root = document.querySelector('.cs210-sqflow');
+  if (!root) return;
+
+  // ============================================================
+  // CS210 widget completion utilities
+  // Salt -> deterministic 6-char code via FNV-1a.
+  // ============================================================
+  const CS210_SALT = "lesson31_stackqueue_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#sqf-name-modal-backdrop');
+    const input = root.querySelector('#sqf-cadet-name-input');
+    const btn = root.querySelector('#sqf-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length > 0) {
+        cs210CadetName = stored.trim();
+        backdrop.style.display = 'none';
+        return;
+      }
+    } catch (e) {}
+    function updateBtn() { btn.disabled = input.value.trim().length === 0; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', () => {
+      const name = input.value.trim();
+      if (!name) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+      const siblings = document.querySelectorAll(
+        '#sqquiz-name-modal-backdrop, #name-modal-backdrop, #duality-name-modal-backdrop'
+      );
+      siblings.forEach((m) => { m.style.display = 'none'; });
+      const cli = root.querySelector('#sqf-cli-input');
+      if (cli) cli.focus();
+    });
+    setTimeout(() => { try { input.focus(); } catch (e) {} }, 50);
+  })();
+
+  function cs210RenderCompletion(area) {
+    if (root.querySelector('#cs210-sqf-completion-overlay')) return;
+    const now = new Date();
+    const pad = (n) => n.toString().padStart(2, '0');
+    const ts = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate()) +
+               ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+    const overlay = document.createElement('div');
+    overlay.id = 'cs210-sqf-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">Walkthrough complete</h2>' +
+        '<p>You drove a stack through push, pop, peek, and the empty guard, then a queue through enqueue and dequeue with both a front and a back pointer, including the dangling-back trap. Take a screenshot of this card and include it with your Blackboard reflection.</p>' +
+        '<div style="background:#F0F4FA;border:1px solid #003087;border-radius:4px;padding:14px 18px;margin-bottom:14px;">' +
+          '<div style="font-size:12px;letter-spacing:1.5px;color:#4A5568;margin-bottom:4px;text-transform:uppercase;">Completion code</div>' +
+          '<div style="font-family:Consolas,monospace;font-size:26px;font-weight:700;color:#00205B;letter-spacing:3px;">' + CS210_CODE + '</div>' +
+        '</div>' +
+        '<div style="font-size:14px;color:#1a1a1a;margin-bottom:6px;"><strong style="color:#00205B;">' + escapeHtml(cs210CadetName || '(name not set)') + '</strong></div>' +
+        '<div style="font-size:13px;color:#6B7280;margin-bottom:14px;">' + ts + '</div>' +
+        '<div style="background:#FFF8E1;border-left:4px solid #F0B92C;padding:10px 14px;border-radius:3px;font-size:13.5px;color:#6B5300;margin-bottom:14px;">' +
+          '<strong style="color:#4A3A00;">Reminder:</strong> Submit this code on the Lesson 31 reflection in Blackboard. The fill-in-the-blank question asks for the 6-character completion code; a screenshot of this card is your backup.' +
+        '</div>' +
+        '<div style="display:flex;gap:8px;">' +
+          '<button class="name-modal-btn" id="cs-sqf-copy-btn" type="button" style="background:#003087;">Copy code</button>' +
+          '<button class="name-modal-btn" id="cs-sqf-overlay-close" type="button" style="background:#2E7D32;">Got it &mdash; close this</button>' +
+        '</div>' +
+      '</div>';
+    root.appendChild(overlay);
+    overlay.querySelector('#cs-sqf-overlay-close').addEventListener('click', () => { overlay.remove(); });
+    overlay.querySelector('#cs-sqf-copy-btn').addEventListener('click', (e) => {
+      const btn = e.currentTarget;
+      const ok = cs210Copy(CS210_CODE);
+      btn.textContent = ok ? 'Copied!' : 'Copy failed';
+      btn.style.background = ok ? '#2E7D32' : '#B8002F';
+      setTimeout(() => { btn.textContent = 'Copy code'; btn.style.background = '#003087'; }, 1500);
+    });
+    if (area) {
+      area.innerHTML =
+        '<div class="inline-code-footer">' +
+          '<span class="label">Completion code</span>' +
+          '<strong>' + CS210_CODE + '</strong>' +
+          '<span style="color:#6B7280;margin-left:14px;font-family:\'Segoe UI\',Arial,sans-serif;">' +
+            escapeHtml(cs210CadetName || '(name not set)') + ' &middot; ' + ts +
+          '</span>' +
+        '</div>';
+    }
+  }
+
+  function cs210Copy(text) {
+    try { if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text); return true; } } catch (e) {}
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+      return true;
+    } catch (e) { return false; }
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+  }
+
+  // ============================================================
+  // Element refs
+  // ============================================================
+  const terminalEl   = root.querySelector('#sqf-terminal');
+  const structEl     = root.querySelector('#sqf-struct-area');
+  const inputEl      = root.querySelector('#sqf-cli-input');
+  const completionEl = root.querySelector('#sqf-completion-area');
+
+  // ============================================================
+  // Structure model
+  // One chain of nodes; kind is 'stack' or 'queue'.
+  //   stack: head = top. push prepends, pop removes head.
+  //   queue: head = front, tail = back. enqueue appends (O(1) via back), dequeue removes head.
+  // ============================================================
+  const NODE_BASE = 0x5000;
+  const NODE_STRIDE = 0x20;
+  let nextAddr = NODE_BASE;
+
+  let kind = null;             // 'stack' | 'queue' | null
+  let head = null;             // node id
+  let tail = null;             // node id (back, queue only)
+  let count = 0;
+  let nodes = new Map();       // id -> { id, data, next, addr }
+  let nextId = 1;
+  let lastReturn = null;       // { op, value, isNull }
+  let flashNodeId = null;
+
+  let currentTaskIndex = 0;
+  let consecutiveFails = 0;
+  let mode = "walkthrough";
+
+  function makeNode(data) {
+    const id = nextId++;
+    const addr = nextAddr; nextAddr += NODE_STRIDE;
+    const n = { id, data, next: null, addr };
+    nodes.set(id, n);
+    return n;
+  }
+  function hexAddr(a) { return '0x' + a.toString(16).toUpperCase(); }
+
+  // ============================================================
+  // Operations (return a result object the printer understands)
+  // ============================================================
+  function opPush(data) {
+    if (kind === 'queue' && count > 0) return { kind: 'rejected', message: 'A queue is already built. Reset, or finish it with dequeue, before switching to a stack.' };
+    kind = 'stack';
+    const n = makeNode(data);
+    n.next = head;
+    head = n.id;
+    count++;
+    flashNodeId = n.id;
+    return { kind: 'pushed', node: n };
+  }
+  function opPop() {
+    if (kind !== 'stack') return { kind: 'rejected', message: 'pop() is a stack operation. Build a stack with push() first.' };
+    if (head === null) {
+      lastReturn = { op: 'pop()', value: 'NULL', isNull: true };
+      return { kind: 'empty-pop' };
+    }
+    const n = nodes.get(head);
+    head = n.next;
+    nodes.delete(n.id);
+    count--;
+    lastReturn = { op: 'pop()', value: n.data, isNull: false };
+    return { kind: 'popped', data: n.data, addr: n.addr };
+  }
+  function opEnqueue(data) {
+    if (kind === 'stack' && count > 0) return { kind: 'rejected', message: 'A stack is already built. Reset, or empty it with pop(), before switching to a queue.' };
+    kind = 'queue';
+    const n = makeNode(data);
+    const wasEmpty = (head === null);
+    if (wasEmpty) {
+      head = n.id; tail = n.id;
+    } else {
+      nodes.get(tail).next = n.id;
+      tail = n.id;
+    }
+    count++;
+    flashNodeId = n.id;
+    return { kind: 'enqueued', node: n, wasEmpty };
+  }
+  function opDequeue() {
+    if (kind !== 'queue') return { kind: 'rejected', message: 'dequeue() is a queue operation. Build a queue with enqueue() first.' };
+    if (head === null) {
+      lastReturn = { op: 'dequeue()', value: 'NULL', isNull: true };
+      return { kind: 'empty-dequeue' };
+    }
+    const n = nodes.get(head);
+    head = n.next;
+    nodes.delete(n.id);
+    count--;
+    let resetBack = false;
+    if (head === null) { tail = null; resetBack = true; }  // CRITICAL: reset back when the queue empties
+    lastReturn = { op: 'dequeue()', value: n.data, isNull: false };
+    return { kind: 'dequeued', data: n.data, addr: n.addr, resetBack };
+  }
+  function opPeek() {
+    if (head === null) {
+      lastReturn = { op: 'peek()', value: 'NULL', isNull: true };
+      return { kind: 'peek-empty' };
+    }
+    const n = nodes.get(head);
+    const where = (kind === 'queue') ? 'front' : 'top';
+    lastReturn = { op: 'peek()', value: n.data, isNull: false };
+    return { kind: 'peeked', data: n.data, where };
+  }
+  function opIsEmpty() {
+    const v = (count === 0) ? 1 : 0;
+    lastReturn = { op: 'is_empty()', value: String(v), isNull: false };
+    return { kind: 'is-empty', value: v };
+  }
+  function doClear() {
+    kind = null; head = null; tail = null; count = 0;
+    nodes = new Map(); nextId = 1; nextAddr = NODE_BASE; lastReturn = null; flashNodeId = null;
+  }
+
+  // ============================================================
+  // Parser: a tiny set of named operations.
+  //   push("x") | push(x)   pop()   peek()   is_empty()
+  //   enqueue("x") | enqueue(x)   dequeue()
+  //   clear | help
+  // ============================================================
+  function norm(s) { return s.replace(/\s+/g, ' ').trim(); }
+  function parseArg(raw) {
+    let s = raw.trim();
+    const q = s.match(/^"(.*)"$/) || s.match(/^'(.*)'$/);
+    if (q) return q[1];
+    return s;
+  }
+  function parseCommand(line) {
+    const t = norm(line).replace(/;\s*$/, '');
+    let m;
+    m = t.match(/^push\s*\(\s*(.*?)\s*\)$/i);
+    if (m) { const a = parseArg(m[1]); return a.length ? { op: 'push', arg: a } : { error: 'push needs a value, e.g. push("usafa.edu").' }; }
+    if (/^pop\s*\(\s*\)$/i.test(t)) return { op: 'pop' };
+    if (/^peek\s*\(\s*\)$/i.test(t)) return { op: 'peek' };
+    if (/^is_empty\s*\(\s*\)$/i.test(t)) return { op: 'is_empty' };
+    m = t.match(/^enqueue\s*\(\s*(.*?)\s*\)$/i);
+    if (m) { const a = parseArg(m[1]); return a.length ? { op: 'enqueue', arg: a } : { error: 'enqueue needs a value, e.g. enqueue("printer jam").' }; }
+    if (/^dequeue\s*\(\s*\)$/i.test(t)) return { op: 'dequeue' };
+    if (/^(clear|reset)$/i.test(t)) return { op: 'clear' };
+    if (/^help$/i.test(t)) return { op: 'help' };
+    return { error: 'Unrecognized operation. Try push("x"), pop(), peek(), is_empty(), enqueue("x"), dequeue(), or help.' };
+  }
+
+  function runCommand(line) {
+    const parsed = parseCommand(line);
+    if (parsed.error) return { kind: 'error', message: parsed.error };
+    switch (parsed.op) {
+      case 'push':     return opPush(parsed.arg);
+      case 'pop':      return opPop();
+      case 'peek':     return opPeek();
+      case 'is_empty': return opIsEmpty();
+      case 'enqueue':  return opEnqueue(parsed.arg);
+      case 'dequeue':  return opDequeue();
+      case 'clear':    doClear(); return { kind: 'cleared' };
+      case 'help':     return { kind: 'help' };
+    }
+    return { kind: 'error', message: 'Could not run that.' };
+  }
+
+  // ============================================================
+  // Terminal output
+  // ============================================================
+  function termWrite(text, cls) {
+    const span = document.createElement('span');
+    if (cls) span.className = cls;
+    span.textContent = text;
+    terminalEl.appendChild(span);
+  }
+  function termLine(text, cls) {
+    termWrite(text, cls);
+    terminalEl.appendChild(document.createElement('br'));
+    terminalEl.scrollTop = terminalEl.scrollHeight;
+  }
+  function echoCommand(cmd) { termWrite('adt> ', 'prompt'); termLine(cmd, 'typed'); }
+
+  // ============================================================
+  // Structure pane rendering
+  // ============================================================
+  function orderedNodes() {
+    const out = [];
+    let cur = head;
+    let guard = 0;
+    while (cur !== null && guard < 100) { const n = nodes.get(cur); if (!n) break; out.push(n); cur = n.next; guard++; }
+    return out;
+  }
+
+  function renderStruct() {
+    if (kind === null && count === 0 && !lastReturn) {
+      structEl.innerHTML = '<div class="struct-empty">Nothing built yet.<br>Type the first operation on the left.</div>';
+      return;
+    }
+    const chain = orderedNodes();
+    const isQueue = (kind === 'queue');
+    const kindLabel = isQueue ? 'queue (FIFO)' : (kind === 'stack' ? 'stack (LIFO)' : '(empty)');
+    let html = '';
+    html += '<div class="struct-kind">' + kindLabel + '</div>';
+    if (isQueue) html += '<div class="struct-meta">front, back, count = ' + count + '</div>';
+    else if (kind === 'stack') html += '<div class="struct-meta">top, count = ' + count + '</div>';
+    else html += '<div class="struct-meta">count = 0</div>';
+
+    if (chain.length === 0) {
+      html += '<div style="font-family:Consolas,monospace;font-size:13px;color:#6B7280;padding:18px 0;">';
+      if (isQueue) html += 'front &rarr; <span style="color:#B8002F;">NULL</span><br>back &nbsp;&rarr; <span style="color:#B8002F;">NULL</span>';
+      else html += 'top &rarr; <span style="color:#B8002F;">NULL</span>';
+      html += '</div>';
+    } else {
+      html += '<div class="chain">';
+      for (let i = 0; i < chain.length; i++) {
+        const n = chain[i];
+        let tags = '';
+        if (isQueue) {
+          const isFront = (i === 0), isBack = (i === chain.length - 1);
+          if (isFront && isBack) tags = '<span class="tag-front">&darr; front</span> <span class="tag-back">/ back</span>';
+          else if (isFront) tags = '<span class="tag-front">&darr; front</span>';
+          else if (isBack) tags = '<span class="tag-back">&darr; back</span>';
+        } else {
+          if (i === 0) tags = '<span class="tag-top">&darr; top</span>';
+        }
+        const targeted = tags ? ' targeted' : '';
+        html += '<div class="node-wrap">';
+        html += '<div class="node' + targeted + '" data-id="' + n.id + '">';
+        if (tags) html += '<div class="ptr-tags">' + tags + '</div>';
+        html += '<span class="data">"' + escapeHtml(String(n.data)) + '"</span>';
+        html += '<span class="addr">' + hexAddr(n.addr) + '</span>';
+        html += '</div>';
+        if (i < chain.length - 1) html += '<span class="node-arrow">&rarr;</span>';
+        else html += '<span class="node-arrow">&rarr;</span><span class="null-cap">&empty;</span>';
+        html += '</div>';
+      }
+      html += '</div>';
+    }
+
+    if (lastReturn) {
+      html += '<div class="return-card">' +
+        '<div class="r-op">' + escapeHtml(lastReturn.op) + ' returned</div>' +
+        '<div class="r-val' + (lastReturn.isNull ? ' nullv' : '') + '">' +
+          (lastReturn.isNull ? 'NULL' : '"' + escapeHtml(String(lastReturn.value)) + '"') +
+        '</div></div>';
+    }
+
+    structEl.innerHTML = html;
+
+    if (flashNodeId !== null) {
+      const el = structEl.querySelector('.node[data-id="' + flashNodeId + '"]');
+      if (el) { el.classList.add('flash-write'); setTimeout(() => { el.classList.remove('flash-write'); }, 700); }
+      flashNodeId = null;
+    }
+  }
+
+  // ============================================================
+  // Process a command and print results
+  // ============================================================
+  function process(line) {
+    echoCommand(line);
+    try {
+      const r = runCommand(line);
+      if (!r) return;
+      switch (r.kind) {
+        case 'pushed':
+          termLine('  pushed "' + r.node.data + '" at ' + hexAddr(r.node.addr) + '; top now points here. count = ' + count, 'out');
+          break;
+        case 'popped':
+          termLine('  popped "' + r.data + '" (freed ' + hexAddr(r.addr) + '); returned the string to the caller. count = ' + count, 'out');
+          break;
+        case 'empty-pop':
+          termLine('  stack is empty: pop() returned NULL and did not touch the chain. No crash. count = 0', 'out');
+          break;
+        case 'enqueued':
+          if (r.wasEmpty) termLine('  enqueued "' + r.node.data + '" at ' + hexAddr(r.node.addr) + '; queue was empty, so front AND back point here. count = ' + count, 'out');
+          else termLine('  enqueued "' + r.node.data + '" at ' + hexAddr(r.node.addr) + '; linked after the old back, back advanced here. front unchanged. count = ' + count, 'out');
+          break;
+        case 'dequeued':
+          termLine('  dequeued "' + r.data + '" (freed ' + hexAddr(r.addr) + ') from the front; returned the string. count = ' + count, 'out');
+          if (r.resetBack) termLine('  queue is now empty: front AND back reset to NULL.', 'out');
+          break;
+        case 'empty-dequeue':
+          termLine('  queue is empty: dequeue() returned NULL, front and back stay NULL. No crash. count = 0', 'out');
+          break;
+        case 'peeked':
+          termLine('  peek() read the ' + r.where + ' value "' + r.data + '" without removing it. count = ' + count, 'out');
+          break;
+        case 'peek-empty':
+          termLine('  empty: peek() returned NULL.', 'out');
+          break;
+        case 'is-empty':
+          termLine('  is_empty() returned ' + r.value + ' (' + (r.value ? 'empty' : 'not empty') + ').', 'out');
+          break;
+        case 'cleared':
+          termLine('  structure cleared.', 'out');
+          break;
+        case 'help':
+          termLine('  stack:  push("x")   pop()   peek()   is_empty()', 'out');
+          termLine('  queue:  enqueue("x")   dequeue()   peek()   is_empty()', 'out');
+          termLine('  meta:   clear   help', 'out');
+          break;
+        case 'rejected':
+          termLine('  ' + r.message, 'err');
+          break;
+        case 'error':
+          termLine('  ' + r.message, 'err');
+          break;
+      }
+      renderStruct();
+    } catch (e) {
+      termLine('  unexpected error: ' + e.message, 'err');
+    }
+  }
+
+  // ============================================================
+  // Task slate
+  // ============================================================
+  const PUSH_RE = /^push\s*\(\s*\S.*\)\s*;?$/i;
+  const ENQ_RE  = /^enqueue\s*\(\s*\S.*\)\s*;?$/i;
+  const POP_RE  = /^pop\s*\(\s*\)\s*;?$/i;
+  const DEQ_RE  = /^dequeue\s*\(\s*\)\s*;?$/i;
+  const PEEK_RE = /^peek\s*\(\s*\)\s*;?$/i;
+  const ISE_RE  = /^is_empty\s*\(\s*\)\s*;?$/i;
+
+  const tasks = [
+    // ---- Section 1: Stack ----
+    { section: 'Section 1: Stack &mdash; last in, first out',
+      label: 'Task 1 of 17',
+      text: 'You are modeling a browser back button. Every page you visit is pushed onto a history stack. Visit the first page: push("usafa.edu").',
+      hint: 'Type:  push("usafa.edu")',
+      match: (c) => PUSH_RE.test(norm(c)),
+      note: 'A stack needs exactly one pointer: top. It points at the most recent node, and that node links to the one below it. Insertion happens only at the top, which is why push is O(1) with no walk to the end.' },
+    { label: 'Task 2 of 17',
+      text: 'Visit a second page. The newest page goes on top: push("/admissions").',
+      hint: 'Type:  push("/admissions")',
+      match: (c) => PUSH_RE.test(norm(c)),
+      note: 'The new node became the head, and its next points at the old top. Newest on top, oldest on the bottom. This is exactly insert-at-head from Lesson 29, renamed push.' },
+    { label: 'Task 3 of 17',
+      text: 'Visit a third page: push("/admissions/apply").',
+      hint: 'Type:  push("/admissions/apply")',
+      match: (c) => PUSH_RE.test(norm(c)),
+      note: 'Three pages, last in on top. The order you would press Back through is exactly the reverse of the order you pushed.' },
+    { label: 'Task 4 of 17',
+      text: 'Where does Back lead right now? Read the top without removing it: peek().',
+      hint: 'Type:  peek()',
+      match: (c) => PEEK_RE.test(norm(c)),
+      note: 'peek returns the top value but leaves the stack unchanged. Use it when you need to look at what is next without committing to removing it.' },
+    { label: 'Task 5 of 17',
+      text: 'Press Back. Remove the top page and get it back: pop().',
+      hint: 'Type:  pop()',
+      match: (c) => POP_RE.test(norm(c)),
+      note: 'pop did two jobs: it unlinked the top node and returned its value to the caller. In your lab, pop hands back the heap string and the caller owns it from then on. The node itself is freed.' },
+    { label: 'Task 6 of 17',
+      text: 'Is there any history left? Ask the stack: is_empty().',
+      hint: 'Type:  is_empty()',
+      match: (c) => ISE_RE.test(norm(c)),
+      note: 'is_empty just checks whether top is NULL (or count is 0). One line, but it is the guard every other operation leans on.' },
+    { label: 'Task 7 of 17',
+      text: 'Press Back again: pop().',
+      hint: 'Type:  pop()',
+      match: (c) => POP_RE.test(norm(c)),
+      note: 'top walked down to the oldest page. Each pop moves top to the node below and frees the one that left.' },
+    { label: 'Task 8 of 17',
+      text: 'One page left. Press Back once more: pop().',
+      hint: 'Type:  pop()',
+      match: (c) => POP_RE.test(norm(c)),
+      note: 'The stack is now empty: top is NULL. Watch what happens if you pop one more time.' },
+    { label: 'Task 9 of 17',
+      text: 'The stack is empty. Predict: what should pop() do now? Then run pop() to check.',
+      hint: 'Type:  pop()',
+      match: (c) => POP_RE.test(norm(c)),
+      note: 'THE STACK GUARD. Popping an empty stack must return NULL and leave the chain alone, never dereference a NULL top. Skip this check in real code and the back button crashes when there is no history left.' },
+    // ---- Section 2: Queue ----
+    { section: 'Section 2: Queue &mdash; first in, first out',
+      label: 'Task 10 of 17',
+      text: 'New structure: a help-desk ticket queue. Tickets are served in the order they arrive. File the first ticket: enqueue("printer jam").',
+      hint: 'Type:  enqueue("printer jam")',
+      match: (c) => ENQ_RE.test(norm(c)),
+      note: 'A queue tracks TWO ends. On the very first node both front and back point at it. That empty-queue special case is the one new wrinkle versus a plain list.' },
+    { label: 'Task 11 of 17',
+      text: 'A second ticket comes in: enqueue("vpn down").',
+      hint: 'Type:  enqueue("vpn down")',
+      match: (c) => ENQ_RE.test(norm(c)),
+      note: 'enqueue linked the new node after the old back, then advanced back to it. front did not move. Because you kept a back pointer, you reached the end in one step. Without back you would walk the whole list every time, turning O(1) into O(n).' },
+    { label: 'Task 12 of 17',
+      text: 'A third ticket: enqueue("email broken").',
+      hint: 'Type:  enqueue("email broken")',
+      match: (c) => ENQ_RE.test(norm(c)),
+      note: 'Three tickets. front is the oldest (printer jam), back is the newest (email broken). New work always joins at back.' },
+    { label: 'Task 13 of 17',
+      text: 'Which ticket gets worked next? Look at the front: peek().',
+      hint: 'Type:  peek()',
+      match: (c) => PEEK_RE.test(norm(c)),
+      note: 'In a queue, peek reads the FRONT, the oldest item. First in, first out: the printer jam came in first, so it is served first.' },
+    { label: 'Task 14 of 17',
+      text: 'Work the oldest ticket. Remove it from the front: dequeue().',
+      hint: 'Type:  dequeue()',
+      match: (c) => DEQ_RE.test(norm(c)),
+      note: 'dequeue removes from the FRONT, the opposite end from where enqueue adds. That split, add at one end and remove at the other, is the entire difference between a queue and a stack. Same node type, opposite access pattern.' },
+    { label: 'Task 15 of 17',
+      text: 'Work the next one: dequeue().',
+      hint: 'Type:  dequeue()',
+      match: (c) => DEQ_RE.test(norm(c)),
+      note: 'front advanced to "email broken", the last ticket standing. back has not moved yet.' },
+    { label: 'Task 16 of 17',
+      text: 'One ticket left. Before you run it, predict: after this dequeue empties the queue, where must back point? Then run dequeue().',
+      hint: 'Type:  dequeue()',
+      match: (c) => DEQ_RE.test(norm(c)),
+      note: 'THE DANGLING-BACK TRAP. When the last node leaves, you must reset BOTH front and back to NULL. If you only null out front and leave back pointing at the node you just freed, the next enqueue dereferences a freed pointer. This is the headline queue bug and the autograder checks for it.' },
+    { label: 'Task 17 of 17',
+      text: 'The queue is empty. Predict what dequeue() does now, then run dequeue().',
+      hint: 'Type:  dequeue()',
+      match: (c) => DEQ_RE.test(norm(c)),
+      note: 'THE QUEUE GUARD, the mirror of the stack guard. dequeue on an empty queue returns NULL with front and back both NULL, and no crash. Same nodes, different ends: a stack pushes and pops at one end, a queue enqueues at back and dequeues at front. That one design choice is what you reach for when you decide which ADT a problem needs. Walkthrough complete.' },
+  ];
+
+  // ============================================================
+  // Controller
+  // ============================================================
+  function checkTask(rawCmd) {
+    if (mode === "free" || currentTaskIndex >= tasks.length) return null;
+    const t = tasks[currentTaskIndex];
+    if (t.match(rawCmd)) {
+      process(rawCmd);
+      if (t.note) { termLine('', 'out'); termLine('  ' + decodeEntities(t.note), 'note'); }
+      currentTaskIndex++;
+      consecutiveFails = 0;
+      hideHintPulse();
+      renderTask();
+      if (currentTaskIndex >= tasks.length) {
+        setMode("free");
+        termLine('', 'out');
+        termLine('  Walkthrough complete. Free mode unlocked. Type any stack or queue operation to keep exploring.', 'note');
+      }
+      return true;
+    } else {
+      echoCommand(rawCmd);
+      const d = diagnose(rawCmd, t);
+      if (d) termLine('  ' + d, 'err');
+      else termLine("  Not what this task is asking for. Look at the task card above, or click 'Show hint'.", 'err');
+      consecutiveFails++;
+      if (consecutiveFails >= 2) showHintPulse();
+      return false;
+    }
+  }
+
+  function diagnose(cmd, t) {
+    const c = norm(cmd);
+    // Missing parentheses on a no-arg op
+    if (/^(pop|peek|dequeue|is_empty)\s*$/i.test(c)) return 'Almost. These are function calls; add the empty parentheses, e.g. ' + c.trim() + '().';
+    // Used the wrong family for the section
+    if (t.match === undefined) return null;
+    const wantPush = (t.match === undefined) ? false : (t.hint || '').toLowerCase().includes('push');
+    if (PUSH_RE.test(c) && (DEQ_RE.test('dequeue()') && (t.hint||'').includes('enqueue'))) { /* no-op */ }
+    if ((t.hint||'').includes('enqueue') && PUSH_RE.test(c)) return 'This section builds a queue. Use enqueue(...) to add, not push(...).';
+    if ((t.hint||'').includes('push(') && ENQ_RE.test(c)) return 'This section builds a stack. Use push(...) to add, not enqueue(...).';
+    if ((t.hint||'').includes('dequeue') && POP_RE.test(c)) return 'You are working a queue here. Remove from the front with dequeue(), not pop().';
+    if ((t.hint||'').startsWith('Type:  pop') && DEQ_RE.test(c)) return 'You are working a stack here. Remove the top with pop(), not dequeue().';
+    return null;
+  }
+
+  function decodeEntities(s) {
+    return String(s).replace(/&mdash;/g, '\u2014').replace(/&rarr;/g, '\u2192').replace(/&darr;/g, '\u2193').replace(/&amp;/g, '&');
+  }
+
+  function renderTask() {
+    const fill  = root.querySelector('#sqf-progress-fill');
+    const label = root.querySelector('#sqf-progress-label');
+    const card  = root.querySelector('#sqf-task-card');
+    const labelEl = root.querySelector('#sqf-task-label');
+    const textEl  = root.querySelector('#sqf-task-text');
+    const hintEl  = root.querySelector('#sqf-task-hint');
+    const sectionEl = root.querySelector('#sqf-section-header');
+
+    const pct = (currentTaskIndex / tasks.length) * 100;
+    fill.style.width = pct + '%';
+    label.textContent = 'Task ' + Math.min(currentTaskIndex + 1, tasks.length) + ' of ' + tasks.length;
+
+    if (currentTaskIndex >= tasks.length) {
+      card.className = 'task-card complete';
+      labelEl.textContent = 'Complete';
+      textEl.textContent = "You built a stack and a queue on the same kind of node, drove every core operation including both empty guards and the dangling-back trap, and saw why a queue keeps a back pointer. You're ready for the Stack & Queue Self-Check and the two labs.";
+      hintEl.textContent = '';
+      fill.style.width = '100%';
+      label.textContent = 'All tasks complete';
+      sectionEl.innerHTML = 'All done';
+      completionEl.innerHTML = '';
+      cs210RenderCompletion(completionEl);
+      return;
+    }
+    completionEl.innerHTML = '';
+    card.className = 'task-card';
+    const t = tasks[currentTaskIndex];
+    if (t.section) sectionEl.innerHTML = t.section;
+    labelEl.textContent = t.label;
+    textEl.innerHTML = t.text;
+    hintEl.textContent = '';
+  }
+
+  function showHint() {
+    if (currentTaskIndex >= tasks.length) return;
+    const t = tasks[currentTaskIndex];
+    root.querySelector('#sqf-task-hint').textContent = 'Hint: ' + (t.hint || '');
+    hideHintPulse();
+  }
+  function showHintPulse() { root.querySelector('#sqf-hint-btn').classList.add('pulse'); }
+  function hideHintPulse() { root.querySelector('#sqf-hint-btn').classList.remove('pulse'); }
+
+  function reset() {
+    doClear();
+    currentTaskIndex = 0;
+    consecutiveFails = 0;
+    hideHintPulse();
+    setMode("walkthrough");
+    terminalEl.innerHTML = '';
+    termLine('Welcome to the stacks and queues walkthrough.', 'dim');
+    termLine('Follow the task card above. Type operations like push("x") or dequeue() at the prompt.', 'dim');
+    termLine('', 'out');
+    renderStruct();
+    renderTask();
+  }
+
+  function setMode(newMode) {
+    mode = newMode;
+    const btn = root.querySelector('#sqf-mode-btn');
+    if (mode === "free") {
+      btn.textContent = 'Return to walkthrough';
+      btn.style.background = '#E6F4EA';
+      btn.style.borderColor = '#2E7D32';
+      btn.style.color = '#1B5E20';
+      inputEl.placeholder = 'free mode: push/pop/peek/enqueue/dequeue/is_empty';
+    } else {
+      btn.textContent = 'Switch to free mode';
+      btn.style.background = '';
+      btn.style.borderColor = '';
+      btn.style.color = '';
+      inputEl.placeholder = 'follow the task above';
+    }
+  }
+
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const v = inputEl.value;
+      inputEl.value = '';
+      if (!v.trim()) return;
+      if (mode === "walkthrough") checkTask(v);
+      else process(v);
+    }
+  });
+  root.querySelector('#sqf-hint-btn').addEventListener('click', showHint);
+  root.querySelector('#sqf-reset-btn').addEventListener('click', reset);
+  root.querySelector('#sqf-mode-btn').addEventListener('click', () => {
+    if (mode === "walkthrough") {
+      setMode("free");
+      termLine('', 'out');
+      termLine('  Free mode. Type any stack or queue operation. Use clear to start over.', 'note');
+    } else {
+      setMode("walkthrough");
+      termLine('', 'out');
+      termLine('  Walkthrough mode. Follow the task card above.', 'note');
+    }
+  });
+
+  // Boot
+  reset();
+})();
+</script>
+
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 32px 0 10px 0;">Stack &amp; Queue Self-Check</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Six questions covering which ADT a problem needs, tracing LIFO and FIFO removal, why a queue keeps a back pointer, and what to reset when a queue empties. Pass at 70% or above; below that, replay the walkthrough and take the quiz again.</p>
+
+<!-- ============================================================
+     CS210 Lesson 31 - Stack & Queue Self-Check Quiz Widget
+     Card/slide flow: one question per card, Submit + Next/Back.
+     Score card at the end with per-question recap and two-salt
+     completion code (passing >= 70% uses _completed salt;
+     non-passing uses _incomplete salt).
+     ============================================================ -->
+<style>
+.cs210-sqquiz * { box-sizing: border-box; }
+.cs210-sqquiz {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-sqquiz h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-sqquiz .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+
+.cs210-sqquiz .dots {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+.cs210-sqquiz .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #E5E7EB;
+  border: 1px solid #C7CFD9;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.cs210-sqquiz .dot.current {
+  background: #003087;
+  border-color: #00205B;
+  transform: scale(1.25);
+}
+.cs210-sqquiz .dot.correct {
+  background: #2E7D32;
+  border-color: #1B5E20;
+}
+.cs210-sqquiz .dot.incorrect {
+  background: #B8002F;
+  border-color: #6B0000;
+}
+.cs210-sqquiz .dot.score {
+  width: 16px;
+  height: 12px;
+  border-radius: 3px;
+  background: #F0B92C;
+  border-color: #6B5300;
+}
+
+.cs210-sqquiz .card {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 6px;
+  padding: 22px 24px;
+  margin-bottom: 14px;
+}
+.cs210-sqquiz .q-label {
+  font-size: 11.5px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.cs210-sqquiz .q-text {
+  font-size: 15.5px;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+}
+.cs210-sqquiz .q-text code {
+  background: #F0F2F5;
+  padding: 1px 6px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13.5px;
+}
+.cs210-sqquiz pre.q-code {
+  background: #1E2A3A;
+  color: #E8EDF5;
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 0 0 16px 0;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.cs210-sqquiz .choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.cs210-sqquiz .choice {
+  display: block;
+  padding: 10px 14px;
+  border: 1px solid #C7CFD9;
+  border-radius: 4px;
+  background: #ffffff;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: inherit;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.cs210-sqquiz .choice:hover { background: #F5F7FA; }
+.cs210-sqquiz .choice.selected {
+  background: #E8EDF5;
+  border-color: #003087;
+}
+.cs210-sqquiz .choice.locked { cursor: default; }
+.cs210-sqquiz .choice.locked:hover { background: inherit; }
+.cs210-sqquiz .choice.correct {
+  background: #E6F4EA;
+  border-color: #2E7D32;
+  color: #1B5E20;
+  font-weight: 600;
+}
+.cs210-sqquiz .choice.incorrect {
+  background: #FCE7EA;
+  border-color: #B8002F;
+  color: #6B0000;
+  font-weight: 600;
+}
+.cs210-sqquiz .choice code {
+  background: #F0F2F5;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+}
+
+.cs210-sqquiz .text-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: Consolas, monospace;
+}
+.cs210-sqquiz .text-input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-sqquiz .text-input:disabled {
+  background: #F5F7FA;
+  color: #4A5568;
+}
+
+.cs210-sqquiz .feedback {
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  margin-bottom: 14px;
+  display: none;
+}
+.cs210-sqquiz .feedback.visible { display: block; }
+.cs210-sqquiz .feedback.correct {
+  background: #E6F4EA;
+  border-left: 4px solid #2E7D32;
+  color: #1B5E20;
+}
+.cs210-sqquiz .feedback.incorrect {
+  background: #FCE7EA;
+  border-left: 4px solid #B8002F;
+  color: #6B0000;
+}
+.cs210-sqquiz .feedback code {
+  background: rgba(255,255,255,0.6);
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+}
+
+.cs210-sqquiz .btn-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+.cs210-sqquiz .submit-btn,
+.cs210-sqquiz .nav-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 9px 18px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-sqquiz .submit-btn:hover,
+.cs210-sqquiz .nav-btn:hover { background: #00205B; }
+.cs210-sqquiz .submit-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-sqquiz .nav-btn.back {
+  background: #ffffff;
+  color: #003087;
+  border: 1px solid #C7CFD9;
+}
+.cs210-sqquiz .nav-btn.back:hover { background: #F5F7FA; color: #00205B; }
+.cs210-sqquiz .nav-row { display: flex; gap: 8px; }
+
+/* Score card */
+.cs210-sqquiz .score-card { text-align: center; }
+.cs210-sqquiz .score-big {
+  font-size: 48px;
+  font-weight: 700;
+  color: #003087;
+  margin: 10px 0 4px 0;
+}
+.cs210-sqquiz .score-card.full-correct .score-big { color: #1B5E20; }
+.cs210-sqquiz .score-card.passing .score-big      { color: #2E7D32; }
+.cs210-sqquiz .score-card.not-passing .score-big  { color: #6B0000; }
+.cs210-sqquiz .score-label {
+  font-size: 13px;
+  color: #6B7280;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.cs210-sqquiz .score-message {
+  font-size: 15px;
+  color: #4A5568;
+  margin-bottom: 18px;
+}
+.cs210-sqquiz .score-message.good-job {
+  color: #1B5E20;
+  font-weight: 600;
+}
+.cs210-sqquiz .recap {
+  text-align: left;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #E5E7EB;
+}
+.cs210-sqquiz .recap-title {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.cs210-sqquiz .recap-item {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #F0F2F5;
+}
+.cs210-sqquiz .recap-item:last-child { border-bottom: none; }
+.cs210-sqquiz .recap-icon {
+  flex: 0 0 22px;
+  font-size: 16px;
+  font-weight: 700;
+}
+.cs210-sqquiz .recap-icon.correct { color: #2E7D32; }
+.cs210-sqquiz .recap-icon.incorrect { color: #B8002F; }
+.cs210-sqquiz .recap-body { flex: 1; font-size: 13.5px; }
+.cs210-sqquiz .recap-question { color: #1a1a1a; margin-bottom: 3px; }
+.cs210-sqquiz .recap-explanation { color: #4A5568; font-size: 13px; }
+.cs210-sqquiz .recap-explanation code {
+  background: #F0F2F5;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 12.5px;
+}
+.cs210-sqquiz .reset-row {
+  margin-top: 18px;
+  display: flex;
+  justify-content: center;
+}
+.cs210-sqquiz .reset-btn {
+  background: #ffffff;
+  border: 1px solid #003087;
+  color: #003087;
+  padding: 8px 18px;
+  border-radius: 4px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-sqquiz .reset-btn:hover { background: #F5F7FA; }
+
+.cs210-sqquiz .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #4A5568;
+  margin-top: 12px;
+}
+.cs210-sqquiz .help-note strong { color: #00205B; }
+
+/* Completion code block on the score card */
+.cs210-sqquiz .code-block {
+  background: #F0F4FA;
+  border: 1px solid #003087;
+  border-radius: 4px;
+  padding: 14px 18px;
+  margin: 14px 0 6px 0;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.cs210-sqquiz .code-block.fail {
+  background: #FFF1F3;
+  border-color: #B8002F;
+}
+.cs210-sqquiz .code-block .code-left { text-align: left; }
+.cs210-sqquiz .code-block .code-label {
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #4A5568;
+}
+.cs210-sqquiz .code-block .code-value {
+  font-family: Consolas, monospace;
+  font-size: 26px;
+  font-weight: 700;
+  color: #00205B;
+  letter-spacing: 3px;
+}
+.cs210-sqquiz .code-block.fail .code-value { color: #6B0000; }
+.cs210-sqquiz .code-block .copy-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-sqquiz .code-block .copy-btn:hover { background: #00205B; }
+.cs210-sqquiz .code-block .copy-btn.copied { background: #2E7D32; }
+.cs210-sqquiz .code-block.fail .copy-btn { background: #6B0000; }
+.cs210-sqquiz .inline-code-footer {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 8px 12px;
+  border-radius: 3px;
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: #4A5568;
+  font-family: Consolas, monospace;
+}
+
+/* Name modal overlay */
+.cs210-sqquiz .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.cs210-sqquiz .name-modal {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-sqquiz .name-modal h2 {
+  color: #00205B;
+  font-size: 20px;
+  margin: 0 0 10px 0;
+}
+.cs210-sqquiz .name-modal p {
+  color: #4A5568;
+  font-size: 14px;
+  margin: 0 0 16px 0;
+}
+.cs210-sqquiz .name-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-sqquiz .name-modal input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-sqquiz .name-modal-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-sqquiz .name-modal-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-sqquiz .name-modal-btn:not(:disabled):hover {
+  background: #00205B;
+}
+</style>
+
+<div class="cs210-sqquiz">
+
+<div class="name-modal-backdrop" id="sqquiz-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the score card so you can include it in your screenshot for the Blackboard reflection.</p>
+    <input type="text" id="sqquiz-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="sqquiz-cadet-name-btn" disabled>Start the quiz</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 31 &middot; Stack &amp; Queue Self-Check</h1>
+<div class="subtitle">Six questions on choosing between a stack and a queue, tracing LIFO and FIFO removal, and the two implementation details that trip people up: the back pointer and the empty-queue reset. Pass at 70% or above; below that, take it again after reviewing.</div>
+
+<div class="dots" id="sqquiz-dots"></div>
+
+<div id="sqquiz-card-area"></div>
+
+<div class="help-note">
+  <strong>How this works:</strong> One question per card. Pick or type your answer and click Submit. Feedback appears, then click Next to move on. Answers lock once submitted, so think before you submit. After all six, you get a score, a completion code, and a per-question recap.
+</div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-sqquiz');
+  if (!root) return;
+
+  // ============================================================
+  // Completion code generation (two-salt scheme: pass vs. fail)
+  // ============================================================
+  const CS210_SALT_PASS = "lesson31_stackqueuequiz_completed";
+  const CS210_SALT_FAIL = "lesson31_stackqueuequiz_incomplete";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const PASSING_THRESHOLD = 0.70;
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE_PASS = cs210CodeFromSalt(CS210_SALT_PASS);
+  const CS210_CODE_FAIL = cs210CodeFromSalt(CS210_SALT_FAIL);
+  let cadetName = '';
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+  function cs210Copy(text) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch (e) {}
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      return true;
+    } catch (e) { return false; }
+  }
+
+  // ============================================================
+  // Name modal
+  // ============================================================
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#sqquiz-name-modal-backdrop');
+    const input = root.querySelector('#sqquiz-cadet-name-input');
+    const btn = root.querySelector('#sqquiz-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length > 0) {
+        // Name already known from a previous widget or visit. Skip the modal.
+        cadetName = stored.trim();
+        backdrop.style.display = 'none';
+        return;
+      }
+    } catch (e) {}
+    function updateBtn() { btn.disabled = input.value.trim().length === 0; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', () => {
+      const n = input.value.trim();
+      if (!n) return;
+      cadetName = n;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', n); } catch (e) {}
+      backdrop.style.display = 'none';
+      // Dismiss any sibling widget modals on the same page.
+      const siblings = document.querySelectorAll(
+        '#sqf-name-modal-backdrop, #name-modal-backdrop'
+      );
+      siblings.forEach(function(m) { m.style.display = 'none'; });
+    });
+    setTimeout(() => { try { input.focus(); } catch (e) {} }, 50);
+  })();
+
+  // ============================================================
+  // Questions
+  // ============================================================
+  const questions = [
+    {
+      id: 'q1',
+      type: 'choice',
+      text: 'A help-desk works tickets in the order they arrive: the ticket that has been waiting longest is handled first. Which ADT models this?',
+      options: [
+        'A stack: last in, first out.',
+        'A queue: first in, first out.',
+        'Either one works equally well; the order does not matter.',
+        'Neither; this needs a sorted list.',
+      ],
+      correct: 1,
+      correctFeedback: 'Right. Oldest served first is first in, first out, which is exactly a queue. Tickets join at the back and are worked from the front.',
+      incorrectFeedback: 'The correct answer is the queue. "Longest waiting handled first" is first in, first out: items leave in the same order they arrived. That is the defining behavior of a queue, not a stack.',
+      shortLabel: 'Which ADT for a help-desk ticket line?',
+    },
+    {
+      id: 'q2',
+      type: 'choice',
+      text: 'A browser Back button returns you to the page you visited most recently, then the one before that, and so on. Which ADT models the page history?',
+      options: [
+        'A queue: first in, first out.',
+        'A stack: last in, first out.',
+        'A sorted list ordered by URL.',
+        'Two queues, one for forward and one for back.',
+      ],
+      correct: 1,
+      correctFeedback: 'Right. Most recent first is last in, first out: the page you pushed last is the first one Back pops. That is a stack.',
+      incorrectFeedback: 'The correct answer is the stack. Back returns the most recently visited page first, which is last in, first out. You push each page as you visit it and pop the top when Back is pressed.',
+      shortLabel: 'Which ADT for a browser Back button?',
+    },
+    {
+      id: 'q3',
+      type: 'text',
+      text: 'You push <code>3</code>, then <code>5</code>, then <code>8</code> onto an empty stack, then call <code>pop()</code> once. What value does <code>pop()</code> return? Type just the number.',
+      correct: ['8'],
+      normalize: s => s.trim(),
+      placeholder: 'e.g. 4',
+      correctFeedback: 'Right. A stack pops the most recently pushed value first. <code>8</code> went on last, so it comes off first.',
+      incorrectFeedback: 'The correct answer is <code>8</code>. push order was 3, 5, 8, so 8 is on top. A stack is last in, first out, so the first pop returns 8.',
+      shortLabel: 'pop() after pushing 3, 5, 8',
+    },
+    {
+      id: 'q4',
+      type: 'text',
+      text: 'You enqueue <code>3</code>, then <code>5</code>, then <code>8</code> onto an empty queue, then call <code>dequeue()</code> once. What value does <code>dequeue()</code> return? Type just the number.',
+      correct: ['3'],
+      normalize: s => s.trim(),
+      placeholder: 'e.g. 4',
+      correctFeedback: 'Right. A queue dequeues the oldest value first. <code>3</code> went in first, so it comes out first.',
+      incorrectFeedback: 'The correct answer is <code>3</code>. enqueue order was 3, 5, 8, so 3 is at the front. A queue is first in, first out, so the first dequeue returns 3. Compare this with the stack in the previous question: same inputs, opposite end.',
+      shortLabel: 'dequeue() after enqueuing 3, 5, 8',
+    },
+    {
+      id: 'q5',
+      type: 'choice',
+      text: 'A linked-list queue keeps a <code>back</code> (tail) pointer in addition to <code>front</code>. Why?',
+      options: [
+        'So <code>enqueue</code> can add at the end in O(1) without walking the whole list to find it.',
+        'So <code>dequeue</code> can remove from the end of the list.',
+        'Because a queue stores two values in every node.',
+        'So the code can detect when the list contains a cycle.',
+      ],
+      correct: 0,
+      correctFeedback: 'Right. Without a back pointer you would walk from front to the end on every enqueue, making it O(n). The back pointer lets you append in one step, O(1).',
+      incorrectFeedback: 'The correct answer is the first one. The back pointer exists so enqueue can reach the end in one step. Without it, each enqueue walks the entire list (O(n)); with it, enqueue is O(1). dequeue still works from the front.',
+      shortLabel: 'Why a queue keeps a back pointer',
+    },
+    {
+      id: 'q6',
+      type: 'choice',
+      text: 'You <code>dequeue</code> the last remaining node from a queue. Besides unlinking it from <code>front</code>, freeing it, and returning its value, what else must the code do?',
+      options: [
+        'Set <code>front</code> to NULL but leave <code>back</code> pointing at the node you just freed.',
+        'Set both <code>front</code> and <code>back</code> to NULL.',
+        'Set <code>back</code> to NULL but leave <code>front</code> unchanged.',
+        'Nothing else; the next <code>enqueue</code> will repair the pointers.',
+      ],
+      correct: 1,
+      correctFeedback: 'Right. When the queue empties, both ends must become NULL. Leaving <code>back</code> aimed at the freed node means the next <code>enqueue</code> dereferences a dangling pointer.',
+      incorrectFeedback: 'The correct answer is to set both <code>front</code> and <code>back</code> to NULL. If you null only <code>front</code> and leave <code>back</code> pointing at the node you just freed, the next <code>enqueue</code> writes through a dangling pointer. This is the queue bug the lab autograder checks for.',
+      shortLabel: 'Emptying a queue: resetting back',
+    },
+  ];
+
+  // ============================================================
+  // State
+  // ============================================================
+  const state = questions.map(() => ({ answered: false, correct: false, choice: null, value: '' }));
+  let currentIndex = 0;
+
+  const dotsArea = root.querySelector('#sqquiz-dots');
+  const cardArea = root.querySelector('#sqquiz-card-area');
+
+  // ============================================================
+  // Rendering: dots
+  // ============================================================
+  function renderDots() {
+    dotsArea.innerHTML = '';
+    for (let i = 0; i < questions.length; i++) {
+      const d = document.createElement('div');
+      d.className = 'dot';
+      if (i === currentIndex) d.classList.add('current');
+      if (state[i].answered) {
+        d.classList.add(state[i].correct ? 'correct' : 'incorrect');
+      }
+      dotsArea.appendChild(d);
+    }
+    const scoreDot = document.createElement('div');
+    scoreDot.className = 'dot score';
+    if (currentIndex === questions.length) scoreDot.classList.add('current');
+    dotsArea.appendChild(scoreDot);
+  }
+
+  // ============================================================
+  // Rendering: question card
+  // ============================================================
+  function buildQuestionCard(i) {
+    const q = questions[i];
+    const s = state[i];
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    const label = document.createElement('div');
+    label.className = 'q-label';
+    label.textContent = 'Question ' + (i + 1) + ' of ' + questions.length;
+    card.appendChild(label);
+
+    const text = document.createElement('div');
+    text.className = 'q-text';
+    text.innerHTML = q.text;
+    card.appendChild(text);
+
+    if (q.code) {
+      const pre = document.createElement('pre');
+      pre.className = 'q-code';
+      pre.textContent = q.code;
+      card.appendChild(pre);
+    }
+
+    // Answer surface
+    let getAnswer; // closure returning chosen index (choice) or string (text)
+    if (q.type === 'choice') {
+      const choices = document.createElement('div');
+      choices.className = 'choices';
+      const buttons = [];
+      q.options.forEach((opt, idx) => {
+        const b = document.createElement('button');
+        b.className = 'choice';
+        b.innerHTML = opt;
+        b.type = 'button';
+        b.addEventListener('click', () => {
+          if (s.answered) return;
+          buttons.forEach(x => x.classList.remove('selected'));
+          b.classList.add('selected');
+          s.choice = idx;
+          submitBtn.disabled = false;
+        });
+        if (s.choice === idx) b.classList.add('selected');
+        if (s.answered) {
+          b.classList.add('locked');
+          if (idx === q.correct) b.classList.add('correct');
+          else if (idx === s.choice) b.classList.add('incorrect');
+        }
+        choices.appendChild(b);
+        buttons.push(b);
+      });
+      card.appendChild(choices);
+      getAnswer = () => s.choice;
+    } else {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'text-input';
+      input.placeholder = q.placeholder || '';
+      input.value = s.value || '';
+      input.spellcheck = false;
+      input.autocomplete = 'off';
+      input.addEventListener('input', () => {
+        if (s.answered) return;
+        s.value = input.value;
+        submitBtn.disabled = input.value.trim().length === 0;
+      });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !s.answered && input.value.trim().length > 0) {
+          e.preventDefault();
+          submitBtn.click();
+        }
+      });
+      if (s.answered) input.disabled = true;
+      card.appendChild(input);
+      getAnswer = () => input.value;
+      setTimeout(() => { try { input.focus(); } catch (e) {} }, 50);
+    }
+
+    // Feedback
+    const fb = document.createElement('div');
+    fb.className = 'feedback';
+    if (s.answered) {
+      fb.classList.add('visible');
+      fb.classList.add(s.correct ? 'correct' : 'incorrect');
+      fb.innerHTML = s.correct ? q.correctFeedback : q.incorrectFeedback;
+    }
+    card.appendChild(fb);
+
+    // Button row
+    const row = document.createElement('div');
+    row.className = 'btn-row';
+
+    const navL = document.createElement('div');
+    navL.className = 'nav-row';
+    if (i > 0) {
+      const back = document.createElement('button');
+      back.className = 'nav-btn back';
+      back.type = 'button';
+      back.innerHTML = '&larr; Back';
+      back.addEventListener('click', () => { currentIndex = i - 1; render(); });
+      navL.appendChild(back);
+    }
+    row.appendChild(navL);
+
+    const submitBtn = document.createElement('button');
+    submitBtn.type = 'button';
+    if (s.answered) {
+      submitBtn.className = 'nav-btn';
+      submitBtn.innerHTML = (i === questions.length - 1) ? 'See score &rarr;' : 'Next &rarr;';
+      submitBtn.addEventListener('click', () => { currentIndex = i + 1; render(); });
+    } else {
+      submitBtn.className = 'submit-btn';
+      submitBtn.textContent = 'Submit';
+      // Enable state
+      if (q.type === 'choice') submitBtn.disabled = (s.choice === null);
+      else submitBtn.disabled = (!s.value || s.value.trim().length === 0);
+      submitBtn.addEventListener('click', () => {
+        const ans = getAnswer();
+        let correct = false;
+        if (q.type === 'choice') {
+          correct = (ans === q.correct);
+        } else {
+          const v = q.normalize ? q.normalize(ans) : ans;
+          correct = q.correct.some(c => (q.normalize ? q.normalize(c) : c) === v);
+        }
+        s.answered = true;
+        s.correct = correct;
+        render();
+      });
+    }
+    row.appendChild(submitBtn);
+    card.appendChild(row);
+
+    return card;
+  }
+
+  // ============================================================
+  // Rendering: score card
+  // ============================================================
+  function buildScoreCard() {
+    const card = document.createElement('div');
+    card.className = 'card score-card';
+    const correctCount = state.filter(s => s.correct).length;
+    const pct = correctCount / questions.length;
+    const passed = pct >= PASSING_THRESHOLD;
+
+    if (correctCount === questions.length) card.classList.add('full-correct');
+    else if (passed) card.classList.add('passing');
+    else card.classList.add('not-passing');
+
+    const label = document.createElement('div');
+    label.className = 'q-label';
+    label.textContent = 'Quiz complete';
+    card.appendChild(label);
+
+    const msg = document.createElement('div');
+    msg.className = 'score-message';
+    if (correctCount === questions.length) {
+      msg.className = 'score-message good-job';
+      msg.textContent = 'Perfect score. Stacks and queues are locked in.';
+    } else if (passed) {
+      msg.className = 'score-message good-job';
+      msg.textContent = 'Passed.';
+    } else {
+      msg.style.color = '#6B0000';
+      msg.textContent = 'Below the 70% threshold. Review and try again.';
+    }
+    card.appendChild(msg);
+
+    const scoreBig = document.createElement('div');
+    scoreBig.className = 'score-big';
+    scoreBig.textContent = correctCount + ' / ' + questions.length;
+    card.appendChild(scoreBig);
+
+    const scoreLabel = document.createElement('div');
+    scoreLabel.className = 'score-label';
+    scoreLabel.textContent = 'questions correct (' + Math.round(pct * 100) + '%)';
+    card.appendChild(scoreLabel);
+
+    // Detail message
+    const detail = document.createElement('div');
+    detail.className = 'score-message';
+    if (correctCount === questions.length) {
+      detail.textContent = 'You can tell a stack from a queue, trace both, and you know the back-pointer and empty-reset details. Move on to the two labs.';
+    } else if (passed) {
+      detail.textContent = 'You crossed the threshold. Review the questions you missed below before the labs.';
+    } else {
+      detail.textContent = 'Re-read the stacks and queues section in the lesson materials. The walkthrough widget is also there if you want to replay it.';
+    }
+    card.appendChild(detail);
+
+    // Completion code block — passing vs non-passing salt
+    const code = passed ? CS210_CODE_PASS : CS210_CODE_FAIL;
+    const codeBlock = document.createElement('div');
+    codeBlock.className = 'code-block' + (passed ? '' : ' fail');
+    const left = document.createElement('div');
+    left.className = 'code-left';
+    const codeLabel = document.createElement('div');
+    codeLabel.className = 'code-label';
+    codeLabel.textContent = passed ? 'Passing code' : 'Non-passing code';
+    left.appendChild(codeLabel);
+    const codeValue = document.createElement('div');
+    codeValue.className = 'code-value';
+    codeValue.textContent = code;
+    left.appendChild(codeValue);
+    codeBlock.appendChild(left);
+    const copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.className = 'copy-btn';
+    copyBtn.textContent = 'Copy';
+    copyBtn.addEventListener('click', () => {
+      const ok = cs210Copy(code);
+      copyBtn.textContent = ok ? 'Copied!' : 'Copy failed';
+      if (ok) copyBtn.classList.add('copied');
+      setTimeout(() => { copyBtn.textContent = 'Copy'; copyBtn.classList.remove('copied'); }, 1500);
+    });
+    codeBlock.appendChild(copyBtn);
+    card.appendChild(codeBlock);
+
+    const now = new Date();
+    const pad = (n) => n.toString().padStart(2, '0');
+    const ts = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate()) +
+               ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+
+    const footer = document.createElement('div');
+    footer.className = 'inline-code-footer';
+    footer.innerHTML = '<strong>' + escapeHtml(cadetName || '(name not set)') + '</strong> &middot; ' + ts +
+                       (passed ? ' &middot; passing' : ' &middot; non-passing');
+    card.appendChild(footer);
+
+    // Recap
+    const recap = document.createElement('div');
+    recap.className = 'recap';
+    const recapTitle = document.createElement('div');
+    recapTitle.className = 'recap-title';
+    recapTitle.textContent = 'Question recap';
+    recap.appendChild(recapTitle);
+
+    state.forEach((s, i) => {
+      const item = document.createElement('div');
+      item.className = 'recap-item';
+      const icon = document.createElement('div');
+      icon.className = 'recap-icon ' + (s.correct ? 'correct' : 'incorrect');
+      icon.textContent = s.correct ? '\u2713' : '\u2717';
+      item.appendChild(icon);
+      const body = document.createElement('div');
+      body.className = 'recap-body';
+      const q = questions[i];
+      const qLine = document.createElement('div');
+      qLine.className = 'recap-question';
+      qLine.innerHTML = '<strong>Q' + (i + 1) + '.</strong> ' + q.shortLabel;
+      body.appendChild(qLine);
+      if (!s.correct) {
+        const exp = document.createElement('div');
+        exp.className = 'recap-explanation';
+        exp.innerHTML = q.incorrectFeedback;
+        body.appendChild(exp);
+      }
+      item.appendChild(body);
+      recap.appendChild(item);
+    });
+    card.appendChild(recap);
+
+    const resetRow = document.createElement('div');
+    resetRow.className = 'reset-row';
+    const resetBtn = document.createElement('button');
+    resetBtn.type = 'button';
+    resetBtn.className = 'reset-btn';
+    resetBtn.textContent = 'Take the quiz again';
+    resetBtn.addEventListener('click', reset);
+    resetRow.appendChild(resetBtn);
+    card.appendChild(resetRow);
+
+    return card;
+  }
+
+  function render() {
+    renderDots();
+    cardArea.innerHTML = '';
+    if (currentIndex >= questions.length) {
+      cardArea.appendChild(buildScoreCard());
+    } else {
+      cardArea.appendChild(buildQuestionCard(currentIndex));
+    }
+  }
+
+  function reset() {
+    state.forEach(s => { s.answered = false; s.correct = false; s.choice = null; s.value = ''; });
+    currentIndex = 0;
+    render();
+  }
+
+  // Boot
+  render();
+})();
+</script>
+
+    </div>
+  </details>
+
+  <!-- ===================== 6. AFTER CLASS ===================== -->
+  <details id="after-class" style="margin-bottom: 24px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      6. After Class
+    </summary>
+    <div style="padding: 18px 22px;">
+      <ul style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Finish Lab 1 and Lab 2 if you did not complete them in class. Each is its own GitHub Classroom assignment with its own Gradescope submission; both are due before Lesson 32.</li>
+        <li style="margin-bottom: 6px;">Submit the Lesson 31 reflection in Blackboard. The reflection asks for the walkthrough and self-check completion codes and one short response from the question bank.</li>
+        <li style="margin-bottom: 6px;">Read the Lesson 32 supplementary notes. Lesson 32 takes the same linked structures you have been walking with loops and traverses them with recursion instead, where the call stack does the bookkeeping your loop made explicit.</li>
+        <li style="margin-bottom: 6px;">Your ethics discussion main post is due around now. Check the discussion board in Blackboard for the exact date and post your response applying two ACM Code of Ethics principles.</li>
+        <li style="margin-bottom: 0;">Quiz 9 was today and covered Lessons 29 and 30. If you want to review it, your graded copy is in the course repo.</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== HELP NOTE ===================== -->
+  <div style="background: #F5F7FA; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 3px; font-size: 13.5px; color: #4A5568;">
+    <strong style="color: #00205B;">Need help?</strong> Schedule EI with your instructor. Bring the specific code that misbehaves, the exact error or valgrind output, and a screenshot of the widget step you got stuck on. The course Resources section has reference material worth checking first. Specific questions get unstuck quickly.
+  </div>
+
+</div>

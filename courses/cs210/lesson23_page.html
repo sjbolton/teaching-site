@@ -1,0 +1,2364 @@
+<!-- ============================================================
+     CS210 — Lesson 23
+     Software Design from Requirements
+     Self-contained: all CSS inline. Native <details> for collapsing.
+     Decompose walkthrough and interface quiz widgets embedded
+     inline in Section 5.
+     Paste into Blackboard Ultra via Document → Add HTML block.
+     ============================================================ -->
+
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 980px; margin: 0 auto; line-height: 1.6;">
+
+  <!-- ===================== LIGHT HEADER ===================== -->
+  <div style="border-left: 5px solid #003087; padding: 8px 0 8px 18px; margin-bottom: 24px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 2px;">CS210 &middot; Block 3 &middot; Lesson 23</div>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 600; color: #00205B;">Software Design from Requirements</h1>
+    <div style="font-size: 14px; color: #4A5568; margin-top: 4px;">Decomposition &middot; Header design &middot; Ownership in interfaces &middot; The design memo</div>
+  </div>
+
+  <!-- ===================== AT A GLANCE ===================== -->
+  <div style="background: #F5F7FA; border-left: 4px solid #B5B7BA; padding: 14px 18px; margin-bottom: 22px; font-size: 14px;">
+    <strong style="color: #00205B;">At a glance:</strong> All semester we have handed you the decomposition: function signatures in a header, a spec naming each function. Today you do that work yourself. You will read a requirements document, identify the data and the actions, group them into modules, sketch headers with ownership notes, and write a short design memo. The lab is the rehearsal for your Team PEX design check-in.
+  </div>
+
+  <!-- ===================== TABLE OF CONTENTS ===================== -->
+  <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 20px; margin-bottom: 24px; border-radius: 3px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Contents</div>
+    <ol style="margin: 0; padding-left: 22px; font-size: 14px;">
+      <li style="margin-bottom: 4px;"><a href="#objectives" style="color: #003087; text-decoration: none;">Lesson Objectives</a></li>
+      <li style="margin-bottom: 4px;"><a href="#readings" style="color: #003087; text-decoration: none;">Assigned Readings</a></li>
+      <li style="margin-bottom: 4px;"><a href="#pre-class" style="color: #003087; text-decoration: none;">Pre-Class Work</a></li>
+      <li style="margin-bottom: 4px;"><a href="#materials" style="color: #003087; text-decoration: none;">Lesson Materials and Overview</a></li>
+      <li style="margin-bottom: 4px;"><a href="#in-class" style="color: #003087; text-decoration: none;">In-Class Work</a></li>
+      <li style="margin-bottom: 0;"><a href="#after-class" style="color: #003087; text-decoration: none;">After Class</a></li>
+    </ol>
+  </div>
+
+  <!-- ===================== 1. OBJECTIVES ===================== -->
+  <details id="objectives" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      1. Lesson Objectives
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 10px 0; font-style: italic;">By the end of this lesson, cadets will be able to:</p>
+      <ol style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Decompose a problem statement into program modules and functions. <span style="color: #6B7280; font-size: 12px;">(Outcomes 3, 7)</span></li>
+        <li style="margin-bottom: 6px;">Design header files that expose appropriate interfaces. <span style="color: #6B7280; font-size: 12px;">(Outcome 7)</span></li>
+        <li style="margin-bottom: 0;">Document design decisions in a written design artifact. <span style="color: #6B7280; font-size: 12px;">(Outcomes 4, 7)</span></li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 2. READINGS ===================== -->
+  <details id="readings" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      2. Assigned Readings
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 12px 0;">Complete before class. These set the vocabulary we will use.</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <thead>
+          <tr style="background: #E8EDF5; color: #00205B;">
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 200px;">Source</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9;">Sections</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 240px;">Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Lesson 23 supplementary notes</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">All sections</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">The four-step process you will use today</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">DFCS C Programming Standard</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">&sect;2.2 (function header blocks), &sect;8.5 (always free dynamically allocated memory)</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Today\'s touchpoint: ownership documented at the header</td>
+          </tr>
+          <tr>
+            <td style="padding: 9px 12px;"><a href="https://beej.us/guide/bgc/" style="color: #003087; text-decoration: underline;">Beej-C</a></td>
+            <td style="padding: 9px 12px;">Chapter 15 (Multifile Projects) revisit</td>
+            <td style="padding: 9px 12px; color: #4A5568;">Skim. Refresher on what goes in .h vs .c</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <!-- ===================== 3. PRE-CLASS WORK ===================== -->
+  <details id="pre-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      3. Pre-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 18px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #6B5300; font-size: 14px; margin-bottom: 4px;">Do this first</div>
+        <div style="font-size: 14px; color: #5A4B00;">About 40 minutes total. The reading is short; the preparation for Team PEX takes the rest.</div>
+      </div>
+
+      <!-- Step 1 -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">1</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Read the Lesson 23 supplementary notes</div>
+            <div style="font-size: 14px;">Posted in Blackboard. Plan on 15 to 20 minutes. The notes walk through the four-step process for turning a requirements document into a design: extract nouns and verbs, group into modules, write the interface, document ownership. Bring questions to class.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">2</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Review the Team PEX topic list</div>
+            <div style="font-size: 14px;">The instructor-provided list of candidate Team PEX topics is posted in Blackboard. Read through it with your team. Talk about which two or three topics interest you most before class. The proposal is due TODAY, so come ready to commit.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">3</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Predict-the-design exercise (5 minutes)</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">Look at the requirements blurb below. Before class, list on paper or in a notes app: what are the data nouns, what are the action verbs, what would your modules be? You will compare your answers with what we build together in class.</div>
+            <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 10px 14px; border-radius: 3px; font-size: 13.5px; color: #1a1a1a; line-height: 1.6;">
+              <em>Spec:</em> Build a program that helps a cadet study from a deck of flashcards. The program reads a deck from a text file (one card per line, question and answer tab-separated). The cadet can start a study session, which presents cards in random order. For each card, the cadet types an answer; the program checks it and tracks correct/incorrect counts. At the end of the session, the program prints a summary and offers to save session results to a file.
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ===================== 4. LESSON MATERIALS ===================== -->
+  <details id="materials" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      4. Lesson Materials and Overview
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <!-- Jump-to nav -->
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 18px; margin-bottom: 22px; border-radius: 3px;">
+        <div style="font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">Jump to</div>
+        <div style="font-size: 13.5px;">
+          <a href="#slides" style="color: #003087; text-decoration: none; margin-right: 14px;">Slides</a>
+          <a href="#why" style="color: #003087; text-decoration: none; margin-right: 14px;">Why this lesson</a>
+          <a href="#process" style="color: #003087; text-decoration: none; margin-right: 14px;">The four-step process</a>
+          <a href="#headers" style="color: #003087; text-decoration: none; margin-right: 14px;">Header design</a>
+          <a href="#ownership" style="color: #003087; text-decoration: none; margin-right: 14px;">Ownership in interfaces</a>
+          <a href="#memo" style="color: #003087; text-decoration: none; margin-right: 14px;">The design memo</a>
+          <a href="#dfcs" style="color: #003087; text-decoration: none;">DFCS standard touchpoint</a>
+        </div>
+      </div>
+
+      <!-- Slides -->
+      <h3 id="slides" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0;">Slides</h3>
+      <p style="font-size: 14px; margin: 0 0 14px 0;">
+        <!-- EDIT ME: replace href with the Blackboard or hosted URL for the Lesson 23 slide deck -->
+        <a href="#" style="display: inline-block; background: #003087; color: #ffffff; padding: 8px 18px; border-radius: 3px; text-decoration: none; font-size: 14px;">Lesson 23 slide deck (PDF)</a>
+      </p>
+
+      <!-- Why this lesson -->
+      <h3 id="why" style="color: #00205B; font-size: 16px; margin: 28px 0 10px 0;">Why this lesson exists</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">On every lab so far, the spec told you what functions to write. You implemented prototypes that someone else (your instructor) decided on. That work was important, but it skipped the question every real C developer asks first: how did you decide the program should look like THIS?</p>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">Today is the lesson where that question gets a process and a vocabulary. You have been doing the underlying skill all semester. At Lesson 6 you refactored a monolithic main into functions you named. At Lesson 19 you designed structs around the data they hold. At Lesson 20 you decided what belongs in a header. Each of those was decomposition in disguise. Lesson 23 is where it gets a name.</p>
+      <p style="font-size: 14px; margin: 0;">The lab is the rehearsal for your Team PEX design check-in. The widget walks you through a small example. The lab takes you through one yourself, with a written deliverable.</p>
+
+      <!-- The four-step process -->
+      <h3 id="process" style="color: #00205B; font-size: 16px; margin: 28px 0 10px 0;">The four-step process</h3>
+      <p style="font-size: 14px; margin: 0 0 14px 0;">A repeatable way to go from a written requirements document to a sketch of the program:</p>
+      <ol style="margin: 0 0 14px 22px; padding: 0; font-size: 14px;">
+        <li style="margin-bottom: 8px;"><strong style="color: #00205B;">Read and underline.</strong> Read the requirements once for understanding. Read again with two colored pens: one for nouns (the data the program holds), one for verbs (the actions the program performs). Anything underlined twice is interesting.</li>
+        <li style="margin-bottom: 8px;"><strong style="color: #00205B;">Group nouns and verbs into modules.</strong> Verbs that act on the same noun belong together. Nouns that the program owns end to end deserve their own type. A module is one or more verbs operating on a related set of nouns.</li>
+        <li style="margin-bottom: 8px;"><strong style="color: #00205B;">Sketch the interfaces.</strong> For each module, write a header file. Function signatures. Comments that say what the function does, what the inputs mean, what the output means, and who owns any memory returned. Skip implementation.</li>
+        <li><strong style="color: #00205B;">Document and check.</strong> Write a short memo explaining the choices. Then ask: if I hand this to a teammate, what is the first question they ask? Whatever it is, your memo should already answer it.</li>
+      </ol>
+      <p style="font-size: 13.5px; color: #6B7280; margin: 0 0 12px 0; font-style: italic;">The widget in Section 5 walks you through every step on a small flashcard-study example before you tackle the lab.</p>
+
+      <!-- Header design -->
+      <h3 id="headers" style="color: #00205B; font-size: 16px; margin: 28px 0 10px 0;">What belongs in a header</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">A header is a contract. Anything you put in it is a public promise to the rest of the codebase. The smaller and more honest the header, the easier the program is to maintain.</p>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">Put in the header:</p>
+      <ul style="margin: 0 0 14px 22px; padding: 0; font-size: 14px;">
+        <li style="margin-bottom: 4px;">The header guard (Lesson 20).</li>
+        <li style="margin-bottom: 4px;">Type declarations that callers need: <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">typedef</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">enum</code>, struct forward declarations.</li>
+        <li style="margin-bottom: 4px;">Function prototypes that other files will call.</li>
+        <li style="margin-bottom: 4px;">A function header block above each prototype (DFCS &sect;2.2) explaining what it does, what each parameter means, what it returns, and who owns any returned memory.</li>
+      </ul>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">Keep OUT of the header:</p>
+      <ul style="margin: 0 0 14px 22px; padding: 0; font-size: 14px;">
+        <li style="margin-bottom: 4px;">Anything declared <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">static</code>. It is internal by design.</li>
+        <li style="margin-bottom: 4px;">Function implementations.</li>
+        <li style="margin-bottom: 4px;">Variable definitions (declarations are fine when truly needed, with <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">extern</code>; this is rare).</li>
+      </ul>
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 4px; font-family: Consolas, monospace; font-size: 13px; line-height: 1.6; margin: 12px 0; overflow-x: auto;"><span style="color: #6B7280;">/* deck.h */</span>
+<span style="color: #C586C0;">#ifndef</span> DECK_H
+<span style="color: #C586C0;">#define</span> DECK_H
+
+<span style="color: #6B7280;">/* Opaque forward declaration: callers see Deck as a type,
+ * but cannot inspect its fields. */</span>
+<span style="color: #569CD6;">typedef</span> <span style="color: #569CD6;">struct</span> Deck Deck;
+
+<span style="color: #6B7280;">/* Read a deck from disk. Caller must free with free_deck().
+ * Returns NULL on file or parse error. */</span>
+Deck *load_deck(<span style="color: #569CD6;">const</span> <span style="color: #569CD6;">char</span> *filename);
+
+<span style="color: #6B7280;">/* Release a deck previously returned by load_deck. */</span>
+<span style="color: #569CD6;">void</span> free_deck(Deck *d);
+
+<span style="color: #C586C0;">#endif</span></div>
+
+      <!-- Ownership in interfaces -->
+      <h3 id="ownership" style="color: #00205B; font-size: 16px; margin: 28px 0 10px 0;">Ownership lives in the interface</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">Any function that returns a pointer is making a statement about ownership. The header is where that statement gets written down. Three patterns cover most cases:</p>
+      <ul style="margin: 0 0 14px 22px; padding: 0; font-size: 14px;">
+        <li style="margin-bottom: 6px;"><strong style="color: #00205B;">Allocator pattern.</strong> Function returns a heap pointer; caller must <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">free</code> it (or call a matching destructor). <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">load_deck</code> above is one. <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">malloc</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">strdup</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">fopen</code> are standard library examples.</li>
+        <li style="margin-bottom: 6px;"><strong style="color: #00205B;">Borrow pattern.</strong> Function returns a pointer INTO existing memory (a string inside a struct, a card inside a deck). Caller must not free; the pointer becomes invalid when the underlying object goes away.</li>
+        <li><strong style="color: #00205B;">Out-parameter pattern.</strong> Function takes a pointer to caller-allocated storage and writes through it. No allocation, no ownership transfer.</li>
+      </ul>
+      <p style="font-size: 14px; margin: 0;">The doc comment on the header is where the pattern gets named. If a teammate has to guess, the header is wrong. This is exactly the DFCS &sect;8.5 discipline: every <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">malloc</code> has a matching <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">free</code>, and the design says who calls each.</p>
+
+      <!-- The design memo -->
+      <h3 id="memo" style="color: #00205B; font-size: 16px; margin: 28px 0 10px 0;">The design memo</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">The third deliverable today is a short written memo, about one page, that captures your design choices in prose. The lab template gives you a structure to fill in. The required sections:</p>
+      <ul style="margin: 0 0 14px 22px; padding: 0; font-size: 14px;">
+        <li style="margin-bottom: 4px;"><strong style="color: #00205B;">Modules.</strong> Each module gets a one-sentence purpose statement.</li>
+        <li style="margin-bottom: 4px;"><strong style="color: #00205B;">Data structures.</strong> The types you defined and why.</li>
+        <li style="margin-bottom: 4px;"><strong style="color: #00205B;">Ownership notes.</strong> Who allocates, who frees, what borrows from what.</li>
+        <li style="margin-bottom: 4px;"><strong style="color: #00205B;">How will we test this?</strong> One concrete test case per function in your interface.</li>
+        <li style="margin-bottom: 4px;"><strong style="color: #00205B;">Open questions.</strong> What you would ask the customer if you had more time.</li>
+      </ul>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">The testing section is not an afterthought. If you cannot name a test case for a function, your interface is underspecified: the function has no observable result, or the inputs are not well defined. Change the design before you write code.</p>
+
+      <!-- DFCS standard touchpoint -->
+      <h3 id="dfcs" style="color: #00205B; font-size: 16px; margin: 28px 0 10px 0;">DFCS C Programming Standard touchpoint</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">Today touches two sections of the standard:</p>
+      <ul style="margin: 0 0 14px 22px; padding: 0; font-size: 14px;">
+        <li style="margin-bottom: 6px;"><strong style="color: #00205B;">&sect;2.2 Function Header Block.</strong> Every prototype in a header carries a documented function header block: purpose, parameters, return value, and (today\'s addition) ownership of any pointer returned.</li>
+        <li><strong style="color: #00205B;">&sect;8.5 Always free dynamically allocated memory.</strong> The standard is short ("free what you allocate"). The design discipline is longer: the header names who allocates and who frees, so by the time you implement, the ownership rules are already on paper.</li>
+      </ul>
+      <p style="font-size: 14px; margin: 0;">See the Resources section for the full standard text.</p>
+
+    </div>
+  </details>
+
+  <!-- ===================== 5. IN-CLASS ===================== -->
+  <details id="in-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      5. In-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <ul style="list-style: none; padding: 0; margin: 0 0 24px 0; font-size: 14.5px;">
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Opener: Kahoot retrieval (10 min).</strong>
+          <span style="color: #4A5568;">Quick review of L20 multi-file rules and L22 argv discipline before today\'s content.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Decompose walkthrough (25 min).</strong>
+          <span style="color: #4A5568;">Twelve guided design decisions on the flashcard-study spec. Below.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Interface design self-check (10 min).</strong>
+          <span style="color: #4A5568;">Eight questions on header design, visibility, ownership. Below.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Lab: Design a Wordle module (60 min).</strong>
+          <span style="color: #4A5568;">Read the requirements, produce wordle.h, DESIGN.md, and a skeleton main. </span>
+          <!-- EDIT ME: replace href with the GitHub Classroom invitation URL for Lab 23 -->
+          <a href="#" style="color: #003087;">GitHub Classroom assignment</a>.
+        </li>
+        <li style="padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Submit Team PEX topic proposal (15 min).</strong>
+          <span style="color: #4A5568;">Teams finalize and submit their topic choice via the Blackboard PEX Proposal assignment.</span>
+        </li>
+      </ul>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 28px 0 10px 0;">Decompose Walkthrough</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Twelve design decisions on a small flashcard-study spec. Read the spec in the right pane, then answer each prompt. The right pane records your decisions as you go.</p>
+
+<style>
+.cs210-decompose * { box-sizing: border-box; }
+.cs210-decompose {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-decompose h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-decompose .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 22px;
+}
+.cs210-decompose .progress-bar {
+  background: #E5E7EB;
+  border-radius: 3px;
+  height: 8px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.cs210-decompose .progress-fill {
+  background: #003087;
+  height: 100%;
+  transition: width 0.3s ease;
+}
+.cs210-decompose .progress-label {
+  font-size: 12px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-decompose .section-header {
+  background: #E8EDF5;
+  color: #00205B;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.cs210-decompose .task-card {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  border-radius: 3px;
+}
+.cs210-decompose .task-card.complete {
+  background: #E6F4EA;
+  border-left-color: #2E7D32;
+}
+.cs210-decompose .task-label {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B5300;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.cs210-decompose .task-card.complete .task-label {
+  color: #1B5E20;
+}
+.cs210-decompose .task-text {
+  font-size: 15px;
+  color: #1a1a1a;
+}
+.cs210-decompose .task-text strong { color: #00205B; }
+.cs210-decompose .task-hint {
+  font-size: 12.5px;
+  color: #6B7280;
+  margin-top: 6px;
+  font-style: italic;
+}
+
+/* Two-pane area: terminal left, requirements/design pane right */
+.cs210-decompose .panes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+@media (max-width: 760px) {
+  .cs210-decompose .panes { grid-template-columns: 1fr; }
+}
+.cs210-decompose .terminal {
+  background: #1E2A3A;
+  color: #E8EDF5;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13.5px;
+  line-height: 1.5;
+  border-radius: 4px;
+  padding: 14px 18px;
+  min-height: 360px;
+  max-height: 460px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.cs210-decompose .terminal .prompt { color: #7FB3D5; }
+.cs210-decompose .terminal .typed { color: #FFFFFF; }
+.cs210-decompose .terminal .out { color: #B5BEC8; }
+.cs210-decompose .terminal .note { color: #F0B92C; }
+.cs210-decompose .terminal .err { color: #F47A7A; }
+.cs210-decompose .terminal .ok { color: #7FD17F; }
+.cs210-decompose .terminal .dim { color: #6B7280; }
+
+.cs210-decompose .design-pane {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  padding: 14px 16px;
+  min-height: 360px;
+  max-height: 460px;
+  overflow-y: auto;
+}
+.cs210-decompose .design-pane-header {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #E5E7EB;
+}
+.cs210-decompose .req-block {
+  background: #F8FAFC;
+  border-left: 3px solid #003087;
+  padding: 10px 14px;
+  border-radius: 3px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: #1a1a1a;
+  line-height: 1.55;
+}
+.cs210-decompose .req-block h4 {
+  color: #00205B;
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin: 0 0 6px 0;
+}
+.cs210-decompose .req-block p { margin: 0 0 8px 0; }
+.cs210-decompose .req-block p:last-child { margin: 0; }
+.cs210-decompose .design-card {
+  background: #F0F4FA;
+  border: 1px solid #003087;
+  border-radius: 4px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+.cs210-decompose .design-card-label {
+  font-size: 11px;
+  letter-spacing: 1.2px;
+  color: #003087;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.cs210-decompose .design-card-body {
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  color: #00205B;
+  word-break: break-word;
+}
+.cs210-decompose .design-card.text-body .design-card-body {
+  font-family: inherit;
+  font-size: 13px;
+  color: #1a1a1a;
+}
+.cs210-decompose .design-empty {
+  color: #6B7280;
+  font-style: italic;
+  font-size: 13px;
+  text-align: center;
+  padding: 40px 10px;
+}
+
+.cs210-decompose .input-row {
+  display: flex;
+  align-items: center;
+  background: #1E2A3A;
+  color: #E8EDF5;
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+}
+.cs210-decompose .input-prompt {
+  font-family: Consolas, monospace;
+  color: #7FB3D5;
+  margin-right: 8px;
+  font-size: 13.5px;
+}
+.cs210-decompose .input-row input {
+  background: transparent;
+  color: #ffffff;
+  border: none;
+  outline: none;
+  font-family: Consolas, monospace;
+  font-size: 13.5px;
+  width: 100%;
+}
+.cs210-decompose .input-row input::placeholder { color: #6B7280; font-style: italic; }
+
+.cs210-decompose .controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.cs210-decompose .btn {
+  background: #F8FAFC;
+  border: 1px solid #D0D5DD;
+  color: #003087;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-decompose .btn:hover { background: #E8EDF5; }
+.cs210-decompose .btn.pulse { animation: dec-pulse 1.4s ease-in-out infinite; }
+@keyframes dec-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0.6); }
+  50% { box-shadow: 0 0 0 6px rgba(240, 185, 44, 0); }
+}
+
+.cs210-decompose .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #4A5568;
+  line-height: 1.55;
+}
+.cs210-decompose .help-note strong { color: #00205B; }
+
+/* Name modal */
+.cs210-decompose .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.cs210-decompose .name-modal {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+.cs210-decompose .name-modal h2 {
+  color: #00205B;
+  font-size: 20px;
+  margin: 0 0 10px 0;
+}
+.cs210-decompose .name-modal p {
+  color: #4A5568;
+  font-size: 14px;
+  margin: 0 0 16px 0;
+}
+.cs210-decompose .name-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-decompose .name-modal input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-decompose .name-modal-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-decompose .name-modal-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-decompose .name-modal-btn:not(:disabled):hover { background: #00205B; }
+
+/* Completion screen (inline footer) */
+.cs210-decompose .completion-screen {
+  background: #E6F4EA;
+  border: 2px solid #2E7D32;
+  border-radius: 6px;
+  padding: 24px 28px;
+  margin-top: 16px;
+}
+.cs210-decompose .completion-screen .cs-heading {
+  color: #1B5E20;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 6px 0;
+}
+.cs210-decompose .completion-screen .cs-name-line {
+  font-size: 15px;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+}
+.cs210-decompose .completion-screen .cs-name-line strong { color: #00205B; }
+.cs210-decompose .completion-screen .cs-code-block {
+  background: #F0F4FA;
+  border: 1px solid #003087;
+  border-radius: 4px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.cs210-decompose .completion-screen .cs-code-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #4A5568;
+  margin-bottom: 4px;
+}
+.cs210-decompose .completion-screen .cs-code-value {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 28px;
+  font-weight: 700;
+  color: #00205B;
+  letter-spacing: 3px;
+}
+.cs210-decompose .completion-screen .cs-copy-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-decompose .completion-screen .cs-copy-btn:hover { background: #00205B; }
+.cs210-decompose .completion-screen .cs-copy-btn.copied { background: #2E7D32; }
+.cs210-decompose .completion-screen .cs-timestamp {
+  font-size: 13px;
+  color: #6B7280;
+}
+</style>
+
+<div class="cs210-decompose">
+
+<div class="name-modal-backdrop" id="dec-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Lesson 23 reflection.</p>
+    <input type="text" id="dec-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="dec-cadet-name-btn" disabled>Start the walkthrough</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 23 &middot; Design Decomposition Walkthrough</h1>
+<div class="subtitle">Twelve design decisions on a small flashcard-study spec. You will not write any C code here. You will read requirements, extract nouns and verbs, group them into modules, sketch interfaces, and reason about ownership. The right pane records what you have decided so far.</div>
+
+<div class="progress-bar"><div class="progress-fill" id="dec-progress-fill" style="width: 0%;"></div></div>
+<div class="progress-label" id="dec-progress-label">Task 0 of 12</div>
+
+<div class="section-header" id="dec-section-header">Section 1: Read the requirements</div>
+
+<div class="task-card" id="dec-task-card">
+  <div class="task-label" id="dec-task-label">Current task</div>
+  <div class="task-text" id="dec-task-text">Loading...</div>
+  <div class="task-hint" id="dec-task-hint"></div>
+</div>
+
+<div class="panes">
+  <div class="terminal" id="dec-terminal"></div>
+  <div class="design-pane">
+    <div class="design-pane-header">Requirements &amp; Decisions</div>
+    <div id="dec-design-area">
+      <div class="design-empty">Read the spec below, then answer each prompt on the left.</div>
+    </div>
+  </div>
+</div>
+
+<div class="input-row">
+  <span class="input-prompt">design&gt;</span>
+  <input type="text" id="dec-input" autocomplete="off" spellcheck="false" placeholder="type your answer">
+</div>
+
+<div class="controls">
+  <button class="btn" id="dec-hint-btn">Show hint</button>
+  <button class="btn" id="dec-reset-btn">Reset</button>
+</div>
+
+<div class="help-note">
+  <strong>How this works:</strong> Each prompt asks for a short text answer. Tolerant matching: small variations (case, plurals, synonyms) are usually fine. Free-text prompts at the end only require a substantive response. If you get stuck, click <em>Show hint</em>. After two failed attempts on any task, the hint button pulses. Replays are unlimited.
+</div>
+
+<div id="dec-completion-area"></div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-decompose');
+  if (!root) return;
+
+  // ============================================================
+  // CS210 widget completion utilities
+  // ============================================================
+  const CS210_SALT = "lesson23_decompose_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+  function cs210FallbackCopy(text) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e) {}
+  }
+
+  // Name modal
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#dec-name-modal-backdrop');
+    const input = root.querySelector('#dec-cadet-name-input');
+    const btn = root.querySelector('#dec-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length >= 2) {
+        cs210CadetName = stored.trim();
+        backdrop.style.display = 'none';
+        return;
+      }
+    } catch (e) {}
+    function updateBtn() { btn.disabled = input.value.trim().length < 2; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', () => {
+      const name = input.value.trim();
+      if (name.length < 2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+      const siblings = document.querySelectorAll(
+        '#name-modal-backdrop, #bw-name-modal-backdrop, #ptrmath-name-modal-backdrop, #duality-name-modal-backdrop, #iq-name-modal-backdrop'
+      );
+      siblings.forEach((m) => { m.style.display = 'none'; });
+      const cli = root.querySelector('#dec-input');
+      if (cli) cli.focus();
+    });
+    setTimeout(() => { try { input.focus(); } catch (e) {} }, 50);
+  })();
+
+  function cs210RenderCompletion(area) {
+    if (!area) return;
+    if (root.querySelector('#dec-completion-overlay')) return;
+    const now = new Date();
+    const ts = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const safeName = escapeHtml(cs210CadetName || 'Cadet');
+
+    area.innerHTML =
+      '<div class="completion-screen">' +
+        '<div class="cs-heading">Walkthrough complete</div>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value">' + CS210_CODE + '</div></div>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+      '</div>';
+
+    const overlay = document.createElement('div');
+    overlay.id = 'dec-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.style.background = 'rgba(27, 94, 32, 0.55)';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">Walkthrough complete</h2>' +
+        '<p>Take a screenshot of this box. You will need the code and a visual of this screen for the Lesson 23 reflection.</p>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value" id="dec-code-value">' + CS210_CODE + '</div></div>' +
+          '<button class="cs-copy-btn" id="dec-copy-btn" type="button">Copy code</button>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+        '<div style="background:#FFF8E1;border-left:4px solid #F0B92C;padding:12px 16px;border-radius:3px;font-size:14px;color:#6B5300;line-height:1.5;margin-bottom:14px;">' +
+          '<strong>Next step:</strong> Open the Lesson 23 reflection in Blackboard. Enter this code and answer the reflection prompt.' +
+        '</div>' +
+        '<button class="name-modal-btn" id="dec-overlay-close" type="button" style="background:#2E7D32;">Got it &mdash; close this</button>' +
+      '</div>';
+    root.appendChild(overlay);
+    const closeBtn = overlay.querySelector('#dec-overlay-close');
+    if (closeBtn) closeBtn.addEventListener('click', () => { overlay.style.display = 'none'; });
+    const copyBtn = overlay.querySelector('#dec-copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        const text = CS210_CODE;
+        const ok = () => {
+          copyBtn.textContent = 'Copied';
+          copyBtn.classList.add('copied');
+          setTimeout(() => {
+            copyBtn.textContent = 'Copy code';
+            copyBtn.classList.remove('copied');
+          }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(ok, () => { cs210FallbackCopy(text); ok(); });
+        } else {
+          cs210FallbackCopy(text); ok();
+        }
+      });
+    }
+  }
+
+  // ============================================================
+  // The sample spec — shown in the right pane at start
+  // ============================================================
+  const SPEC_HTML =
+    '<div class="req-block">' +
+      '<h4>Spec: Flashcard Study Helper</h4>' +
+      '<p>Build a program that helps a cadet study from a deck of flashcards. The program reads a deck from a text file (one card per line, question and answer separated by a tab). The cadet can start a study session, which presents cards in randomized order. For each card the cadet types an answer; the program checks the answer against the stored one and tracks correct/incorrect counts. At the end of the session, the program prints a summary and offers to save the session results to a file so the cadet can review later. The cadet may also print the full deck before studying. The deck file path is given on the command line.</p>' +
+      '<p style="font-size:11.5px;color:#6B7280;font-style:italic;margin-top:6px;">Same shape as the lab Wordle spec, just smaller. The skills you practice here transfer directly.</p>' +
+    '</div>';
+
+  // ============================================================
+  // State — tracks what the cadet has committed to so far
+  // ============================================================
+  const decisions = {
+    nouns: null,
+    verbs: null,
+    primaryNoun: null,
+    deckModule: null,
+    sessionModule: null,
+    printPlacement: null,
+    loadSig: null,
+    loadOwner: null,
+    scoreSig: null,
+    shufflePlacement: null,
+    testCase: null,
+    teammateQ: null,
+  };
+
+  let currentTaskIndex = 0;
+  let consecutiveFails = 0;
+  let mode = "walkthrough"; // walkthrough | free
+
+  // ============================================================
+  // Tasks
+  // ============================================================
+  // Each task: { section?, label, text, hint, validate(input) -> {ok, msg, normalized?},
+  //              record(normalized) -> updates decisions, note }
+  //
+  // validate returns ok=true with normalized form, or ok=false with msg.
+  // Tolerant matchers: normalize, allow synonyms, etc.
+
+  function norm(s) {
+    return String(s || '').trim().toLowerCase().replace(/[.,;!?]+$/g, '');
+  }
+  function splitList(s) {
+    return String(s || '').split(/[,;\/]|\s+and\s+|\s+&\s+/i).map(x => x.trim()).filter(x => x.length);
+  }
+  function containsAny(set, candidates) {
+    const lower = new Set(set.map(x => x.toLowerCase()));
+    return candidates.some(c => lower.has(c.toLowerCase()));
+  }
+  function countMatches(set, families) {
+    // families: array of arrays of synonyms; returns how many families have at least one match in set
+    const lower = set.map(x => norm(x).replace(/s$/, ''));
+    let n = 0;
+    for (const fam of families) {
+      if (fam.some(syn => lower.includes(syn))) n++;
+    }
+    return n;
+  }
+
+  const NOUN_FAMILIES = [
+    ['card', 'flashcard'],
+    ['deck'],
+    ['session', 'study session', 'studysession'],
+    ['answer', 'guess', 'response'],
+    ['summary', 'result', 'report', 'score', 'count'],
+    ['file', 'deck file', 'output file'],
+  ];
+  const VERB_FAMILIES = [
+    ['read', 'load', 'parse', 'open', 'import'],
+    ['start', 'study', 'present', 'show', 'quiz', 'ask'],
+    ['shuffle', 'randomize', 'randomise'],
+    ['check', 'compare', 'grade', 'validate', 'score', 'mark'],
+    ['track', 'count', 'tally', 'record', 'accumulate'],
+    ['print', 'display', 'output'],
+    ['save', 'write', 'export'],
+  ];
+
+  const tasks = [
+    // --- Section 1: Read the requirements ---
+    {
+      section: 'Section 1: Read the requirements',
+      label: 'Task 1 of 12',
+      text: 'List 2 or 3 of the data nouns in this spec. Type them comma-separated. Example format: "thing1, thing2, thing3".',
+      hint: 'Look for the things the program stores or moves around. Examples in this spec: card, deck, session.',
+      placeholder: 'e.g. card, deck, session',
+      validate: (raw) => {
+        const items = splitList(raw);
+        if (items.length < 2) return { ok: false, msg: "Give at least two nouns, comma-separated." };
+        const hits = countMatches(items, NOUN_FAMILIES);
+        if (hits >= 2) return { ok: true, normalized: items.slice(0, 4).join(', ') };
+        return { ok: false, msg: "Those words don't all read as data nouns. Look at what the program holds onto or passes around. Hint: card, deck, session, answer, summary." };
+      },
+      record: (n) => { decisions.nouns = n; },
+      note: 'Data nouns become candidate types. card, deck, session, and (eventually) summary are the four that will most likely become typedefs or structs in the design.'
+    },
+    {
+      label: 'Task 2 of 12',
+      text: 'Now list 2 or 3 of the action verbs in this spec. Comma-separated.',
+      hint: 'Look for what the program DOES. Examples: read, shuffle, check, save, print.',
+      placeholder: 'e.g. read, shuffle, check',
+      validate: (raw) => {
+        const items = splitList(raw);
+        if (items.length < 2) return { ok: false, msg: "Give at least two verbs, comma-separated." };
+        const hits = countMatches(items, VERB_FAMILIES);
+        if (hits >= 2) return { ok: true, normalized: items.slice(0, 4).join(', ') };
+        return { ok: false, msg: "Those words don't all read as action verbs in this spec. Look at sentences in the requirements that start with 'the program ___'." };
+      },
+      record: (n) => { decisions.verbs = n; },
+      note: 'Action verbs become candidate functions. Verbs that act on the same noun tend to cluster into the same module.'
+    },
+    {
+      label: 'Task 3 of 12',
+      text: 'Which single noun gets touched by the most verbs in this spec? When a noun is verb-heavy, it is a strong sign that noun should become its own type. Answer in one word.',
+      hint: 'The thing the program reads, prints, and uses as the source for the session.',
+      placeholder: 'one word',
+      validate: (raw) => {
+        const n = norm(raw).replace(/s$/, '');
+        if (['deck', 'cards', 'card'].includes(n)) return { ok: true, normalized: 'deck' };
+        if (n === 'session') return { ok: false, msg: "Session is verb-heavy too, but deck is touched by more verbs in this spec (read, shuffle, print). Try again." };
+        return { ok: false, msg: "Not the heaviest. Count the verbs that act on each noun and pick the winner." };
+      },
+      record: (n) => { decisions.primaryNoun = n; },
+      note: 'In this spec the deck gets read, shuffled, printed, and used as the source for a session. Four verbs on one noun. That tells you the deck should become its own type with its own module.'
+    },
+
+    // --- Section 2: Group into modules ---
+    {
+      section: 'Section 2: Group verbs into modules',
+      label: 'Task 4 of 12',
+      text: 'Loading the deck from a file and printing the deck both operate on the deck. They probably belong in the same module. Name the module file base (without .h or .c). Use snake_case.',
+      hint: 'The module owns the deck. A natural name: deck.',
+      placeholder: 'e.g. deck',
+      validate: (raw) => {
+        const n = norm(raw).replace(/\.(c|h)$/, '');
+        if (['deck', 'card_deck', 'flashcard_deck', 'cards'].includes(n)) return { ok: true, normalized: n };
+        return { ok: false, msg: "A module named after the type it owns reads cleanly. Try the noun itself." };
+      },
+      record: (n) => { decisions.deckModule = n; },
+      note: 'A module named after the type it owns (deck.h / deck.c) reads cleanly to anyone navigating the project. That naming pattern is worth copying.'
+    },
+    {
+      label: 'Task 5 of 12',
+      text: 'Shuffling cards, presenting them one at a time, checking the answer, and tracking counts all operate on a single study session. Name a module for these. snake_case.',
+      hint: 'A module named after the type it owns. A natural name: session.',
+      placeholder: 'e.g. session',
+      validate: (raw) => {
+        const n = norm(raw).replace(/\.(c|h)$/, '');
+        if (['session', 'study_session', 'study', 'quiz'].includes(n)) return { ok: true, normalized: n };
+        return { ok: false, msg: "Same pattern as task 4: name the module after the type it owns." };
+      },
+      record: (n) => { decisions.sessionModule = n; },
+      note: 'Now you have two modules: deck (data + read/print) and session (study run + scoring). Two modules is a sensible scale for a small program. Five modules would be over-engineered; one module would be the monolithic main you refactored back at Lesson 6.'
+    },
+    {
+      label: 'Task 6 of 12',
+      text: 'Where does print_deck belong: in the deck module or in the session module? Type "deck" or "session".',
+      hint: 'It operates on a deck. It does not need any session state.',
+      placeholder: 'deck or session',
+      validate: (raw) => {
+        const n = norm(raw);
+        if (['deck', 'a', 'deck module'].includes(n)) return { ok: true, normalized: 'deck' };
+        if (['session', 'b', 'session module'].includes(n))
+          return { ok: false, msg: "print_deck takes a deck and prints it; it does not need session state. The deck module is the cleaner home." };
+        return { ok: false, msg: "Type 'deck' or 'session'." };
+      },
+      record: (n) => { decisions.printPlacement = n; },
+      note: 'Rule of thumb: a function lives in the module of the type it primarily operates on. print_deck operates on a deck, so it belongs in the deck module even though it is used by the session.'
+    },
+
+    // --- Section 3: Write the interface ---
+    {
+      section: 'Section 3: Write the interface',
+      label: 'Task 7 of 12',
+      text: 'Sketch a function signature for load_deck. It takes a filename and returns a pointer to a heap-allocated Deck (NULL on failure). Skip the doc comment. Just the C signature.',
+      hint: 'Something like: Deck *load_deck(const char *filename);',
+      placeholder: 'e.g. Deck *load_deck(const char *filename);',
+      validate: (raw) => {
+        // Be tolerant: accept Deck* / Deck * / deck_t * / struct deck *, with or without const, with or without semicolon
+        const s = raw.trim().replace(/;\s*$/, '');
+        // Must contain "load_deck", must mention a pointer return, must take some filename-like param
+        if (!/load_deck/i.test(s)) return { ok: false, msg: "The function name should be load_deck." };
+        if (!/\*/.test(s)) return { ok: false, msg: "It should return a POINTER to a Deck (the * matters)." };
+        if (!/^(?:struct\s+)?(?:Deck|deck|deck_t)\s*\*/i.test(s.replace(/^\s+/, ''))) {
+          return { ok: false, msg: "Return type should be Deck * (or deck_t * if you used a typedef)." };
+        }
+        if (!/\(.*\)/.test(s)) return { ok: false, msg: "Don't forget the parameter list in parentheses." };
+        if (!/char\s*\*|filename|path/i.test(s))
+          return { ok: false, msg: "It needs a filename parameter — typically const char *filename." };
+        return { ok: true, normalized: s + (s.endsWith(';') ? '' : ';') };
+      },
+      record: (n) => { decisions.loadSig = n; },
+      note: 'Three patterns to notice: return type is a pointer (because Deck has unknown size at compile time), the parameter is const char * (the function does not modify the filename), and the function can return NULL to signal failure. All three are standard C library conventions.'
+    },
+    {
+      label: 'Task 8 of 12',
+      text: 'load_deck returns a pointer to a heap-allocated Deck. WHO owns that memory and is responsible for freeing it? Type: caller, callee, both, or shared.',
+      hint: 'The function returns the pointer and walks away. Whoever holds the pointer holds the responsibility.',
+      placeholder: 'caller, callee, both, or shared',
+      validate: (raw) => {
+        const n = norm(raw);
+        if (['caller', 'the caller', 'main', 'whoever calls', 'user'].includes(n)) return { ok: true, normalized: 'caller' };
+        if (['callee', 'load_deck', 'function', 'load deck'].includes(n))
+          return { ok: false, msg: "Not quite. load_deck returns and exits. It cannot free what it just returned." };
+        if (['both', 'shared'].includes(n))
+          return { ok: false, msg: "Shared ownership is a recipe for double-frees and leaks in C. Pick the single owner." };
+        return { ok: false, msg: "Pick one: caller, callee, both, or shared." };
+      },
+      record: (n) => { decisions.loadOwner = n; },
+      note: 'The CALLER owns the returned memory. This is the standard pattern for allocator-style functions (malloc, strdup, fopen). The header should document this with a comment like: "Caller must free with free_deck()." DFCS Standard §8.5 makes this explicit: every malloc has a matching free, and the design says who calls each.'
+    },
+    {
+      label: 'Task 9 of 12',
+      text: 'Sketch a function signature for score_answer. It takes a pointer to a session and a pointer to the cadet\'s answer string. It updates the session counts. It returns nothing the caller needs (void). Just the signature.',
+      hint: 'void score_answer(Session *s, const char *guess);',
+      placeholder: 'e.g. void score_answer(Session *s, const char *guess);',
+      validate: (raw) => {
+        const s = raw.trim().replace(/;\s*$/, '');
+        if (!/score_answer/i.test(s)) return { ok: false, msg: "The function should be named score_answer." };
+        if (!/^void\b/i.test(s.replace(/^\s+/, ''))) {
+          return { ok: false, msg: "Return type should be void — the function mutates the session, the caller does not need a return value." };
+        }
+        if (!/\bsession\b.*\*|\*\s*\w+/i.test(s) || !/session/i.test(s)) {
+          return { ok: false, msg: "It needs a Session pointer parameter (mutation requires pass-by-pointer — recall Lesson 14)." };
+        }
+        if (!/char\s*\*|guess|answer|input/i.test(s)) {
+          return { ok: false, msg: "It needs the cadet's answer string — typically const char *guess." };
+        }
+        return { ok: true, normalized: s + (s.endsWith(';') ? '' : ';') };
+      },
+      record: (n) => { decisions.scoreSig = n; },
+      note: 'Return void + Session * parameter is the pass-by-pointer-to-mutate pattern from Lesson 14. The function changes the session\'s internal counts; the caller sees the change because they hold the same pointer.'
+    },
+    {
+      label: 'Task 10 of 12',
+      text: 'Should shuffle_deck be exposed in the header (callable from main) or kept internal to the session module (static, only called from session functions)? Type "header" or "internal".',
+      hint: 'Does main need to shuffle the deck directly, or does only session need to?',
+      placeholder: 'header or internal',
+      validate: (raw) => {
+        const n = norm(raw);
+        if (['internal', 'static', 'session', 'private', 'c only', 'just c'].includes(n)) return { ok: true, normalized: 'internal' };
+        if (['header', 'public', '.h', 'h', 'exposed'].includes(n))
+          return { ok: false, msg: "Think about who needs to call it. Only session uses shuffle_deck — main never does. Smaller header = smaller surface to maintain." };
+        return { ok: false, msg: "Type 'header' or 'internal'." };
+      },
+      record: (n) => { decisions.shufflePlacement = n; },
+      note: 'Keep it internal. shuffle_deck is a helper used only inside session.c, so it gets the static keyword (introduced at Lesson 20) and stays out of the header. A smaller header is a stronger interface: every function exposed is a commitment to keep working.'
+    },
+
+    // --- Section 4: Document & test ---
+    {
+      section: 'Section 4: Document and test',
+      label: 'Task 11 of 12',
+      text: 'Pick any function you have sketched. Write one test case for it in plain English (input → expected output / behavior). At least 15 characters.',
+      hint: 'e.g. load_deck("missing.txt") returns NULL.',
+      placeholder: 'e.g. load_deck(\"missing.txt\") returns NULL',
+      validate: (raw) => {
+        const s = raw.trim();
+        if (s.length < 15) return { ok: false, msg: "Give a real test case — input and expected result. At least 15 characters." };
+        if (!/(return|null|true|false|exit|count|prints?|increments?|equals?|match|fail|error|success|\d|->|=>|→)/i.test(s)) {
+          return { ok: false, msg: "Name an expected result — what the function should return, print, or do." };
+        }
+        return { ok: true, normalized: s };
+      },
+      record: (n) => { decisions.testCase = n; },
+      note: 'If you can name a concrete test case for every function in your header, your interface is testable. If you can\'t, your interface is probably underspecified — go back and add return values or out-parameters until each function has an observable result.'
+    },
+    {
+      label: 'Task 12 of 12',
+      text: 'Imagine handing this header to a teammate with no other context. What is the FIRST question they would ask? Type the question. At least 15 characters.',
+      hint: 'e.g. "What format does the deck file use?" or "Who frees the result of load_deck?"',
+      placeholder: 'e.g. What format does the deck file use?',
+      validate: (raw) => {
+        const s = raw.trim();
+        if (s.length < 15) return { ok: false, msg: "A real question, at least 15 characters." };
+        if (!/\?$/.test(s) && !/^(what|who|when|where|why|how|does|do|is|are|can|should|which)\b/i.test(s)) {
+          return { ok: false, msg: "Phrase it as a question — start with what/who/when/where/why/how, or end with a question mark." };
+        }
+        return { ok: true, normalized: s };
+      },
+      record: (n) => { decisions.teammateQ = n; },
+      note: 'Whatever your teammate would ask first is what your DESIGN.md memo needs to answer. The questions they would ask are the design decisions worth writing down. This is exactly the discipline your Team PEX design check-in is graded on.'
+    },
+  ];
+
+  // ============================================================
+  // Terminal output
+  // ============================================================
+  const terminalEl = root.querySelector('#dec-terminal');
+  function termWrite(text, cls) {
+    const span = document.createElement('span');
+    if (cls) span.className = cls;
+    span.textContent = text;
+    terminalEl.appendChild(span);
+  }
+  function termLine(text, cls) {
+    termWrite(text, cls);
+    terminalEl.appendChild(document.createElement('br'));
+    terminalEl.scrollTop = terminalEl.scrollHeight;
+  }
+  function echoCommand(cmd) {
+    termWrite('design> ', 'prompt');
+    termLine(cmd, 'typed');
+  }
+
+  // ============================================================
+  // Design pane rendering
+  // ============================================================
+  const designEl = root.querySelector('#dec-design-area');
+  function renderDesign() {
+    const filled = Object.values(decisions).filter(x => x !== null).length;
+    let html = SPEC_HTML;
+    if (filled === 0) {
+      designEl.innerHTML = html;
+      return;
+    }
+    html += '<div style="font-size:11px;letter-spacing:1.5px;color:#6B7280;text-transform:uppercase;font-weight:600;margin:6px 0 8px 0;">Your design so far</div>';
+    if (decisions.nouns) html += card('Data nouns', decisions.nouns, true);
+    if (decisions.verbs) html += card('Action verbs', decisions.verbs, true);
+    if (decisions.primaryNoun) html += card('Primary noun (becomes a type)', decisions.primaryNoun);
+    if (decisions.deckModule) html += card('Deck module', decisions.deckModule + '.h / ' + decisions.deckModule + '.c');
+    if (decisions.sessionModule) html += card('Session module', decisions.sessionModule + '.h / ' + decisions.sessionModule + '.c');
+    if (decisions.printPlacement) html += card('print_deck lives in', decisions.printPlacement + ' module');
+    if (decisions.loadSig) html += card('load_deck signature', decisions.loadSig);
+    if (decisions.loadOwner) html += card('Owner of load_deck result', decisions.loadOwner);
+    if (decisions.scoreSig) html += card('score_answer signature', decisions.scoreSig);
+    if (decisions.shufflePlacement) html += card('shuffle_deck visibility', decisions.shufflePlacement);
+    if (decisions.testCase) html += card('A test case you wrote', decisions.testCase, true);
+    if (decisions.teammateQ) html += card("Teammate's first question", decisions.teammateQ, true);
+    designEl.innerHTML = html;
+  }
+  function card(label, value, textBody) {
+    const cls = textBody ? 'design-card text-body' : 'design-card';
+    return '<div class="' + cls + '">' +
+           '<div class="design-card-label">' + escapeHtml(label) + '</div>' +
+           '<div class="design-card-body">' + escapeHtml(value) + '</div>' +
+           '</div>';
+  }
+
+  // ============================================================
+  // Walkthrough controller
+  // ============================================================
+  function checkTask(rawCmd) {
+    if (mode === "free" || currentTaskIndex >= tasks.length) return null;
+    const t = tasks[currentTaskIndex];
+    const result = t.validate(rawCmd);
+    if (result.ok) {
+      echoCommand(rawCmd);
+      termLine('  recorded: ' + result.normalized, 'ok');
+      t.record(result.normalized);
+      if (t.note) {
+        termLine('', 'out');
+        termLine('  ' + t.note, 'note');
+        termLine('', 'out');
+      }
+      currentTaskIndex++;
+      consecutiveFails = 0;
+      hideHintPulse();
+      renderDesign();
+      renderTask();
+      if (currentTaskIndex >= tasks.length) {
+        mode = "free";
+        termLine('  Walkthrough complete. You have a small design on the right. Replay or move on to your lab.', 'note');
+      }
+      return true;
+    } else {
+      echoCommand(rawCmd);
+      termLine('  ' + result.msg, 'err');
+      consecutiveFails++;
+      if (consecutiveFails >= 2) showHintPulse();
+      return false;
+    }
+  }
+  function renderTask() {
+    const fill = root.querySelector('#dec-progress-fill');
+    const label = root.querySelector('#dec-progress-label');
+    const cardEl = root.querySelector('#dec-task-card');
+    const labelEl = root.querySelector('#dec-task-label');
+    const textEl = root.querySelector('#dec-task-text');
+    const hintEl = root.querySelector('#dec-task-hint');
+    const sectionEl = root.querySelector('#dec-section-header');
+    const completionArea = root.querySelector('#dec-completion-area');
+
+    const pct = (currentTaskIndex / tasks.length) * 100;
+    fill.style.width = pct + '%';
+    label.textContent = 'Task ' + Math.min(currentTaskIndex + 1, tasks.length) + ' of ' + tasks.length;
+
+    if (currentTaskIndex >= tasks.length) {
+      cardEl.className = 'task-card complete';
+      labelEl.textContent = 'Complete';
+      textEl.textContent = "You walked the full design process: read the requirements, extracted nouns and verbs, grouped them into modules, sketched the interface with ownership notes, and named both a test case and the next question your teammate would ask. That is the same process you will use for your Team PEX design check-in.";
+      hintEl.textContent = '';
+      fill.style.width = '100%';
+      label.textContent = 'All tasks complete';
+      sectionEl.textContent = 'All done';
+      completionArea.innerHTML = '';
+      const inputEl = root.querySelector('#dec-input');
+      if (inputEl) inputEl.placeholder = 'free mode: replay any answer to update your design';
+      cs210RenderCompletion(completionArea);
+      return;
+    }
+    completionArea.innerHTML = '';
+    cardEl.className = 'task-card';
+    const t = tasks[currentTaskIndex];
+    if (t.section) sectionEl.textContent = t.section;
+    labelEl.textContent = t.label;
+    textEl.textContent = t.text;
+    hintEl.textContent = '';
+    const inputEl = root.querySelector('#dec-input');
+    if (inputEl && t.placeholder) inputEl.placeholder = t.placeholder;
+  }
+  function showHint() {
+    if (currentTaskIndex >= tasks.length) return;
+    const t = tasks[currentTaskIndex];
+    root.querySelector('#dec-task-hint').textContent = 'Hint: ' + (t.hint || '');
+    hideHintPulse();
+  }
+  function showHintPulse() { root.querySelector('#dec-hint-btn').classList.add('pulse'); }
+  function hideHintPulse() { root.querySelector('#dec-hint-btn').classList.remove('pulse'); }
+
+  function reset() {
+    Object.keys(decisions).forEach(k => decisions[k] = null);
+    currentTaskIndex = 0;
+    consecutiveFails = 0;
+    mode = "walkthrough";
+    hideHintPulse();
+    terminalEl.innerHTML = '';
+    termLine('Welcome to the design decomposition walkthrough.', 'dim');
+    termLine('Read the spec on the right, then answer each prompt below.', 'dim');
+    termLine('', 'out');
+    renderDesign();
+    renderTask();
+  }
+
+  // ============================================================
+  // Input wiring
+  // ============================================================
+  const inputEl = root.querySelector('#dec-input');
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const v = inputEl.value;
+      inputEl.value = '';
+      if (!v.trim()) return;
+      checkTask(v);
+    }
+  });
+  root.querySelector('#dec-hint-btn').addEventListener('click', showHint);
+  root.querySelector('#dec-reset-btn').addEventListener('click', reset);
+
+  // Boot
+  reset();
+})();
+</script>
+
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 28px 0 10px 0;">Interface Design Self-Check</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Eight questions on header design, module boundaries, and ownership. Pass at 70% or above; below that, take it again after reviewing.</p>
+
+<style>
+.cs210-iq * { box-sizing: border-box; }
+.cs210-iq {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-iq h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-iq .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+
+.cs210-iq .dots {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+.cs210-iq .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #E5E7EB;
+  border: 1px solid #C7CFD9;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.cs210-iq .dot.current {
+  background: #003087;
+  border-color: #00205B;
+  transform: scale(1.25);
+}
+.cs210-iq .dot.correct {
+  background: #2E7D32;
+  border-color: #1B5E20;
+}
+.cs210-iq .dot.incorrect {
+  background: #B8002F;
+  border-color: #6B0000;
+}
+.cs210-iq .dot.score {
+  width: 16px;
+  height: 12px;
+  border-radius: 3px;
+  background: #F0B92C;
+  border-color: #6B5300;
+}
+
+.cs210-iq .card {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 6px;
+  padding: 22px 24px;
+  margin-bottom: 14px;
+}
+.cs210-iq .q-label {
+  font-size: 11.5px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.cs210-iq .q-text {
+  font-size: 15.5px;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+}
+.cs210-iq .q-text code {
+  background: #F0F2F5;
+  padding: 1px 6px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13.5px;
+}
+.cs210-iq pre.q-code {
+  background: #1E2A3A;
+  color: #E8EDF5;
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.55;
+  overflow-x: auto;
+  margin: 0 0 14px 0;
+}
+
+.cs210-iq .choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.cs210-iq .choice {
+  background: #F8FAFC;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  padding: 12px 16px;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  color: #1a1a1a;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.cs210-iq .choice code {
+  background: #E8EDF5;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 12.5px;
+}
+.cs210-iq .choice:hover { border-color: #003087; }
+.cs210-iq .choice.selected {
+  border-color: #003087;
+  background: #E8EDF5;
+}
+.cs210-iq .choice.locked { cursor: default; }
+.cs210-iq .choice.correct {
+  background: #E6F4EA;
+  border-color: #2E7D32;
+}
+.cs210-iq .choice.incorrect {
+  background: #FBE9EB;
+  border-color: #B8002F;
+}
+
+.cs210-iq .text-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: Consolas, monospace;
+}
+.cs210-iq .text-input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-iq .text-input:disabled { background: #F0F2F5; color: #6B7280; }
+
+.cs210-iq .feedback {
+  display: none;
+  padding: 12px 14px;
+  border-radius: 4px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+.cs210-iq .feedback.visible { display: block; }
+.cs210-iq .feedback.correct {
+  background: #E6F4EA;
+  border-left: 4px solid #2E7D32;
+  color: #1B5E20;
+}
+.cs210-iq .feedback.incorrect {
+  background: #FBE9EB;
+  border-left: 4px solid #B8002F;
+  color: #6B0000;
+}
+.cs210-iq .feedback code {
+  background: rgba(0,0,0,0.06);
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 12.5px;
+}
+
+.cs210-iq .btn-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.cs210-iq .nav-row {
+  display: flex;
+  gap: 8px;
+}
+.cs210-iq .submit-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-iq .submit-btn:disabled { background: #A0AEC0; cursor: not-allowed; }
+.cs210-iq .submit-btn:not(:disabled):hover { background: #00205B; }
+.cs210-iq .nav-btn {
+  background: #F8FAFC;
+  border: 1px solid #D0D5DD;
+  color: #003087;
+  padding: 9px 16px;
+  border-radius: 4px;
+  font-size: 13.5px;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 500;
+}
+.cs210-iq .nav-btn:hover { background: #E8EDF5; }
+.cs210-iq .nav-btn.back { color: #6B7280; }
+
+/* Score card */
+.cs210-iq .score-card {
+  background: #ffffff;
+  border: 2px solid #003087;
+  border-radius: 6px;
+  padding: 24px 28px;
+}
+.cs210-iq .score-card.passing { border-color: #2E7D32; }
+.cs210-iq .score-card.full-correct { border-color: #2E7D32; background: #F0FAF2; }
+.cs210-iq .score-card.not-passing { border-color: #B8002F; }
+.cs210-iq .score-message {
+  font-size: 17px;
+  font-weight: 600;
+  color: #00205B;
+  margin: 8px 0 6px 0;
+}
+.cs210-iq .score-message.good-job { color: #1B5E20; }
+.cs210-iq .score-big {
+  font-family: Consolas, monospace;
+  font-size: 42px;
+  font-weight: 700;
+  color: #00205B;
+  margin: 6px 0;
+}
+.cs210-iq .score-card.not-passing .score-big { color: #B8002F; }
+.cs210-iq .score-label {
+  font-size: 13px;
+  color: #6B7280;
+  margin-bottom: 16px;
+}
+.cs210-iq .code-block {
+  background: #F0F4FA;
+  border: 1px solid #003087;
+  border-radius: 4px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 14px 0 10px 0;
+}
+.cs210-iq .code-block.fail {
+  background: #FBE9EB;
+  border-color: #B8002F;
+}
+.cs210-iq .code-left { flex: 1; }
+.cs210-iq .code-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #4A5568;
+  margin-bottom: 4px;
+}
+.cs210-iq .code-block.fail .code-label { color: #6B0000; }
+.cs210-iq .code-value {
+  font-family: Consolas, monospace;
+  font-size: 26px;
+  font-weight: 700;
+  color: #00205B;
+  letter-spacing: 3px;
+}
+.cs210-iq .code-block.fail .code-value { color: #B8002F; }
+.cs210-iq .code-block .copy-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-iq .code-block .copy-btn:hover { background: #00205B; }
+.cs210-iq .code-block .copy-btn.copied { background: #2E7D32; }
+.cs210-iq .code-block.fail .copy-btn { background: #6B0000; }
+.cs210-iq .inline-code-footer {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 8px 12px;
+  border-radius: 3px;
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: #4A5568;
+  font-family: Consolas, monospace;
+}
+
+.cs210-iq .recap {
+  margin-top: 22px;
+  border-top: 1px solid #E5E7EB;
+  padding-top: 18px;
+}
+.cs210-iq .recap-title {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #4A5568;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+.cs210-iq .recap-item {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 14px;
+  align-items: flex-start;
+}
+.cs210-iq .recap-icon {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  color: #ffffff;
+}
+.cs210-iq .recap-icon.correct { background: #2E7D32; }
+.cs210-iq .recap-icon.incorrect { background: #B8002F; }
+.cs210-iq .recap-body { flex: 1; }
+.cs210-iq .recap-question {
+  font-size: 14px;
+  color: #1a1a1a;
+  margin-bottom: 4px;
+}
+.cs210-iq .recap-explanation {
+  font-size: 13px;
+  color: #4A5568;
+  background: #F8FAFC;
+  padding: 8px 12px;
+  border-radius: 3px;
+}
+.cs210-iq .recap-explanation code {
+  background: #E8EDF5;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 12.5px;
+}
+.cs210-iq .reset-row { margin-top: 16px; }
+.cs210-iq .reset-btn {
+  background: #F8FAFC;
+  border: 1px solid #D0D5DD;
+  color: #003087;
+  padding: 9px 16px;
+  border-radius: 4px;
+  font-size: 13.5px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.cs210-iq .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #4A5568;
+  line-height: 1.55;
+}
+.cs210-iq .help-note strong { color: #00205B; }
+
+/* Name modal overlay */
+.cs210-iq .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.cs210-iq .name-modal {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+.cs210-iq .name-modal h2 {
+  color: #00205B;
+  font-size: 20px;
+  margin: 0 0 10px 0;
+}
+.cs210-iq .name-modal p {
+  color: #4A5568;
+  font-size: 14px;
+  margin: 0 0 16px 0;
+}
+.cs210-iq .name-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-iq .name-modal input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-iq .name-modal-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-iq .name-modal-btn:disabled { background: #A0AEC0; cursor: not-allowed; }
+.cs210-iq .name-modal-btn:not(:disabled):hover { background: #00205B; }
+</style>
+
+<div class="cs210-iq">
+
+<div class="name-modal-backdrop" id="iq-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the score card so you can include it in your screenshot for the Lesson 23 reflection.</p>
+    <input type="text" id="iq-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="iq-cadet-name-btn" disabled>Start the quiz</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 23 &middot; Interface Design Self-Check</h1>
+<div class="subtitle">Eight questions on header design, module boundaries, and ownership. Pass at 70% or above; below that, take it again after reviewing.</div>
+
+<div class="dots" id="iq-dots"></div>
+<div id="iq-card-area"></div>
+
+<div class="help-note">
+  <strong>How this works:</strong> One question per card. Pick or type your answer and click Submit. Feedback appears, then click Next to move on. Answers lock once submitted, so think before you submit. After all eight, you get a score, a completion code, and a per-question recap.
+</div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-iq');
+  if (!root) return;
+
+  // Completion code generation (two-salt scheme: pass vs. fail)
+  const CS210_SALT_PASS = "lesson23_interface_completed";
+  const CS210_SALT_FAIL = "lesson23_interface_incomplete";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const PASSING_THRESHOLD = 0.70;
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE_PASS = cs210CodeFromSalt(CS210_SALT_PASS);
+  const CS210_CODE_FAIL = cs210CodeFromSalt(CS210_SALT_FAIL);
+  let cadetName = '';
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+  function cs210Copy(text) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch (e) {}
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      return true;
+    } catch (e) { return false; }
+  }
+
+  // Name modal
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#iq-name-modal-backdrop');
+    const input = root.querySelector('#iq-cadet-name-input');
+    const btn = root.querySelector('#iq-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length > 0) {
+        cadetName = stored.trim();
+        backdrop.style.display = 'none';
+        return;
+      }
+    } catch (e) {}
+    function updateBtn() { btn.disabled = input.value.trim().length === 0; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', () => {
+      const n = input.value.trim();
+      if (!n) return;
+      cadetName = n;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', n); } catch (e) {}
+      backdrop.style.display = 'none';
+      const siblings = document.querySelectorAll(
+        '#name-modal-backdrop, #bw-name-modal-backdrop, #ptrmath-name-modal-backdrop, #duality-name-modal-backdrop, #dec-name-modal-backdrop'
+      );
+      siblings.forEach((m) => { m.style.display = 'none'; });
+    });
+    setTimeout(() => { try { input.focus(); } catch (e) {} }, 50);
+  })();
+
+  // Questions
+  const questions = [
+    {
+      id: 'q1',
+      type: 'choice',
+      text: 'You are designing a <code>deck.h</code> header. Which of these does NOT belong in the header?',
+      options: [
+        'The <code>typedef struct Deck Deck;</code> forward declaration of the type.',
+        'The prototype <code>Deck *load_deck(const char *filename);</code>.',
+        'A static helper function <code>static int parse_card_line(const char *line);</code> used only inside <code>deck.c</code>.',
+        'A doc comment above <code>free_deck</code> saying who owns the deck.',
+      ],
+      correct: 2,
+      correctFeedback: 'Right. <code>static</code> means "internal to this .c file" — never expose it. Headers should declare only what other files need to call.',
+      incorrectFeedback: 'The correct answer is the third option. A <code>static</code> helper is internal to one .c file by design; putting it in the header defeats the point and tempts other files to call it. Forward declarations, public prototypes, and doc comments all belong in the header.',
+      shortLabel: 'What does NOT belong in deck.h',
+    },
+    {
+      id: 'q2',
+      type: 'choice',
+      text: 'Which of the following is the strongest signal that a noun in a requirements document should become its own type (typedef or struct)?',
+      options: [
+        'The noun appears at least three times in the requirements.',
+        'The noun is touched by multiple verbs, especially verbs that the program owns from beginning to end.',
+        'The noun has a one-syllable name.',
+        'The noun appears in the program title.',
+      ],
+      correct: 1,
+      correctFeedback: 'Right. Verb-heavy nouns are the nouns the program actually does work on; those are the data structures worth naming and grouping into a module.',
+      incorrectFeedback: 'The correct answer is the second option. Frequency, name length, and appearance in the title are weak signals. Verb-heaviness is the strong signal: if multiple actions in the spec operate on the same noun, that noun is what the program is built around.',
+      shortLabel: 'Strongest signal that a noun should become its own type',
+    },
+    {
+      id: 'q3',
+      type: 'choice',
+      text: 'A function in your header is declared as <code>char *get_card_text(const Deck *d, int index);</code>. Who owns the returned pointer?',
+      options: [
+        'The caller owns it. They must <code>free</code> it.',
+        'The deck owns it. The pointer is to memory inside the deck and is valid as long as the deck is.',
+        'Ownership is shared. Either side can free.',
+        'No one owns it. The pointer is a constant.',
+      ],
+      correct: 1,
+      correctFeedback: 'Right. The function returns a pointer INTO the deck — a borrow, not a hand-off. The caller must not free; the pointer becomes invalid when the deck is freed.',
+      incorrectFeedback: 'The correct answer is the second option. The signature does not name a new allocation — it returns a pointer into existing deck memory. This is a "borrow," not an allocation. The caller must not free; the pointer dies when the deck does. A header doc comment should say this explicitly: borrowed pointer, valid for the lifetime of the deck.',
+      shortLabel: 'Owner of a pointer returned by get_card_text',
+    },
+    {
+      id: 'q4',
+      type: 'choice',
+      text: 'Compare these two signatures for the same logical operation. Which one is the better design and why?',
+      code: 'Option A:  int update_score(Session *s, int delta);\nOption B:  void update_score(Session *s, int delta);',
+      options: [
+        'Option A. Returning <code>int</code> always gives the caller more information.',
+        'Option B. The function mutates the session; the caller does not need a return value, so void is the honest contract.',
+        'Option A. <code>void</code> is bad style and should be avoided.',
+        'They are equivalent. The return type does not matter for mutating functions.',
+      ],
+      correct: 1,
+      correctFeedback: 'Right. If callers do not need a return value, lying with <code>int</code> creates a useless return that someone will eventually misinterpret. Be honest: return <code>void</code> for pure-mutation functions.',
+      incorrectFeedback: 'The correct answer is Option B. A function that mutates state via pointer is the pass-by-pointer pattern from Lesson 14; the return value is for information the caller cannot get any other way. If callers do not need a return, returning <code>void</code> is the honest signature. Adding a return value "just in case" is a common over-design mistake.',
+      shortLabel: 'int update_score vs void update_score',
+    },
+    {
+      id: 'q5',
+      type: 'choice',
+      text: 'Your team has a module <code>wordle.h</code> with 14 function prototypes. Three are only called by main; the other 11 call each other inside the module and are never called from outside. What should you do?',
+      options: [
+        'Nothing. A header with 14 prototypes is fine.',
+        'Move the 11 internal-only functions out of the header. Make them <code>static</code> inside the .c file.',
+        'Split the module into 14 separate .h/.c pairs, one per function.',
+        'Move the 3 main-facing functions into main.c.',
+      ],
+      correct: 1,
+      correctFeedback: 'Right. Header surface = commitment. Anything in the header is a promise to the rest of the codebase to keep working. Smaller headers = stronger interfaces.',
+      incorrectFeedback: 'The correct answer is the second option. Every function you expose in a header is a public commitment. Eleven internal-only prototypes leak implementation; make them <code>static</code> and they vanish from outside callers\' view. One module per function is the opposite over-correction. Functions stay where they belong; visibility is what changes.',
+      shortLabel: 'Reducing the public surface of a 14-prototype header',
+    },
+    {
+      id: 'q6',
+      type: 'text',
+      text: 'Write a function signature: <code>print_session_summary</code> takes a pointer to a Session, prints to stdout, and returns nothing. The function does not modify the session. End with a semicolon.',
+      correct: [
+        'void print_session_summary(const Session *s);',
+        'void print_session_summary(const Session *session);',
+        'void print_session_summary(Session const *s);',
+      ],
+      normalize: s => {
+        return String(s || '')
+          .trim()
+          .replace(/\s+/g, ' ')
+          .replace(/\s*\*\s*/g, ' *')
+          .replace(/\s*;\s*$/, ';')
+          .replace(/\s*\(\s*/g, '(')
+          .replace(/\s*\)\s*/g, ')')
+          .replace(/\s*,\s*/g, ', ')
+          // strip parameter names — we only require the type+name+const+pointer to be right
+          .toLowerCase();
+      },
+      // Match function: accept any reasonable variant
+      check: function(value) {
+        const v = String(value || '').trim().toLowerCase().replace(/\s+/g, ' ').replace(/\s*\*\s*/g, '*');
+        // Required: void, print_session_summary, const, session, *, ;
+        // Forbidden: any return-type other than void, missing const, missing *
+        if (!/^void\s+print_session_summary\s*\(/.test(v)) return false;
+        if (!/const/.test(v)) return false;
+        if (!/session/.test(v)) return false;
+        if (!/\*/.test(v)) return false;
+        if (!/\);$/.test(v.replace(/\s+/g, ''))) return false;
+        return true;
+      },
+      placeholder: 'void print_session_summary(...);',
+      correctFeedback: 'Right. void return (no value to return), const Session * parameter (read-only, no mutation), pointer (not by value, because Session is a struct), and a semicolon at the end. All four pieces matter.',
+      incorrectFeedback: 'The expected signature is <code>void print_session_summary(const Session *s);</code>. Four pieces have to be right: return type is void (nothing useful to return), parameter is a pointer (Session is a struct, pass-by-pointer avoids the copy), the pointer is const (the function does not mutate the session), and the line ends with a semicolon.',
+      shortLabel: 'Write the signature for print_session_summary',
+    },
+    {
+      id: 'q7',
+      type: 'choice',
+      text: 'Your design memo includes a section called "How will we test this?" listing one test case per function. Why does this section belong in the DESIGN document, not in a separate testing document?',
+      options: [
+        'It is shorter to write it once than twice.',
+        'If you cannot name a test case for a function, your interface is underspecified — testability is a design property, not a post-hoc check.',
+        'The grading rubric requires it to be in the design document.',
+        'C functions cannot be tested separately from the design.',
+      ],
+      correct: 1,
+      correctFeedback: 'Right. "Can I test this?" is the same question as "Does this function have an observable result?" — which is a design question. If the answer is no, change the design before writing code.',
+      incorrectFeedback: 'The correct answer is the second option. A function with no observable result (no return value, no out-parameter mutation, no visible side effect) cannot be tested. If you cannot name a test case for a function during design, you have underspecified the interface — change the design before you start implementing. Testability is a design property.',
+      shortLabel: 'Why "How will we test this?" belongs in the design memo',
+    },
+    {
+      id: 'q8',
+      type: 'choice',
+      text: 'Your team\'s Wordle project has these proposed modules. Which decomposition is most likely to cause integration pain at Team PEX time?',
+      options: [
+        '<code>game</code> (round logic, scoring), <code>stats</code> (history, streaks), <code>display</code> (formatted output). Three modules, clear roles.',
+        '<code>everything</code>: one module containing all functions. One person writes it all; no integration needed.',
+        '<code>game</code>, <code>stats</code>, <code>display</code>, <code>tile_color_helper</code>, <code>word_loader</code>, <code>main_helper</code>, <code>print_helper</code>, <code>input_helper</code>. Eight modules, every helper isolated.',
+        'Both B and C are problematic, for opposite reasons.',
+      ],
+      correct: 3,
+      correctFeedback: 'Right. Option B is one teammate writing the whole project — no division of labor possible. Option C is over-decomposition — eight modules to coordinate, with helpers that should have been static functions inside their own .c file. Three to four modules with clear ownership is the sweet spot for a CS210 team project.',
+      incorrectFeedback: 'The correct answer is the fourth option (both B and C are problematic). B is a single-owner monolith; teammates cannot work in parallel. C over-decomposes — each "helper" module is the kind of thing that should be a <code>static</code> function inside its own .c file, not its own .h/.c pair. The sweet spot is around three to four modules with clear ownership.',
+      shortLabel: 'Decomposition that causes Team PEX integration pain',
+    },
+  ];
+
+  // State
+  const state = questions.map(() => ({ answered: false, correct: false, choice: null, value: '' }));
+  let currentIndex = 0;
+
+  const dotsArea = root.querySelector('#iq-dots');
+  const cardArea = root.querySelector('#iq-card-area');
+
+  function renderDots() {
+    dotsArea.innerHTML = '';
+    for (let i = 0; i < questions.length; i++) {
+      const d = document.createElement('div');
+      d.className = 'dot';
+      if (i === currentIndex) d.classList.add('current');
+      if (state[i].answered) {
+        d.classList.add(state[i].correct ? 'correct' : 'incorrect');
+      }
+      dotsArea.appendChild(d);
+    }
+    const scoreDot = document.createElement('div');
+    scoreDot.className = 'dot score';
+    if (currentIndex === questions.length) scoreDot.classList.add('current');
+    dotsArea.appendChild(scoreDot);
+  }
+
+  function buildQuestionCard(i) {
+    const q = questions[i];
+    const s = state[i];
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    const label = document.createElement('div');
+    label.className = 'q-label';
+    label.textContent = 'Question ' + (i + 1) + ' of ' + questions.length;
+    card.appendChild(label);
+
+    const text = document.createElement('div');
+    text.className = 'q-text';
+    text.innerHTML = q.text;
+    card.appendChild(text);
+
+    if (q.code) {
+      const pre = document.createElement('pre');
+      pre.className = 'q-code';
+      pre.textContent = q.code;
+      card.appendChild(pre);
+    }
+
+    let getAnswer;
+    if (q.type === 'choice') {
+      const choices = document.createElement('div');
+      choices.className = 'choices';
+      const buttons = [];
+      q.options.forEach((opt, idx) => {
+        const b = document.createElement('button');
+        b.className = 'choice';
+        b.innerHTML = opt;
+        b.type = 'button';
+        b.addEventListener('click', () => {
+          if (s.answered) return;
+          buttons.forEach(x => x.classList.remove('selected'));
+          b.classList.add('selected');
+          s.choice = idx;
+          submitBtn.disabled = false;
+        });
+        if (s.choice === idx) b.classList.add('selected');
+        if (s.answered) {
+          b.classList.add('locked');
+          if (idx === q.correct) b.classList.add('correct');
+          else if (idx === s.choice) b.classList.add('incorrect');
+        }
+        choices.appendChild(b);
+        buttons.push(b);
+      });
+      card.appendChild(choices);
+      getAnswer = () => s.choice;
+    } else {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'text-input';
+      input.placeholder = q.placeholder || '';
+      input.value = s.value || '';
+      input.spellcheck = false;
+      input.autocomplete = 'off';
+      input.addEventListener('input', () => {
+        if (s.answered) return;
+        s.value = input.value;
+        submitBtn.disabled = input.value.trim().length === 0;
+      });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !s.answered && input.value.trim().length > 0) {
+          e.preventDefault();
+          submitBtn.click();
+        }
+      });
+      if (s.answered) input.disabled = true;
+      card.appendChild(input);
+      getAnswer = () => input.value;
+      setTimeout(() => { try { input.focus(); } catch (e) {} }, 50);
+    }
+
+    const fb = document.createElement('div');
+    fb.className = 'feedback';
+    if (s.answered) {
+      fb.classList.add('visible');
+      fb.classList.add(s.correct ? 'correct' : 'incorrect');
+      fb.innerHTML = s.correct ? q.correctFeedback : q.incorrectFeedback;
+    }
+    card.appendChild(fb);
+
+    const row = document.createElement('div');
+    row.className = 'btn-row';
+
+    const navL = document.createElement('div');
+    navL.className = 'nav-row';
+    if (i > 0) {
+      const back = document.createElement('button');
+      back.className = 'nav-btn back';
+      back.type = 'button';
+      back.innerHTML = '&larr; Back';
+      back.addEventListener('click', () => { currentIndex = i - 1; render(); });
+      navL.appendChild(back);
+    }
+    row.appendChild(navL);
+
+    const submitBtn = document.createElement('button');
+    submitBtn.type = 'button';
+    if (s.answered) {
+      submitBtn.className = 'nav-btn';
+      submitBtn.innerHTML = (i === questions.length - 1) ? 'See score &rarr;' : 'Next &rarr;';
+      submitBtn.addEventListener('click', () => { currentIndex = i + 1; render(); });
+    } else {
+      submitBtn.className = 'submit-btn';
+      submitBtn.textContent = 'Submit';
+      if (q.type === 'choice') submitBtn.disabled = (s.choice === null);
+      else submitBtn.disabled = (!s.value || s.value.trim().length === 0);
+      submitBtn.addEventListener('click', () => {
+        const ans = getAnswer();
+        let correct = false;
+        if (q.type === 'choice') {
+          correct = (ans === q.correct);
+        } else if (q.check) {
+          correct = q.check(ans);
+        } else {
+          const v = q.normalize ? q.normalize(ans) : ans;
+          correct = q.correct.some(c => (q.normalize ? q.normalize(c) : c) === v);
+        }
+        s.answered = true;
+        s.correct = correct;
+        render();
+      });
+    }
+    row.appendChild(submitBtn);
+    card.appendChild(row);
+
+    return card;
+  }
+
+  function buildScoreCard() {
+    const card = document.createElement('div');
+    card.className = 'card score-card';
+    const correctCount = state.filter(s => s.correct).length;
+    const pct = correctCount / questions.length;
+    const passed = pct >= PASSING_THRESHOLD;
+
+    if (correctCount === questions.length) card.classList.add('full-correct');
+    else if (passed) card.classList.add('passing');
+    else card.classList.add('not-passing');
+
+    const label = document.createElement('div');
+    label.className = 'q-label';
+    label.textContent = 'Quiz complete';
+    card.appendChild(label);
+
+    const msg = document.createElement('div');
+    msg.className = 'score-message';
+    if (correctCount === questions.length) {
+      msg.className = 'score-message good-job';
+      msg.textContent = 'Perfect score. Interface design is locked in.';
+    } else if (passed) {
+      msg.className = 'score-message good-job';
+      msg.textContent = 'Passed.';
+    } else {
+      msg.style.color = '#6B0000';
+      msg.textContent = 'Below the 70% threshold. Review and try again.';
+    }
+    card.appendChild(msg);
+
+    const scoreBig = document.createElement('div');
+    scoreBig.className = 'score-big';
+    scoreBig.textContent = correctCount + ' / ' + questions.length;
+    card.appendChild(scoreBig);
+
+    const scoreLabel = document.createElement('div');
+    scoreLabel.className = 'score-label';
+    scoreLabel.textContent = 'questions correct (' + Math.round(pct * 100) + '%)';
+    card.appendChild(scoreLabel);
+
+    const detail = document.createElement('div');
+    detail.className = 'score-message';
+    if (correctCount === questions.length) {
+      detail.style.fontSize = '14px';
+      detail.style.fontWeight = 'normal';
+      detail.style.color = '#4A5568';
+      detail.textContent = 'You can read a header and reason about ownership and visibility. Apply it to the lab.';
+    } else if (passed) {
+      detail.style.fontSize = '14px';
+      detail.style.fontWeight = 'normal';
+      detail.style.color = '#4A5568';
+      detail.textContent = 'You crossed the threshold. Review the questions you missed before tackling the lab.';
+    } else {
+      detail.style.fontSize = '14px';
+      detail.style.fontWeight = 'normal';
+      detail.style.color = '#6B0000';
+      detail.textContent = 'Re-read the header design section in the lesson materials and replay the walkthrough widget. Then take this quiz again.';
+    }
+    card.appendChild(detail);
+
+    const code = passed ? CS210_CODE_PASS : CS210_CODE_FAIL;
+    const codeBlock = document.createElement('div');
+    codeBlock.className = 'code-block' + (passed ? '' : ' fail');
+    const left = document.createElement('div');
+    left.className = 'code-left';
+    const codeLabel = document.createElement('div');
+    codeLabel.className = 'code-label';
+    codeLabel.textContent = passed ? 'Passing code' : 'Non-passing code';
+    left.appendChild(codeLabel);
+    const codeValue = document.createElement('div');
+    codeValue.className = 'code-value';
+    codeValue.textContent = code;
+    left.appendChild(codeValue);
+    codeBlock.appendChild(left);
+    const copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.className = 'copy-btn';
+    copyBtn.textContent = 'Copy';
+    copyBtn.addEventListener('click', () => {
+      const ok = cs210Copy(code);
+      copyBtn.textContent = ok ? 'Copied!' : 'Copy failed';
+      if (ok) copyBtn.classList.add('copied');
+      setTimeout(() => { copyBtn.textContent = 'Copy'; copyBtn.classList.remove('copied'); }, 1500);
+    });
+    codeBlock.appendChild(copyBtn);
+    card.appendChild(codeBlock);
+
+    const now = new Date();
+    const pad = (n) => n.toString().padStart(2, '0');
+    const ts = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate()) +
+               ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+
+    const footer = document.createElement('div');
+    footer.className = 'inline-code-footer';
+    footer.innerHTML = '<strong>' + escapeHtml(cadetName || '(name not set)') + '</strong> &middot; ' + ts +
+                       (passed ? ' &middot; passing' : ' &middot; non-passing');
+    card.appendChild(footer);
+
+    const recap = document.createElement('div');
+    recap.className = 'recap';
+    const recapTitle = document.createElement('div');
+    recapTitle.className = 'recap-title';
+    recapTitle.textContent = 'Question recap';
+    recap.appendChild(recapTitle);
+
+    state.forEach((s, i) => {
+      const item = document.createElement('div');
+      item.className = 'recap-item';
+      const icon = document.createElement('div');
+      icon.className = 'recap-icon ' + (s.correct ? 'correct' : 'incorrect');
+      icon.textContent = s.correct ? '\u2713' : '\u2717';
+      item.appendChild(icon);
+      const body = document.createElement('div');
+      body.className = 'recap-body';
+      const q = questions[i];
+      const qLine = document.createElement('div');
+      qLine.className = 'recap-question';
+      qLine.innerHTML = '<strong>Q' + (i + 1) + '.</strong> ' + q.shortLabel;
+      body.appendChild(qLine);
+      if (!s.correct) {
+        const exp = document.createElement('div');
+        exp.className = 'recap-explanation';
+        exp.innerHTML = q.incorrectFeedback;
+        body.appendChild(exp);
+      }
+      item.appendChild(body);
+      recap.appendChild(item);
+    });
+    card.appendChild(recap);
+
+    const resetRow = document.createElement('div');
+    resetRow.className = 'reset-row';
+    const resetBtn = document.createElement('button');
+    resetBtn.type = 'button';
+    resetBtn.className = 'reset-btn';
+    resetBtn.textContent = 'Take the quiz again';
+    resetBtn.addEventListener('click', reset);
+    resetRow.appendChild(resetBtn);
+    card.appendChild(resetRow);
+
+    return card;
+  }
+
+  function render() {
+    renderDots();
+    cardArea.innerHTML = '';
+    if (currentIndex >= questions.length) {
+      cardArea.appendChild(buildScoreCard());
+    } else {
+      cardArea.appendChild(buildQuestionCard(currentIndex));
+    }
+  }
+
+  function reset() {
+    state.forEach(s => { s.answered = false; s.correct = false; s.choice = null; s.value = ''; });
+    currentIndex = 0;
+    render();
+  }
+
+  render();
+})();
+</script>
+
+
+    </div>
+  </details>
+
+  <!-- ===================== 6. AFTER CLASS ===================== -->
+  <details id="after-class" style="margin-bottom: 24px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      6. After Class
+    </summary>
+    <div style="padding: 18px 22px;">
+      <ul style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Submit Lab 23 (wordle.h + DESIGN.md + main_skeleton.c) through GitHub Classroom before Lesson 24.</li>
+        <li style="margin-bottom: 6px;">Submit the Lesson 23 reflection in Blackboard. Include the completion codes from both widgets and your screenshot.</li>
+        <li style="margin-bottom: 6px;">Confirm your team\'s Team PEX topic proposal was submitted today. The design check-in is due at Lesson 26; today\'s lab is the rehearsal for that work at team scale.</li>
+        <li style="margin-bottom: 6px;">Read for Lesson 24 (Git in Depth I): Beej-Git &sect;4-6 on branching, merging, and conflict resolution.</li>
+        <li style="margin-bottom: 0;">Heads up: GR3 at Lesson 28 covers Block 3 content. Software design questions ARE fair game.</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== HELP NOTE ===================== -->
+  <div style="background: #F5F7FA; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 3px; font-size: 13.5px; color: #4A5568;">
+    <strong style="color: #00205B;">Need help?</strong> Schedule EI with your instructor. Bring your draft header, your DESIGN.md, and the specific design decision you are stuck on. Specific questions get unstuck quickly. The Resources section in Blackboard has the DFCS C Programming Standard, the functional decomposition reference, and the Git troubleshooting card.
+  </div>
+
+</div>

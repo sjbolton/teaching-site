@@ -1,0 +1,1615 @@
+<!-- ============================================================
+     CS210 — Lesson 25
+     Git in Depth II: Collaboration, Remotes, Pull Requests, Code Review
+     Self-contained: all CSS inline. Native <details> for collapsing.
+     remote_sync and code_review walkthrough widgets embedded inline in section 5.
+     Paste into Blackboard Ultra via Document → Add HTML block.
+     ============================================================ -->
+
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 980px; margin: 0 auto; line-height: 1.6;">
+
+  <!-- ===================== LIGHT HEADER ===================== -->
+  <div style="border-left: 5px solid #003087; padding: 8px 0 8px 18px; margin-bottom: 24px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 2px;">CS210 &middot; Block 3 &middot; Lesson 25</div>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 600; color: #00205B;">Git in Depth II: Collaboration</h1>
+    <div style="font-size: 14px; color: #4A5568; margin-top: 4px;">Remotes &middot; fetch, pull, push &middot; The rejected push &middot; Pull requests &middot; Code review</div>
+  </div>
+
+  <!-- ===================== AT A GLANCE ===================== -->
+  <div style="background: #F5F7FA; border-left: 4px solid #B5B7BA; padding: 14px 18px; margin-bottom: 22px; font-size: 14px;">
+    <strong style="color: #00205B;">At a glance:</strong> Lesson 24 was Git by yourself on one machine. Today is Git with a team. Your repository now lives in two places at once, and keeping them in sync is where collaboration gets interesting. You will run the full remote loop (including the rejected push that confuses every beginner), learn how pull requests propose changes, and practice giving the kind of code review comments that actually get bugs fixed. Two walkthroughs in Section 5 build the skills; the two labs apply them — you open a pull request in Lab 1 and review one in Lab 2.
+  </div>
+
+  <!-- ===================== TABLE OF CONTENTS ===================== -->
+  <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 20px; margin-bottom: 24px; border-radius: 3px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Contents</div>
+    <ol style="margin: 0; padding-left: 22px; font-size: 14px;">
+      <li style="margin-bottom: 4px;"><a href="#objectives" style="color: #003087; text-decoration: none;">Lesson Objectives</a></li>
+      <li style="margin-bottom: 4px;"><a href="#readings" style="color: #003087; text-decoration: none;">Assigned Readings</a></li>
+      <li style="margin-bottom: 4px;"><a href="#pre-class" style="color: #003087; text-decoration: none;">Pre-Class Work</a></li>
+      <li style="margin-bottom: 4px;"><a href="#materials" style="color: #003087; text-decoration: none;">Lesson Materials and Overview</a></li>
+      <li style="margin-bottom: 4px;"><a href="#in-class" style="color: #003087; text-decoration: none;">In-Class Work</a></li>
+      <li style="margin-bottom: 0;"><a href="#after-class" style="color: #003087; text-decoration: none;">After Class</a></li>
+    </ol>
+  </div>
+
+  <!-- ===================== 1. OBJECTIVES ===================== -->
+  <details id="objectives" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      1. Lesson Objectives
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 10px 0; font-style: italic;">By the end of this lesson, cadets will be able to:</p>
+      <ol style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Synchronize a local repository with a remote using <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">fetch</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">pull</code>, and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">push</code>. <span style="color: #6B7280; font-size: 12px;">(Outcomes 6, 7)</span></li>
+        <li style="margin-bottom: 6px;">Submit and respond to pull requests in a collaborative workflow. <span style="color: #6B7280; font-size: 12px;">(Outcome 6)</span></li>
+        <li style="margin-bottom: 0;">Conduct constructive code reviews using established conventions. <span style="color: #6B7280; font-size: 12px;">(Outcomes 6, 4)</span></li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 2. READINGS ===================== -->
+  <details id="readings" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      2. Assigned Readings
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 12px 0;">Complete before class. These give you the vocabulary we will use in the walkthroughs and labs.</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <thead>
+          <tr style="background: #E8EDF5; color: #00205B;">
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 150px;">Source</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9;">Sections</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 230px;">Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;"><a href="https://beej.us/guide/bggit/" style="color: #003087; text-decoration: underline;">Beej-Git</a></td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Ch. 9, 10, 14, 17 (Remotes: Repos in Other Places, Remote Tracking Branches, Collaboration across Branches, GitHub: Forking and Pull Requests)</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">How remotes, push/pull, and pull requests actually work</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 9px 12px;">Supplementary notes (instructor)</td>
+            <td style="padding: 9px 12px;">Code review workflow and conventions</td>
+            <td style="padding: 9px 12px; color: #4A5568;">What a good review comment looks like; severity and tone</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 12px 16px; margin-top: 14px; border-radius: 3px; font-size: 13.5px; color: #5A4B00;">
+        <strong style="color: #6B5300;">Heads up:</strong> the Beej site may be blocked on the USAFA network. If the link does not load on a lab machine, read it on a personal device or through the course Resources mirror.
+      </div>
+    </div>
+  </details>
+
+  <!-- ===================== 3. PRE-CLASS WORK ===================== -->
+  <details id="pre-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      3. Pre-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 18px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #6B5300; font-size: 14px; margin-bottom: 4px;">Do this first</div>
+        <div style="font-size: 14px; color: #5A4B00;">Plan on 20 to 30 minutes for the reading. The hands-on learning happens during the two in-class walkthroughs; come ready to type and to read code critically.</div>
+      </div>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 0 0 10px 0;">Pre-Class Checklist</h3>
+
+      <!-- Step 1: Reading -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">1</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Read Beej-Git Ch. 9, 10, 14, and 17 (Remotes: Repos in Other Places, Remote Tracking Branches, Collaboration across Branches, GitHub: Forking and Pull Requests)</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">Focus on these ideas; you do not need to memorize commands, just recognize the terms:</div>
+            <ul style="font-size: 13.5px; margin: 0 0 6px 0; padding-left: 20px;">
+              <li style="margin-bottom: 3px;">remote, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">origin</code>, and remote-tracking branches (<code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">origin/main</code>)</li>
+              <li style="margin-bottom: 3px;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">fetch</code> vs <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">pull</code> vs <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">push</code></li>
+              <li style="margin-bottom: 0;">what a pull request is and why teams use one</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Recall L24 -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">2</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Refresh your Lesson 24 conflict-resolution skill</div>
+            <div style="font-size: 14px;">Today's <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">git pull</code> can produce a merge conflict, and you resolve it the exact same way you did in Lesson 24. If that feels rusty, skim your Lesson 24 notes so it is fresh.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Skim widgets -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 8px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">3</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Skim the In-Class section below</div>
+            <div style="font-size: 14px;">You will see two interactive walkthroughs: one for the remote sync loop, one for code review. No need to use them yet; just know they are there.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ===================== 4. LESSON MATERIALS AND OVERVIEW ===================== -->
+  <details id="materials" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      4. Lesson Materials and Overview
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 18px 0;">Lesson 24 gave you branching, merging, and conflict resolution on a single machine. Today the repository lives in more than one place, and the new skill is keeping those copies in agreement while a teammate is changing the same code. The reference material below covers the concepts you will see in lecture and practice in the two walkthroughs.</p>
+
+      <!-- Subsection navigation -->
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 18px; margin-bottom: 22px; border-radius: 3px;">
+        <div style="font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">Jump to</div>
+        <div style="font-size: 13.5px;">
+          <a href="#slides" style="color: #003087; text-decoration: none; margin-right: 14px;">Slides</a>
+          <a href="#two-places" style="color: #003087; text-decoration: none; margin-right: 14px;">Two Places</a>
+          <a href="#sync-commands" style="color: #003087; text-decoration: none; margin-right: 14px;">Sync Commands</a>
+          <a href="#rejected" style="color: #003087; text-decoration: none; margin-right: 14px;">The Rejected Push</a>
+          <a href="#pull-requests" style="color: #003087; text-decoration: none; margin-right: 14px;">Pull Requests</a>
+          <a href="#code-review" style="color: #003087; text-decoration: none;">Code Review</a>
+        </div>
+      </div>
+
+      <!-- Slides -->
+      <h3 id="slides" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0; scroll-margin-top: 16px;">Slides</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">The Lesson 25 deck covers the local-versus-remote mental model, the four sync commands, the rejected push, pull requests, and what makes a good code review comment. The slides are the spine of the lecture; the two walkthroughs in Section 5 are where you practice.</p>
+
+      <!-- =========================================================
+           EDIT ME: Lesson 25 slide deck link
+           Replace href="#" below with the SharePoint share URL once the
+           deck is published. Leave target="_blank" and rel="noopener".
+           ========================================================= -->
+      <p style="margin: 0 0 18px 0;">
+        <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 10px 20px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 14px;">Open Lesson 25 slides &rarr;</a>
+      </p>
+
+      <!-- Two places -->
+      <h3 id="two-places" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Your repo now lives in two places</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">When you clone a shared repo, you end up with three things that matter. There is your local <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">main</code> (the branch you actually work on), the remote <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">main</code> on GitHub (the shared truth your teammates pull from), and a third thing called <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">origin/main</code>.</p>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">origin/main</code> is a remote-tracking branch: your local copy's memory of where the remote was the last time you talked to it. It is not a live feed. The remote can move forward (a teammate pushes) and your <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">origin/main</code> will not know until you <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">clone</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">fetch</code>, or <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">pull</code>. Almost every sync headache traces back to that snapshot being stale.</p>
+
+      <!-- Sync commands -->
+      <h3 id="sync-commands" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">The four commands that move work</h3>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 18px;">
+        <thead>
+          <tr style="background: #00205B; color: #ffffff;">
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 160px;">Command</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600;">What it does</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; color: #003087;">git clone &lt;url&gt;</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Copy a remote repo to your machine, once, at the start. Sets up <code style="background: #F0F2F5; padding: 1px 4px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12px;">origin</code> automatically.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; color: #003087;">git fetch</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Download the remote's new commits but do not merge them yet. Updates <code style="background: #F0F2F5; padding: 1px 4px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12px;">origin/main</code>. The cautious "let me look first" move.</td>
+          </tr>
+          <tr>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; color: #003087;">git pull</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;"><code style="background: #F0F2F5; padding: 1px 4px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12px;">fetch</code> then <code style="background: #F0F2F5; padding: 1px 4px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12px;">merge</code> in one step. Brings remote work into your branch. Can produce a merge conflict.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 9px 12px; font-family: Consolas, monospace; color: #003087;">git push</td>
+            <td style="padding: 9px 12px; color: #4A5568;">Upload your local commits to the remote so others can get them.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">If a <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">pull</code> reports a conflict, resolve it exactly the way you did in Lesson 24: open the file, fix the conflict markers, then add and commit. The skill carries over unchanged.</p>
+
+      <!-- The rejected push -->
+      <h3 id="rejected" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">The rejected push (and why it is not a break)</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">This is the single most common collaboration error, and it is Git protecting you, not failing. It happens when a teammate pushes to the remote after your last sync, so the remote has a commit you do not. When you try to push, Git refuses:</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #F47A7A;">! [rejected]        main -&gt; main (fetch first)</span><br>
+        <span style="color: #F47A7A;">error: failed to push some refs to 'origin'</span><br>
+        <span style="color: #6B7280;">hint: Updates were rejected because the remote contains work</span><br>
+        <span style="color: #6B7280;">hint: that you do not have locally. Pull and integrate the</span><br>
+        <span style="color: #6B7280;">hint: remote changes before pushing again.</span>
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">The fix is always the same: <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">git pull</code> to bring in the teammate's work (resolving any conflict), then <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">git push</code> again. Read the hint Git gives you; in this corner of Git the error messages tell you exactly what to do. You will make this rejection happen on purpose in the remote_sync walkthrough.</p>
+
+      <!-- Pull requests -->
+      <h3 id="pull-requests" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Pull requests: propose, do not just push</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">On a team you usually do not push straight to <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">main</code>. Instead you do your work on a feature branch, push the branch, and open a pull request: a request to merge your branch into <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">main</code>. The name is a little confusing because it has "pull" in it, but it is about getting your work merged in, not pulling work down.</p>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">A pull request is a conversation around a diff. The title says what changed, the description says why, and reviewers leave comments before anything merges. That review checkpoint is how a team catches problems before they reach the shared branch and everyone's copy. In Lab 1 you open a real pull request for a small Summit Log feature.</p>
+
+      <!-- Code review -->
+      <h3 id="code-review" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">What makes a good code review comment</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">A useful review comment is three things at once: <strong>specific</strong> (it points at a line and names the actual issue), <strong>actionable</strong> (it says what to change or check, ideally with a suggested fix), and <strong>kind</strong> (it is about the code, not the author, and assumes good faith). Compare:</p>
+      <div style="background: #FDECEA; border-left: 4px solid #B8002F; padding: 10px 14px; border-radius: 3px; margin-bottom: 8px; font-size: 13.5px; color: #8A0023;"><strong>Weak:</strong> &ldquo;this is wrong&rdquo;</div>
+      <div style="background: #E6F4EA; border-left: 4px solid #2E7D32; padding: 10px 14px; border-radius: 3px; margin-bottom: 14px; font-size: 13.5px; color: #1B5E20;"><strong>Strong:</strong> &ldquo;The loop uses <code style="background: rgba(0,0,0,0.06); padding: 1px 4px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12px;">i &lt;= n</code>, but valid indices are 0..n-1, so this reads one past the end. Should it be <code style="background: rgba(0,0,0,0.06); padding: 1px 4px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12px;">i &lt; n</code>?&rdquo;</div>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Lead with correctness. A review that flags whitespace while missing a buffer overflow has failed at the one job that mattered. Style and personal preferences come after, and should be clearly marked non-blocking so the author knows what truly must change before merge.</p>
+      <p style="font-size: 14.5px; margin: 0 0 4px 0;">Reviewing is a form of testing. Some bugs compile cleanly under <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">-Wall -Werror</code> and still do the wrong thing; the only tool that finds them by inspection is a careful human reading the code. Ask of every change: <em>what is the worst input this could get, and what would it do?</em> That question is what you will practice in the code_review walkthrough and apply for real in Lab 2.</p>
+
+    </div>
+  </details>
+
+
+  <!-- ===================== 5. IN-CLASS WORK ===================== -->
+  <details id="in-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      5. In-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 16px 0;">Four things to do in class. Use the checklist to track your progress.</p>
+
+      <ul style="list-style: none; padding: 0; margin: 0 0 24px 0; font-size: 14.5px;">
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Work through the remote_sync walkthrough below.</strong>
+          <span style="color: #4A5568;">Thirteen guided tasks: clone, commit, push, watch a teammate diverge the remote, hit the rejected push, then pull and re-push. About 15 minutes.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Work through the code_review walkthrough below.</strong>
+          <span style="color: #4A5568;">Ten review decisions on a Summit Log pull request, including finding a real out-of-bounds bug by reading. About 15 minutes.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Complete Lab 1: Open a Pull Request.</strong>
+          <span style="color: #4A5568;">Add the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">elevation_per_mile</code> feature on a branch and open a pull request against your team's <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">main</code>. Half autograded, half checked on your PR.</span>
+          <!-- =========================================================
+               EDIT ME: Lab 1 (L25) GitHub Classroom assignment link
+               Replace href="#" with the classroom.github.com/a/... invite
+               URL once the TEAM assignment is published.
+               ========================================================= -->
+          <div style="margin-top: 8px; margin-left: 28px;">
+            <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 6px 14px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 13px;">Accept Lab 1 on GitHub Classroom &rarr;</a>
+          </div>
+        </li>
+        <li style="margin-bottom: 0; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Complete Lab 2: Review a Pull Request.</strong>
+          <span style="color: #4A5568;">Review the provided PR #7 on the Summit Log and write your review in <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">REVIEW.md</code>. You must catch at least one correctness bug, not just style.</span>
+          <!-- =========================================================
+               EDIT ME: Lab 2 (L25) GitHub Classroom assignment link
+               Replace href="#" with the classroom.github.com/a/... invite
+               URL once the assignment is published.
+               ========================================================= -->
+          <div style="margin-top: 8px; margin-left: 28px;">
+            <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 6px 14px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 13px;">Accept Lab 2 on GitHub Classroom &rarr;</a>
+          </div>
+        </li>
+      </ul>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 18px 0 10px 0;">remote_sync Walkthrough</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Thirteen tasks across four sections. Type each git command at the prompt. The terminal shows what git did; the right pane shows how your local branch and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">origin/main</code> line up. Watch the right pane when the teammate pushes and when your push gets rejected.</p>
+
+<!-- ============================================================
+     remote_sync walkthrough widget inlined below
+     ============================================================ -->
+<!-- ============================================================
+     CS210 Lesson 25 - remote_sync Walkthrough Widget
+     Terminal-style CLI walkthrough of the remote collaboration loop:
+     clone, commit, push, the rejected non-fast-forward, pull, re-push.
+     Side panel visualizes local HEAD vs origin/main divergence.
+     Template-aligned. Native HTML/CSS + scoped JS. Paste as a block.
+     ============================================================ -->
+<style>
+.cs210-rsync * { box-sizing: border-box; }
+.cs210-rsync {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-rsync h1 { color: #00205B; font-size: 24px; margin: 0 0 6px 0; }
+.cs210-rsync .subtitle { color: #4A5568; font-size: 14px; margin-bottom: 22px; }
+.cs210-rsync .progress-bar { background: #E5E7EB; border-radius: 3px; height: 8px; overflow: hidden; margin-bottom: 6px; }
+.cs210-rsync .progress-fill { background: #003087; height: 100%; transition: width 0.3s ease; }
+.cs210-rsync .progress-label { font-size: 12px; color: #6B7280; margin-bottom: 18px; }
+.cs210-rsync .section-header {
+  background: #E8EDF5; color: #00205B; padding: 8px 14px; border-radius: 3px;
+  font-size: 13px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px;
+}
+.cs210-rsync .task-card {
+  background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px;
+  margin-bottom: 14px; border-radius: 3px;
+}
+.cs210-rsync .task-card.complete { background: #E6F4EA; border-left-color: #2E7D32; }
+.cs210-rsync .task-label {
+  font-size: 12px; letter-spacing: 1.5px; color: #6B5300; text-transform: uppercase;
+  font-weight: 600; margin-bottom: 4px;
+}
+.cs210-rsync .task-card.complete .task-label { color: #1B5E20; }
+.cs210-rsync .task-text { font-size: 15px; color: #1a1a1a; }
+.cs210-rsync .task-hint { font-size: 12.5px; color: #6B7280; margin-top: 6px; font-style: italic; }
+
+.cs210-rsync .panes { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 12px; }
+@media (max-width: 760px) { .cs210-rsync .panes { grid-template-columns: 1fr; } }
+.cs210-rsync .terminal {
+  background: #1E2A3A; color: #E8EDF5; font-family: Consolas, 'Courier New', monospace;
+  font-size: 13.5px; line-height: 1.5; border-radius: 4px; padding: 14px 18px;
+  min-height: 380px; max-height: 440px; overflow-y: auto; white-space: pre-wrap; word-break: break-word;
+}
+.cs210-rsync .terminal .prompt { color: #7FB3D5; }
+.cs210-rsync .terminal .typed { color: #FFFFFF; }
+.cs210-rsync .terminal .out { color: #B5BEC8; }
+.cs210-rsync .terminal .note { color: #F0B92C; }
+.cs210-rsync .terminal .err { color: #F47A7A; }
+.cs210-rsync .terminal .ok { color: #7FD17F; }
+.cs210-rsync .terminal .dim { color: #6B7280; }
+
+.cs210-rsync .state-pane {
+  background: #ffffff; border: 1px solid #D0D5DD; border-radius: 4px; padding: 14px 16px;
+  min-height: 380px; max-height: 440px; overflow-y: auto;
+}
+.cs210-rsync .state-pane-header {
+  font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase;
+  font-weight: 600; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #E5E7EB;
+}
+.cs210-rsync .repo-block { margin-bottom: 16px; }
+.cs210-rsync .repo-title {
+  font-size: 12px; font-weight: 700; color: #00205B; text-transform: uppercase;
+  letter-spacing: 1px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;
+}
+.cs210-rsync .repo-title .badge {
+  font-size: 9px; font-weight: 600; padding: 1px 6px; border-radius: 8px;
+  letter-spacing: 0.5px; text-transform: none;
+}
+.cs210-rsync .badge.local { background: #E8EDF5; color: #003087; }
+.cs210-rsync .badge.remote { background: #FFF3D6; color: #6B5300; }
+.cs210-rsync .commit-list { display: flex; flex-direction: column; gap: 0; }
+.cs210-rsync .commit {
+  font-family: Consolas, monospace; font-size: 12px; padding: 5px 8px;
+  border: 1px solid #D0D5DD; border-radius: 3px; margin-bottom: 4px; background: #F8FAFC;
+  display: flex; justify-content: space-between; gap: 8px;
+}
+.cs210-rsync .commit .sha { color: #003087; font-weight: 700; }
+.cs210-rsync .commit .msg { color: #4A5568; flex: 1; }
+.cs210-rsync .commit.head { border-color: #003087; border-width: 2px; background: #EEF3FB; }
+.cs210-rsync .commit.theirs { border-color: #F0B92C; background: #FFFBF0; }
+.cs210-rsync .commit .tag {
+  font-size: 9px; padding: 0 5px; border-radius: 6px; background: #003087; color: #fff;
+  align-self: center; white-space: nowrap;
+}
+.cs210-rsync .repo-empty { color: #6B7280; font-style: italic; font-size: 12.5px; padding: 14px 4px; }
+.cs210-rsync .sync-banner {
+  font-size: 12px; padding: 8px 10px; border-radius: 3px; margin-bottom: 14px; font-weight: 600; text-align: center;
+}
+.cs210-rsync .sync-banner.even { background: #E6F4EA; color: #1B5E20; border: 1px solid #2E7D32; }
+.cs210-rsync .sync-banner.ahead { background: #EEF3FB; color: #003087; border: 1px solid #003087; }
+.cs210-rsync .sync-banner.diverged { background: #FDECEA; color: #B8002F; border: 1px solid #E07A7A; }
+.cs210-rsync .sync-banner.none { background: #F5F7FA; color: #6B7280; border: 1px solid #D0D5DD; }
+
+.cs210-rsync .input-row {
+  display: flex; background: #1E2A3A; border-radius: 4px; padding: 8px 14px; margin-bottom: 14px;
+  border: 1px solid #003087;
+}
+.cs210-rsync .input-prompt {
+  color: #7FB3D5; font-family: Consolas, monospace; font-size: 14px; margin-right: 8px;
+  align-self: center; white-space: nowrap;
+}
+.cs210-rsync .input-row input {
+  flex: 1; background: transparent; color: #FFFFFF; border: none; outline: none;
+  font-family: Consolas, monospace; font-size: 14px; padding: 4px 0;
+}
+.cs210-rsync .controls { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+.cs210-rsync .btn {
+  background: #ffffff; border: 1px solid #C7CFD9; padding: 6px 14px; border-radius: 3px;
+  font-size: 13px; cursor: pointer; color: #00205B; font-family: inherit;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.cs210-rsync .btn:hover { background: #F5F7FA; }
+@keyframes cs210-rsync-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(240, 185, 44, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0); }
+}
+.cs210-rsync .btn.pulse {
+  background: #FFF8E1; border-color: #F0B92C; color: #6B5300; font-weight: 600;
+  animation: cs210-rsync-pulse 1.5s infinite;
+}
+.cs210-rsync .help-note {
+  background: #F5F7FA; border: 1px solid #D0D5DD; padding: 12px 16px; border-radius: 3px;
+  font-size: 13px; color: #4A5568; margin-top: 12px;
+}
+.cs210-rsync .help-note strong { color: #00205B; }
+
+/* Name modal overlay */
+.cs210-rsync .name-modal-backdrop {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55); display: flex; align-items: center; justify-content: center; z-index: 9999;
+}
+.cs210-rsync .name-modal {
+  background: #ffffff; border-radius: 6px; padding: 28px 32px; max-width: 440px; width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25); font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-rsync .name-modal h2 { color: #00205B; font-size: 20px; margin: 0 0 10px 0; }
+.cs210-rsync .name-modal p { color: #4A5568; font-size: 14px; line-height: 1.5; margin: 0 0 16px 0; }
+.cs210-rsync .name-modal input {
+  width: 100%; padding: 10px 12px; font-size: 15px; border: 1px solid #CBD5E0;
+  border-radius: 4px; margin-bottom: 14px; font-family: inherit;
+}
+.cs210-rsync .name-modal input:focus { outline: none; border-color: #003087; box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15); }
+.cs210-rsync .name-modal-btn {
+  background: #003087; color: #ffffff; border: none; padding: 10px 20px; border-radius: 4px;
+  font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.cs210-rsync .name-modal-btn:disabled { background: #A0AEC0; cursor: not-allowed; }
+.cs210-rsync .name-modal-btn:not(:disabled):hover { background: #00205B; }
+
+/* Completion screen */
+.cs210-rsync .completion-screen { background: #ffffff; border: 2px solid #2E7D32; border-radius: 6px; padding: 24px 28px; margin-top: 16px; }
+.cs210-rsync .completion-screen .cs-heading { color: #1B5E20; font-size: 20px; font-weight: 600; margin: 0 0 6px 0; }
+.cs210-rsync .completion-screen .cs-name-line { font-size: 15px; color: #1a1a1a; margin-bottom: 16px; }
+.cs210-rsync .completion-screen .cs-name-line strong { color: #00205B; }
+.cs210-rsync .completion-screen .cs-code-block {
+  background: #F0F4FA; border: 1px solid #003087; border-radius: 4px; padding: 16px 20px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 14px;
+}
+.cs210-rsync .completion-screen .cs-code-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: #4A5568; margin-bottom: 4px; }
+.cs210-rsync .completion-screen .cs-code-value { font-family: 'Consolas', 'Courier New', monospace; font-size: 28px; font-weight: 700; color: #00205B; letter-spacing: 3px; }
+.cs210-rsync .completion-screen .cs-copy-btn { background: #003087; color: #ffffff; border: none; padding: 8px 14px; border-radius: 3px; font-size: 13px; cursor: pointer; font-family: inherit; }
+.cs210-rsync .completion-screen .cs-copy-btn:hover { background: #00205B; }
+.cs210-rsync .completion-screen .cs-copy-btn.copied { background: #2E7D32; }
+.cs210-rsync .completion-screen .cs-timestamp { font-size: 13px; color: #6B7280; margin-bottom: 18px; }
+.cs210-rsync .completion-screen .cs-reminder { background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 12px 16px; border-radius: 3px; font-size: 14px; color: #6B5300; line-height: 1.5; }
+.cs210-rsync .completion-screen .cs-reminder strong { color: #4A3A00; }
+</style>
+
+<div class="cs210-rsync">
+
+<div class="name-modal-backdrop" id="rsync-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Lesson 25 reflection.</p>
+    <input type="text" id="rsync-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="rsync-cadet-name-btn" disabled>Start the walkthrough</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 25 &middot; remote_sync Walkthrough</h1>
+<div class="subtitle">A guided run through the remote collaboration loop: clone, commit, push, hit the rejected push when a teammate gets there first, pull to reconcile, then push for real. The terminal shows what git did; the right pane shows how your local branch and origin/main line up.</div>
+
+<div class="progress-bar"><div class="progress-fill" id="rsync-progress-fill" style="width: 0%;"></div></div>
+<div class="progress-label" id="rsync-progress-label">Task 0 of 13</div>
+
+<div class="section-header" id="rsync-section-header">Section 1: Get the shared repo</div>
+
+<div class="task-card" id="rsync-task-card">
+  <div class="task-label" id="rsync-task-label">Current task</div>
+  <div class="task-text" id="rsync-task-text">Loading...</div>
+  <div class="task-hint" id="rsync-task-hint"></div>
+</div>
+
+<div class="panes">
+  <div class="terminal" id="rsync-terminal"></div>
+  <div class="state-pane">
+    <div class="state-pane-header">Repository state</div>
+    <div id="rsync-state-area"></div>
+  </div>
+</div>
+
+<div class="input-row">
+  <span class="input-prompt">~/summit-log$</span>
+  <input type="text" id="rsync-cli-input" autocomplete="off" spellcheck="false" placeholder="follow the task above">
+</div>
+
+<div class="controls">
+  <button class="btn" id="rsync-hint-btn">Show hint</button>
+  <button class="btn" id="rsync-reset-btn">Reset</button>
+</div>
+
+<div class="help-note">
+  <strong>How this works:</strong> This is not a real shell and there is no real network. It is a teaching simulation of the git collaboration loop. The task card tells you what to type next; only the expected command advances the walkthrough so the repository state stays predictable. Mistype twice and the hint button pulses. The point is the <em>pattern</em>: who has which commits, and what each command does to close the gap.
+</div>
+
+<div id="rsync-completion-area"></div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-rsync');
+  if (!root) return;
+
+  // ============================================================
+  // CS210 widget completion utilities
+  // Salt -> deterministic 6-char code via FNV-1a.
+  // ============================================================
+  const CS210_SALT = "lesson25_remote_sync_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) { out += CS210_ALPHABET[Number(pool & 31n)]; pool >>= 5n; }
+    return out;
+  }
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#rsync-name-modal-backdrop');
+    const input = root.querySelector('#rsync-cadet-name-input');
+    const btn = root.querySelector('#rsync-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length >= 2) {
+        cs210CadetName = stored.trim();
+        backdrop.style.display = 'none';
+        return;
+      }
+    } catch (e) {}
+    function updateBtn() { btn.disabled = input.value.trim().length < 2; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', function() {
+      const name = input.value.trim();
+      if (name.length < 2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+      // Dismiss sibling widget modals on the same page.
+      const siblings = document.querySelectorAll('#review-name-modal-backdrop');
+      siblings.forEach(function(m) { m.style.display = 'none'; });
+      const cli = root.querySelector('#rsync-cli-input');
+      if (cli) cli.focus();
+    });
+    setTimeout(function() { input.focus(); }, 50);
+  })();
+
+  function cs210Escape(s) {
+    return (s || '').replace(/[<>&"']/g, function(c) {
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+  }
+
+  function cs210RenderCompletion(area) {
+    if (!area) return;
+    if (root.querySelector('#cs210-completion-overlay')) return;
+    const now = new Date();
+    const ts = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const safeName = cs210Escape(cs210CadetName || 'Cadet');
+    area.innerHTML =
+      '<div class="completion-screen">' +
+        '<div class="cs-heading">Walkthrough complete</div>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value">' + CS210_CODE + '</div></div>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+      '</div>';
+    const overlay = document.createElement('div');
+    overlay.id = 'cs210-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.style.background = 'rgba(27, 94, 32, 0.55)';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">Walkthrough complete</h2>' +
+        '<p>Take a screenshot of this box. You will need the code and a visual of this screen for the Lesson 25 reflection.</p>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value" id="rsync-cs-code-value">' + CS210_CODE + '</div></div>' +
+          '<button class="cs-copy-btn" id="rsync-cs-copy-btn" type="button">Copy code</button>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+        '<div class="cs-reminder" style="margin-bottom:14px;">' +
+          '<strong>Next step:</strong> Open the Lesson 25 reflection in Blackboard. Enter this code, answer the reflection prompt, and attach your screenshot.' +
+        '</div>' +
+        '<button class="name-modal-btn" id="rsync-cs-overlay-close" type="button" style="background:#2E7D32;">Got it &mdash; close this</button>' +
+      '</div>';
+    root.appendChild(overlay);
+    const closeBtn = overlay.querySelector('#rsync-cs-overlay-close');
+    if (closeBtn) closeBtn.addEventListener('click', function() { overlay.style.display = 'none'; });
+    const copyBtn = overlay.querySelector('#rsync-cs-copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function() {
+        const text = CS210_CODE;
+        const ok = function() {
+          copyBtn.textContent = 'Copied'; copyBtn.classList.add('copied');
+          setTimeout(function() { copyBtn.textContent = 'Copy code'; copyBtn.classList.remove('copied'); }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(ok, function() { cs210FallbackCopy(text); ok(); });
+        } else { cs210FallbackCopy(text); ok(); }
+      });
+    }
+  }
+  function cs210FallbackCopy(text) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+    } catch (e) {}
+  }
+
+  // ============================================================
+  // Simulated repository state
+  //  - localCommits: array of {sha, msg, theirs} for local main
+  //  - remoteCommits: array for origin/main
+  //  - originKnown: what local thinks origin/main is (remote-tracking ref),
+  //    refreshed only by clone/fetch/pull
+  // A "teammate" push adds a commit to remoteCommits without touching local.
+  // ============================================================
+  let cloned = false;
+  let localCommits = [];
+  let remoteCommits = [];
+  let originKnown = [];          // local's view of origin/main (remote-tracking)
+  let workingChange = false;     // an edited-but-uncommitted file
+  let staged = false;            // staged but uncommitted
+  let teammatePushed = false;    // has the teammate's divergent commit landed on remote
+  let shaCounter = 1;
+
+  function nextSha() {
+    const hex = '0123456789abcdef';
+    let s = '';
+    // deterministic-ish short shas for display
+    let seed = shaCounter * 2654435761 >>> 0;
+    for (let i = 0; i < 7; i++) { s += hex[seed & 15]; seed = (seed >> 4) ^ (seed << 3); seed >>>= 0; }
+    shaCounter++;
+    return s.slice(0, 7);
+  }
+
+  const terminalEl = root.querySelector('#rsync-terminal');
+  function termLine(text, cls) {
+    const div = document.createElement('div');
+    if (cls) div.className = cls;
+    div.textContent = text;
+    terminalEl.appendChild(div);
+    terminalEl.scrollTop = terminalEl.scrollHeight;
+  }
+  function echoCommand(cmd) {
+    const div = document.createElement('div');
+    div.innerHTML = '<span class="prompt">~/summit-log$</span> <span class="typed">' + cs210Escape(cmd) + '</span>';
+    terminalEl.appendChild(div);
+    terminalEl.scrollTop = terminalEl.scrollHeight;
+  }
+
+  // ---- State pane rendering ----
+  function commitsEqual(a, b) {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) if (a[i].sha !== b[i].sha) return false;
+    return true;
+  }
+  function renderState() {
+    const area = root.querySelector('#rsync-state-area');
+    if (!cloned) {
+      area.innerHTML = '<div class="repo-empty">No local clone yet. The shared repo lives on the remote (origin). Run <code>git clone</code> to get a copy.</div>' +
+        renderRemoteBlock();
+      return;
+    }
+    // Sync banner: compare local main against local's known origin/main
+    let banner = '';
+    if (commitsEqual(localCommits, originKnown) && commitsEqual(localCommits, remoteCommits)) {
+      banner = '<div class="sync-banner even">In sync with origin/main</div>';
+    } else if (localCommits.length > originKnown.length &&
+               originKnown.every((c, i) => localCommits[i] && localCommits[i].sha === c.sha)) {
+      banner = '<div class="sync-banner ahead">Local is ahead of origin/main by ' + (localCommits.length - originKnown.length) + ' &mdash; safe to push</div>';
+    } else if (teammatePushed && !commitsEqual(originKnown, remoteCommits) &&
+               !originKnown.every((c,i)=>remoteCommits[i] && remoteCommits[i].sha===c.sha)) {
+      banner = '<div class="sync-banner diverged">Histories diverged &mdash; the remote has a commit you do not. Pull before you can push.</div>';
+    } else if (!commitsEqual(localCommits, remoteCommits)) {
+      banner = '<div class="sync-banner ahead">Local and origin/main differ</div>';
+    } else {
+      banner = '<div class="sync-banner even">In sync with origin/main</div>';
+    }
+    area.innerHTML = banner + renderLocalBlock() + renderRemoteBlock();
+  }
+  function renderCommit(c, isHead, opts) {
+    opts = opts || {};
+    let cls = 'commit';
+    if (isHead) cls += ' head';
+    if (c.theirs) cls += ' theirs';
+    const tag = isHead ? '<span class="tag">' + (opts.headLabel || 'HEAD') + '</span>' : '';
+    return '<div class="' + cls + '"><span class="sha">' + c.sha + '</span><span class="msg">' + cs210Escape(c.msg) + '</span>' + tag + '</div>';
+  }
+  function renderLocalBlock() {
+    let html = '<div class="repo-block"><div class="repo-title">Your machine <span class="badge local">local main</span></div><div class="commit-list">';
+    if (localCommits.length === 0) html += '<div class="repo-empty">empty</div>';
+    else {
+      for (let i = localCommits.length - 1; i >= 0; i--) {
+        html += renderCommit(localCommits[i], i === localCommits.length - 1, { headLabel: 'HEAD -> main' });
+      }
+    }
+    html += '</div>';
+    if (workingChange) html += '<div style="font-size:11.5px;color:#B8002F;margin-top:4px;">&#9679; trails.txt has uncommitted changes' + (staged ? ' (staged)' : '') + '</div>';
+    html += '</div>';
+    return html;
+  }
+  function renderRemoteBlock() {
+    let html = '<div class="repo-block"><div class="repo-title">GitHub <span class="badge remote">origin/main</span></div><div class="commit-list">';
+    if (remoteCommits.length === 0) html += '<div class="repo-empty">empty repo on the remote</div>';
+    else {
+      for (let i = remoteCommits.length - 1; i >= 0; i--) {
+        html += renderCommit(remoteCommits[i], i === remoteCommits.length - 1, { headLabel: 'origin/main' });
+      }
+    }
+    html += '</div></div>';
+    return html;
+  }
+
+  // ============================================================
+  // Tasks
+  // ============================================================
+  const tasks = [
+    {
+      section: 'Section 1: Get the shared repo',
+      label: 'Task 1 of 13',
+      text: 'Your team accepted the Summit Log assignment on GitHub Classroom, so a shared repo exists on the remote. Get a local copy. Clone it.',
+      hint: 'git clone <url>',
+      match: (c) => /^\s*git\s+clone\s+\S+/.test(c),
+      run: () => {
+        cloned = true;
+        remoteCommits = [{ sha: nextSha(), msg: 'Initial summit log', theirs: false }];
+        localCommits = remoteCommits.map(x => ({...x}));
+        originKnown = remoteCommits.map(x => ({...x}));
+      },
+      note: 'Clone copies the whole repo: the files, the full history, and a remote-tracking ref called origin/main that records where the remote was at clone time. Now you have two copies, your local one and the one on GitHub.'
+    },
+    {
+      label: 'Task 2 of 13',
+      text: 'Confirm the clone worked and the working tree is clean. Check the status.',
+      hint: 'git status',
+      match: (c) => /^\s*git\s+status\s*$/.test(c),
+      run: () => {},
+      note: 'A clean working tree means nothing is changed since the last commit, and your branch is up to date with origin/main. This is your baseline before you do any work.'
+    },
+    {
+      label: 'Task 3 of 13',
+      text: 'See the connection to the remote. List the configured remotes (verbose, so you see the fetch and push URLs).',
+      hint: 'git remote -v',
+      match: (c) => /^\s*git\s+remote\s+-v\s*$/.test(c),
+      run: () => {},
+      note: 'origin is just a name (a nickname for the remote URL). Clone sets it up automatically. push and pull both talk to origin unless you tell them otherwise.'
+    },
+    {
+      section: 'Section 2: Do some work and push it',
+      label: 'Task 4 of 13',
+      text: 'You added Quandary Peak to the log. Mark the file as edited so we can track it. Type: edit trails.txt',
+      hint: 'edit trails.txt',
+      match: (c) => /^\s*edit\s+trails\.txt\s*$/.test(c),
+      run: () => { workingChange = true; staged = false; },
+      note: 'In a real editor you would just save the file. Here we simulate the edit so the state pane can show the uncommitted change. Notice the red dot appear on the local side.'
+    },
+    {
+      label: 'Task 5 of 13',
+      text: 'Stage the change so it is ready to commit.',
+      hint: 'git add trails.txt',
+      match: (c) => /^\s*git\s+add\s+(trails\.txt|\.|-A|--all)\s*$/.test(c),
+      run: () => { staged = true; },
+      note: 'Staging selects exactly what goes into the next commit. The change is staged but not yet committed; it still lives only on your machine.'
+    },
+    {
+      label: 'Task 6 of 13',
+      text: 'Commit the staged change with a clear message about adding Quandary Peak.',
+      hint: 'git commit -m "Add Quandary Peak"',
+      match: (c) => /^\s*git\s+commit\s+-m\s+["'].+["']\s*$/.test(c),
+      run: () => {
+        localCommits.push({ sha: nextSha(), msg: 'Add Quandary Peak', theirs: false });
+        workingChange = false; staged = false;
+      },
+      note: 'The commit is now in your LOCAL history. Look at the panes: local main is one commit ahead of origin/main. Until you push, the remote and your teammates cannot see it.'
+    },
+    {
+      label: 'Task 7 of 13',
+      text: 'Share your commit. Push it to the remote.',
+      hint: 'git push',
+      match: (c) => /^\s*git\s+push(\s+origin(\s+main)?)?\s*$/.test(c),
+      run: () => {
+        // Fast-forward: remote takes the new commit; local view of origin updates.
+        remoteCommits = localCommits.map(x => ({...x}));
+        originKnown = localCommits.map(x => ({...x}));
+      },
+      note: 'Push succeeded because the remote could fast-forward: your history simply extended what was already there. origin/main now matches local main. Everyone who pulls will get Quandary Peak.'
+    },
+    {
+      section: 'Section 3: A teammate gets there first',
+      label: 'Task 8 of 13',
+      text: 'While you start your next edit, a teammate pushes their own commit to the remote. Simulate their push: type teammate-pushes',
+      hint: 'teammate-pushes',
+      match: (c) => /^\s*teammate-pushes\s*$/.test(c),
+      run: () => {
+        teammatePushed = true;
+        remoteCommits.push({ sha: nextSha(), msg: 'Add Mt. Bierstadt (teammate)', theirs: true });
+        // local and originKnown are now stale; they do NOT have the teammate commit.
+      },
+      note: 'The remote moved forward without you. Your local origin/main ref is now stale: it still points at the old tip. You have no idea this happened yet, which is exactly the normal situation on a team.'
+    },
+    {
+      label: 'Task 9 of 13',
+      text: 'You finished editing. Add a note about trail difficulty: type edit trails.txt, then stage and commit it. Start with the edit.',
+      hint: 'edit trails.txt',
+      match: (c) => /^\s*edit\s+trails\.txt\s*$/.test(c),
+      run: () => { workingChange = true; staged = false; },
+      note: 'Another local edit. You are building on top of YOUR history, which does not include the teammate commit sitting on the remote.'
+    },
+    {
+      label: 'Task 10 of 13',
+      text: 'Stage and commit this change in one step using the shortcut for tracked files. Commit with a message about trail difficulty.',
+      hint: 'git commit -am "Add difficulty ratings"',
+      match: (c) => /^\s*git\s+commit\s+-a?m[a]?\s+["'].+["']\s*$|^\s*git\s+commit\s+-am\s+["'].+["']\s*$/.test(c),
+      run: () => {
+        localCommits.push({ sha: nextSha(), msg: 'Add difficulty ratings', theirs: false });
+        workingChange = false; staged = false;
+      },
+      note: 'commit -am stages all tracked, modified files and commits in one step. Now local main has a commit the remote lacks, AND the remote has a commit local lacks. The histories have diverged.'
+    },
+    {
+      label: 'Task 11 of 13',
+      text: 'Try to push your work to the remote.',
+      hint: 'git push',
+      match: (c) => /^\s*git\s+push(\s+origin(\s+main)?)?\s*$/.test(c),
+      run: () => { /* rejected: no state change */ },
+      reject: true,
+      note: 'Rejected: non-fast-forward. This is the single most common collaboration error, and it is not a bug. Git is protecting the teammate commit on the remote that your push would have buried. The fix is to pull first.'
+    },
+    {
+      section: 'Section 4: Reconcile and re-push',
+      label: 'Task 12 of 13',
+      text: 'Bring the remote changes into your local repo and combine them with your work. Pull.',
+      hint: 'git pull',
+      match: (c) => /^\s*git\s+pull(\s+origin(\s+main)?)?\s*$/.test(c),
+      run: () => {
+        // Merge: local gets teammate commit folded in, plus a merge commit. No conflict here.
+        const merged = [];
+        // remote history is the base that now includes teammate commit; local adds its own commit + a merge commit
+        // For display: local = remoteCommits (incl teammate) + your unique commit(s) + merge commit
+        const remoteShas = new Set(remoteCommits.map(c => c.sha));
+        const yourUnique = localCommits.filter(c => !remoteShas.has(c.sha));
+        remoteCommits.forEach(c => merged.push({...c}));
+        yourUnique.forEach(c => merged.push({...c}));
+        merged.push({ sha: nextSha(), msg: "Merge origin/main into main", theirs: false });
+        localCommits = merged;
+        originKnown = remoteCommits.map(x => ({...x}));
+      },
+      note: 'Pull = fetch + merge. It downloaded the teammate commit and merged it with yours, creating a merge commit. No conflict this time because you edited different lines. If you HAD edited the same lines, you would resolve it exactly like the local conflicts you practiced in Lesson 24, the skill carries over unchanged.'
+    },
+    {
+      label: 'Task 13 of 13',
+      text: 'Now that your history includes the teammate commit, share your work. Push again.',
+      hint: 'git push',
+      match: (c) => /^\s*git\s+push(\s+origin(\s+main)?)?\s*$/.test(c),
+      run: () => {
+        remoteCommits = localCommits.map(x => ({...x}));
+        originKnown = localCommits.map(x => ({...x}));
+      },
+      note: 'Push succeeded. Your local main contained everything on the remote plus your new work, so git could fast-forward again. Local and origin/main match. This pull-then-push rhythm is the whole game of collaborating on a shared branch.'
+    },
+  ];
+
+  let currentTaskIndex = 0;
+  let consecutiveFails = 0;
+
+  function diagnose(cmd, t) {
+    const c = cmd.trim();
+    // Generic helpful nudges for common near-misses
+    if (/^git\s+pus[h]?\b/.test(c) && t.hint.indexOf('push') === -1 && t.hint.indexOf('pull') !== -1)
+      return "You typed push, but the remote has a commit you don't have yet. This task wants you to pull first.";
+    if (/^git\s+commit\s*$/.test(c))
+      return "A commit needs a message. Use -m \"...\" with a short description.";
+    if (/^git\s+add\s*$/.test(c) && t.hint.indexOf('add') !== -1)
+      return "git add needs something to stage. Name the file (or use a dot for everything).";
+    if (/^git\s+pull\b/.test(c) && t.hint.indexOf('push') !== -1)
+      return "Not yet. This task wants you to push. Pull comes into play once the remote is ahead of you.";
+    return null;
+  }
+
+  function checkTask(rawCmd) {
+    if (currentTaskIndex >= tasks.length) return;
+    const t = tasks[currentTaskIndex];
+    if (t.match(rawCmd)) {
+      echoCommand(rawCmd);
+      if (t.reject) {
+        // Render the rejected-push output without advancing? No: the task IS to attempt
+        // the push and see it rejected, so it counts as complete.
+        termLine('To github.com:cs210/summit-log.git', 'out');
+        termLine(' ! [rejected]        main -> main (fetch first)', 'err');
+        termLine("error: failed to push some refs to 'origin'", 'err');
+        termLine("hint: Updates were rejected because the remote contains work that you do", 'dim');
+        termLine("hint: not have locally. Pull and integrate the remote changes before pushing again.", 'dim');
+      } else {
+        if (t.run) t.run();
+        emitOutput(rawCmd, t);
+      }
+      if (t.note) { termLine('', 'out'); termLine('  ' + t.note, 'note'); }
+      currentTaskIndex++;
+      consecutiveFails = 0;
+      hideHintPulse();
+      renderState();
+      renderTask();
+      if (currentTaskIndex >= tasks.length) {
+        termLine('', 'out');
+        termLine('  Walkthrough complete. You ran the full collaboration loop end to end.', 'ok');
+      }
+      return;
+    } else {
+      echoCommand(rawCmd);
+      const diag = diagnose(rawCmd, t);
+      if (diag) termLine('  ' + diag, 'err');
+      else termLine("  Not what this task is asking for. Read the task card above, or click 'Show hint'.", 'err');
+      consecutiveFails++;
+      if (consecutiveFails >= 2) showHintPulse();
+      return;
+    }
+  }
+
+  function emitOutput(cmd, t) {
+    const c = cmd.trim();
+    if (/^git\s+clone/.test(c)) {
+      termLine("Cloning into 'summit-log'...", 'out');
+      termLine('remote: Enumerating objects: 3, done.', 'dim');
+      termLine('Receiving objects: 100% (3/3), done.', 'dim');
+    } else if (/^git\s+status/.test(c)) {
+      if (!workingChange && commitsEqual(localCommits, originKnown)) {
+        termLine('On branch main', 'out');
+        termLine("Your branch is up to date with 'origin/main'.", 'out');
+        termLine('nothing to commit, working tree clean', 'ok');
+      } else {
+        termLine('On branch main', 'out');
+        if (workingChange) termLine('Changes ' + (staged ? 'to be committed' : 'not staged for commit') + ': trails.txt', 'out');
+      }
+    } else if (/^git\s+remote\s+-v/.test(c)) {
+      termLine('origin\tgit@github.com:cs210/summit-log.git (fetch)', 'out');
+      termLine('origin\tgit@github.com:cs210/summit-log.git (push)', 'out');
+    } else if (/^edit\s+/.test(c)) {
+      termLine('  (simulated edit saved to trails.txt)', 'dim');
+    } else if (/^git\s+add/.test(c)) {
+      termLine('  (staged)', 'dim');
+    } else if (/^git\s+commit/.test(c)) {
+      const last = localCommits[localCommits.length - 1];
+      termLine('[main ' + last.sha + '] ' + last.msg, 'out');
+      termLine(' 1 file changed, 2 insertions(+)', 'dim');
+    } else if (/^git\s+push/.test(c)) {
+      termLine('Enumerating objects: 5, done.', 'dim');
+      termLine('To github.com:cs210/summit-log.git', 'out');
+      termLine('   ' + (remoteCommits.length>1?remoteCommits[remoteCommits.length-2].sha:'0000000') + '..' + remoteCommits[remoteCommits.length-1].sha + '  main -> main', 'ok');
+    } else if (/^teammate-pushes/.test(c)) {
+      termLine('  [simulation] A teammate pushed "Add Mt. Bierstadt" to origin/main.', 'note');
+      termLine('  Your local repo has NOT been told about it yet.', 'dim');
+    } else if (/^git\s+pull/.test(c)) {
+      termLine('remote: Enumerating objects: 4, done.', 'dim');
+      termLine('From github.com:cs210/summit-log', 'out');
+      termLine('   ' + 'main     -> FETCH_HEAD', 'dim');
+      termLine('Merge made by the \'ort\' strategy.', 'ok');
+      termLine(' trails.txt | 1 +', 'dim');
+    }
+  }
+
+  function renderTask() {
+    const fill = root.querySelector('#rsync-progress-fill');
+    const label = root.querySelector('#rsync-progress-label');
+    const card = root.querySelector('#rsync-task-card');
+    const labelEl = root.querySelector('#rsync-task-label');
+    const textEl = root.querySelector('#rsync-task-text');
+    const hintEl = root.querySelector('#rsync-task-hint');
+    const sectionEl = root.querySelector('#rsync-section-header');
+    const completionArea = root.querySelector('#rsync-completion-area');
+
+    const pct = (currentTaskIndex / tasks.length) * 100;
+    fill.style.width = pct + '%';
+    label.textContent = 'Task ' + Math.min(currentTaskIndex + 1, tasks.length) + ' of ' + tasks.length;
+
+    if (currentTaskIndex >= tasks.length) {
+      card.className = 'task-card complete';
+      labelEl.textContent = 'Complete';
+      textEl.textContent = "You ran the full remote collaboration loop: clone, commit, push, the rejected non-fast-forward, pull to reconcile, and a clean re-push. This rhythm is what every Lab 1 pull request relies on.";
+      hintEl.textContent = '';
+      fill.style.width = '100%';
+      label.textContent = 'All tasks complete';
+      sectionEl.textContent = 'All done';
+      completionArea.innerHTML = '';
+      cs210RenderCompletion(completionArea);
+      return;
+    }
+    completionArea.innerHTML = '';
+    card.className = 'task-card';
+    const t = tasks[currentTaskIndex];
+    if (t.section) sectionEl.textContent = t.section;
+    labelEl.textContent = t.label;
+    textEl.textContent = t.text;
+    hintEl.textContent = '';
+  }
+
+  function showHint() {
+    if (currentTaskIndex >= tasks.length) return;
+    const t = tasks[currentTaskIndex];
+    root.querySelector('#rsync-task-hint').textContent = 'Hint: ' + (t.hint || '');
+    hideHintPulse();
+  }
+  function showHintPulse() { root.querySelector('#rsync-hint-btn').classList.add('pulse'); }
+  function hideHintPulse() { root.querySelector('#rsync-hint-btn').classList.remove('pulse'); }
+
+  function reset() {
+    cloned = false; localCommits = []; remoteCommits = []; originKnown = [];
+    workingChange = false; staged = false; teammatePushed = false; shaCounter = 1;
+    currentTaskIndex = 0; consecutiveFails = 0;
+    hideHintPulse();
+    const overlay = root.querySelector('#cs210-completion-overlay');
+    if (overlay) overlay.remove();
+    terminalEl.innerHTML = '';
+    termLine('Welcome to the remote_sync walkthrough.', 'dim');
+    termLine('Follow the task card above. Type each git command at the prompt.', 'dim');
+    termLine('', 'out');
+    renderState();
+    renderTask();
+  }
+
+  const inputEl = root.querySelector('#rsync-cli-input');
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const v = inputEl.value;
+      inputEl.value = '';
+      if (!v.trim()) return;
+      checkTask(v);
+    }
+  });
+  root.querySelector('#rsync-hint-btn').addEventListener('click', showHint);
+  root.querySelector('#rsync-reset-btn').addEventListener('click', reset);
+
+  reset();
+})();
+</script>
+
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 28px 0 10px 0;">code_review Walkthrough</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Ten short diffs from a Summit Log pull request. For each, read the code and pick the strongest review comment. Choosing reveals why it is strong or weak; you must choose before you can advance. There is no score, the goal is to train your eye before Lab 2.</p>
+
+<!-- ============================================================
+     code_review walkthrough widget inlined below
+     ============================================================ -->
+<!-- ============================================================
+     CS210 Lesson 25 - code_review Walkthrough Widget
+     Decision-walkthrough: cadet reads short annotated diffs from a
+     Summit Log pull request and chooses the strongest review comment.
+     Feedback distinguishes vague vs actionable vs wrong-target comments.
+     One task requires spotting the seeded correctness bug.
+     NOT a quiz: single completion salt, no pass/fail, no locked card flow.
+     Template-aligned. Native HTML/CSS + scoped JS. Paste as a block.
+     ============================================================ -->
+<style>
+.cs210-review * { box-sizing: border-box; }
+.cs210-review {
+  font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; line-height: 1.55;
+  max-width: 980px; margin: 0 auto; padding: 20px; background: #ffffff; position: relative;
+}
+.cs210-review h1 { color: #00205B; font-size: 24px; margin: 0 0 6px 0; }
+.cs210-review .subtitle { color: #4A5568; font-size: 14px; margin-bottom: 22px; }
+.cs210-review .progress-bar { background: #E5E7EB; border-radius: 3px; height: 8px; overflow: hidden; margin-bottom: 6px; }
+.cs210-review .progress-fill { background: #003087; height: 100%; transition: width 0.3s ease; }
+.cs210-review .progress-label { font-size: 12px; color: #6B7280; margin-bottom: 18px; }
+.cs210-review .section-header {
+  background: #E8EDF5; color: #00205B; padding: 8px 14px; border-radius: 3px;
+  font-size: 13px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px;
+}
+.cs210-review .task-card { background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 14px; border-radius: 3px; }
+.cs210-review .task-card.complete { background: #E6F4EA; border-left-color: #2E7D32; }
+.cs210-review .task-label { font-size: 12px; letter-spacing: 1.5px; color: #6B5300; text-transform: uppercase; font-weight: 600; margin-bottom: 4px; }
+.cs210-review .task-card.complete .task-label { color: #1B5E20; }
+.cs210-review .task-text { font-size: 15px; color: #1a1a1a; }
+
+/* Diff viewer */
+.cs210-review .diff {
+  background: #1E2A3A; border-radius: 4px; padding: 12px 0; margin-bottom: 14px;
+  font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.5; overflow-x: auto;
+}
+.cs210-review .diff .file {
+  color: #7FB3D5; padding: 0 16px 8px 16px; border-bottom: 1px solid #33445A; margin-bottom: 6px; font-size: 12px;
+}
+.cs210-review .diff .line { padding: 1px 16px; white-space: pre; }
+.cs210-review .diff .ctx { color: #B5BEC8; }
+.cs210-review .diff .add { color: #7FD17F; background: rgba(127,209,127,0.08); }
+.cs210-review .diff .del { color: #F47A7A; background: rgba(244,122,122,0.08); }
+.cs210-review .diff .ln { color: #5A6B80; display: inline-block; width: 28px; user-select: none; }
+
+/* Comment options */
+.cs210-review .prompt-line { font-size: 14px; color: #00205B; font-weight: 600; margin-bottom: 10px; }
+.cs210-review .options { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+.cs210-review .option {
+  border: 1px solid #D0D5DD; border-radius: 4px; padding: 11px 14px; cursor: pointer;
+  font-size: 14px; background: #F8FAFC; transition: border-color 0.15s ease, background 0.15s ease;
+}
+.cs210-review .option:hover { border-color: #003087; background: #F0F4FA; }
+.cs210-review .option.chosen { border-color: #003087; border-width: 2px; background: #EEF3FB; }
+.cs210-review .option.correct { border-color: #2E7D32; border-width: 2px; background: #E6F4EA; }
+.cs210-review .option.wrong { border-color: #E07A7A; border-width: 2px; background: #FDECEA; }
+.cs210-review .option .quote { font-family: Consolas, monospace; font-size: 13px; color: #1a1a1a; }
+.cs210-review .feedback {
+  font-size: 13.5px; padding: 11px 14px; border-radius: 4px; margin-bottom: 12px; line-height: 1.5; display: none;
+}
+.cs210-review .feedback.show { display: block; }
+.cs210-review .feedback.good { background: #E6F4EA; border-left: 4px solid #2E7D32; color: #1B5E20; }
+.cs210-review .feedback.bad { background: #FDECEA; border-left: 4px solid #B8002F; color: #8A0023; }
+.cs210-review .controls { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+.cs210-review .btn {
+  background: #ffffff; border: 1px solid #C7CFD9; padding: 7px 16px; border-radius: 3px;
+  font-size: 13px; cursor: pointer; color: #00205B; font-family: inherit;
+}
+.cs210-review .btn:hover { background: #F5F7FA; }
+.cs210-review .btn.primary { background: #003087; color: #fff; border-color: #003087; }
+.cs210-review .btn.primary:hover { background: #00205B; }
+.cs210-review .btn:disabled { background: #E5E7EB; color: #9AA5B1; cursor: not-allowed; border-color: #D0D5DD; }
+.cs210-review .help-note { background: #F5F7FA; border: 1px solid #D0D5DD; padding: 12px 16px; border-radius: 3px; font-size: 13px; color: #4A5568; margin-top: 12px; }
+.cs210-review .help-note strong { color: #00205B; }
+
+/* Name modal + completion (shared pattern) */
+.cs210-review .name-modal-backdrop { position: absolute; top:0;left:0;right:0;bottom:0; background: rgba(0,32,91,0.55); display:flex; align-items:center; justify-content:center; z-index:9999; }
+.cs210-review .name-modal { background:#fff; border-radius:6px; padding:28px 32px; max-width:440px; width:90%; box-shadow:0 12px 40px rgba(0,0,0,0.25); }
+.cs210-review .name-modal h2 { color:#00205B; font-size:20px; margin:0 0 10px 0; }
+.cs210-review .name-modal p { color:#4A5568; font-size:14px; line-height:1.5; margin:0 0 16px 0; }
+.cs210-review .name-modal input { width:100%; padding:10px 12px; font-size:15px; border:1px solid #CBD5E0; border-radius:4px; margin-bottom:14px; font-family:inherit; }
+.cs210-review .name-modal input:focus { outline:none; border-color:#003087; box-shadow:0 0 0 2px rgba(0,48,135,0.15); }
+.cs210-review .name-modal-btn { background:#003087; color:#fff; border:none; padding:10px 20px; border-radius:4px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; }
+.cs210-review .name-modal-btn:disabled { background:#A0AEC0; cursor:not-allowed; }
+.cs210-review .name-modal-btn:not(:disabled):hover { background:#00205B; }
+.cs210-review .completion-screen { background:#fff; border:2px solid #2E7D32; border-radius:6px; padding:24px 28px; margin-top:16px; }
+.cs210-review .completion-screen .cs-heading { color:#1B5E20; font-size:20px; font-weight:600; margin:0 0 6px 0; }
+.cs210-review .completion-screen .cs-name-line { font-size:15px; color:#1a1a1a; margin-bottom:16px; }
+.cs210-review .completion-screen .cs-name-line strong { color:#00205B; }
+.cs210-review .completion-screen .cs-code-block { background:#F0F4FA; border:1px solid #003087; border-radius:4px; padding:16px 20px; display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:14px; }
+.cs210-review .completion-screen .cs-code-label { font-size:12px; text-transform:uppercase; letter-spacing:1.5px; color:#4A5568; margin-bottom:4px; }
+.cs210-review .completion-screen .cs-code-value { font-family:Consolas,'Courier New',monospace; font-size:28px; font-weight:700; color:#00205B; letter-spacing:3px; }
+.cs210-review .completion-screen .cs-copy-btn { background:#003087; color:#fff; border:none; padding:8px 14px; border-radius:3px; font-size:13px; cursor:pointer; font-family:inherit; }
+.cs210-review .completion-screen .cs-copy-btn:hover { background:#00205B; }
+.cs210-review .completion-screen .cs-copy-btn.copied { background:#2E7D32; }
+.cs210-review .completion-screen .cs-timestamp { font-size:13px; color:#6B7280; margin-bottom:18px; }
+.cs210-review .completion-screen .cs-reminder { background:#FFF8E1; border-left:4px solid #F0B92C; padding:12px 16px; border-radius:3px; font-size:14px; color:#6B5300; line-height:1.5; }
+.cs210-review .completion-screen .cs-reminder strong { color:#4A3A00; }
+</style>
+
+<div class="cs210-review">
+
+<div class="name-modal-backdrop" id="review-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Lesson 25 reflection.</p>
+    <input type="text" id="review-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="review-cadet-name-btn" disabled>Start the walkthrough</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 25 &middot; code_review Walkthrough</h1>
+<div class="subtitle">You are reviewing a teammate's pull request on the Summit Log. Each step shows a diff and asks you to pick the strongest review comment. A strong comment is specific, actionable, and kind: it points at a line, says what is wrong or could be better, and suggests a direction. Watch for the one diff that hides a real correctness bug.</div>
+
+<div class="progress-bar"><div class="progress-fill" id="review-progress-fill" style="width: 0%;"></div></div>
+<div class="progress-label" id="review-progress-label">Step 0 of 10</div>
+
+<div class="section-header" id="review-section-header">Section 1: What makes a review comment useful</div>
+
+<div class="task-card" id="review-task-card">
+  <div class="task-label" id="review-task-label">Current step</div>
+  <div class="task-text" id="review-task-text">Loading...</div>
+</div>
+
+<div id="review-diff-area"></div>
+<div class="prompt-line" id="review-prompt-line"></div>
+<div class="options" id="review-options"></div>
+<div class="feedback" id="review-feedback"></div>
+
+<div class="controls">
+  <button class="btn primary" id="review-next-btn" disabled>Next &rarr;</button>
+</div>
+
+<div class="help-note">
+  <strong>How this works:</strong> Read the diff, then choose the review comment you would actually leave. Choosing locks the options and shows feedback explaining why that comment is strong or weak. You must choose before you can advance. There is no score; the goal is to train your eye for what a useful comment looks like, because in Lab 2 you will write your own on a real seeded pull request.
+</div>
+
+<div id="review-completion-area"></div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-review');
+  if (!root) return;
+
+  const CS210_SALT = "lesson25_code_review_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  function cs210Fnv1a(str){let h=0x811c9dc5;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=(h+((h<<1)+(h<<4)+(h<<7)+(h<<8)+(h<<24)))>>>0;}return h>>>0;}
+  function cs210CodeFromSalt(salt){const h1=cs210Fnv1a(salt);const h2=cs210Fnv1a(salt+'|cs210');let pool=BigInt(h1)|(BigInt(h2)<<32n);let out='';for(let i=0;i<6;i++){out+=CS210_ALPHABET[Number(pool&31n)];pool>>=5n;}return out;}
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  (function setupNameModal(){
+    const backdrop = root.querySelector('#review-name-modal-backdrop');
+    const input = root.querySelector('#review-cadet-name-input');
+    const btn = root.querySelector('#review-cadet-name-btn');
+    if (!backdrop||!input||!btn) return;
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length >= 2) { cs210CadetName = stored.trim(); backdrop.style.display='none'; return; }
+    } catch(e){}
+    function upd(){ btn.disabled = input.value.trim().length < 2; }
+    upd(); input.addEventListener('input', upd);
+    input.addEventListener('keydown', function(e){ if(e.key==='Enter'&&!btn.disabled){e.preventDefault();btn.click();} });
+    btn.addEventListener('click', function(){
+      const name = input.value.trim(); if (name.length<2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch(e){}
+      backdrop.style.display='none';
+      const siblings = document.querySelectorAll('#rsync-name-modal-backdrop');
+      siblings.forEach(function(m){ m.style.display='none'; });
+    });
+    setTimeout(function(){ input.focus(); }, 50);
+  })();
+
+  function esc(s){ return (s||'').replace(/[<>&"']/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];}); }
+
+  function cs210RenderCompletion(area){
+    if (!area) return;
+    if (root.querySelector('#cs210-completion-overlay')) return;
+    const now = new Date();
+    const ts = now.toLocaleString('en-US', { dateStyle:'medium', timeStyle:'short' });
+    const safeName = esc(cs210CadetName || 'Cadet');
+    area.innerHTML =
+      '<div class="completion-screen">'+
+        '<div class="cs-heading">Walkthrough complete</div>'+
+        '<div class="cs-name-line">Cadet: <strong>'+safeName+'</strong></div>'+
+        '<div class="cs-code-block"><div><div class="cs-code-label">Completion code</div>'+
+        '<div class="cs-code-value">'+CS210_CODE+'</div></div></div>'+
+        '<div class="cs-timestamp">Completed: '+ts+'</div>'+
+      '</div>';
+    const overlay = document.createElement('div');
+    overlay.id = 'cs210-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.style.background = 'rgba(27,94,32,0.55)';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">'+
+        '<h2 style="color:#1B5E20;">Walkthrough complete</h2>'+
+        '<p>Take a screenshot of this box. You will need the code and a visual of this screen for the Lesson 25 reflection.</p>'+
+        '<div class="cs-name-line">Cadet: <strong>'+safeName+'</strong></div>'+
+        '<div class="cs-code-block"><div><div class="cs-code-label">Completion code</div>'+
+        '<div class="cs-code-value" id="review-cs-code-value">'+CS210_CODE+'</div></div>'+
+        '<button class="cs-copy-btn" id="review-cs-copy-btn" type="button">Copy code</button></div>'+
+        '<div class="cs-timestamp">Completed: '+ts+'</div>'+
+        '<div class="cs-reminder" style="margin-bottom:14px;"><strong>Next step:</strong> Open the Lesson 25 reflection in Blackboard. Enter this code, answer the reflection prompt, and attach your screenshot.</div>'+
+        '<button class="name-modal-btn" id="review-cs-overlay-close" type="button" style="background:#2E7D32;">Got it &mdash; close this</button>'+
+      '</div>';
+    root.appendChild(overlay);
+    const closeBtn = overlay.querySelector('#review-cs-overlay-close');
+    if (closeBtn) closeBtn.addEventListener('click', function(){ overlay.style.display='none'; });
+    const copyBtn = overlay.querySelector('#review-cs-copy-btn');
+    if (copyBtn) copyBtn.addEventListener('click', function(){
+      const text = CS210_CODE;
+      const ok=function(){copyBtn.textContent='Copied';copyBtn.classList.add('copied');setTimeout(function(){copyBtn.textContent='Copy code';copyBtn.classList.remove('copied');},1500);};
+      if (navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(ok,function(){fallbackCopy(text);ok();});
+      else { fallbackCopy(text); ok(); }
+    });
+  }
+  function fallbackCopy(text){ try{const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}catch(e){} }
+
+  // ============================================================
+  // Steps. Each: diff (array of {t:'ctx'|'add'|'del', n:lineno, s:code}),
+  // a prompt, options [{quote, verdict:'best'|'weak'|'wrong', why}].
+  // 'best' is the strong comment; choosing it advances cleanly.
+  // 'weak'/'wrong' still advance (no score) but feedback explains the gap.
+  // ============================================================
+  const FILE = 'summit_log.c';
+  const steps = [
+    {
+      section: 'Section 1: What makes a review comment useful',
+      label: 'Step 1 of 10',
+      text: 'A teammate renamed a variable. Three reviewers left comments. Which is the most useful?',
+      file: FILE,
+      diff: [
+        {t:'ctx', n:12, s:'void print_trail(Trail t) {'},
+        {t:'del', n:13, s:'    printf("%s: %d ft\\n", t.n, t.e);'},
+        {t:'add', n:13, s:'    printf("%s: %d ft\\n", t.name, t.elevation_ft);'},
+        {t:'ctx', n:14, s:'}'},
+      ],
+      prompt: 'Pick the comment you would leave:',
+      options: [
+        {quote:'Looks good to me.', verdict:'weak', why:'This is the most common useless comment in code review. It says nothing the author can act on. If the change really is fine, an approval is enough; a comment should add information.'},
+        {quote:'Nice, the descriptive names make this line readable at a glance. Matches the snake_case standard too.', verdict:'best', why:'Specific (names this line), actionable in spirit (reinforces the standard), and kind. Positive comments are real review comments when they reinforce a good decision the author made.'},
+        {quote:'why did you change this', verdict:'wrong', why:'Curt and unpunctuated, and it reads as suspicious rather than curious. A review comment should assume good faith. If you genuinely want context, ask warmly and say why you are asking.'},
+      ]
+    },
+    {
+      label: 'Step 2 of 10',
+      text: 'The teammate added input handling. One reviewer flags a real problem; the others miss it or nitpick.',
+      file: FILE,
+      diff: [
+        {t:'ctx', n:30, s:'    FILE *fp = fopen(path, "r");'},
+        {t:'add', n:31, s:'    fscanf(fp, "%d", &count);'},
+        {t:'ctx', n:32, s:'    /* ... use count ... */'},
+      ],
+      prompt: 'Pick the comment you would leave:',
+      options: [
+        {quote:'fopen can return NULL if the file is missing, and this dereferences fp on the next line without checking. Can we guard with: if (fp == NULL) { return -1; } before the fscanf?', verdict:'best', why:'Names the exact failure (NULL fopen), explains the consequence (crash on the next line), and proposes a concrete fix. This is the gold standard for a review comment on a correctness issue.'},
+        {quote:'Add a blank line after this block for readability.', verdict:'weak', why:'Not wrong, but it nitpicks formatting while ignoring a latent crash one line up. Reviewers should surface the high-severity issue first; style can wait or be left to the formatter.'},
+        {quote:'fscanf is bad, never use it.', verdict:'wrong', why:'Absolute and unhelpful. fscanf is fine here; the missing NULL check is the actual issue. Vague condemnation without a reason or a fix gives the author nothing to do.'},
+      ]
+    },
+    {
+      section: 'Section 2: Severity and tone',
+      label: 'Step 3 of 10',
+      text: 'A reviewer wants a change. Which phrasing is most likely to get the fix made without friction?',
+      file: FILE,
+      diff: [
+        {t:'ctx', n:40, s:'int total = 0;'},
+        {t:'add', n:41, s:'for (int i = 0; i <= n; i++)   /* sum elevations */'},
+        {t:'add', n:42, s:'    total += trails[i].elevation_ft;'},
+      ],
+      prompt: 'Pick the comment you would leave:',
+      options: [
+        {quote:'This is wrong.', verdict:'wrong', why:'It may even be true (see the next step), but with no specifics the author cannot tell what is wrong or why. "This is wrong" starts an argument; a good comment starts a fix.'},
+        {quote:'I think the loop bound might be off by one: i <= n reads index n, but the valid indices are 0..n-1. Should this be i < n? Happy to be wrong if n is the count of the last index.', verdict:'best', why:'Tentative where appropriate ("I think", "happy to be wrong"), specific about the suspected bug, and invites the author to confirm. Tone like this gets bugs fixed without putting the author on the defensive.'},
+        {quote:'nit: prefer ++i over i++ in for loops.', verdict:'weak', why:'A real nit (and labeling it "nit:" is good practice), but it distracts from a possible off-by-one right next to it. Lead with severity: correctness before micro-optimizations that the compiler erases anyway.'},
+      ]
+    },
+    {
+      section: 'Section 3: Find the bug',
+      label: 'Step 4 of 10',
+      text: 'Look closely at that same loop. Before commenting, decide: is there actually a correctness bug here? Pick the comment that correctly characterizes it.',
+      file: FILE,
+      diff: [
+        {t:'ctx', n:38, s:'/* trails[] holds n elements, indices 0 .. n-1 */'},
+        {t:'ctx', n:40, s:'int total = 0;'},
+        {t:'add', n:41, s:'for (int i = 0; i <= n; i++)'},
+        {t:'add', n:42, s:'    total += trails[i].elevation_ft;'},
+      ],
+      prompt: 'Which comment is correct AND actionable?',
+      options: [
+        {quote:'The comment on line 38 says indices are 0..n-1, but the loop uses i <= n, so it reads trails[n], one past the end. That is an out-of-bounds read. Change the condition to i < n.', verdict:'best', why:'Correct: i <= n touches trails[n], which is past the last valid index n-1. You used the in-code comment as ground truth, named the out-of-bounds read, and gave the one-character fix. This is exactly the kind of bug Lab 2 asks you to catch.'},
+        {quote:'Looks correct to me, the loop sums all the elements.', verdict:'wrong', why:'It does not. i <= n runs one extra iteration and reads trails[n], out of bounds. Approving a buffer overrun is the costliest kind of review miss. Always check loop bounds against the documented size.'},
+        {quote:'Consider using a while loop instead.', verdict:'weak', why:'Rewriting the loop shape does not address the off-by-one and would carry the same bug. The issue is the condition, not the loop construct.'},
+      ]
+    },
+    {
+      label: 'Step 5 of 10',
+      text: 'The author pushed a fix in response to a review comment. What is the right follow-up?',
+      file: FILE,
+      diff: [
+        {t:'del', n:41, s:'for (int i = 0; i <= n; i++)'},
+        {t:'add', n:41, s:'for (int i = 0; i < n; i++)'},
+      ],
+      prompt: 'Pick your follow-up comment:',
+      options: [
+        {quote:'Confirmed, i < n now stops at the last valid index. Thanks for the quick fix. Resolving this thread.', verdict:'best', why:'Acknowledges the fix, restates why it is now correct (closure for anyone reading later), and resolves the thread. Closing the loop on your own comments keeps the PR readable.'},
+        {quote:'(say nothing and just approve)', verdict:'weak', why:'Approving silently works, but a one-line confirmation tells the author you actually re-checked and gives the next reader a record that the concern was addressed. Cheap to write, useful to others.'},
+        {quote:'Why did it take you two tries to get this right?', verdict:'wrong', why:'Never. Code review is about the code, not the author. Two iterations to fix an off-by-one is normal and healthy; this is the process working.'},
+      ]
+    },
+    {
+      section: 'Section 4: Style versus substance',
+      label: 'Step 6 of 10',
+      text: 'A diff mixes a naming-standard issue with working logic. How do you comment?',
+      file: FILE,
+      diff: [
+        {t:'add', n:50, s:'int Max_Elevation = trails[0].elevation_ft;'},
+        {t:'add', n:51, s:'for (int i = 1; i < n; i++)'},
+        {t:'add', n:52, s:'    if (trails[i].elevation_ft > Max_Elevation)'},
+        {t:'add', n:53, s:'        Max_Elevation = trails[i].elevation_ft;'},
+      ],
+      prompt: 'Pick the comment you would leave:',
+      options: [
+        {quote:'Logic looks right. One style note: Max_Elevation should be max_elevation_ft to match the snake_case standard from the style guide. Not blocking, but worth fixing before merge.', verdict:'best', why:'Separates substance ("logic looks right") from style, names the standard, and marks severity ("not blocking"). The author knows exactly what to change and how much it matters.'},
+        {quote:'Rename this variable.', verdict:'weak', why:'Actionable-ish but bare. Rename to what, and why? "Rename Max_Elevation to max_elevation_ft to match snake_case" takes three more seconds and removes all guesswork.'},
+        {quote:'This whole block could be a helper function find_max_elevation(). Please refactor before I approve.', verdict:'wrong', why:'Scope creep stated as a blocker. The decomposition suggestion may have merit, but forcing a refactor in a small PR over a naming nit is heavy-handed. Suggest it as optional, do not block on it.'},
+      ]
+    },
+    {
+      label: 'Step 7 of 10',
+      text: 'A reviewer disagrees with a design choice that is not wrong, just different from how they would do it.',
+      file: FILE,
+      diff: [
+        {t:'add', n:60, s:'/* return difficulty: 0 easy, 1 moderate, 2 hard */'},
+        {t:'add', n:61, s:'int rate_difficulty(Trail t) { ... }'},
+      ],
+      prompt: 'Pick the comment you would leave:',
+      options: [
+        {quote:'I would have used an enum here instead of bare ints, but this is a reasonable choice and well documented. Non-blocking, your call.', verdict:'best', why:'Offers a perspective, concedes the current code is reasonable, and explicitly hands the decision back to the author. Reviewers suggest; authors decide on non-blocking matters.'},
+        {quote:'Use an enum.', verdict:'weak', why:'A directive with no acknowledgment that the int approach works. On a matter of taste, phrase it as a suggestion and say why, or let it go.'},
+        {quote:'I cannot approve this until you switch to an enum.', verdict:'wrong', why:'Blocking a PR over a defensible style preference is how reviews turn adversarial. Reserve blocking for correctness, security, and standard violations, not personal preference.'},
+      ]
+    },
+    {
+      section: 'Section 5: Putting it together',
+      label: 'Step 8 of 10',
+      text: 'A small diff has both a real bug and a tiny style issue. What is the best single comment strategy?',
+      file: FILE,
+      diff: [
+        {t:'add', n:70, s:'char *name = malloc(len);'},
+        {t:'add', n:71, s:'strcpy(name, src);'},
+      ],
+      prompt: 'Pick the strongest review approach:',
+      options: [
+        {quote:'Two things, in order of importance. (1) malloc(len) leaves no room for the null terminator; strcpy will write one byte past the buffer. Use malloc(len + 1). (2) minor: a space after the cast would read better.', verdict:'best', why:'Leads with the correctness bug (off-by-one on the allocation), explains the consequence, gives the fix, then mentions the nit last and labels it minor. Ordering by severity is what separates a senior reviewer from a linter.'},
+        {quote:'Looks fine, maybe add a space somewhere.', verdict:'wrong', why:'Misses a heap buffer overflow entirely and offers a vague style note. This is the worst outcome in review: approving a memory bug while commenting on whitespace.'},
+        {quote:'malloc(len) is too small.', verdict:'weak', why:'Correct and points at the right line, but stops short. Why is it too small, and what is the fix? "Needs len + 1 for the null terminator" turns a hint into something the author can apply immediately.'},
+      ]
+    },
+    {
+      label: 'Step 9 of 10',
+      text: 'You have reviewed the whole PR. The bug is fixed and only a non-blocking style note remains open. What do you do?',
+      file: FILE,
+      diff: [
+        {t:'ctx', n:0, s:'Summary: 1 correctness bug (fixed), 1 non-blocking style note (open)'},
+      ],
+      prompt: 'Pick your final review action:',
+      options: [
+        {quote:'Approve with a note: "Approving. Correctness issue is resolved. The one snake_case rename is non-blocking, feel free to fold it into this PR or a follow-up."', verdict:'best', why:'Unblocks the author (nothing critical remains), records that the bug was resolved, and leaves the minor item clearly optional. This keeps the team moving without dropping the small improvement.'},
+        {quote:'Request changes until the style note is also fixed.', verdict:'weak', why:'Holding a PR hostage over a non-blocking nit slows the team for little gain. If it truly matters, approve and let the author address it, or fix it yourself in a follow-up.'},
+        {quote:'Approve silently with no comment.', verdict:'weak', why:'Acceptable, but a one-line summary of where things landed helps the author and anyone reading the PR later. A good review leaves a paper trail.'},
+      ]
+    },
+    {
+      label: 'Step 10 of 10',
+      text: 'Last one. Which statement best captures the habit this walkthrough was training?',
+      file: FILE,
+      diff: [
+        {t:'ctx', n:0, s:'/* The point of code review */'},
+      ],
+      prompt: 'Pick the best summary:',
+      options: [
+        {quote:'Read the code as carefully as if you wrote it: lead with correctness, be specific and kind, separate blocking issues from preferences, and close the loop on your comments.', verdict:'best', why:'That is the whole lesson. Review is a form of testing: reading someone else\'s code critically catches bugs that the author, too close to the work, cannot see. You will do exactly this on the seeded PR in Lab 2.'},
+        {quote:'Find as many things to comment on as possible so the author knows you reviewed it.', verdict:'wrong', why:'Volume is not value. A pile of nitpicks buries the one comment that matters. A single comment that catches a real bug is worth more than twenty about whitespace.'},
+        {quote:'Approve quickly so you do not slow the team down.', verdict:'wrong', why:'Speed at the cost of catching bugs defeats the purpose. The review exists to catch what the author missed; rubber-stamping is worse than no review at all.'},
+      ]
+    },
+  ];
+
+  let currentStep = 0;
+  let chosenThisStep = false;
+
+  function renderDiff(step) {
+    const area = root.querySelector('#review-diff-area');
+    if (!step.diff || step.diff.length === 0) { area.innerHTML = ''; return; }
+    let html = '<div class="diff"><div class="file">' + esc(step.file || '') + '</div>';
+    step.diff.forEach(function(d){
+      const cls = d.t === 'add' ? 'add' : d.t === 'del' ? 'del' : 'ctx';
+      const sign = d.t === 'add' ? '+' : d.t === 'del' ? '-' : ' ';
+      const lnum = d.n ? d.n : '';
+      html += '<div class="line ' + cls + '"><span class="ln">' + lnum + '</span>' + sign + ' ' + esc(d.s) + '</div>';
+    });
+    html += '</div>';
+    area.innerHTML = html;
+  }
+
+  function renderStep() {
+    const fill = root.querySelector('#review-progress-fill');
+    const label = root.querySelector('#review-progress-label');
+    const card = root.querySelector('#review-task-card');
+    const labelEl = root.querySelector('#review-task-label');
+    const textEl = root.querySelector('#review-task-text');
+    const sectionEl = root.querySelector('#review-section-header');
+    const promptEl = root.querySelector('#review-prompt-line');
+    const optsEl = root.querySelector('#review-options');
+    const fbEl = root.querySelector('#review-feedback');
+    const nextBtn = root.querySelector('#review-next-btn');
+    const completionArea = root.querySelector('#review-completion-area');
+
+    const pct = (currentStep / steps.length) * 100;
+    fill.style.width = pct + '%';
+    label.textContent = 'Step ' + Math.min(currentStep + 1, steps.length) + ' of ' + steps.length;
+
+    if (currentStep >= steps.length) {
+      card.className = 'task-card complete';
+      labelEl.textContent = 'Complete';
+      textEl.textContent = "You worked through ten review decisions: useful versus useless comments, severity ordering, tone, and the off-by-one bug you caught by reading the code against its own comment. You are ready to review the seeded pull request in Lab 2.";
+      sectionEl.textContent = 'All done';
+      promptEl.textContent = '';
+      optsEl.innerHTML = '';
+      fbEl.className = 'feedback';
+      fbEl.innerHTML = '';
+      root.querySelector('#review-diff-area').innerHTML = '';
+      nextBtn.style.display = 'none';
+      fill.style.width = '100%';
+      label.textContent = 'All steps complete';
+      completionArea.innerHTML = '';
+      cs210RenderCompletion(completionArea);
+      return;
+    }
+
+    completionArea.innerHTML = '';
+    chosenThisStep = false;
+    const step = steps[currentStep];
+    card.className = 'task-card';
+    if (step.section) sectionEl.textContent = step.section;
+    labelEl.textContent = step.label;
+    textEl.textContent = step.text;
+    promptEl.textContent = step.prompt;
+    renderDiff(step);
+    fbEl.className = 'feedback';
+    fbEl.innerHTML = '';
+    nextBtn.disabled = true;
+    nextBtn.style.display = '';
+
+    optsEl.innerHTML = '';
+    step.options.forEach(function(opt, idx){
+      const div = document.createElement('div');
+      div.className = 'option';
+      div.innerHTML = '<span class="quote">&ldquo;' + esc(opt.quote) + '&rdquo;</span>';
+      div.addEventListener('click', function(){
+        if (chosenThisStep) return;
+        chosenThisStep = true;
+        // Mark chosen; color by verdict
+        Array.prototype.forEach.call(optsEl.children, function(c){ c.style.cursor = 'default'; });
+        if (opt.verdict === 'best') div.classList.add('correct');
+        else div.classList.add('wrong');
+        // Reveal the best option if a non-best was chosen
+        if (opt.verdict !== 'best') {
+          step.options.forEach(function(o2, j){
+            if (o2.verdict === 'best') optsEl.children[j].classList.add('correct');
+          });
+        }
+        fbEl.className = 'feedback show ' + (opt.verdict === 'best' ? 'good' : 'bad');
+        const lead = opt.verdict === 'best' ? '<strong>Strong comment.</strong> ' : '<strong>Weaker choice.</strong> ';
+        fbEl.innerHTML = lead + esc(opt.why);
+        nextBtn.disabled = false;
+      });
+      optsEl.appendChild(div);
+    });
+  }
+
+  root.querySelector('#review-next-btn').addEventListener('click', function(){
+    if (currentStep >= steps.length) return;
+    if (!chosenThisStep) return;
+    currentStep++;
+    renderStep();
+  });
+
+  function reset() {
+    currentStep = 0; chosenThisStep = false;
+    const overlay = root.querySelector('#cs210-completion-overlay');
+    if (overlay) overlay.remove();
+    renderStep();
+  }
+
+  reset();
+})();
+</script>
+
+
+    </div>
+  </details>
+
+  <!-- ===================== 6. AFTER CLASS ===================== -->
+  <details id="after-class" style="margin-bottom: 24px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      6. After Class
+    </summary>
+    <div style="padding: 18px 22px;">
+      <ul style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Finish both labs if you did not complete them in class. Both share the same due date; submit Lab 1 through GitHub Classroom and Gradescope, and push your <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">REVIEW.md</code> for Lab 2.</li>
+        <li style="margin-bottom: 6px;">Finished both walkthroughs? Enter both completion codes in the Lesson 25 reflection on Blackboard and attach your screenshots.</li>
+        <li style="margin-bottom: 6px;">The remote loop and the review habit you practiced today are exactly what the Team PEX will need. This was not a graded event, but it is groundwork for the project.</li>
+        <li style="margin-bottom: 0;">Stuck on a rejected push, a merge conflict, or anything else? The Git troubleshooting card is linked in the help note below.</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== HELP NOTE ===================== -->
+  <div style="background: #F5F7FA; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 3px; font-size: 13.5px; color: #4A5568;">
+    <strong style="color: #00205B;">Need help?</strong> Schedule EI with your instructor. Bring the exact command you ran and the exact output or error message, especially for a rejected push or a merge conflict, since those are usually fixed in under a minute once we see the message. The
+    <!-- =========================================================
+         EDIT ME: Git troubleshooting reference card link
+         Replace href="#" with the published URL of the one-page Git
+         troubleshooting card (linked from every lesson L1-L23+).
+         ========================================================= -->
+    <a href="#" target="_blank" rel="noopener" style="color: #003087; text-decoration: underline;">Git troubleshooting reference card</a>
+    covers the pull-then-push pattern and the most common conflict messages.
+  </div>
+
+</div>

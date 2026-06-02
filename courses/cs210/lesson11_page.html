@@ -1,0 +1,2877 @@
+<!-- ============================================================
+     CS210 - Lesson 11
+     Recursion I: First Exposure
+     Self-contained: all CSS inline. Native <details> for collapsing.
+     Recursion trace and recursion quiz widgets embedded in section 5.
+     Paste into Blackboard Ultra via Document -> Add HTML block.
+     ============================================================ -->
+
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 980px; margin: 0 auto; line-height: 1.6;">
+
+  <!-- ===================== LIGHT HEADER ===================== -->
+  <div style="border-left: 5px solid #003087; padding: 8px 0 8px 18px; margin-bottom: 24px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 2px;">CS210 &middot; Block 2 &middot; Lesson 11</div>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 600; color: #00205B;">Recursion I: First Exposure</h1>
+    <div style="font-size: 14px; color: #4A5568; margin-top: 4px;">Concept &middot; Base case &middot; Recursive case &middot; The call stack</div>
+  </div>
+
+  <!-- ===================== AT A GLANCE ===================== -->
+  <div style="background: #F5F7FA; border-left: 4px solid #B5B7BA; padding: 14px 18px; margin-bottom: 22px; font-size: 14px;">
+    <strong style="color: #00205B;">At a glance:</strong> Your first exposure to recursion. CS110 did not cover it, so plan to read the supplementary notes carefully before class. The mental model you build today (base case, recursive case, the call stack) becomes the foundation for linked lists at Lesson 29 and the recursion-with-pointers work in Block 4. The recursion trace widget in Section 5 makes the call stack visible; the lab has you write your own.
+  </div>
+
+  <!-- ===================== TABLE OF CONTENTS ===================== -->
+  <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 20px; margin-bottom: 24px; border-radius: 3px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Contents</div>
+    <ol style="margin: 0; padding-left: 22px; font-size: 14px;">
+      <li style="margin-bottom: 4px;"><a href="#objectives" style="color: #003087; text-decoration: none;">Lesson Objectives</a></li>
+      <li style="margin-bottom: 4px;"><a href="#readings" style="color: #003087; text-decoration: none;">Assigned Readings</a></li>
+      <li style="margin-bottom: 4px;"><a href="#pre-class" style="color: #003087; text-decoration: none;">Pre-Class Work</a></li>
+      <li style="margin-bottom: 4px;"><a href="#materials" style="color: #003087; text-decoration: none;">Lesson Materials and Overview</a></li>
+      <li style="margin-bottom: 4px;"><a href="#in-class" style="color: #003087; text-decoration: none;">In-Class Work</a></li>
+      <li style="margin-bottom: 0;"><a href="#after-class" style="color: #003087; text-decoration: none;">After Class</a></li>
+    </ol>
+  </div>
+
+  <!-- ===================== 1. OBJECTIVES ===================== -->
+  <details id="objectives" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      1. Lesson Objectives
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 10px 0; font-style: italic;">By the end of this lesson, cadets will be able to:</p>
+      <ol style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Identify the base case and the recursive case in a recursive function. <span style="color: #6B7280; font-size: 12px;">(Outcome 1)</span></li>
+        <li style="margin-bottom: 6px;">Trace the execution of a recursive function and predict its return value. <span style="color: #6B7280; font-size: 12px;">(Outcomes 1, 3)</span></li>
+        <li style="margin-bottom: 6px;">Describe how the call stack grows and shrinks during recursive execution. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+        <li style="margin-bottom: 6px;">Write a small recursive function from a problem description. <span style="color: #6B7280; font-size: 12px;">(Outcomes 1, 7)</span></li>
+        <li style="margin-bottom: 0;">Diagnose a recursive function that is missing or mis-implementing its base case. <span style="color: #6B7280; font-size: 12px;">(Outcome 3)</span></li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 2. READINGS ===================== -->
+  <details id="readings" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      2. Assigned Readings
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 12px 0;">Complete before class. Recursion is new (CS110 did not cover it), so plan to read carefully.</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <thead>
+          <tr style="background: #E8EDF5; color: #00205B;">
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 220px;">Source</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9;">Sections</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 220px;">Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <!-- =========================================================
+                 EDIT ME: supplementary notes HTML/PDF link
+                 Replace href="#" with the SharePoint or LMS-hosted URL
+                 for recursion_notes.html (or the PDF reference card).
+                 ========================================================= -->
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;"><a href="#" style="color: #003087; text-decoration: underline;">Supplementary notes (required)</a></td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Recursion I: First Exposure (all six sections)</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Vocabulary and the call stack model. About 25 minutes.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 9px 12px;">King, <em>C Programming: A Modern Approach</em></td>
+            <td style="padding: 9px 12px;">Section 9.6 (Recursive Functions), optional</td>
+            <td style="padding: 9px 12px; color: #4A5568;">Optional deeper dive with additional worked examples</td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="font-size: 13.5px; color: #6B7280; margin: 14px 0 0 0; font-style: italic;">Note: Beej's Guide does not cover recursion as a topic. The supplementary notes are the assigned reading; they are short and focused.</p>
+    </div>
+  </details>
+
+  <!-- ===================== 3. PRE-CLASS WORK ===================== -->
+  <details id="pre-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      3. Pre-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 18px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #6B5300; font-size: 14px; margin-bottom: 4px;">Do this first</div>
+        <div style="font-size: 14px; color: #5A4B00;">Plan on 30 to 40 minutes for the reading. Most cadets find recursion confusing on the first read; the in-class trace widget makes it concrete. Come with specific questions.</div>
+      </div>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 0 0 10px 0;">Pre-Class Checklist</h3>
+
+      <!-- Step 1: Read the notes -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">1</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Read the supplementary notes</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">Section by section. Pay particular attention to:</div>
+            <ul style="font-size: 13.5px; margin: 0 0 6px 0; padding-left: 20px;">
+              <li style="margin-bottom: 3px;">The two pieces every recursive function has (Section 2)</li>
+              <li style="margin-bottom: 3px;">The factorial(3) hand-trace (Section 3)</li>
+              <li style="margin-bottom: 3px;">The call stack diagram with separate <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">n</code> values per frame (Section 4)</li>
+              <li style="margin-bottom: 0;">The two ways recursion gets it wrong (Section 5)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Print the reference card -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">2</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Print or download the reference card</div>
+            <!-- =========================================================
+                 EDIT ME: reference card PDF link
+                 Replace href="#" with the SharePoint or LMS URL for
+                 recursion_reference_card.pdf.
+                 ========================================================= -->
+            <div style="font-size: 14px;">A one-page printable summary of the reading. Keep it next to you during the in-class trace and the lab. <a href="#" target="_blank" rel="noopener" style="color: #003087;">Download the reference card (PDF) &rarr;</a></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Try one trace by hand -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 8px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">3</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Try one trace on paper</div>
+            <div style="font-size: 14px;">Before class, predict by hand what <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">factorial(5)</code> returns and write down what the call stack looks like at its deepest point. The trace widget in class will confirm or correct your prediction.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ===================== 4. LESSON MATERIALS AND OVERVIEW ===================== -->
+  <details id="materials" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      4. Lesson Materials and Overview
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 18px 0;">Recursion is a way of solving a problem by breaking it into a smaller version of itself. The reference material below previews the concepts you saw in the supplementary notes; the in-class trace widget makes them visible in motion.</p>
+
+      <!-- Subsection navigation -->
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 18px; margin-bottom: 22px; border-radius: 3px;">
+        <div style="font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">Jump to</div>
+        <div style="font-size: 13.5px;">
+          <a href="#slides" style="color: #003087; text-decoration: none; margin-right: 14px;">Slides</a>
+          <a href="#concept" style="color: #003087; text-decoration: none; margin-right: 14px;">What is recursion</a>
+          <a href="#two-pieces" style="color: #003087; text-decoration: none; margin-right: 14px;">Base case &amp; recursive case</a>
+          <a href="#call-stack" style="color: #003087; text-decoration: none; margin-right: 14px;">The call stack</a>
+          <a href="#pitfalls" style="color: #003087; text-decoration: none; margin-right: 14px;">Common pitfalls</a>
+          <a href="#decomposition" style="color: #003087; text-decoration: none; margin-right: 14px;">Decomposition connection</a>
+          <a href="#dfcs-standard" style="color: #003087; text-decoration: none;">DFCS standard</a>
+        </div>
+      </div>
+
+      <!-- Slides -->
+      <h3 id="slides" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0; scroll-margin-top: 16px;">Slides</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">The Lesson 11 deck walks through the recursion concept, base case identification, the call stack model, factorial as the canonical example, and the two pitfalls. Roughly 30 to 40 minutes of lecture, then straight into the trace widget.</p>
+
+      <!-- =========================================================
+           EDIT ME: Lesson 11 slide deck link
+           Replace href="#" with the SharePoint share URL once the
+           deck is published. Leave target="_blank" and rel="noopener".
+           ========================================================= -->
+      <p style="margin: 0 0 18px 0;">
+        <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 10px 20px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 14px;">Open Lesson 11 slides &rarr;</a>
+      </p>
+
+      <!-- What is recursion -->
+      <h3 id="concept" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">What is recursion</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">A recursive function is a function that calls itself. That single sentence is the whole concept, but it lands strangely the first time you read it. The question that immediately follows is, "if a function calls itself, when does it stop?" The answer to that question is what makes recursion work.</p>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">Each call works on a smaller version of the problem. Eventually one call hits the simplest possible version, returns an answer directly, and the chain of waiting calls unwinds with values flowing back. The supplementary notes show this with a simple <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">countdown</code> example before moving to factorial.</p>
+
+      <!-- Base case & recursive case -->
+      <h3 id="two-pieces" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Base case and recursive case</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Every recursive function has exactly two pieces. Identifying them is the first thing you do when writing or reading recursive code.</p>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 14px;">
+        <thead>
+          <tr style="background: #00205B; color: #ffffff;">
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 180px;">Piece</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600;">What it does</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-weight: 600; color: #00205B;">Base case</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">The smallest version of the problem. Returns directly. No further recursive calls.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; font-weight: 600; color: #00205B;">Recursive case</td>
+            <td style="padding: 8px 12px;">Does a little work, then calls the function on a smaller input, then combines the result.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Factorial is the textbook example because the math itself is already recursive: <em>n!</em> = <em>n</em> &middot; (<em>n</em>-1)! and 0! = 1. The math tells you what the base case and the recursive case should be.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 18px;">
+        <span style="color: #569CD6;">int</span> <span style="color: #DCDCAA;">factorial</span>(<span style="color: #569CD6;">int</span> n) {<br>
+        &nbsp;&nbsp;<span style="color: #C586C0;">if</span> (n &lt;= <span style="color: #B5CEA8;">1</span>) <span style="color: #C586C0;">return</span> <span style="color: #B5CEA8;">1</span>;&nbsp;&nbsp;<span style="color: #6B7280;">// base case</span><br>
+        &nbsp;&nbsp;<span style="color: #C586C0;">return</span> n * <span style="color: #DCDCAA;">factorial</span>(n - <span style="color: #B5CEA8;">1</span>);&nbsp;&nbsp;<span style="color: #6B7280;">// recursive case</span><br>
+        }
+      </div>
+
+      <!-- The call stack -->
+      <h3 id="call-stack" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">The call stack</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Every active function call has its own <strong>stack frame</strong> in memory: a little bundle holding that call's parameters, local variables, and a marker for where to return when the call finishes. The call stack is the collection of all currently-active frames, with the most recent call on top. A recursive call pushes a new frame; a return pops one.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">During <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">factorial(3)</code>, four frames are alive at once:</p>
+
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 4px; font-family: Consolas, monospace; font-size: 12.5px; line-height: 1.55; margin-bottom: 14px;">
+        <pre style="margin: 0; font-family: Consolas, monospace;">  +----------------------------+
+  | factorial   n=1   ret=?    |  &lt;-- top (most recent)
+  +----------------------------+
+  | factorial   n=2   ret=?    |
+  +----------------------------+
+  | factorial   n=3   ret=?    |
+  +----------------------------+
+  | main                       |  &lt;-- bottom
+  +----------------------------+</pre>
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">Each frame has its own copy of <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">n</code>. There are three separate <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">n</code> values alive at the same time, and they do not interfere with each other. This is the fact the trace widget in Section 5 makes visceral.</p>
+
+      <!-- Pitfalls -->
+      <h3 id="pitfalls" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">The two ways recursion goes wrong</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Most broken recursion fails in one of two ways. Both involve the base case.</p>
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 12px 16px; margin-bottom: 10px; border-radius: 3px;">
+        <div style="font-weight: 700; color: #6B5300; font-size: 14.5px; margin-bottom: 4px;">Pitfall 1: No base case at all.</div>
+        <div style="font-size: 14px; color: #5A4B00;">The function calls itself forever. Stack grows without bound until the OS kills the program with a stack overflow.</div>
+      </div>
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 12px 16px; margin-bottom: 18px; border-radius: 3px;">
+        <div style="font-weight: 700; color: #6B5300; font-size: 14.5px; margin-bottom: 4px;">Pitfall 2: Base case exists but is never reached.</div>
+        <div style="font-size: 14px; color: #5A4B00;">The recursive call does not actually shrink the input toward the base case. Same crash, different cause. The lab includes one of these as a fix-it exercise.</div>
+      </div>
+
+      <!-- Decomposition connection -->
+      <h3 id="decomposition" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Recursion as decomposition</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">In Lesson 6 you learned about functional decomposition: breaking a problem into smaller, well-named functions. Recursion is decomposition in its purest form. Every recursive function says, "this problem decomposes into a smaller version of itself, plus a tiny bit of glue." The base case and the recursive case are the two pieces that decomposition produces.</p>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">When you write the L11 lab functions, name the pieces explicitly to yourself before you write any code: <em>what is the base case?</em> and <em>what is the smaller problem?</em> If you can answer both in plain English, the C code follows quickly.</p>
+
+      <h3 id="dfcs-standard" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">DFCS C Programming Standard</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Recursive code is short but conceptually dense. A two-line recursive function can hide a base-case bug that takes an hour to find. The DFCS C Programming Standard <strong>&sect;2.4 (Inline Comments)</strong> applies directly: a comment above the base case stating <em>what the base case is</em>, and a comment above the recursive call stating <em>what gets smaller</em>, makes the intent visible to a reader and to your future self when the program crashes.</p>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">The standard reminds you not to comment every line and not to rephrase code in English &mdash; comments explain code in the context of the problem. For L11, that means a one-line comment per function naming the base case and the recursive case, not blow-by-blow narration. See the Resources section for the full standard.</p>
+
+    </div>
+  </details>
+
+  <!-- ===================== 5. IN-CLASS WORK ===================== -->
+  <details id="in-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      5. In-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 16px 0;">Three things to do in class. Use the checklist to track your progress.</p>
+
+      <ul style="list-style: none; padding: 0; margin: 0 0 24px 0; font-size: 14.5px;">
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Step through the recursion trace widget.</strong>
+          <span style="color: #4A5568;">Five preloaded examples (countdown, factorial, sum_to_n, power, fibonacci). Watch frames push and pop. About 20 minutes.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Take the recursion self-check quiz.</strong>
+          <span style="color: #4A5568;">Eight quick questions on base cases, return values, stack depth, and the two pitfalls. About 10 minutes.</span>
+        </li>
+        <li style="margin-bottom: 0; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Complete Lab 11: Recursive Functions.</strong>
+          <span style="color: #4A5568;">Write three recursive functions and fix one that has a broken base case. Auto-graded through GitHub Classroom. Full instructions in the lab repo.</span>
+          <!-- =========================================================
+               EDIT ME: Lab 11 GitHub Classroom assignment link
+               Replace href="#" with the classroom.github.com/a/... invite
+               URL once the assignment is published.
+               ========================================================= -->
+          <div style="margin-top: 8px; margin-left: 28px;">
+            <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 6px 14px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 13px;">Accept Lab 11 on GitHub Classroom &rarr;</a>
+          </div>
+        </li>
+      </ul>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 18px 0 10px 0;">Recursion Trace</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Five preloaded examples. Step through each one and watch the call stack grow and shrink. Mark all five complete to earn your code.</p>
+
+<!-- ============================================================
+     CS210 Lesson 11 - Recursion Trace Widget
+     Visualization-style. Preloaded examples, no free-typing.
+     Steps through five recursive functions, showing frames push/pop.
+     Scoped class root .cs210-rtrace to prevent CSS bleed.
+     ============================================================ -->
+<style>
+.cs210-rtrace * { box-sizing: border-box; }
+.cs210-rtrace {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-rtrace h1 { color: #00205B; font-size: 24px; margin: 0 0 6px 0; }
+.cs210-rtrace .subtitle { color: #4A5568; font-size: 14px; margin-bottom: 22px; }
+
+.cs210-rtrace .progress-bar {
+  background: #E5E7EB; border-radius: 3px; height: 8px;
+  overflow: hidden; margin-bottom: 6px;
+}
+.cs210-rtrace .progress-fill { background: #003087; height: 100%; transition: width 0.3s ease; }
+.cs210-rtrace .progress-label { font-size: 12px; color: #6B7280; margin-bottom: 18px; }
+
+.cs210-rtrace .section-header {
+  background: #E8EDF5; color: #00205B;
+  padding: 8px 14px; border-radius: 3px;
+  font-size: 13px; font-weight: 600;
+  letter-spacing: 1px; text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.cs210-rtrace .task-card {
+  background: #FFF8E1; border-left: 4px solid #F0B92C;
+  padding: 14px 18px; margin-bottom: 14px; border-radius: 3px;
+}
+.cs210-rtrace .task-card.complete { background: #E6F4EA; border-left-color: #2E7D32; }
+.cs210-rtrace .task-label {
+  font-size: 12px; letter-spacing: 1.5px; color: #6B5300;
+  text-transform: uppercase; font-weight: 600; margin-bottom: 4px;
+}
+.cs210-rtrace .task-card.complete .task-label { color: #1B5E20; }
+.cs210-rtrace .task-text { font-size: 14.5px; color: #1a1a1a; }
+.cs210-rtrace .task-hint { font-size: 13px; color: #6B5300; margin-top: 6px; font-style: italic; }
+
+/* Prediction gate (shown after example execution finishes) */
+.cs210-rtrace .pred-card {
+  background: #F0F4FA; border: 1px solid #C7CFD9; border-left: 4px solid #003087;
+  padding: 14px 18px; margin-bottom: 14px; border-radius: 3px;
+}
+.cs210-rtrace .pred-card.passed { background: #E6F4EA; border-color: #2E7D32; border-left-color: #2E7D32; }
+.cs210-rtrace .pred-label {
+  font-size: 12px; letter-spacing: 1.5px; color: #003087;
+  text-transform: uppercase; font-weight: 600; margin-bottom: 4px;
+}
+.cs210-rtrace .pred-card.passed .pred-label { color: #1B5E20; }
+.cs210-rtrace .pred-question {
+  font-size: 14.5px; color: #00205B; font-weight: 600; margin-bottom: 8px;
+}
+.cs210-rtrace .pred-input-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.cs210-rtrace .pred-input {
+  flex: 1; min-width: 160px;
+  padding: 8px 12px; border: 1px solid #C7CFD9; border-radius: 3px;
+  font-family: inherit; font-size: 14px;
+}
+.cs210-rtrace .pred-input:focus { border-color: #003087; outline: none; }
+.cs210-rtrace .pred-input:disabled { background: #F5F7FA; color: #6B7280; }
+.cs210-rtrace .pred-submit {
+  background: #003087; color: #fff; border: none;
+  padding: 8px 16px; border-radius: 3px;
+  font-family: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer;
+}
+.cs210-rtrace .pred-submit:hover:not(:disabled) { background: #002066; }
+.cs210-rtrace .pred-submit:disabled { background: #9CA3AF; cursor: not-allowed; }
+.cs210-rtrace .pred-hint-btn {
+  background: #F5F7FA; color: #00205B; border: 1px solid #C7CFD9;
+  padding: 8px 14px; border-radius: 3px;
+  font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.cs210-rtrace .pred-hint-btn:hover:not(:disabled) { background: #E8EDF5; }
+.cs210-rtrace .pred-hint-btn:disabled { color: #6B7280; cursor: not-allowed; }
+.cs210-rtrace .pred-hint-btn.pulse {
+  background: #FFF8E1; border-color: #F0B92C; color: #6B5300;
+  animation: cs210RTracePulse 1.5s infinite;
+}
+@keyframes cs210RTracePulse {
+  0%   { box-shadow: 0 0 0 0   rgba(240, 185, 44, 0.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(240, 185, 44, 0); }
+  100% { box-shadow: 0 0 0 0   rgba(240, 185, 44, 0); }
+}
+.cs210-rtrace .pred-feedback {
+  margin-top: 8px; font-size: 13px;
+  padding: 8px 12px; border-radius: 3px;
+}
+.cs210-rtrace .pred-feedback.wrong { background: #FCE8E8; color: #6B2020; border-left: 3px solid #B8002F; }
+.cs210-rtrace .pred-feedback.right { background: #E6F4EA; color: #1B5E20; border-left: 3px solid #2E7D32; }
+.cs210-rtrace .pred-hint-text {
+  margin-top: 8px; font-size: 13px; font-style: italic;
+  padding: 8px 12px; background: #FFF8E1; border-left: 3px solid #F0B92C; border-radius: 3px;
+  color: #5A4B00;
+}
+
+.cs210-rtrace .panes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+@media (max-width: 760px) {
+  .cs210-rtrace .panes { grid-template-columns: 1fr; }
+}
+
+.cs210-rtrace .code-pane, .cs210-rtrace .stack-pane {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 3px;
+  display: flex; flex-direction: column;
+  min-height: 360px;
+  max-height: 460px;
+  overflow: hidden;
+}
+.cs210-rtrace .pane-header {
+  background: #F5F7FA;
+  border-bottom: 1px solid #D0D5DD;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #00205B;
+}
+.cs210-rtrace .code-body {
+  flex: 1; overflow: auto;
+  background: #1E2A3A; color: #E8EDF5;
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 13px; line-height: 1.55;
+  padding: 10px 4px 10px 0;
+}
+.cs210-rtrace .code-line {
+  display: flex;
+  padding: 1px 12px 1px 4px;
+  border-left: 3px solid transparent;
+}
+.cs210-rtrace .code-line.current {
+  background: #3a4a5e;
+  border-left-color: #F0B92C;
+}
+.cs210-rtrace .code-line.exec {
+  background: rgba(46, 125, 50, 0.25);
+}
+.cs210-rtrace .code-line-num {
+  display: inline-block;
+  width: 28px;
+  text-align: right;
+  color: #6B7280;
+  padding-right: 10px;
+  user-select: none;
+}
+.cs210-rtrace .code-line-text { white-space: pre; }
+.cs210-rtrace .k { color: #569CD6; }
+.cs210-rtrace .fn { color: #DCDCAA; }
+.cs210-rtrace .n { color: #B5CEA8; }
+.cs210-rtrace .c { color: #6B7280; }
+.cs210-rtrace .s { color: #CE9178; }
+.cs210-rtrace .kw { color: #C586C0; }
+
+.cs210-rtrace .stack-body {
+  flex: 1; overflow: auto;
+  padding: 10px 12px;
+  background: #FAFBFD;
+}
+.cs210-rtrace .stack-empty {
+  color: #9CA3AF; text-align: center;
+  padding-top: 40px;
+  font-style: italic;
+  font-size: 13.5px;
+}
+.cs210-rtrace .frame {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  border-radius: 3px;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  font-family: 'Consolas', monospace;
+  font-size: 13px;
+  transition: all 0.25s ease;
+}
+.cs210-rtrace .frame.top {
+  border-color: #003087;
+  border-width: 2px;
+  box-shadow: 0 1px 4px rgba(0, 48, 135, 0.18);
+}
+.cs210-rtrace .frame.popping {
+  opacity: 0; transform: translateX(20px);
+}
+.cs210-rtrace .frame.pushing {
+  animation: cs210FramePush 0.3s ease;
+}
+@keyframes cs210FramePush {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.cs210-rtrace .frame-fn {
+  font-weight: 700;
+  color: #00205B;
+  margin-bottom: 4px;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 13.5px;
+}
+.cs210-rtrace .frame-fn .top-tag {
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  background: #003087;
+  color: #fff;
+  padding: 1px 6px;
+  border-radius: 2px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+.cs210-rtrace .frame-row {
+  display: flex;
+  gap: 8px;
+  font-size: 12.5px;
+  padding: 2px 0;
+}
+.cs210-rtrace .frame-key { color: #6B7280; min-width: 90px; }
+.cs210-rtrace .frame-val { color: #1a1a1a; font-weight: 600; }
+.cs210-rtrace .frame-val.returning {
+  background: #FFF59D;
+  padding: 0 4px;
+  border-radius: 2px;
+  animation: cs210ValueFlash 0.6s ease;
+}
+@keyframes cs210ValueFlash {
+  0% { background: #FFE082; }
+  100% { background: #FFF59D; }
+}
+
+.cs210-rtrace .status-row {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  border-radius: 3px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  color: #1a1a1a;
+  margin-bottom: 14px;
+  min-height: 64px;
+}
+.cs210-rtrace .status-label {
+  font-size: 11px; letter-spacing: 1.5px; color: #6B7280;
+  text-transform: uppercase; font-weight: 600; margin-bottom: 3px;
+}
+.cs210-rtrace .status-now { color: #00205B; font-weight: 600; }
+.cs210-rtrace .status-next { color: #4A5568; margin-top: 4px; font-size: 13px; }
+.cs210-rtrace .status-next .arrow { color: #F0B92C; font-weight: 700; }
+
+.cs210-rtrace .example-row {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-bottom: 14px;
+}
+.cs210-rtrace .example-btn {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  color: #00205B;
+  padding: 8px 14px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+}
+.cs210-rtrace .example-btn:hover { background: #E8EDF5; }
+.cs210-rtrace .example-btn.active {
+  background: #003087; color: #fff; border-color: #003087;
+}
+.cs210-rtrace .example-btn.complete::after {
+  content: ' \2713';
+  color: #2E7D32;
+  font-weight: 700;
+}
+.cs210-rtrace .example-btn.active.complete::after { color: #B5E6C0; }
+
+.cs210-rtrace .controls {
+  display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap;
+}
+.cs210-rtrace .btn {
+  background: #003087; color: #fff; border: none;
+  padding: 9px 18px; border-radius: 3px;
+  cursor: pointer; font-family: inherit;
+  font-size: 13.5px; font-weight: 600;
+}
+.cs210-rtrace .btn:hover:not(:disabled) { background: #002066; }
+.cs210-rtrace .btn:disabled { background: #9CA3AF; cursor: not-allowed; }
+.cs210-rtrace .btn.secondary { background: #F5F7FA; color: #00205B; border: 1px solid #D0D5DD; }
+.cs210-rtrace .btn.secondary:hover:not(:disabled) { background: #E8EDF5; }
+
+.cs210-rtrace .help-note {
+  background: #F5F7FA; border: 1px solid #D0D5DD;
+  padding: 12px 16px; border-radius: 3px;
+  font-size: 13px; color: #4A5568; margin-top: 14px;
+}
+.cs210-rtrace .help-note strong { color: #00205B; }
+
+.cs210-rtrace .output-line {
+  background: #1B3A1B;
+  color: #B5E6C0;
+  font-family: 'Consolas', monospace;
+  font-size: 12.5px;
+  padding: 4px 12px;
+  border-radius: 2px;
+  margin-bottom: 4px;
+}
+.cs210-rtrace .output-list { margin-top: 8px; }
+.cs210-rtrace .output-title {
+  font-size: 11px; letter-spacing: 1.5px; color: #6B7280;
+  text-transform: uppercase; font-weight: 600; margin-bottom: 4px;
+}
+
+/* name-modal (shared pattern) */
+.cs210-rtrace .name-modal-backdrop {
+  position: absolute; inset: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding-top: 80px;
+  z-index: 100;
+}
+.cs210-rtrace .name-modal {
+  background: #fff; max-width: 480px; width: 90%;
+  padding: 22px 26px; border-radius: 4px;
+  border-top: 6px solid #003087;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+.cs210-rtrace .name-modal h2 { color: #00205B; font-size: 18px; margin: 0 0 8px 0; }
+.cs210-rtrace .name-modal p { font-size: 14px; margin: 0 0 14px 0; color: #4A5568; }
+.cs210-rtrace .name-modal input {
+  width: 100%; padding: 9px 12px; border: 1px solid #D0D5DD;
+  border-radius: 3px; font-family: inherit; font-size: 14px; margin-bottom: 12px;
+}
+.cs210-rtrace .name-modal input:focus { border-color: #003087; outline: none; }
+.cs210-rtrace .name-modal-btn {
+  width: 100%; background: #003087; color: #fff; border: none;
+  padding: 10px; border-radius: 3px; font-family: inherit;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.cs210-rtrace .name-modal-btn:disabled { background: #9CA3AF; cursor: not-allowed; }
+
+/* completion screen */
+.cs210-rtrace .completion-screen {
+  background: #E6F4EA; border: 1px solid #2E7D32;
+  border-radius: 4px; padding: 14px 18px; margin-top: 14px;
+}
+.cs210-rtrace .cs-heading { color: #1B5E20; font-weight: 700; font-size: 16px; margin-bottom: 6px; }
+.cs210-rtrace .cs-name-line { font-size: 14px; margin-bottom: 8px; }
+.cs210-rtrace .cs-code-block {
+  background: #F0F4FA; border: 1px solid #2E7D32; border-radius: 3px;
+  padding: 10px 14px; display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; margin-bottom: 8px;
+}
+.cs210-rtrace .cs-code-label {
+  font-size: 11px; letter-spacing: 1.5px; color: #4A5568;
+  text-transform: uppercase; margin-bottom: 2px;
+}
+.cs210-rtrace .cs-code-value {
+  font-family: Consolas, monospace; font-size: 22px;
+  font-weight: 700; color: #1B5E20; letter-spacing: 3px;
+}
+.cs210-rtrace .cs-timestamp { font-size: 12px; color: #6B7280; }
+.cs210-rtrace .cs-copy-btn {
+  background: #2E7D32; color: #fff; border: none;
+  padding: 7px 12px; border-radius: 3px; font-size: 12.5px;
+  cursor: pointer; font-family: inherit;
+}
+.cs210-rtrace .cs-copy-btn.copied { background: #1B5E20; }
+.cs210-rtrace .cs-reminder {
+  background: #FFF8E1; border-left: 4px solid #F0B92C;
+  padding: 10px 14px; border-radius: 3px;
+  font-size: 13px; color: #6B5300; margin-bottom: 12px;
+}
+.cs210-rtrace .cs-reminder strong { color: #6B5300; }
+</style>
+
+<div class="cs210-rtrace">
+
+  <div class="name-modal-backdrop" id="rt-name-modal-backdrop">
+    <div class="name-modal">
+      <h2>Before you begin</h2>
+      <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Blackboard reflection.</p>
+      <input type="text" id="rt-cadet-name-input" placeholder="First and last name" autocomplete="off">
+      <button class="name-modal-btn" id="rt-cadet-name-btn" disabled>Start the trace</button>
+    </div>
+  </div>
+
+  <h1>CS210 Lesson 11 &middot; Recursion Trace</h1>
+  <div class="subtitle">Step through five recursive functions and watch the call stack grow and shrink. Each frame is a separate call with its own parameters. Mark all five examples complete to earn your code.</div>
+
+  <div class="progress-bar"><div class="progress-fill" id="rt-progress-fill" style="width: 0%;"></div></div>
+  <div class="progress-label" id="rt-progress-label">0 of 5 examples complete</div>
+
+  <div class="section-header" id="rt-section-header">Example 1 of 5</div>
+
+  <div class="task-card" id="rt-task-card">
+    <div class="task-label" id="rt-task-label">Current example</div>
+    <div class="task-text" id="rt-task-text">Loading...</div>
+    <div class="task-hint" id="rt-task-hint"></div>
+  </div>
+
+  <div class="example-row" id="rt-example-row">
+    <!-- example selector buttons rendered dynamically -->
+  </div>
+
+  <div class="panes">
+    <div class="code-pane">
+      <div class="pane-header">Code</div>
+      <div class="code-body" id="rt-code-body"></div>
+    </div>
+    <div class="stack-pane">
+      <div class="pane-header">Call stack <span style="font-weight: 400; text-transform: none; letter-spacing: 0; color: #6B7280; font-size: 11px;">top = most recent</span></div>
+      <div class="stack-body" id="rt-stack-body">
+        <div class="stack-empty">No frames yet.<br>Press Step or Run to start.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="status-row">
+    <div class="status-label">Status</div>
+    <div class="status-now" id="rt-status-now">Press Step to begin execution of <strong id="rt-status-call">this example</strong>.</div>
+    <div class="status-next" id="rt-status-next"></div>
+    <div class="output-list" id="rt-output-list" style="display: none;">
+      <div class="output-title">printf output</div>
+      <div id="rt-output-lines"></div>
+    </div>
+  </div>
+
+  <div id="rt-pred-container"></div>
+
+  <div class="controls">
+    <button class="btn" id="rt-step-btn">Step</button>
+    <button class="btn" id="rt-run-btn">Run to end</button>
+    <button class="btn secondary" id="rt-reset-btn">Reset this example</button>
+  </div>
+
+  <div class="help-note">
+    <strong>How to read it:</strong> the highlighted line in the code pane is what is about to execute. The call stack pane shows every function call currently alive, with the most recent call on top. A new frame appears when a call is made; a frame disappears when its function returns, and the return value flashes briefly in the frame below. When the trace finishes, a short prediction question appears &mdash; answer it correctly to mark the example complete.
+  </div>
+
+  <div id="rt-completion-area"></div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-rtrace');
+  if (!root) return;
+
+  // ============================================================
+  // CS210 widget completion utilities
+  // Salt -> deterministic 6-char code via FNV-1a.
+  // Alphabet excludes 0, 1, O, I (uppercase only).
+  // ============================================================
+  const CS210_SALT = "lesson11_recursion_trace_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  // Name-modal gating
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#rt-name-modal-backdrop');
+    const input = root.querySelector('#rt-cadet-name-input');
+    const btn = root.querySelector('#rt-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored) input.value = stored;
+    } catch (e) {}
+
+    function updateBtn() { btn.disabled = input.value.trim().length < 2; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', function() {
+      const name = input.value.trim();
+      if (name.length < 2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+    });
+    setTimeout(function() { input.focus(); }, 50);
+  })();
+
+  // ============================================================
+  // Example definitions
+  //
+  // Each example has:
+  //   id, title, description, initialCall (display string),
+  //   functions: { name: { params, lines, steps } }
+  // Each line is { num, html } (HTML allowed for syntax coloring).
+  // Each step is one of:
+  //   { kind: 'enter', line }                              -- on call entry, highlight start
+  //   { kind: 'cond', line, test: (locals)=>bool,
+  //                   trueNextStep, falseNextStep,
+  //                   describeTrue, describeFalse }
+  //   { kind: 'print', line, text: (locals)=>string }
+  //   { kind: 'compute', line, var, expr: (locals)=>val,
+  //                   describe: (locals,val)=>string }
+  //   { kind: 'call', line, fn, args: (locals)=>[..],
+  //                   storeIn, describe: (locals,args)=>string }
+  //   { kind: 'return', line, value: (locals)=>val,
+  //                   describe: (locals,val)=>string }
+  // Steps execute in order unless a cond redirects.
+  // ============================================================
+
+  // Helper to color-format a code line - simple inline highlight
+  function L(num, html) { return { num: num, html: html }; }
+
+  const EXAMPLES = [
+    // ----------------------------------------------------------
+    // 1. countdown - simplest recursive function
+    // ----------------------------------------------------------
+    {
+      id: 'countdown',
+      title: 'countdown(3)',
+      description: 'A void function with no return value. Each call prints, then calls itself with n-1. Watch the stack grow to four frames, then unwind cleanly with nothing flowing back.',
+      hint: 'Press Step a dozen or so times. Notice that frames pop with no return value because countdown returns void.',
+      initialCall: 'countdown(3)',
+      functions: {
+        countdown: {
+          params: ['n'],
+          locals: [],
+          lines: [
+            L(1, '<span class="k">void</span> <span class="fn">countdown</span>(<span class="k">int</span> n) {'),
+            L(2, '  <span class="kw">if</span> (n &lt;= <span class="n">0</span>) <span class="kw">return</span>;'),
+            L(3, '  <span class="fn">printf</span>(<span class="s">"%d\\n"</span>, n);'),
+            L(4, '  <span class="fn">countdown</span>(n - <span class="n">1</span>);'),
+            L(5, '}')
+          ],
+          steps: [
+            { kind: 'enter', line: 1 },
+            { kind: 'cond', line: 2,
+              test: (L) => L.n <= 0,
+              trueNextStep: 4, falseNextStep: 2,
+              describeTrue: (L) => 'Base case hit (n = ' + L.n + '). Returning.',
+              describeFalse: (L) => 'n = ' + L.n + ' is > 0; continuing past the base case.'
+            },
+            { kind: 'print', line: 3,
+              text: (L) => String(L.n)
+            },
+            { kind: 'call', line: 4,
+              fn: 'countdown',
+              args: (L) => [L.n - 1],
+              storeIn: null,
+              describe: (L) => 'Calling countdown(' + (L.n - 1) + ').'
+            },
+            { kind: 'return', line: 5,
+              value: (L) => undefined,
+              describe: (L) => 'Frame for countdown(' + L.n + ') returns (void).'
+            }
+          ]
+        }
+      },
+      mainCallArgs: [3],
+      prediction: {
+        question: 'How many times does printf run during countdown(3)?',
+        hint: 'printf only runs in the recursive case, not in the base case. countdown(0) hits the base case and returns without printing.',
+        check: (s) => s.trim() === '3',
+        placeholder: 'just a number'
+      }
+    },
+
+    // ----------------------------------------------------------
+    // 2. factorial - the classic, with return values
+    // ----------------------------------------------------------
+    {
+      id: 'factorial',
+      title: 'factorial(4)',
+      description: 'The canonical recursion example. Each call sets up a multiplication that waits on the recursive call to return. Watch the return values flow back up the stack and multiply.',
+      hint: 'Each frame holds n. The "ret" field stays unknown until factorial(1) hits the base case; then values flow up and multiply.',
+      initialCall: 'factorial(4)',
+      functions: {
+        factorial: {
+          params: ['n'],
+          locals: ['sub'],
+          lines: [
+            L(1, '<span class="k">int</span> <span class="fn">factorial</span>(<span class="k">int</span> n) {'),
+            L(2, '  <span class="kw">if</span> (n &lt;= <span class="n">1</span>) <span class="kw">return</span> <span class="n">1</span>;'),
+            L(3, '  <span class="k">int</span> sub = <span class="fn">factorial</span>(n - <span class="n">1</span>);'),
+            L(4, '  <span class="kw">return</span> n * sub;'),
+            L(5, '}')
+          ],
+          steps: [
+            { kind: 'enter', line: 1 },
+            { kind: 'cond', line: 2,
+              test: (L) => L.n <= 1,
+              trueNextStep: 4, falseNextStep: 2,
+              describeTrue: (L) => 'Base case hit (n = ' + L.n + ' &le; 1). Returning 1.',
+              describeFalse: (L) => 'n = ' + L.n + '; recursive case.'
+            },
+            { kind: 'call', line: 3,
+              fn: 'factorial',
+              args: (L) => [L.n - 1],
+              storeIn: 'sub',
+              describe: (L) => 'Calling factorial(' + (L.n - 1) + '). Result will be stored in sub.'
+            },
+            { kind: 'return', line: 4,
+              value: (L) => L.n * L.sub,
+              describe: (L) => 'Computing ' + L.n + ' * ' + L.sub + ' = ' + (L.n * L.sub) + '. Returning.'
+            },
+            // Step 4 corresponds to base case return (cond.trueNextStep = 4):
+            { kind: 'return', line: 2,
+              value: (L) => 1,
+              describe: (L) => 'Returning 1 (base case).'
+            }
+          ]
+        }
+      },
+      mainCallArgs: [4],
+      prediction: {
+        question: 'What was the maximum number of factorial frames alive on the stack at the same time during factorial(4)?',
+        hint: 'Count the factorial frames just before the base case fired. main was at the bottom; don\'t count main.',
+        check: (s) => s.trim() === '4',
+        placeholder: 'just a number'
+      }
+    },
+
+    // ----------------------------------------------------------
+    // 3. sum_to_n - addition instead of multiplication
+    // ----------------------------------------------------------
+    {
+      id: 'sum_to_n',
+      title: 'sum_to_n(4)',
+      description: 'Sum the integers from 1 to n. Same recursive shape as factorial, but the combining operation is addition instead of multiplication.',
+      hint: 'Compare to factorial: identical structure, different operator. Once you see the pattern, both look like the same function.',
+      initialCall: 'sum_to_n(4)',
+      functions: {
+        sum_to_n: {
+          params: ['n'],
+          locals: ['sub'],
+          lines: [
+            L(1, '<span class="k">int</span> <span class="fn">sum_to_n</span>(<span class="k">int</span> n) {'),
+            L(2, '  <span class="kw">if</span> (n &lt;= <span class="n">0</span>) <span class="kw">return</span> <span class="n">0</span>;'),
+            L(3, '  <span class="k">int</span> sub = <span class="fn">sum_to_n</span>(n - <span class="n">1</span>);'),
+            L(4, '  <span class="kw">return</span> n + sub;'),
+            L(5, '}')
+          ],
+          steps: [
+            { kind: 'enter', line: 1 },
+            { kind: 'cond', line: 2,
+              test: (L) => L.n <= 0,
+              trueNextStep: 4, falseNextStep: 2,
+              describeTrue: (L) => 'Base case hit (n = ' + L.n + '). Returning 0.',
+              describeFalse: (L) => 'n = ' + L.n + '; recursive case.'
+            },
+            { kind: 'call', line: 3,
+              fn: 'sum_to_n',
+              args: (L) => [L.n - 1],
+              storeIn: 'sub',
+              describe: (L) => 'Calling sum_to_n(' + (L.n - 1) + '). Result stored in sub.'
+            },
+            { kind: 'return', line: 4,
+              value: (L) => L.n + L.sub,
+              describe: (L) => 'Computing ' + L.n + ' + ' + L.sub + ' = ' + (L.n + L.sub) + '. Returning.'
+            },
+            { kind: 'return', line: 2,
+              value: (L) => 0,
+              describe: (L) => 'Returning 0 (base case).'
+            }
+          ]
+        }
+      },
+      mainCallArgs: [4],
+      prediction: {
+        question: 'What value did sum_to_n(4) return?',
+        hint: 'It is the sum of 1 + 2 + 3 + 4. The base case returns 0 and adds nothing.',
+        check: (s) => s.trim() === '10',
+        placeholder: 'just a number'
+      }
+    },
+
+    // ----------------------------------------------------------
+    // 4. power - two parameters, the second one stays constant
+    // ----------------------------------------------------------
+    {
+      id: 'power',
+      title: 'power(2, 3)',
+      description: 'Compute base raised to exp. Two parameters: base stays the same across all calls, exp shrinks toward 0. Notice that every frame holds the same base value but a different exp.',
+      hint: 'base is the same in every frame; only exp changes. That is how the parameter binding works -- each call gets its own copy, even when the value is unchanged.',
+      initialCall: 'power(2, 3)',
+      functions: {
+        power: {
+          params: ['base', 'exp'],
+          locals: ['sub'],
+          lines: [
+            L(1, '<span class="k">int</span> <span class="fn">power</span>(<span class="k">int</span> base, <span class="k">int</span> exp) {'),
+            L(2, '  <span class="kw">if</span> (exp == <span class="n">0</span>) <span class="kw">return</span> <span class="n">1</span>;'),
+            L(3, '  <span class="k">int</span> sub = <span class="fn">power</span>(base, exp - <span class="n">1</span>);'),
+            L(4, '  <span class="kw">return</span> base * sub;'),
+            L(5, '}')
+          ],
+          steps: [
+            { kind: 'enter', line: 1 },
+            { kind: 'cond', line: 2,
+              test: (L) => L.exp === 0,
+              trueNextStep: 4, falseNextStep: 2,
+              describeTrue: (L) => 'Base case hit (exp = 0). Returning 1.',
+              describeFalse: (L) => 'exp = ' + L.exp + '; recursive case.'
+            },
+            { kind: 'call', line: 3,
+              fn: 'power',
+              args: (L) => [L.base, L.exp - 1],
+              storeIn: 'sub',
+              describe: (L) => 'Calling power(' + L.base + ', ' + (L.exp - 1) + '). Note base does not change.'
+            },
+            { kind: 'return', line: 4,
+              value: (L) => L.base * L.sub,
+              describe: (L) => 'Computing ' + L.base + ' * ' + L.sub + ' = ' + (L.base * L.sub) + '. Returning.'
+            },
+            { kind: 'return', line: 2,
+              value: (L) => 1,
+              describe: (L) => 'Returning 1 (exp = 0 base case).'
+            }
+          ]
+        }
+      },
+      mainCallArgs: [2, 3],
+      prediction: {
+        question: 'Looking at the frames, what stayed the same in every power frame, and what changed? Answer with one word: BASE or EXP.',
+        hint: 'base stayed the same in every call (2, 2, 2, 2). exp counted down toward zero.',
+        check: (s) => s.trim().toUpperCase() === 'EXP',
+        placeholder: 'BASE or EXP'
+      }
+    },
+
+    // ----------------------------------------------------------
+    // 5. fibonacci - two recursive calls per frame
+    // ----------------------------------------------------------
+    {
+      id: 'fibonacci',
+      title: 'fibonacci(4)',
+      description: 'fibonacci is different: each non-base case makes TWO recursive calls and adds the results. The stack still only holds one chain at a time, but the same frame is revisited as it works through its left call and then its right call.',
+      hint: 'Watch fib(4)\'s frame closely. It calls fib(3), waits for the answer, stores it in a, then calls fib(2), waits, stores it in b, then returns a+b. Two separate sub-recursions from one frame.',
+      initialCall: 'fibonacci(4)',
+      functions: {
+        fibonacci: {
+          params: ['n'],
+          locals: ['a', 'b'],
+          lines: [
+            L(1, '<span class="k">int</span> <span class="fn">fibonacci</span>(<span class="k">int</span> n) {'),
+            L(2, '  <span class="kw">if</span> (n &lt; <span class="n">2</span>) <span class="kw">return</span> n;'),
+            L(3, '  <span class="k">int</span> a = <span class="fn">fibonacci</span>(n - <span class="n">1</span>);'),
+            L(4, '  <span class="k">int</span> b = <span class="fn">fibonacci</span>(n - <span class="n">2</span>);'),
+            L(5, '  <span class="kw">return</span> a + b;'),
+            L(6, '}')
+          ],
+          steps: [
+            { kind: 'enter', line: 1 },
+            // step 1
+            { kind: 'cond', line: 2,
+              test: (L) => L.n < 2,
+              trueNextStep: 5, falseNextStep: 2,
+              describeTrue: (L) => 'Base case hit (n = ' + L.n + ' &lt; 2). Returning ' + L.n + '.',
+              describeFalse: (L) => 'n = ' + L.n + '; recursive case.'
+            },
+            // step 2 - first call
+            { kind: 'call', line: 3,
+              fn: 'fibonacci',
+              args: (L) => [L.n - 1],
+              storeIn: 'a',
+              describe: (L) => 'First sub-call: fibonacci(' + (L.n - 1) + '). Result stored in a.'
+            },
+            // step 3 - second call
+            { kind: 'call', line: 4,
+              fn: 'fibonacci',
+              args: (L) => [L.n - 2],
+              storeIn: 'b',
+              describe: (L) => 'Second sub-call: fibonacci(' + (L.n - 2) + '). Result stored in b.'
+            },
+            // step 4 - return
+            { kind: 'return', line: 5,
+              value: (L) => L.a + L.b,
+              describe: (L) => 'Computing ' + L.a + ' + ' + L.b + ' = ' + (L.a + L.b) + '. Returning.'
+            },
+            // step 5 - base case return
+            { kind: 'return', line: 2,
+              value: (L) => L.n,
+              describe: (L) => 'Returning ' + L.n + ' (base case).'
+            }
+          ]
+        }
+      },
+      mainCallArgs: [4],
+      prediction: {
+        question: 'What value did fibonacci(4) return?',
+        hint: 'fibonacci(4) = fibonacci(3) + fibonacci(2). The two sub-calls each follow the same pattern, with fibonacci(0) returning 0 and fibonacci(1) returning 1.',
+        check: (s) => s.trim() === '3',
+        placeholder: 'just a number'
+      }
+    }
+  ];
+
+  // ============================================================
+  // Runtime state
+  // ============================================================
+
+  let currentExampleIdx = 0;
+  const completed = new Array(EXAMPLES.length).fill(false);
+
+  // For the active example, we maintain:
+  //   stack: array of { fn, args, locals, currentStepIdx, currentLine, popping }
+  //   output: array of strings (printf output)
+  //   finished: bool
+  //   lastReturnValue: for animation purposes
+  let stack = [];
+  let output = [];
+  let finished = false;
+  let started = false;
+  let runTimer = null;
+  let lastReturnFrame = null;
+
+  // Per-example prediction state.
+  // predFailures[i] = number of wrong attempts on example i's prediction
+  // predHintShown[i] = whether the hint text is currently revealed
+  // predFeedback[i] = last feedback message to show (string or null)
+  // (completed[i] already tracks whether the example is fully passed)
+  const predFailures = new Array(EXAMPLES.length).fill(0);
+  const predHintShown = new Array(EXAMPLES.length).fill(false);
+  const predFeedback = new Array(EXAMPLES.length).fill(null);
+  const predLastAttempt = new Array(EXAMPLES.length).fill('');
+
+  function ex() { return EXAMPLES[currentExampleIdx]; }
+  function topFrame() { return stack[stack.length - 1]; }
+
+  function resetExample() {
+    if (runTimer) { clearInterval(runTimer); runTimer = null; }
+    stack = [];
+    output = [];
+    finished = false;
+    started = false;
+    lastReturnFrame = null;
+    // Reset prediction state for THIS example (other examples keep theirs)
+    predFailures[currentExampleIdx] = 0;
+    predHintShown[currentExampleIdx] = false;
+    predFeedback[currentExampleIdx] = null;
+    predLastAttempt[currentExampleIdx] = '';
+    completed[currentExampleIdx] = false;
+    render();
+  }
+
+  function startExample() {
+    const e = ex();
+    // Push a synthetic main frame and the first real call.
+    // We model main as a frame whose only purpose is to receive the final return value.
+    stack = [
+      { fn: '__main__', args: {}, locals: { result: undefined }, currentStepIdx: -1, currentLine: null, isMain: true }
+    ];
+    // Push the initial call
+    const fnName = Object.keys(e.functions)[0];
+    pushFrame(fnName, e.mainCallArgs, 'result');
+    started = true;
+    render();
+  }
+
+  function pushFrame(fnName, argVals, storeInOnCaller) {
+    const e = ex();
+    const fnDef = e.functions[fnName];
+    const locals = {};
+    fnDef.params.forEach((p, i) => { locals[p] = argVals[i]; });
+    (fnDef.locals || []).forEach(v => { locals[v] = undefined; });
+    // Record in caller's pendingReturnVar
+    if (stack.length > 0) {
+      stack[stack.length - 1].pendingReturnVar = storeInOnCaller;
+    }
+    stack.push({
+      fn: fnName,
+      args: argVals.slice(),
+      locals: locals,
+      currentStepIdx: -1,
+      currentLine: fnDef.lines[0].num,
+      pushing: true
+    });
+  }
+
+  function step() {
+    if (finished) return;
+    if (!started) {
+      startExample();
+      return;
+    }
+
+    const frame = topFrame();
+    if (!frame || frame.isMain) {
+      // Top of stack is __main__; execution is done.
+      onFinished();
+      return;
+    }
+    // Clear pushing flag once user has stepped past initial push
+    frame.pushing = false;
+    lastReturnFrame = null;
+
+    const e = ex();
+    const fnDef = e.functions[frame.fn];
+    let nextStepIdx = frame.currentStepIdx + 1;
+    if (nextStepIdx >= fnDef.steps.length) {
+      // shouldn't normally happen - last step in each example is a return
+      onFinished();
+      return;
+    }
+    const stepDef = fnDef.steps[nextStepIdx];
+    frame.currentStepIdx = nextStepIdx;
+    frame.currentLine = stepDef.line;
+
+    if (stepDef.kind === 'enter') {
+      // Just highlight the function header; advance next step on next press.
+      // No state change.
+    } else if (stepDef.kind === 'cond') {
+      const truthy = stepDef.test(frame.locals);
+      if (truthy) {
+        // Jump to the trueNextStep on the NEXT step call
+        frame.currentStepIdx = stepDef.trueNextStep - 1; // -1 because step() will ++ next time
+        frame._pendingDescribe = stepDef.describeTrue(frame.locals);
+      } else {
+        frame._pendingDescribe = stepDef.describeFalse(frame.locals);
+      }
+    } else if (stepDef.kind === 'print') {
+      const txt = stepDef.text(frame.locals);
+      output.push(txt);
+      frame._pendingDescribe = 'printf wrote: "' + txt + '"';
+    } else if (stepDef.kind === 'compute') {
+      const v = stepDef.expr(frame.locals);
+      frame.locals[stepDef.var] = v;
+      frame._pendingDescribe = stepDef.describe(frame.locals, v);
+    } else if (stepDef.kind === 'call') {
+      const argVals = stepDef.args(frame.locals);
+      // The call freezes the current frame here; a new frame appears on top.
+      pushFrame(stepDef.fn, argVals, stepDef.storeIn);
+      frame._pendingDescribe = stepDef.describe(frame.locals, argVals);
+    } else if (stepDef.kind === 'return') {
+      const v = stepDef.value(frame.locals);
+      frame._pendingDescribe = stepDef.describe(frame.locals, v);
+      // Pop this frame and deposit value into caller's pendingReturnVar
+      const returningFrame = stack.pop();
+      const caller = stack[stack.length - 1];
+      if (caller && caller.pendingReturnVar) {
+        caller.locals[caller.pendingReturnVar] = v;
+        lastReturnFrame = { frame: caller, varName: caller.pendingReturnVar, value: v };
+        // Surface the return on the new top frame's status so the cadet sees
+        // who received what, not the stale "calling X" message from earlier.
+        caller._pendingDescribe = caller.fn + ' received ' + v +
+          ' from ' + returningFrame.fn + '(' + returningFrame.args.join(', ') + ')' +
+          '; stored in ' + caller.pendingReturnVar + '.';
+        caller.pendingReturnVar = null;
+      } else if (caller && caller.isMain) {
+        caller.locals.result = v;
+        lastReturnFrame = { frame: caller, varName: 'result', value: v };
+      }
+      // If caller is main and there are no more real frames, we're done after this render
+      if (stack.length === 1 && stack[0].isMain) {
+        onFinished();
+        render();
+        return;
+      }
+    }
+    render();
+  }
+
+  function runAll() {
+    if (runTimer) return;
+    if (!started) startExample();
+    runTimer = setInterval(() => {
+      step();
+      if (finished) {
+        clearInterval(runTimer);
+        runTimer = null;
+      }
+    }, 350);
+  }
+
+  function onFinished() {
+    finished = true;
+    if (runTimer) { clearInterval(runTimer); runTimer = null; }
+    // Note: do NOT mark completed[currentExampleIdx] = true here.
+    // The example is only marked complete when the cadet answers the
+    // prediction question correctly. The prediction card renders below
+    // the status row whenever finished == true and !completed[i].
+  }
+
+  function onPredictionSubmit(rawAnswer) {
+    const e = ex();
+    if (!e.prediction) {
+      // Defensive: shouldn't happen because every example has a prediction.
+      completed[currentExampleIdx] = true;
+      maybeRenderCompletion();
+      render();
+      return;
+    }
+    predLastAttempt[currentExampleIdx] = rawAnswer;
+    if (e.prediction.check(rawAnswer)) {
+      completed[currentExampleIdx] = true;
+      predFeedback[currentExampleIdx] = { kind: 'right', text: 'Correct.' };
+      maybeRenderCompletion();
+    } else {
+      predFailures[currentExampleIdx] += 1;
+      predFeedback[currentExampleIdx] = {
+        kind: 'wrong',
+        text: 'Not quite. Look back at the trace and try again.'
+      };
+    }
+    render();
+  }
+
+  function onHintReveal() {
+    predHintShown[currentExampleIdx] = true;
+    render();
+  }
+
+  function maybeRenderCompletion() {
+    if (completed.every(Boolean)) {
+      const area = root.querySelector('#rt-completion-area');
+      cs210RenderCompletion(area);
+    }
+  }
+
+  // ============================================================
+  // Rendering
+  // ============================================================
+
+  function render() {
+    renderExampleRow();
+    renderProgress();
+    renderTaskCard();
+    renderCodePane();
+    renderStackPane();
+    renderStatus();
+    renderPredictionCard();
+    renderControls();
+  }
+
+  function renderExampleRow() {
+    const row = root.querySelector('#rt-example-row');
+    row.innerHTML = '';
+    EXAMPLES.forEach((e, i) => {
+      const b = document.createElement('button');
+      b.className = 'example-btn';
+      if (i === currentExampleIdx) b.classList.add('active');
+      if (completed[i]) b.classList.add('complete');
+      b.textContent = (i + 1) + '. ' + e.title;
+      b.addEventListener('click', () => {
+        if (runTimer) { clearInterval(runTimer); runTimer = null; }
+        currentExampleIdx = i;
+        resetExample();
+      });
+      row.appendChild(b);
+    });
+  }
+
+  function renderProgress() {
+    const done = completed.filter(Boolean).length;
+    root.querySelector('#rt-progress-fill').style.width = ((done / EXAMPLES.length) * 100) + '%';
+    root.querySelector('#rt-progress-label').textContent = done + ' of ' + EXAMPLES.length + ' examples complete';
+    root.querySelector('#rt-section-header').textContent = 'Example ' + (currentExampleIdx + 1) + ' of ' + EXAMPLES.length;
+  }
+
+  function renderTaskCard() {
+    const e = ex();
+    const card = root.querySelector('#rt-task-card');
+    if (completed[currentExampleIdx]) {
+      card.classList.add('complete');
+      root.querySelector('#rt-task-label').textContent = 'Example complete';
+    } else {
+      card.classList.remove('complete');
+      root.querySelector('#rt-task-label').textContent = 'Current example: ' + e.initialCall;
+    }
+    root.querySelector('#rt-task-text').innerHTML = e.description;
+    root.querySelector('#rt-task-hint').textContent = e.hint;
+  }
+
+  function renderCodePane() {
+    const e = ex();
+    const body = root.querySelector('#rt-code-body');
+    body.innerHTML = '';
+    const fnName = Object.keys(e.functions)[0];
+    const fnDef = e.functions[fnName];
+    const currentLine = topFrame() && !topFrame().isMain ? topFrame().currentLine : null;
+    fnDef.lines.forEach(line => {
+      const row = document.createElement('div');
+      row.className = 'code-line';
+      if (line.num === currentLine) row.classList.add('current');
+      row.innerHTML =
+        '<span class="code-line-num">' + line.num + '</span>' +
+        '<span class="code-line-text">' + line.html + '</span>';
+      body.appendChild(row);
+    });
+  }
+
+  function renderStackPane() {
+    const body = root.querySelector('#rt-stack-body');
+    body.innerHTML = '';
+    // Filter out the synthetic main frame for display? Actually we want to show "main" at bottom.
+    // Render frames from top to bottom (top of stack first).
+    const visible = stack.slice().reverse(); // top first
+    if (visible.length === 0) {
+      body.innerHTML = '<div class="stack-empty">No frames yet.<br>Press Step or Run to start.</div>';
+      return;
+    }
+    visible.forEach((frame, i) => {
+      const isTop = (i === 0);
+      const div = document.createElement('div');
+      div.className = 'frame' + (isTop ? ' top' : '') + (frame.pushing ? ' pushing' : '');
+      let fnLine = '<div class="frame-fn">' + (frame.isMain ? 'main' : frame.fn);
+      if (isTop && !frame.isMain) fnLine += '<span class="top-tag">TOP</span>';
+      fnLine += '</div>';
+      div.innerHTML = fnLine;
+
+      // Render params and locals
+      if (frame.isMain) {
+        // Only show "result" once it has a value (after the top-level call returns).
+        const r = frame.locals.result;
+        if (r !== undefined) {
+          const isFlash = lastReturnFrame && lastReturnFrame.frame === frame && lastReturnFrame.varName === 'result';
+          const valClass = isFlash ? 'frame-val returning' : 'frame-val';
+          div.innerHTML +=
+            '<div class="frame-row"><span class="frame-key">result =</span>' +
+            '<span class="' + valClass + '">' + r + '</span></div>';
+        } else {
+          // While the recursive chain is unwinding, just show a "waiting" hint.
+          div.innerHTML +=
+            '<div class="frame-row" style="color:#9CA3AF;font-style:italic;font-size:12px;">' +
+            '(waiting for the top-level call to return)</div>';
+        }
+      } else {
+        const e = ex();
+        const fnDef = e.functions[frame.fn];
+        fnDef.params.forEach(p => {
+          const v = frame.locals[p];
+          div.innerHTML +=
+            '<div class="frame-row"><span class="frame-key">' + p + ' =</span>' +
+            '<span class="frame-val">' + (v === undefined ? '?' : v) + '</span></div>';
+        });
+        (fnDef.locals || []).forEach(v => {
+          const val = frame.locals[v];
+          const valStr = (val === undefined) ? '?' : String(val);
+          const isFlash = lastReturnFrame && lastReturnFrame.frame === frame && lastReturnFrame.varName === v;
+          const valClass = isFlash ? 'frame-val returning' : 'frame-val';
+          div.innerHTML +=
+            '<div class="frame-row"><span class="frame-key">' + v + ' =</span>' +
+            '<span class="' + valClass + '">' + valStr + '</span></div>';
+        });
+      }
+      body.appendChild(div);
+    });
+  }
+
+  function renderStatus() {
+    const nowEl = root.querySelector('#rt-status-now');
+    const nextEl = root.querySelector('#rt-status-next');
+    const e = ex();
+
+    if (!started) {
+      nowEl.innerHTML = 'Ready to start. Press <strong>Step</strong> to execute one step at a time, or <strong>Run to end</strong> to play the whole trace.';
+      nextEl.innerHTML = '<span class="arrow">Next:</span> push the first frame, <code>' + e.initialCall + '</code>.';
+    } else if (finished) {
+      const finalVal = stack[0] && stack[0].locals && stack[0].locals.result;
+      const e2 = ex();
+      // For void functions, finalVal is undefined - phrase differently
+      const fnName = Object.keys(e2.functions)[0];
+      const isVoid = e2.functions[fnName].lines[0].html.includes('void');
+      if (isVoid || finalVal === undefined) {
+        nowEl.innerHTML = 'Execution complete. <strong>' + e2.initialCall + '</strong> finished (void function, no return value).';
+      } else {
+        nowEl.innerHTML = 'Execution complete. <strong>' + e2.initialCall + '</strong> returned <strong>' + finalVal + '</strong>.';
+      }
+      nextEl.innerHTML = '';
+    } else {
+      const tf = topFrame();
+      let lastDesc = tf && tf._pendingDescribe ? tf._pendingDescribe : '';
+      // If the top frame just got pushed and has no description yet, give a friendly default
+      if (!lastDesc && tf && !tf.isMain) {
+        lastDesc = 'Entered ' + tf.fn + '(' + tf.args.join(', ') + '). Next press will evaluate the first statement.';
+      }
+      nowEl.innerHTML = lastDesc || 'In progress.';
+      // Compute the "next" preview from the top frame's next step
+      const fnDef = e.functions[tf && tf.fn];
+      if (fnDef) {
+        const nxtIdx = tf.currentStepIdx + 1;
+        const nxt = fnDef.steps[nxtIdx];
+        if (nxt) {
+          let nextLabel = '';
+          if (nxt.kind === 'enter') nextLabel = 'enter ' + tf.fn;
+          else if (nxt.kind === 'cond') nextLabel = 'evaluate condition on line ' + nxt.line;
+          else if (nxt.kind === 'print') nextLabel = 'print on line ' + nxt.line;
+          else if (nxt.kind === 'compute') nextLabel = 'compute on line ' + nxt.line;
+          else if (nxt.kind === 'call') nextLabel = 'recursive call on line ' + nxt.line;
+          else if (nxt.kind === 'return') nextLabel = 'return on line ' + nxt.line;
+          nextEl.innerHTML = '<span class="arrow">Next:</span> ' + nextLabel + '.';
+        } else {
+          nextEl.innerHTML = '';
+        }
+      } else {
+        nextEl.innerHTML = '';
+      }
+    }
+
+    // Output area
+    const outList = root.querySelector('#rt-output-list');
+    const outLines = root.querySelector('#rt-output-lines');
+    if (output.length > 0) {
+      outList.style.display = 'block';
+      outLines.innerHTML = output.map(o => '<div class="output-line">' + o + '</div>').join('');
+    } else {
+      outList.style.display = 'none';
+    }
+  }
+
+  function renderPredictionCard() {
+    const container = root.querySelector('#rt-pred-container');
+    if (!container) return;
+    const e = ex();
+    // Only show the prediction card when execution finished AND the
+    // example has a prediction defined. The card stays visible after
+    // completion (with the .passed class) so the cadet sees they passed.
+    if (!finished || !e.prediction) {
+      container.innerHTML = '';
+      return;
+    }
+    const i = currentExampleIdx;
+    const passed = !!completed[i];
+    const failed = predFailures[i] || 0;
+    const hintShown = !!predHintShown[i];
+    const feedback = predFeedback[i];
+    // Hint button pulses after two consecutive failed attempts at this
+    // example's prediction, unless the hint has already been revealed.
+    const pulseHint = (failed >= 2) && !hintShown && !passed;
+    const lastAttempt = predLastAttempt[i] || '';
+
+    // Build the card HTML. innerHTML rebuild on each render is fine
+    // because the container is small and the input value is read into
+    // predLastAttempt on submit before re-render.
+    const safeQ = e.prediction.question.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    const safePlaceholder = (e.prediction.placeholder || '')
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+
+    let html = '<div class="pred-card' + (passed ? ' passed' : '') + '">';
+    html += '<div class="pred-label">' + (passed ? 'Prediction passed' : 'Prediction check') + '</div>';
+    html += '<div class="pred-question">' + safeQ + '</div>';
+    html += '<div class="pred-input-row">';
+    html += '<input type="text" class="pred-input" id="rt-pred-input"' +
+            ' placeholder="' + safePlaceholder + '"' +
+            ' value="' + lastAttempt.replace(/"/g, '&quot;') + '"' +
+            (passed ? ' disabled' : '') + '>';
+    html += '<button type="button" class="pred-submit" id="rt-pred-submit"' +
+            (passed ? ' disabled' : '') + '>' +
+            (passed ? 'Passed' : 'Submit') + '</button>';
+    html += '<button type="button" class="pred-hint-btn' +
+            (pulseHint ? ' pulse' : '') + '" id="rt-pred-hint-btn"' +
+            (hintShown || passed ? ' disabled' : '') + '>' +
+            (hintShown ? 'Hint shown' : 'Show hint') + '</button>';
+    html += '</div>';
+    if (hintShown) {
+      const safeHint = e.prediction.hint.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+      html += '<div class="pred-hint-text">' + safeHint + '</div>';
+    }
+    if (feedback) {
+      html += '<div class="pred-feedback ' + feedback.kind + '">' + feedback.text + '</div>';
+    }
+    html += '</div>';
+    container.innerHTML = html;
+
+    // Wire up handlers (we just rebuilt the DOM).
+    const input = container.querySelector('#rt-pred-input');
+    const submitBtn = container.querySelector('#rt-pred-submit');
+    const hintBtn = container.querySelector('#rt-pred-hint-btn');
+    if (submitBtn && !passed) {
+      submitBtn.addEventListener('click', function() {
+        const val = input ? input.value : '';
+        onPredictionSubmit(val);
+      });
+    }
+    if (input && !passed) {
+      input.addEventListener('keydown', function(ev) {
+        if (ev.key === 'Enter') {
+          ev.preventDefault();
+          onPredictionSubmit(input.value);
+        }
+      });
+      // Auto-focus the input on first render of the card
+      if (!feedback && !lastAttempt) {
+        setTimeout(function() { input.focus(); }, 40);
+      }
+    }
+    if (hintBtn && !hintShown && !passed) {
+      hintBtn.addEventListener('click', onHintReveal);
+    }
+  }
+
+  function renderControls() {
+    root.querySelector('#rt-step-btn').disabled = finished;
+    root.querySelector('#rt-run-btn').disabled = finished;
+  }
+
+  // ============================================================
+  // Completion overlay (shared pattern)
+  // ============================================================
+  function cs210EscapeName(s) {
+    return (s || 'Cadet').replace(/[<>&"']/g, function(c) {
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+  }
+
+  function cs210RenderCompletion(area) {
+    if (!area) return;
+    if (root.querySelector('#rt-cs210-completion-overlay')) return;
+    const now = new Date();
+    const ts = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const safeName = cs210EscapeName(cs210CadetName);
+    area.innerHTML =
+      '<div class="completion-screen">' +
+        '<div class="cs-heading">Trace complete</div>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value">' + CS210_CODE + '</div></div>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+      '</div>';
+
+    const overlay = document.createElement('div');
+    overlay.id = 'rt-cs210-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.style.background = 'rgba(27, 94, 32, 0.55)';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">Trace complete</h2>' +
+        '<p>You stepped through all five recursive functions. Take a screenshot of this box; you will need it for the Lesson 11 reflection in Blackboard.</p>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value" id="rt-cs-code-value">' + CS210_CODE + '</div></div>' +
+          '<button class="cs-copy-btn" id="rt-cs-copy-btn" type="button">Copy code</button>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+        '<div class="cs-reminder" style="margin-bottom:14px;">' +
+          '<strong>Next step:</strong> Open the Lesson 11 reflection in Blackboard. Enter this code and answer the reflection prompt.' +
+        '</div>' +
+        '<button class="name-modal-btn" id="rt-cs-overlay-close" type="button" style="background:#2E7D32;">Got it &mdash; close this</button>' +
+      '</div>';
+    root.appendChild(overlay);
+    const closeBtn = overlay.querySelector('#rt-cs-overlay-close');
+    if (closeBtn) closeBtn.addEventListener('click', function() { overlay.style.display = 'none'; });
+    const copyBtn = overlay.querySelector('#rt-cs-copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function() {
+        const ok = function() {
+          copyBtn.textContent = 'Copied';
+          copyBtn.classList.add('copied');
+          setTimeout(function() {
+            copyBtn.textContent = 'Copy code';
+            copyBtn.classList.remove('copied');
+          }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(CS210_CODE).then(ok, function() { cs210FallbackCopy(CS210_CODE); ok(); });
+        } else {
+          cs210FallbackCopy(CS210_CODE); ok();
+        }
+      });
+    }
+  }
+  function cs210FallbackCopy(text) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e) {}
+  }
+
+  // ============================================================
+  // Wire up controls
+  // ============================================================
+  root.querySelector('#rt-step-btn').addEventListener('click', step);
+  root.querySelector('#rt-run-btn').addEventListener('click', runAll);
+  root.querySelector('#rt-reset-btn').addEventListener('click', resetExample);
+
+  // initial render
+  resetExample();
+})();
+</script>
+
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 28px 0 10px 0;">Recursion Self-Check Quiz</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Eight questions covering base case identification, return-value tracing, stack depth, broken recursion, and the questions to ask before writing recursion. Answer each one, click Submit, then click Next. Score of 70% or higher earns the passing code.</p>
+
+<!-- ============================================================
+     CS210 Lesson 11 - Recursion Self-Check Quiz
+     Card/slide flow: one question per card, Submit + Next/Back.
+     Two-salt completion (pass / non-pass) at >=70% threshold.
+     Score card at the end with per-question recap.
+     ============================================================ -->
+<style>
+.cs210-quiz * { box-sizing: border-box; }
+.cs210-quiz {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-quiz h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-quiz .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+
+/* Dot progress indicator */
+.cs210-quiz .dots {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+.cs210-quiz .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #E5E7EB;
+  border: 1px solid #C7CFD9;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.cs210-quiz .dot.current {
+  background: #003087;
+  border-color: #00205B;
+  transform: scale(1.25);
+}
+.cs210-quiz .dot.correct {
+  background: #2E7D32;
+  border-color: #1B5E20;
+}
+.cs210-quiz .dot.incorrect {
+  background: #B8002F;
+  border-color: #6B0000;
+}
+.cs210-quiz .dot.score {
+  width: 16px;
+  height: 12px;
+  border-radius: 3px;
+  background: #F0B92C;
+  border-color: #B88800;
+}
+
+/* Card */
+.cs210-quiz .card {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 6px;
+  padding: 36px 40px;
+  margin-bottom: 14px;
+  min-height: 380px;
+  display: flex;
+  flex-direction: column;
+}
+.cs210-quiz .card.answered.correct {
+  border-left: 4px solid #2E7D32;
+}
+.cs210-quiz .card.answered.incorrect {
+  border-left: 4px solid #B8002F;
+}
+
+.cs210-quiz .q-label {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.cs210-quiz .q-text {
+  font-size: 17px;
+  margin-bottom: 22px;
+  color: #1a1a1a;
+}
+.cs210-quiz .q-text code {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-family: Consolas, monospace;
+  font-size: 15px;
+  color: #00205B;
+}
+
+/* Options for multiple choice */
+.cs210-quiz .options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.cs210-quiz .option {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 15px;
+  background: #ffffff;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.cs210-quiz .option:hover:not(.disabled) {
+  background: #F5F7FA;
+  border-color: #003087;
+}
+.cs210-quiz .option.disabled {
+  cursor: default;
+}
+.cs210-quiz .option input[type="radio"] {
+  margin-right: 12px;
+  accent-color: #003087;
+}
+.cs210-quiz .option.selected {
+  border-color: #003087;
+  background: #F0F4FA;
+}
+.cs210-quiz .option.reveal-correct {
+  border-color: #2E7D32;
+  background: #E6F4EA;
+  font-weight: 600;
+}
+.cs210-quiz .option.incorrect {
+  border-color: #B8002F;
+  background: #FCE8E8;
+}
+
+/* Text input */
+.cs210-quiz .text-input-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.cs210-quiz .text-input-row input {
+  flex: 1;
+  max-width: 320px;
+  padding: 12px 14px;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  font-family: Consolas, monospace;
+  font-size: 16px;
+  color: #1a1a1a;
+}
+.cs210-quiz .text-input-row input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-quiz .text-input-row input.correct {
+  border-color: #2E7D32;
+  background: #E6F4EA;
+}
+.cs210-quiz .text-input-row input.incorrect {
+  border-color: #B8002F;
+  background: #FCE8E8;
+}
+
+/* Feedback */
+.cs210-quiz .feedback {
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-size: 14.5px;
+  margin-bottom: 4px;
+}
+.cs210-quiz .feedback.correct {
+  background: #E6F4EA;
+  border-left: 3px solid #2E7D32;
+  color: #1B5E20;
+}
+.cs210-quiz .feedback.incorrect {
+  background: #FCE8E8;
+  border-left: 3px solid #B8002F;
+  color: #6B0000;
+}
+.cs210-quiz .feedback strong { color: inherit; }
+.cs210-quiz .feedback code {
+  background: rgba(255, 255, 255, 0.7);
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13.5px;
+}
+
+/* Spacer pushes nav to the bottom of the card */
+.cs210-quiz .spacer { flex: 1; }
+
+/* Navigation row */
+.cs210-quiz .nav-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  gap: 10px;
+}
+.cs210-quiz .nav-btn {
+  padding: 10px 18px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+  transition: background 0.15s ease;
+}
+.cs210-quiz .nav-btn.back {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  color: #00205B;
+}
+.cs210-quiz .nav-btn.back:hover:not(:disabled) { background: #F5F7FA; }
+.cs210-quiz .nav-btn.primary {
+  background: #003087;
+  border: 1px solid #00205B;
+  color: #ffffff;
+}
+.cs210-quiz .nav-btn.primary:hover:not(:disabled) { background: #00205B; }
+.cs210-quiz .nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.cs210-quiz .nav-position {
+  font-size: 13px;
+  color: #6B7280;
+  font-weight: 500;
+}
+
+/* Score card */
+.cs210-quiz .score-card {
+  text-align: center;
+}
+.cs210-quiz .score-big {
+  font-size: 52px;
+  font-weight: 700;
+  color: #00205B;
+  margin: 4px 0 0 0;
+  line-height: 1;
+}
+.cs210-quiz .score-card.full-correct .score-big { color: #1B5E20; }
+.cs210-quiz .score-label {
+  font-size: 13px;
+  color: #6B7280;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin-bottom: 14px;
+}
+.cs210-quiz .score-message {
+  font-size: 16px;
+  color: #1a1a1a;
+  margin-bottom: 22px;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.cs210-quiz .score-message.good-job {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1B5E20;
+  margin-bottom: 12px;
+}
+.cs210-quiz .recap {
+  text-align: left;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid #E5E7EB;
+}
+.cs210-quiz .recap-title {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.cs210-quiz .recap-item {
+  display: flex;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #F0F2F5;
+  font-size: 14px;
+}
+.cs210-quiz .recap-item:last-child { border-bottom: none; }
+.cs210-quiz .recap-icon {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+}
+.cs210-quiz .recap-icon.correct { background: #2E7D32; }
+.cs210-quiz .recap-icon.incorrect { background: #B8002F; }
+.cs210-quiz .recap-body { flex: 1; }
+.cs210-quiz .recap-question { color: #1a1a1a; margin-bottom: 4px; }
+.cs210-quiz .recap-question code {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  color: #00205B;
+}
+.cs210-quiz .recap-explanation {
+  font-size: 13px;
+  color: #4A5568;
+  font-style: italic;
+}
+.cs210-quiz .recap-explanation code {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-style: normal;
+  font-size: 12.5px;
+  color: #00205B;
+}
+
+.cs210-quiz .reset-row {
+  margin-top: 22px;
+  text-align: center;
+}
+.cs210-quiz .reset-btn {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  padding: 10px 22px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  color: #00205B;
+  font-family: inherit;
+  font-weight: 600;
+}
+.cs210-quiz .reset-btn:hover { background: #F5F7FA; }
+
+.cs210-quiz .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #4A5568;
+  margin-top: 18px;
+}
+.cs210-quiz .help-note strong { color: #00205B; }
+
+/* Name modal overlay */
+.cs210-quiz .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.cs210-quiz .name-modal {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-quiz .name-modal h2 {
+  color: #00205B;
+  font-size: 20px;
+  margin: 0 0 10px 0;
+}
+.cs210-quiz .name-modal p {
+  color: #4A5568;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+.cs210-quiz .name-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-quiz .name-modal input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-quiz .name-modal-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-quiz .name-modal-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-quiz .name-modal-btn:not(:disabled):hover {
+  background: #00205B;
+}
+
+/* Completion screen (inline footer in score card) */
+.cs210-quiz .completion-screen {
+  background: #ffffff;
+  border: 2px solid #2E7D32;
+  border-radius: 6px;
+  padding: 20px 24px;
+  margin-top: 18px;
+}
+.cs210-quiz .completion-screen.incomplete {
+  border-color: #B88800;
+}
+.cs210-quiz .completion-screen .cs-heading {
+  color: #1B5E20;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 6px 0;
+}
+.cs210-quiz .completion-screen.incomplete .cs-heading {
+  color: #6B5300;
+}
+.cs210-quiz .completion-screen .cs-name-line {
+  font-size: 15px;
+  color: #1a1a1a;
+  margin-bottom: 14px;
+}
+.cs210-quiz .completion-screen .cs-name-line strong {
+  color: #00205B;
+}
+.cs210-quiz .completion-screen .cs-code-block {
+  background: #F0F4FA;
+  border: 1px solid #003087;
+  border-radius: 4px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+.cs210-quiz .completion-screen.incomplete .cs-code-block {
+  background: #FFF8E1;
+  border-color: #B88800;
+}
+.cs210-quiz .completion-screen .cs-code-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #4A5568;
+  margin-bottom: 4px;
+}
+.cs210-quiz .completion-screen .cs-code-value {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 26px;
+  font-weight: 700;
+  color: #00205B;
+  letter-spacing: 3px;
+}
+.cs210-quiz .completion-screen.incomplete .cs-code-value {
+  color: #6B5300;
+}
+.cs210-quiz .completion-screen .cs-timestamp {
+  font-size: 13px;
+  color: #6B7280;
+}
+</style>
+
+<div class="cs210-quiz">
+
+<div class="name-modal-backdrop" id="q-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Blackboard reflection quiz.</p>
+    <input type="text" id="cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="cadet-name-btn" disabled>Start the quiz</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 11 &middot; Recursion Self-Check</h1>
+<div class="subtitle">Eight questions on base cases, recursive cases, return values, the call stack, and broken recursion. Answer each one, submit, and move forward.</div>
+
+<div class="dots" id="quiz-dots"></div>
+
+<div id="quiz-card-area"></div>
+
+<div class="help-note">
+  <strong>How this works:</strong> One question per card. Pick or type your answer and click Submit. The feedback appears, then click Next to move on. Answers are locked once submitted, so think before you submit. When you finish all eight, you get a score and a recap.
+</div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-quiz');
+  if (!root) return;
+
+  // ============================================================
+  // CS210 widget completion utilities
+  // Two salts: one for passing (>=70%), one for non-passing.
+  // The code that lands in Blackboard tells the instructor which.
+  // FNV-1a -> 6-char base-32 code over an unambiguous alphabet.
+  // ============================================================
+  const CS210_SALT_PASS = "lesson11_recursion_quiz_completed";
+  const CS210_SALT_FAIL = "lesson11_recursion_quiz_incomplete";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE_PASS = cs210CodeFromSalt(CS210_SALT_PASS);
+  const CS210_CODE_FAIL = cs210CodeFromSalt(CS210_SALT_FAIL);
+  let cs210CadetName = '';
+
+  // Name-modal gating: quiz stays blocked until name entered.
+  // Pre-fill from localStorage (shared key with the other CS210 widgets).
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#q-name-modal-backdrop');
+    const input = root.querySelector('#cadet-name-input');
+    const btn = root.querySelector('#cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored) input.value = stored;
+    } catch (e) { /* localStorage may be disabled */ }
+
+    function updateBtn() {
+      btn.disabled = input.value.trim().length < 2;
+    }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', function() {
+      const name = input.value.trim();
+      if (name.length < 2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+    });
+    setTimeout(function() { input.focus(); }, 50);
+  })();
+
+  function cs210EscapeName(s) {
+    return (s || 'Cadet').replace(/[<>&"']/g, function(c) {
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+  }
+
+  function cs210RenderCompletion(card, passed) {
+    // Idempotent: re-running the score card (e.g., after "Take quiz again"
+    // is undone) should not stack multiple overlays.
+    const existingOverlay = root.querySelector('#cs210-completion-overlay');
+    if (existingOverlay) existingOverlay.remove();
+
+    const code = passed ? CS210_CODE_PASS : CS210_CODE_FAIL;
+    const now = new Date();
+    const ts = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const safeName = cs210EscapeName(cs210CadetName);
+    const accent = passed ? '#2E7D32' : '#B88800';
+    const accentDark = passed ? '#1B5E20' : '#6B5300';
+    const overlayBg = passed ? 'rgba(27, 94, 32, 0.55)' : 'rgba(184, 136, 0, 0.55)';
+    const heading = passed ? 'Quiz complete \u2014 you passed' : 'Quiz complete \u2014 below the passing mark';
+    const introCopy = passed
+      ? 'Take a screenshot of this box. You will need the code and a visual of this screen for the Blackboard reflection quiz.'
+      : 'You scored below 70%, so this is the non-passing code. Enter it in Blackboard so credit for taking the quiz lands, then review the Lesson Materials and re-take the quiz to earn the passing code.';
+    const reminderCopy = passed
+      ? '<strong>Next step:</strong> Open the Lesson 11 reflection in Blackboard. Enter this code, answer the reflection prompt, and attach your screenshot.'
+      : '<strong>Next step:</strong> Enter this code in Blackboard so the attempt is recorded, then re-take the quiz. The passing code is different and will land you full credit on the widget question.';
+
+    // Inline footer in the score card so a screenshot of the widget body
+    // still captures the code even if the overlay gets dismissed first.
+    const footer = document.createElement('div');
+    footer.className = 'completion-screen' + (passed ? '' : ' incomplete');
+    footer.innerHTML =
+      '<div class="cs-heading">' + heading + '</div>' +
+      '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+      '<div class="cs-code-block">' +
+        '<div><div class="cs-code-label">' + (passed ? 'Completion code' : 'Non-passing code') + '</div>' +
+        '<div class="cs-code-value">' + code + '</div></div>' +
+      '</div>' +
+      '<div class="cs-timestamp">Completed: ' + ts + '</div>';
+    card.appendChild(footer);
+
+    // Overlay (the unmissable version)
+    const overlay = document.createElement('div');
+    overlay.id = 'cs210-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.style.background = overlayBg;
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid ' + accent + ';">' +
+        '<h2 style="color:' + accentDark + ';">' + heading + '</h2>' +
+        '<p>' + introCopy + '</p>' +
+        '<div class="cs-name-line" style="font-size:15px;margin-bottom:14px;">Cadet: <strong style="color:#00205B;">' + safeName + '</strong></div>' +
+        '<div style="background:' + (passed ? '#F0F4FA' : '#FFF8E1') + ';border:1px solid ' + accent + ';border-radius:4px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px;">' +
+          '<div><div style="font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:#4A5568;margin-bottom:4px;">' + (passed ? 'Completion code' : 'Non-passing code') + '</div>' +
+          '<div style="font-family:Consolas,monospace;font-size:26px;font-weight:700;color:' + accentDark + ';letter-spacing:3px;" id="cs-code-value">' + code + '</div></div>' +
+          '<button class="cs-copy-btn" id="cs-copy-btn" type="button" style="background:' + accent + ';color:#fff;border:none;padding:8px 14px;border-radius:3px;font-size:13px;cursor:pointer;font-family:inherit;">Copy code</button>' +
+        '</div>' +
+        '<div style="font-size:13px;color:#6B7280;margin-bottom:14px;">Completed: ' + ts + '</div>' +
+        '<div style="background:#FFF8E1;border-left:4px solid #F0B92C;padding:12px 16px;border-radius:3px;font-size:14px;color:#6B5300;line-height:1.5;margin-bottom:14px;">' +
+          reminderCopy +
+        '</div>' +
+        '<button class="name-modal-btn" id="cs-overlay-close" type="button" style="background:' + accent + ';">Got it &mdash; close this</button>' +
+      '</div>';
+    root.appendChild(overlay);
+
+    const closeBtn = overlay.querySelector('#cs-overlay-close');
+    if (closeBtn) closeBtn.addEventListener('click', function() { overlay.style.display = 'none'; });
+    const copyBtn = overlay.querySelector('#cs-copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function() {
+        const ok = function() {
+          copyBtn.textContent = 'Copied';
+          copyBtn.style.background = '#2E7D32';
+          setTimeout(function() {
+            copyBtn.textContent = 'Copy code';
+            copyBtn.style.background = accent;
+          }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(code).then(ok, function() { cs210FallbackCopy(code); ok(); });
+        } else {
+          cs210FallbackCopy(code); ok();
+        }
+      });
+    }
+  }
+  function cs210FallbackCopy(text) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e) { /* nothing else to do */ }
+  }
+
+  const questions = [
+    {
+      id: 'q1',
+      type: 'choice',
+      text: 'Look at this function:<br><pre style="background:#1E2A3A;color:#E8EDF5;padding:10px 14px;border-radius:3px;font-size:13px;line-height:1.55;margin:10px 0;"><span style="color:#569CD6;">int</span> <span style="color:#DCDCAA;">mystery</span>(<span style="color:#569CD6;">int</span> n) {\n  <span style="color:#C586C0;">if</span> (n &lt;= <span style="color:#B5CEA8;">0</span>) <span style="color:#C586C0;">return</span> <span style="color:#B5CEA8;">0</span>;\n  <span style="color:#C586C0;">return</span> n + <span style="color:#DCDCAA;">mystery</span>(n - <span style="color:#B5CEA8;">1</span>);\n}</pre>Which line is the base case?',
+      options: [
+        'Line 1: int mystery(int n) {',
+        'Line 2: if (n <= 0) return 0;',
+        'Line 3: return n + mystery(n - 1);',
+        'Line 4: }',
+      ],
+      correct: 1,
+      correctFeedback: 'The base case is the input where the function returns directly with no further recursive calls. <code>if (n &lt;= 0) return 0;</code> is the exit ramp.',
+      incorrectFeedback: 'The correct answer is <strong>Line 2: if (n &lt;= 0) return 0;</strong>. The base case is the path that returns without calling the function again. Line 3 is the recursive case (it calls mystery again).',
+      shortLabel: 'Identify the base case of mystery(n)',
+    },
+    {
+      id: 'q2',
+      type: 'text',
+      text: 'What does <code>mystery(4)</code> from the previous question return? Type just the number.',
+      correct: ['10'],
+      normalize: s => s.trim(),
+      placeholder: 'e.g. 7',
+      correctFeedback: 'mystery sums n down to 0: 4 + 3 + 2 + 1 + 0 = 10. The base case returns 0; everything else adds n to the result of the smaller call.',
+      incorrectFeedback: 'The correct answer is <code>10</code>. mystery(4) = 4 + mystery(3) = 4 + 3 + mystery(2) = ... = 4 + 3 + 2 + 1 + 0 = 10. It is summing the integers from 1 to n.',
+      shortLabel: 'Return value of mystery(4)',
+    },
+    {
+      id: 'q3',
+      type: 'choice',
+      text: 'During the execution of <code>factorial(4)</code> with a base case at <code>n &lt;= 1</code>, what is the maximum number of <code>factorial</code> stack frames alive at the same time?',
+      options: ['1', '2', '3', '4'],
+      correct: 3,
+      correctFeedback: 'factorial(4) calls factorial(3) calls factorial(2) calls factorial(1). All four are alive at once just before factorial(1) hits the base case and returns.',
+      incorrectFeedback: 'The correct answer is <strong>4</strong>. factorial(4), factorial(3), factorial(2), and factorial(1) are all alive simultaneously just before the base case returns. Each call sits on the stack waiting for the call it made to return.',
+      shortLabel: 'Max frames alive in factorial(4)',
+    },
+    {
+      id: 'q4',
+      type: 'choice',
+      text: 'Consider this function:<br><pre style="background:#1E2A3A;color:#E8EDF5;padding:10px 14px;border-radius:3px;font-size:13px;line-height:1.55;margin:10px 0;"><span style="color:#569CD6;">int</span> <span style="color:#DCDCAA;">broken</span>(<span style="color:#569CD6;">int</span> n) {\n  <span style="color:#C586C0;">if</span> (n == <span style="color:#B5CEA8;">0</span>) <span style="color:#C586C0;">return</span> <span style="color:#B5CEA8;">1</span>;\n  <span style="color:#C586C0;">return</span> n * <span style="color:#DCDCAA;">broken</span>(n);\n}</pre>What happens when you call <code>broken(3)</code>?',
+      options: [
+        'It returns 6.',
+        'It returns 1, because the base case eventually fires.',
+        'It runs forever and the program crashes with a stack overflow.',
+        'It returns 0.',
+      ],
+      correct: 2,
+      correctFeedback: 'The recursive call passes <code>n</code> (not <code>n - 1</code>), so the input never shrinks. The base case exists but is unreachable from any input other than 0. Pitfall 2 from the notes.',
+      incorrectFeedback: 'The correct answer is <strong>It runs forever and the program crashes with a stack overflow</strong>. The recursive call is <code>broken(n)</code>, not <code>broken(n - 1)</code>. The input never gets smaller, so the base case at n == 0 is never reached. This is Pitfall 2 from the reading.',
+      shortLabel: 'What broken(3) does (recursive call does not shrink input)',
+    },
+    {
+      id: 'q5',
+      type: 'choice',
+      text: 'Which of these three questions is the one you do NOT need to answer before writing a recursive function?',
+      options: [
+        'What is the base case?',
+        'What smaller input does the recursive call pass?',
+        'How many lines of code will the function be?',
+        'Will repeating the "smaller" transformation eventually reach the base case?',
+      ],
+      correct: 2,
+      correctFeedback: 'Length is irrelevant. The three checks that actually matter are: identifying the base case, identifying what gets smaller in the recursive call, and verifying that the shrinking eventually hits the base case.',
+      incorrectFeedback: 'The correct answer is <strong>How many lines of code will the function be?</strong>. Length is irrelevant. The three checks that actually matter are: base case, what gets smaller, and that the shrinking actually reaches the base case.',
+      shortLabel: 'Which question is NOT needed before writing recursion',
+    },
+    {
+      id: 'q6',
+      type: 'choice',
+      text: 'In <code>factorial(3)</code>, when the call to <code>factorial(1)</code> returns 1, which frame receives that value, and what happens next?',
+      options: [
+        'main receives the value 1 and the program ends.',
+        'factorial(2) receives the value 1 and multiplies it by 2 to get 2.',
+        'factorial(3) receives the value 1 and multiplies it by 3 to get 3.',
+        'No frame receives the value; the stack just unwinds.',
+      ],
+      correct: 1,
+      correctFeedback: 'Each return goes one frame down. factorial(1) returns 1 to factorial(2), which finishes 2 * 1 = 2 and returns 2 to factorial(3), which finishes 3 * 2 = 6 and returns 6 to main.',
+      incorrectFeedback: 'The correct answer is <strong>factorial(2) receives the value 1 and multiplies it by 2 to get 2</strong>. Each return goes one frame down, not all the way back to main. factorial(1) returns to factorial(2), which then returns to factorial(3), which then returns to main.',
+      shortLabel: 'Where factorial(1)\'s return value goes',
+    },
+    {
+      id: 'q7',
+      type: 'text',
+      text: 'Given this function:<br><pre style="background:#1E2A3A;color:#E8EDF5;padding:10px 14px;border-radius:3px;font-size:13px;line-height:1.55;margin:10px 0;"><span style="color:#569CD6;">int</span> <span style="color:#DCDCAA;">power</span>(<span style="color:#569CD6;">int</span> base, <span style="color:#569CD6;">int</span> exp) {\n  <span style="color:#C586C0;">if</span> (exp == <span style="color:#B5CEA8;">0</span>) <span style="color:#C586C0;">return</span> <span style="color:#B5CEA8;">1</span>;\n  <span style="color:#C586C0;">return</span> base * <span style="color:#DCDCAA;">power</span>(base, exp - <span style="color:#B5CEA8;">1</span>);\n}</pre>What does <code>power(3, 2)</code> return? Type just the number.',
+      correct: ['9'],
+      normalize: s => s.trim(),
+      placeholder: 'e.g. 6',
+      correctFeedback: 'power(3, 2) = 3 * power(3, 1) = 3 * 3 * power(3, 0) = 3 * 3 * 1 = 9. base stays the same in every call; only exp shrinks.',
+      incorrectFeedback: 'The correct answer is <code>9</code>. Trace it: power(3, 2) = 3 * power(3, 1) = 3 * (3 * power(3, 0)) = 3 * (3 * 1) = 9. base stays constant; only exp counts down.',
+      shortLabel: 'Return value of power(3, 2)',
+    },
+    {
+      id: 'q8',
+      type: 'choice',
+      text: 'A recursive function has the right base case and the recursive call does pass a smaller input. But when you run it, the program crashes with a stack overflow. What is the most likely cause?',
+      options: [
+        'The compiler does not support recursion.',
+        'The input was so large that the call chain grew past the stack size limit.',
+        'You forgot to include <stdlib.h>.',
+        'C does not allow more than 16 nested function calls.',
+      ],
+      correct: 1,
+      correctFeedback: 'Even a correct recursive function can blow the stack if the input is large enough that the chain of frames exceeds the OS-set stack size. This is why recursion is not always the right tool; loops do not have this problem.',
+      incorrectFeedback: 'The correct answer is <strong>The input was so large that the call chain grew past the stack size limit</strong>. The base case and the shrinking input were correct, so the recursion is logically right; it just ran out of stack memory because the chain was too long. Recursion has practical limits even when logically correct.',
+      shortLabel: 'Stack overflow despite correct base case and shrinking input',
+    },
+  ];
+
+  const state = questions.map(() => ({ answered: false, correct: false, choice: null, value: '' }));
+  let currentIndex = 0;
+
+  const cardArea = root.querySelector('#quiz-card-area');
+  const dotsArea = root.querySelector('#quiz-dots');
+
+  function renderDots() {
+    dotsArea.innerHTML = '';
+    for (let i = 0; i < questions.length; i++) {
+      const d = document.createElement('div');
+      d.className = 'dot';
+      if (i === currentIndex && currentIndex < questions.length) d.classList.add('current');
+      else if (state[i].answered) d.classList.add(state[i].correct ? 'correct' : 'incorrect');
+      dotsArea.appendChild(d);
+    }
+    const scoreDot = document.createElement('div');
+    scoreDot.className = 'dot score';
+    if (currentIndex === questions.length) scoreDot.classList.add('current');
+    dotsArea.appendChild(scoreDot);
+  }
+
+  function hasAnswer(i) {
+    const q = questions[i];
+    if (q.type === 'choice') return state[i].choice !== null;
+    return state[i].value && state[i].value.trim().length > 0;
+  }
+
+  function submitAnswer(i) {
+    if (state[i].answered) return;
+    if (!hasAnswer(i)) return;
+    const q = questions[i];
+    let correct = false;
+    if (q.type === 'choice') {
+      correct = (state[i].choice === q.correct);
+    } else {
+      const norm = q.normalize ? q.normalize(state[i].value) : state[i].value.trim();
+      correct = q.correct.includes(norm);
+    }
+    state[i].answered = true;
+    state[i].correct = correct;
+    render();
+  }
+
+  function buildQuestionCard(i) {
+    const q = questions[i];
+    const card = document.createElement('div');
+    card.className = 'card';
+    if (state[i].answered) {
+      card.classList.add('answered');
+      card.classList.add(state[i].correct ? 'correct' : 'incorrect');
+    }
+
+    const label = document.createElement('div');
+    label.className = 'q-label';
+    label.textContent = 'Question ' + (i + 1) + ' of ' + questions.length;
+    card.appendChild(label);
+
+    const text = document.createElement('div');
+    text.className = 'q-text';
+    text.innerHTML = q.text;
+    card.appendChild(text);
+
+    if (q.type === 'choice') {
+      const opts = document.createElement('div');
+      opts.className = 'options';
+      q.options.forEach((optText, j) => {
+        const opt = document.createElement('label');
+        opt.className = 'option';
+        if (state[i].answered) opt.classList.add('disabled');
+        if (state[i].choice === j) opt.classList.add('selected');
+        if (state[i].answered) {
+          if (j === q.correct) opt.classList.add('reveal-correct');
+          if (state[i].choice === j && j !== q.correct) opt.classList.add('incorrect');
+        }
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = q.id;
+        radio.value = j;
+        radio.disabled = state[i].answered;
+        if (state[i].choice === j) radio.checked = true;
+        radio.addEventListener('change', () => {
+          if (state[i].answered) return;
+          state[i].choice = j;
+          render();
+        });
+        opt.appendChild(radio);
+        const span = document.createElement('span');
+        span.textContent = optText;
+        opt.appendChild(span);
+        opts.appendChild(opt);
+      });
+      card.appendChild(opts);
+    } else {
+      const row = document.createElement('div');
+      row.className = 'text-input-row';
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.placeholder = q.placeholder || '';
+      input.value = state[i].value;
+      input.disabled = state[i].answered;
+      if (state[i].answered) {
+        input.classList.add(state[i].correct ? 'correct' : 'incorrect');
+      }
+      input.addEventListener('input', (e) => {
+        state[i].value = e.target.value;
+        // Update submit button enabled state without re-rendering (preserves focus)
+        const submitBtn = card.querySelector('.nav-btn.primary');
+        if (submitBtn) submitBtn.disabled = !hasAnswer(i);
+      });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !state[i].answered) {
+          e.preventDefault();
+          submitAnswer(i);
+        }
+      });
+      row.appendChild(input);
+      card.appendChild(row);
+      if (!state[i].answered) {
+        setTimeout(() => input.focus(), 50);
+      }
+    }
+
+    if (state[i].answered) {
+      const fb = document.createElement('div');
+      fb.className = 'feedback ' + (state[i].correct ? 'correct' : 'incorrect');
+      fb.innerHTML = (state[i].correct ? '<strong>Correct.</strong> ' : '<strong>Not quite.</strong> ') +
+                     (state[i].correct ? q.correctFeedback : q.incorrectFeedback);
+      card.appendChild(fb);
+    }
+
+    const spacer = document.createElement('div');
+    spacer.className = 'spacer';
+    card.appendChild(spacer);
+
+    const nav = document.createElement('div');
+    nav.className = 'nav-row';
+
+    const backBtn = document.createElement('button');
+    backBtn.className = 'nav-btn back';
+    backBtn.innerHTML = '&larr; Back';
+    backBtn.disabled = (i === 0);
+    backBtn.addEventListener('click', () => {
+      if (i > 0) { currentIndex--; render(); }
+    });
+    nav.appendChild(backBtn);
+
+    const positionLabel = document.createElement('div');
+    positionLabel.className = 'nav-position';
+    positionLabel.textContent = (i + 1) + ' / ' + questions.length;
+    nav.appendChild(positionLabel);
+
+    if (!state[i].answered) {
+      const submitBtn = document.createElement('button');
+      submitBtn.className = 'nav-btn primary';
+      submitBtn.textContent = 'Submit';
+      submitBtn.disabled = !hasAnswer(i);
+      submitBtn.addEventListener('click', () => submitAnswer(i));
+      nav.appendChild(submitBtn);
+    } else {
+      const nextBtn = document.createElement('button');
+      nextBtn.className = 'nav-btn primary';
+      nextBtn.innerHTML = (i === questions.length - 1) ? 'See score &rarr;' : 'Next &rarr;';
+      nextBtn.addEventListener('click', () => { currentIndex++; render(); });
+      nav.appendChild(nextBtn);
+    }
+
+    card.appendChild(nav);
+    return card;
+  }
+
+  function buildScoreCard() {
+    const card = document.createElement('div');
+    card.className = 'card score-card';
+    const correctCount = state.filter(s => s.correct).length;
+    if (correctCount === questions.length) card.classList.add('full-correct');
+
+    const label = document.createElement('div');
+    label.className = 'q-label';
+    label.textContent = 'Quiz complete';
+    card.appendChild(label);
+
+    const msg = document.createElement('div');
+    if (correctCount === questions.length) {
+      msg.className = 'score-message good-job';
+      msg.textContent = 'Perfect score. Excellent work!';
+    } else if (correctCount >= 6) {
+      msg.className = 'score-message good-job';
+      msg.textContent = 'Good job!';
+    } else if (correctCount >= 4) {
+      msg.className = 'score-message good-job';
+      msg.style.color = '#6B5300';
+      msg.textContent = 'Nice effort.';
+    } else {
+      msg.className = 'score-message good-job';
+      msg.style.color = '#6B0000';
+      msg.textContent = 'Let\u2019s review.';
+    }
+    card.appendChild(msg);
+
+    const scoreBig = document.createElement('div');
+    scoreBig.className = 'score-big';
+    scoreBig.textContent = correctCount + ' / ' + questions.length;
+    card.appendChild(scoreBig);
+
+    const scoreLabel = document.createElement('div');
+    scoreLabel.className = 'score-label';
+    scoreLabel.textContent = 'questions correct';
+    card.appendChild(scoreLabel);
+
+    const detail = document.createElement('div');
+    detail.className = 'score-message';
+    if (correctCount === questions.length) {
+      detail.textContent = 'You have the recursion fundamentals down. The base case, the recursive case, and the call stack are all in place. Lab 11 will let you write your own.';
+    } else if (correctCount >= 6) {
+      detail.textContent = 'Solid foundation. Review the questions you missed below before Lab 11, especially anything about base cases or what gets smaller in the recursive call.';
+    } else if (correctCount >= 4) {
+      detail.textContent = 'Some gaps to close. Re-read the recursion notes (sections 2 and 4 especially), step through the recursion trace widget once more, and then try this quiz again.';
+    } else {
+      detail.textContent = 'Time to slow down and review. Re-read the recursion notes carefully and step through the recursion trace widget. Schedule EI if the call stack model is still unclear after that.';
+    }
+    card.appendChild(detail);
+
+    const recap = document.createElement('div');
+    recap.className = 'recap';
+    const recapTitle = document.createElement('div');
+    recapTitle.className = 'recap-title';
+    recapTitle.textContent = 'Question recap';
+    recap.appendChild(recapTitle);
+
+    state.forEach((s, i) => {
+      const item = document.createElement('div');
+      item.className = 'recap-item';
+      const icon = document.createElement('div');
+      icon.className = 'recap-icon ' + (s.correct ? 'correct' : 'incorrect');
+      icon.textContent = s.correct ? '\u2713' : '\u2717';
+      item.appendChild(icon);
+      const body = document.createElement('div');
+      body.className = 'recap-body';
+      const q = questions[i];
+      const qLine = document.createElement('div');
+      qLine.className = 'recap-question';
+      qLine.innerHTML = '<strong>Q' + (i + 1) + '.</strong> ' + q.shortLabel;
+      body.appendChild(qLine);
+      if (!s.correct) {
+        const exp = document.createElement('div');
+        exp.className = 'recap-explanation';
+        exp.innerHTML = q.incorrectFeedback;
+        body.appendChild(exp);
+      }
+      item.appendChild(body);
+      recap.appendChild(item);
+    });
+    card.appendChild(recap);
+
+    const resetRow = document.createElement('div');
+    resetRow.className = 'reset-row';
+    const resetBtn = document.createElement('button');
+    resetBtn.className = 'reset-btn';
+    resetBtn.textContent = 'Take the quiz again';
+    resetBtn.addEventListener('click', reset);
+    resetRow.appendChild(resetBtn);
+    card.appendChild(resetRow);
+
+    const nav = document.createElement('div');
+    nav.className = 'nav-row';
+    const backBtn = document.createElement('button');
+    backBtn.className = 'nav-btn back';
+    backBtn.innerHTML = '&larr; Review questions';
+    backBtn.addEventListener('click', () => {
+      currentIndex = questions.length - 1;
+      render();
+    });
+    nav.appendChild(backBtn);
+    const spacer = document.createElement('div');
+    spacer.style.flex = '1';
+    nav.appendChild(spacer);
+    card.appendChild(nav);
+
+    // Completion code / non-passing code overlay + inline footer.
+    // Threshold: 6 / 8 = 75% (>= 70% passing rule for CS210 widgets).
+    const passed = correctCount >= 6;
+    cs210RenderCompletion(card, passed);
+
+    return card;
+  }
+
+  function render() {
+    renderDots();
+    cardArea.innerHTML = '';
+    if (currentIndex >= questions.length) {
+      cardArea.appendChild(buildScoreCard());
+    } else {
+      cardArea.appendChild(buildQuestionCard(currentIndex));
+    }
+  }
+
+  function reset() {
+    state.forEach(s => { s.answered = false; s.correct = false; s.choice = null; s.value = ''; });
+    currentIndex = 0;
+    // Clear any lingering completion overlay (e.g., from a previous attempt)
+    const overlay = root.querySelector('#cs210-completion-overlay');
+    if (overlay) overlay.remove();
+    render();
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (!root.contains(document.activeElement)) return;
+    if (document.activeElement && document.activeElement.tagName === 'INPUT' && document.activeElement.type === 'text') return;
+    if (e.key === 'ArrowLeft' && currentIndex > 0) {
+      currentIndex--;
+      render();
+    } else if (e.key === 'ArrowRight') {
+      if (currentIndex >= questions.length) return;
+      if (state[currentIndex].answered) {
+        currentIndex++;
+        render();
+      }
+    }
+  });
+
+  render();
+})();
+</script>
+
+
+    </div>
+  </details>
+
+  <!-- ===================== 6. AFTER CLASS ===================== -->
+  <details id="after-class" style="margin-bottom: 24px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      6. After Class
+    </summary>
+    <div style="padding: 18px 22px;">
+      <ul style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Finish Lab 11 if you did not complete it in class. Submit through GitHub Classroom before Lesson 12.</li>
+        <li style="margin-bottom: 6px;">Submit the Lesson 11 reflection in Blackboard: enter your widget codes and answer the short reflection prompt.</li>
+        <li style="margin-bottom: 6px;">Read Beej-C Chapter 5 (Pointers I) for Lesson 12. Recursion is the last "first-exposure" topic before pointers; the next two weeks are the hardest stretch of the course.</li>
+        <li style="margin-bottom: 6px;">Replay the recursion trace widget on your own if any example was confusing. Try predicting the return value and stack depth before pressing Step.</li>
+        <li style="margin-bottom: 0;"><strong>Heads up:</strong> Quiz 4 at Lesson 12 covers Recursion I.</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== HELP NOTE ===================== -->
+  <div style="background: #F5F7FA; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 3px; font-size: 13.5px; color: #4A5568;">
+    <strong style="color: #00205B;">Need help?</strong> Schedule EI with your instructor. Bring your specific recursive function, the input you traced, and where the prediction stopped matching reality. Recursion is one of those topics where one careful conversation closes the gap; vague worry tends not to.
+  </div>
+
+</div>

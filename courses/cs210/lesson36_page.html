@@ -1,0 +1,1633 @@
+<!-- ============================================================
+     CS210 - Lesson 36
+     Function Pointers
+     Self-contained: all CSS inline. Native <details> for collapsing.
+     Function pointer walkthrough widget embedded inline in Section 5.
+     Paste into Blackboard Ultra via Document -> Add HTML block.
+     ============================================================ -->
+
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 980px; margin: 0 auto; line-height: 1.6;">
+
+  <!-- ===================== LIGHT HEADER ===================== -->
+  <div style="border-left: 5px solid #003087; padding: 8px 0 8px 18px; margin-bottom: 24px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 2px;">CS210 &middot; Block 4 &middot; Lesson 36</div>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 600; color: #00205B;">Function Pointers</h1>
+    <div style="font-size: 14px; color: #4A5568; margin-top: 4px;">Functions as data &middot; Declaring function pointers &middot; Calling through a pointer &middot; Callbacks &middot; Generic data with void *</div>
+  </div>
+
+  <!-- ===================== AT A GLANCE ===================== -->
+  <div style="background: #F5F7FA; border-left: 4px solid #B5B7BA; padding: 14px 18px; margin-bottom: 22px; font-size: 14px;">
+    <strong style="color: #00205B;">At a glance:</strong> Until now a function pointer has been the one kind of pointer you had not met. Today a function gets an address like everything else, which means you can store it, pass it, and call through it. That single idea unlocks callbacks and the standard library <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">qsort</code>, and with <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">void *</code> it lets one routine work on data of any type. This lesson closes Block 4. You practice in the walkthrough in Section 5, then build a late night food truck finder in the lab.
+  </div>
+
+  <!-- ===================== TABLE OF CONTENTS ===================== -->
+  <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 20px; margin-bottom: 24px; border-radius: 3px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Contents</div>
+    <ol style="margin: 0; padding-left: 22px; font-size: 14px;">
+      <li style="margin-bottom: 4px;"><a href="#objectives" style="color: #003087; text-decoration: none;">Lesson Objectives</a></li>
+      <li style="margin-bottom: 4px;"><a href="#readings" style="color: #003087; text-decoration: none;">Assigned Readings</a></li>
+      <li style="margin-bottom: 4px;"><a href="#pre-class" style="color: #003087; text-decoration: none;">Pre-Class Work</a></li>
+      <li style="margin-bottom: 4px;"><a href="#materials" style="color: #003087; text-decoration: none;">Lesson Materials and Overview</a></li>
+      <li style="margin-bottom: 4px;"><a href="#in-class" style="color: #003087; text-decoration: none;">In-Class Work</a></li>
+      <li style="margin-bottom: 0;"><a href="#after-class" style="color: #003087; text-decoration: none;">After Class</a></li>
+    </ol>
+  </div>
+
+  <!-- ===================== 1. OBJECTIVES ===================== -->
+  <details id="objectives" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      1. Lesson Objectives
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 10px 0; font-style: italic;">By the end of this lesson, cadets will be able to:</p>
+      <ol style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Declare, assign, and invoke function pointers.</li>
+        <li style="margin-bottom: 6px;">Use function pointers to implement callback patterns.</li>
+        <li style="margin-bottom: 0;">Apply the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">void *</code> type to write functions that operate on generic data.</li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 2. READINGS ===================== -->
+  <details id="readings" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      2. Assigned Readings
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 12px 0;">Complete before class. Beej Chapter 23 is the spine of today's lesson.</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <thead>
+          <tr style="background: #E8EDF5; color: #00205B;">
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 130px;">Source</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9;">Sections</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 240px;">Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;"><a href="https://beej.us/guide/bgc/" style="color: #003087; text-decoration: underline;">Beej-C</a></td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Chapter 23 (Pointers III), the function pointer and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">void *</code> sections</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Function pointer syntax, callbacks, and generic pointers; ends with <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">qsort</code>, which ties both ideas together</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 9px 12px;">King, <em>C Programming: A Modern Approach</em></td>
+            <td style="padding: 9px 12px;">Chapter 17 (Pointers to Functions)</td>
+            <td style="padding: 9px 12px; color: #4A5568;">Optional deeper dive with more worked examples</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <!-- ===================== 3. PRE-CLASS WORK ===================== -->
+  <details id="pre-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      3. Pre-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 18px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #6B5300; font-size: 14px; margin-bottom: 4px;">Do this first</div>
+        <div style="font-size: 14px; color: #5A4B00;">Plan on 30 to 40 minutes. The syntax looks strange the first time; reading it before class is what makes the walkthrough click.</div>
+      </div>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 0 0 10px 0;">Pre-Class Checklist</h3>
+
+      <!-- Step 1: Reading -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">1</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Read Beej Chapter 23</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">Focus on the function pointer and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">void *</code> sections. Pay attention to:</div>
+            <ul style="font-size: 13.5px; margin: 0 0 6px 0; padding-left: 20px;">
+              <li style="margin-bottom: 3px;">The declaration form <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">int (*p)(int, int)</code> and why the parentheses around <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">*p</code> matter</li>
+              <li style="margin-bottom: 3px;">That a function name on its own is already an address</li>
+              <li style="margin-bottom: 3px;">What <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">void *</code> can and cannot do without a cast</li>
+              <li style="margin-bottom: 0;">The <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">qsort</code> example at the end of the chapter</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Toolchain -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">2</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Confirm your toolchain still builds clean</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">Open your terminal, recompile any recent lab with <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">-Wall -Werror</code>, and confirm it still runs. Today's lab adds <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">qsort</code> from <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&lt;stdlib.h&gt;</code>, nothing new to install.</div>
+            <div style="font-size: 13.5px; color: #4A5568;">If anything broke since your last lab, schedule EI before class so it does not eat your lab time.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Skim widget -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 8px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">3</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Skim the In-Class section below</div>
+            <div style="font-size: 14px;">You will see an interactive function pointer walkthrough. No need to use it yet; just know it is there.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ===================== 4. LESSON MATERIALS AND OVERVIEW ===================== -->
+  <details id="materials" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      4. Lesson Materials and Overview
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 18px 0;">You already know that a pointer holds an address. The new idea is that a function has an address too, so a pointer can hold it. Once a function fits in a variable, you can pass it around like any other value. The reference material below covers what you will see in lecture and use in the walkthrough.</p>
+
+      <!-- Subsection navigation -->
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 18px; margin-bottom: 22px; border-radius: 3px;">
+        <div style="font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">Jump to</div>
+        <div style="font-size: 13.5px;">
+          <a href="#slides" style="color: #003087; text-decoration: none; margin-right: 14px;">Slides</a>
+          <a href="#behavior" style="color: #003087; text-decoration: none; margin-right: 14px;">Behavior as Data</a>
+          <a href="#declaring" style="color: #003087; text-decoration: none; margin-right: 14px;">Declaring</a>
+          <a href="#calling" style="color: #003087; text-decoration: none; margin-right: 14px;">Calling</a>
+          <a href="#callbacks" style="color: #003087; text-decoration: none; margin-right: 14px;">Callbacks</a>
+          <a href="#voidptr" style="color: #003087; text-decoration: none; margin-right: 14px;">void *</a>
+          <a href="#qsort" style="color: #003087; text-decoration: none;">qsort</a>
+        </div>
+      </div>
+
+      <!-- Slides -->
+      <h3 id="slides" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px; margin-top: 0;">Slides</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">The Lesson 36 deck walks from passing data to passing behavior, decodes the declaration syntax, then builds up callbacks, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">void *</code>, and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">qsort</code>. The slides are the spine of lecture; the walkthrough in Section 5 is where you practice each step.</p>
+
+      <!-- =========================================================
+           EDIT ME: Lesson 36 slide deck link
+           Replace href="#" below with the share URL once the deck is
+           published. Leave target="_blank" and rel="noopener".
+           ========================================================= -->
+      <p style="margin: 0 0 18px 0;">
+        <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 10px 20px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 14px;">Open Lesson 36 slides &rarr;</a>
+      </p>
+
+      <!-- Behavior as data -->
+      <h3 id="behavior" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Passing behavior, not just data</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Every function you have written so far takes data and does something fixed with it. A sort function sorts; a counter counts. But what if the caller wants to decide the rule? Sort by rating tonight, by distance tomorrow. Count the trucks that are quick, or the ones that are highly rated. You could write a separate function for each rule, or you could write one function and let the caller hand in the rule. The rule is a function, and to hand it in you need its address. That address is what a function pointer holds.</p>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">This is also a decomposition idea, one level up from what you have done before. You are not just deciding what data flows through a function; you are deciding which function runs inside it. Naming and isolating that piece of behavior so it can be swapped is the same instinct as pulling a helper out of a long <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">main</code>, applied to control flow instead of data.</p>
+
+      <!-- Declaring -->
+      <h3 id="declaring" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Declaring and decoding a function pointer</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">The declaration reads strangely until you take it apart from the inside out. Start at the name, go right when you can, left when you must, and let the parentheses group things:</p>
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">int</span> (*op)(<span style="color: #569CD6;">int</span>, <span style="color: #569CD6;">int</span>);<br>
+        <span style="color: #6B7280;">// op is a pointer (the * inside parentheses)</span><br>
+        <span style="color: #6B7280;">// to a function taking (int, int)</span><br>
+        <span style="color: #6B7280;">// that returns int</span>
+      </div>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">The parentheses around <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">*op</code> are not optional. Without them, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">int *op(int, int)</code> declares a function that returns <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">int *</code>, which is a completely different thing. The parentheses are what bind the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">*</code> to the name and make it a pointer.</p>
+
+      <!-- Calling -->
+      <h3 id="calling" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Binding and calling through a pointer</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">A bare function name is already its address, so you assign it with no <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;</code> needed. Calling through the pointer looks exactly like a normal call:</p>
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        op = add;<br>
+        <span style="color: #6B7280;">// op now points to add</span><br><br>
+        <span style="color: #569CD6;">int</span> r = op(<span style="color: #B5CEA8;">5</span>, <span style="color: #B5CEA8;">7</span>);<br>
+        <span style="color: #6B7280;">// identical to add(5, 7); r is 12</span>
+      </div>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Reassign the pointer and the same call site does something different. The line <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">op(5, 7)</code> never changes, but after <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">op = mult;</code> it computes 35. The assignment is checked against the full signature: the return type and every parameter type must match, or the compiler rejects it.</p>
+
+      <!-- Callbacks -->
+      <h3 id="callbacks" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Callbacks: passing a function as an argument</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Once a function fits in a pointer, it fits in a parameter. A function that takes another function and calls it back is using a callback. The classic shape:</p>
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">void</span> <span style="color: #DCDCAA;">print_math</span>(<span style="color: #569CD6;">int</span> (*op)(<span style="color: #569CD6;">int</span>, <span style="color: #569CD6;">int</span>), <span style="color: #569CD6;">int</span> x, <span style="color: #569CD6;">int</span> y)<br>
+        {<br>
+        &nbsp;&nbsp;<span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"%d"</span>, op(x, y));<br>
+        }
+      </div>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">print_math</code> does not know or care what <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">op</code> does. The caller decides by passing <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">add</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">sub</code>, or anything with the right signature. That inversion, where the caller supplies the behavior, is the whole point.</p>
+
+      <!-- void * -->
+      <h3 id="voidptr" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Generic data with void *</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">A <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">void *</code> is a pointer with no element type attached. It can hold the address of anything, but you cannot dereference it directly, because the compiler does not know how many bytes to read or how to interpret them. To use it, you cast it back to the real type first. That sounds like a loophole, and it is a deliberate one: it lets a single function operate on data whose type it never has to know.</p>
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">int</span> <span style="color: #DCDCAA;">compare</span>(<span style="color: #569CD6;">const void</span> *a, <span style="color: #569CD6;">const void</span> *b)<br>
+        {<br>
+        &nbsp;&nbsp;<span style="color: #569CD6;">const struct</span> food_truck *ta = a;&nbsp;&nbsp;<span style="color: #6B7280;">// cast back to the real type</span><br>
+        &nbsp;&nbsp;<span style="color: #569CD6;">const struct</span> food_truck *tb = b;<br>
+        &nbsp;&nbsp;<span style="color: #569CD6;">return</span> ta-&gt;rating - tb-&gt;rating;&nbsp;&nbsp;<span style="color: #6B7280;">// see the caution below</span><br>
+        }
+      </div>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">The <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">const</code> is a promise that the comparator will look but not change. One caution on the return value: a comparator must return any negative number, zero, or any positive number, but returning a raw subtraction like <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">a - b</code> can overflow for large values and give the wrong sign. The safe habit is to compare and return <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">-1</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">0</code>, or <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">1</code> explicitly.</p>
+
+      <!-- qsort -->
+      <h3 id="qsort" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">qsort: where it all comes together</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">The standard library sort is the payoff. It is generic over type through <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">void *</code> and configurable in behavior through a comparator callback:</p>
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #DCDCAA;">qsort</span>(trucks, n, <span style="color: #569CD6;">sizeof</span> trucks[<span style="color: #B5CEA8;">0</span>], by_rating_desc);<br>
+        <span style="color: #6B7280;">// base, count, size of one element, comparator</span>
+      </div>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">qsort</code> never looks at your data directly. It walks the array using the element <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">size</code> you gave it and, every time it needs to order two elements, it calls your comparator through the function pointer. That one callback is the only code that knows the elements are trucks. Swap the comparator and the order changes without touching the sort. Your lab builds exactly this on a list of late night food trucks.</p>
+
+      <!-- =========================================================
+           DFCS C Programming Standard: intentionally omitted.
+           Per the course schedule's Block 4 touchpoints, Lesson 36
+           introduces no new standard sections, so there is no DFCS
+           paragraph here and no DFCS slide in the deck. The existing
+           rules (snake_case, header blocks, -Wall -Werror) still apply
+           and are enforced by the autograder; they are simply not
+           newly taught this lesson.
+           ========================================================= -->
+
+    </div>
+  </details>
+
+  <!-- ===================== 5. IN-CLASS WORK ===================== -->
+  <details id="in-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      5. In-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 16px 0;">Two things to do in class. Use the checklist to track your progress.</p>
+
+      <ul style="list-style: none; padding: 0; margin: 0 0 24px 0; font-size: 14.5px;">
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Work through the function pointer walkthrough below.</strong>
+          <span style="color: #4A5568;">Twelve guided tasks: declaring and calling a function pointer, swapping behavior, callbacks, and a generic sort. About 25 minutes. Screenshot the completion code for the Lesson 36 reflection.</span>
+        </li>
+        <li style="margin-bottom: 0; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Complete Lab 36: Late Night Food Truck Finder.</strong>
+          <span style="color: #4A5568;">Comparators for <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">qsort</code>, a predicate callback, and a generic <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">void *</code> search. Auto-graded through GitHub Classroom; full instructions in the lab repo. Worth 2 points.</span>
+          <!-- =========================================================
+               EDIT ME: Lab 36 GitHub Classroom assignment link
+               Replace href="#" with the classroom.github.com/a/... invite
+               URL once the assignment is published.
+               ========================================================= -->
+          <div style="margin-top: 8px; margin-left: 28px;">
+            <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 6px 14px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 13px;">Accept Lab 36 on GitHub Classroom &rarr;</a>
+          </div>
+        </li>
+      </ul>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 18px 0 10px 0;">Function Pointer Walkthrough</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Twelve tasks across four sections. Type each line at the prompt. The terminal shows what happened; the right pane shows which function each pointer currently names. Finish all twelve to unlock your completion code.</p>
+
+<!-- ============================================================
+     CS210 Lesson 36 - funcptr Walkthrough Widget
+     Function pointers: declare, assign, invoke, callbacks, void *.
+     Template-aligned style. Native HTML/CSS + scoped JS.
+     Paste as a block; runs anywhere the parent page allows <script>.
+     ============================================================ -->
+<style>
+.cs210-funcptr * { box-sizing: border-box; }
+.cs210-funcptr {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-funcptr h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-funcptr .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 22px;
+}
+.cs210-funcptr .progress-bar {
+  background: #E5E7EB;
+  border-radius: 3px;
+  height: 8px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.cs210-funcptr .progress-fill {
+  background: #003087;
+  height: 100%;
+  transition: width 0.3s ease;
+}
+.cs210-funcptr .progress-label {
+  font-size: 12px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-funcptr .section-header {
+  background: #E8EDF5;
+  color: #00205B;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.cs210-funcptr .task-card {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  border-radius: 3px;
+}
+.cs210-funcptr .task-card.complete {
+  background: #E6F4EA;
+  border-left-color: #2E7D32;
+}
+.cs210-funcptr .task-label {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B5300;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.cs210-funcptr .task-card.complete .task-label {
+  color: #1B5E20;
+}
+.cs210-funcptr .task-text {
+  font-size: 15px;
+  color: #1a1a1a;
+}
+.cs210-funcptr .task-hint {
+  font-size: 12.5px;
+  color: #6B7280;
+  margin-top: 6px;
+  font-style: italic;
+}
+
+/* Two-pane area: terminal left, bindings right */
+.cs210-funcptr .panes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+@media (max-width: 760px) {
+  .cs210-funcptr .panes { grid-template-columns: 1fr; }
+}
+.cs210-funcptr .terminal {
+  background: #1E2A3A;
+  color: #E8EDF5;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13.5px;
+  line-height: 1.5;
+  border-radius: 4px;
+  padding: 14px 18px;
+  min-height: 380px;
+  max-height: 440px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.cs210-funcptr .terminal .prompt { color: #7FB3D5; }
+.cs210-funcptr .terminal .typed { color: #FFFFFF; }
+.cs210-funcptr .terminal .out { color: #B5BEC8; }
+.cs210-funcptr .terminal .note { color: #F0B92C; }
+.cs210-funcptr .terminal .err { color: #F47A7A; }
+.cs210-funcptr .terminal .ok { color: #7FD17F; }
+.cs210-funcptr .terminal .dim { color: #6B7280; }
+
+.cs210-funcptr .bind-pane {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  padding: 14px 16px;
+  min-height: 380px;
+  max-height: 440px;
+  overflow-y: auto;
+}
+.cs210-funcptr .bind-pane-header {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #E5E7EB;
+}
+.cs210-funcptr .bind-empty {
+  color: #6B7280;
+  font-style: italic;
+  font-size: 13px;
+  text-align: center;
+  padding: 40px 10px;
+}
+.cs210-funcptr .ptr-card {
+  background: #F8FAFC;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+.cs210-funcptr .ptr-decl {
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  color: #00205B;
+  font-weight: 600;
+  margin-bottom: 8px;
+  word-break: break-all;
+}
+.cs210-funcptr .ptr-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+.cs210-funcptr .ptr-name {
+  background: #003087;
+  color: #ffffff;
+  border-radius: 3px;
+  padding: 2px 8px;
+  font-weight: 700;
+}
+.cs210-funcptr .ptr-arrow {
+  color: #003087;
+  font-size: 18px;
+  font-weight: 700;
+  transition: transform 0.25s ease;
+}
+.cs210-funcptr .ptr-target {
+  background: #E6F4EA;
+  border: 1px solid #2E7D32;
+  color: #1B5E20;
+  border-radius: 3px;
+  padding: 2px 8px;
+  font-weight: 700;
+}
+.cs210-funcptr .ptr-target.unbound {
+  background: #FDE8E8;
+  border-color: #B8002F;
+  color: #B8002F;
+}
+.cs210-funcptr .ptr-addr {
+  font-size: 11px;
+  color: #6B7280;
+}
+.cs210-funcptr .ptr-card.flash .ptr-arrow { transform: translateX(4px); }
+.cs210-funcptr .ptr-card.flash {
+  animation: cs210-funcptr-flash 0.6s ease;
+}
+@keyframes cs210-funcptr-flash {
+  0%   { background: #FFF8E1; }
+  100% { background: #F8FAFC; }
+}
+
+/* Function library reference */
+.cs210-funcptr .lib-card {
+  background: #ffffff;
+  border: 1px dashed #C7CFD9;
+  border-radius: 4px;
+  padding: 10px 12px;
+  margin-top: 6px;
+}
+.cs210-funcptr .lib-title {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.cs210-funcptr .lib-row {
+  font-family: Consolas, monospace;
+  font-size: 12px;
+  color: #1a1a1a;
+  padding: 3px 0;
+  border-bottom: 1px dotted #E5E7EB;
+}
+.cs210-funcptr .lib-row:last-child { border-bottom: none; }
+.cs210-funcptr .lib-row .fn { color: #00205B; font-weight: 700; }
+.cs210-funcptr .lib-row .sg { color: #6B7280; }
+
+/* Sort result visualization */
+.cs210-funcptr .sort-card {
+  background: #ffffff;
+  border: 2px solid #003087;
+  border-radius: 4px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+.cs210-funcptr .sort-expr {
+  font-family: Consolas, monospace;
+  font-size: 12px;
+  color: #6B7280;
+  text-align: center;
+  margin-bottom: 8px;
+}
+.cs210-funcptr .sort-row {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 6px 0;
+}
+.cs210-funcptr .sort-cell {
+  background: #E8EDF5;
+  border: 1px solid #C7CFD9;
+  border-radius: 3px;
+  padding: 4px 8px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: #00205B;
+  min-width: 34px;
+  text-align: center;
+}
+.cs210-funcptr .sort-cell.sorted {
+  background: #E6F4EA;
+  border-color: #2E7D32;
+  color: #1B5E20;
+}
+.cs210-funcptr .sort-arrow {
+  text-align: center;
+  color: #003087;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.cs210-funcptr .input-row {
+  display: flex;
+  background: #1E2A3A;
+  border-radius: 4px;
+  padding: 8px 14px;
+  margin-bottom: 14px;
+  border: 1px solid #003087;
+}
+.cs210-funcptr .input-prompt {
+  color: #7FB3D5;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  margin-right: 8px;
+  align-self: center;
+  white-space: nowrap;
+}
+.cs210-funcptr .input-row input {
+  flex: 1;
+  background: transparent;
+  color: #FFFFFF;
+  border: none;
+  outline: none;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  padding: 4px 0;
+}
+.cs210-funcptr .controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.cs210-funcptr .btn {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  padding: 6px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #00205B;
+  font-family: inherit;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.cs210-funcptr .btn:hover { background: #F5F7FA; }
+@keyframes cs210-funcptr-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(240, 185, 44, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0); }
+}
+.cs210-funcptr .btn.pulse {
+  background: #FFF8E1;
+  border-color: #F0B92C;
+  color: #6B5300;
+  font-weight: 600;
+  animation: cs210-funcptr-pulse 1.5s infinite;
+}
+.cs210-funcptr .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #4A5568;
+  margin-top: 12px;
+}
+.cs210-funcptr .help-note strong { color: #00205B; }
+
+/* Name modal overlay */
+.cs210-funcptr .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.cs210-funcptr .name-modal {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-funcptr .name-modal h2 {
+  color: #00205B;
+  font-size: 20px;
+  margin: 0 0 10px 0;
+}
+.cs210-funcptr .name-modal p {
+  color: #4A5568;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+.cs210-funcptr .name-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-funcptr .name-modal input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-funcptr .name-modal-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-funcptr .name-modal-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-funcptr .name-modal-btn:not(:disabled):hover {
+  background: #00205B;
+}
+/* Completion screen */
+.cs210-funcptr .completion-screen {
+  background: #ffffff;
+  border: 2px solid #2E7D32;
+  border-radius: 6px;
+  padding: 24px 28px;
+  margin-top: 16px;
+}
+.cs210-funcptr .completion-screen .cs-heading {
+  color: #1B5E20;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 6px 0;
+}
+.cs210-funcptr .completion-screen .cs-name-line {
+  font-size: 15px;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+}
+.cs210-funcptr .completion-screen .cs-name-line strong { color: #00205B; }
+.cs210-funcptr .completion-screen .cs-code-block {
+  background: #F0F4FA;
+  border: 1px solid #003087;
+  border-radius: 4px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.cs210-funcptr .completion-screen .cs-code-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #4A5568;
+  margin-bottom: 4px;
+}
+.cs210-funcptr .completion-screen .cs-code-value {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 28px;
+  font-weight: 700;
+  color: #00205B;
+  letter-spacing: 3px;
+}
+.cs210-funcptr .completion-screen .cs-copy-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-funcptr .completion-screen .cs-copy-btn:hover { background: #00205B; }
+.cs210-funcptr .completion-screen .cs-copy-btn.copied { background: #2E7D32; }
+.cs210-funcptr .completion-screen .cs-timestamp {
+  font-size: 13px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-funcptr .completion-screen .cs-reminder {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 14px;
+  color: #6B5300;
+  line-height: 1.5;
+}
+.cs210-funcptr .completion-screen .cs-reminder strong { color: #4A3A00; }
+</style>
+
+<div class="cs210-funcptr">
+
+<div class="name-modal-backdrop" id="fp-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Lesson 36 reflection in Blackboard.</p>
+    <input type="text" id="fp-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="fp-cadet-name-btn" disabled>Start the walkthrough</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 36 &middot; Function Pointer Walkthrough</h1>
+<div class="subtitle">A guided tour through declaring, assigning, and calling function pointers, then using them as callbacks and with generic <code>void *</code> data. Type each line at the prompt. The terminal shows what happened; the right pane shows which function each pointer currently names.</div>
+
+<div class="progress-bar"><div class="progress-fill" id="fp-progress-fill" style="width: 0%;"></div></div>
+<div class="progress-label" id="fp-progress-label">Task 0 of 12</div>
+
+<div class="section-header" id="fp-section-header">Section 1: A function is an address</div>
+
+<div class="task-card" id="fp-task-card">
+  <div class="task-label" id="fp-task-label">Current task</div>
+  <div class="task-text" id="fp-task-text">Loading...</div>
+  <div class="task-hint" id="fp-task-hint"></div>
+</div>
+
+<div class="panes">
+  <div class="terminal" id="fp-terminal"></div>
+  <div class="bind-pane">
+    <div class="bind-pane-header">Function pointers</div>
+    <div id="fp-bind-area">
+      <div class="bind-empty">No function pointers yet.<br>Declare one on the left.</div>
+    </div>
+  </div>
+</div>
+
+<div class="input-row">
+  <span class="input-prompt">funcptr&gt;</span>
+  <input type="text" id="fp-cli-input" autocomplete="off" spellcheck="false" placeholder="try: add">
+</div>
+
+<div class="controls">
+  <button class="btn" id="fp-hint-btn">Show hint</button>
+  <button class="btn" id="fp-reset-btn">Reset</button>
+  <button class="btn" id="fp-mode-btn">Switch to free mode</button>
+</div>
+
+<div class="help-note">
+  <strong>How this works:</strong> This is a teaching tool, not a compiler. A small library of functions is already defined for you (see the right pane). The task card tells you what to type next; only the expected line advances the walkthrough so the pointer state stays predictable. Mistype twice and the hint button will pulse. After the walkthrough completes, free mode unlocks so you can experiment.
+</div>
+
+<div id="fp-completion-area"></div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-funcptr');
+  if (!root) return;
+
+  // ============================================================
+  // CS210 widget completion utilities
+  // Salt -> deterministic 6-char code via FNV-1a.
+  // Alphabet excludes 0, 1, O, I (uppercase only output).
+  // ============================================================
+  const CS210_SALT = "lesson36_funcptr_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  // Name-modal gating: widget stays blocked until name entered.
+  // Pre-fill from localStorage if available. If already set, skip the modal entirely.
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#fp-name-modal-backdrop');
+    const input = root.querySelector('#fp-cadet-name-input');
+    const btn = root.querySelector('#fp-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length >= 2) {
+        cs210CadetName = stored.trim();
+        backdrop.style.display = 'none';
+        return;
+      }
+    } catch (e) { /* localStorage may be disabled */ }
+
+    function updateBtn() { btn.disabled = input.value.trim().length < 2; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', function() {
+      const name = input.value.trim();
+      if (name.length < 2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+      const cli = root.querySelector('#fp-cli-input');
+      if (cli) cli.focus();
+    });
+    setTimeout(function() { input.focus(); }, 50);
+  })();
+
+  function cs210RenderCompletion(area) {
+    if (!area) return;
+    if (root.querySelector('#fp-completion-overlay')) return; // already shown
+    const now = new Date();
+    const ts = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const safeName = (cs210CadetName || 'Cadet').replace(/[<>&"']/g, function(c) {
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+    area.innerHTML =
+      '<div class="completion-screen">' +
+        '<div class="cs-heading">Walkthrough complete</div>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value">' + CS210_CODE + '</div></div>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+      '</div>';
+    const overlay = document.createElement('div');
+    overlay.id = 'fp-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.style.background = 'rgba(27, 94, 32, 0.55)';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">Walkthrough complete</h2>' +
+        '<p>Take a screenshot of this box. You will need the code and a visual of this screen for the Lesson 36 reflection in Blackboard.</p>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value" id="fp-code-value">' + CS210_CODE + '</div></div>' +
+          '<button class="cs-copy-btn" id="fp-copy-btn" type="button">Copy code</button>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+        '<div class="cs-reminder" style="margin-bottom:14px;">' +
+          '<strong>Next step:</strong> Open the Lesson 36 reflection in Blackboard. Enter this code, answer the reflection prompt, and attach your screenshot.' +
+        '</div>' +
+        '<button class="name-modal-btn" id="fp-overlay-close" type="button" style="background:#2E7D32;">Got it &mdash; close this</button>' +
+      '</div>';
+    root.appendChild(overlay);
+    const closeBtn = overlay.querySelector('#fp-overlay-close');
+    if (closeBtn) closeBtn.addEventListener('click', function() { overlay.style.display = 'none'; });
+    const copyBtn = overlay.querySelector('#fp-copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function() {
+        const text = CS210_CODE;
+        const ok = function() {
+          copyBtn.textContent = 'Copied';
+          copyBtn.classList.add('copied');
+          setTimeout(function() {
+            copyBtn.textContent = 'Copy code';
+            copyBtn.classList.remove('copied');
+          }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(ok, function() { cs210FallbackCopy(text); ok(); });
+        } else { cs210FallbackCopy(text); ok(); }
+      });
+    }
+  }
+  function cs210FallbackCopy(text) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e) { /* nothing else to do */ }
+  }
+
+  // ============================================================
+  // The little function library the cadet can point at.
+  // kind: 'arith'   -> int (int, int)
+  //       'voidint' -> void (int)
+  //       'cmp'      -> int (const void *, const void *)
+  // ============================================================
+  const FUNCS = {
+    add:          { sig: 'int (*)(int, int)',  kind: 'arith',   addr: '0x401136', impl: (a, b) => a + b,            human: 'returns a + b' },
+    sub:          { sig: 'int (*)(int, int)',  kind: 'arith',   addr: '0x401150', impl: (a, b) => a - b,            human: 'returns a - b' },
+    mult:         { sig: 'int (*)(int, int)',  kind: 'arith',   addr: '0x40116a', impl: (a, b) => a * b,            human: 'returns a * b' },
+    max2:         { sig: 'int (*)(int, int)',  kind: 'arith',   addr: '0x401184', impl: (a, b) => (a > b ? a : b),  human: 'returns the larger' },
+    print_int:    { sig: 'void (*)(int)',      kind: 'voidint', addr: '0x4011a0', impl: (a) => a,                   human: 'prints its argument' },
+    cmp_int_asc:  { sig: 'int (*)(const void *, const void *)', kind: 'cmp', addr: '0x4011b8', impl: (a, b) => a - b, human: 'ascending order' },
+    cmp_int_desc: { sig: 'int (*)(const void *, const void *)', kind: 'cmp', addr: '0x4011e0', impl: (a, b) => b - a, human: 'descending order' },
+  };
+  const DEMO = [42, 7, 19, 3];
+
+  // ============================================================
+  // State
+  // ============================================================
+  const pointers = new Map(); // name -> { name, declSig, target, lastFlash }
+  let currentTaskIndex = 0;
+  let consecutiveFails = 0;
+  let mode = "walkthrough";
+  let lastSort = null;        // last sort_demo result for the bindings pane
+  let flashPtr = null;        // name of pointer to flash on next render
+
+  // ============================================================
+  // Signature helpers
+  // ============================================================
+  function stripSig(s) { return String(s).replace(/\s+/g, ''); }
+  function normalizeParams(raw) {
+    return raw.split(',').map(p => p.trim().replace(/\s+/g, ' ')).join(', ');
+  }
+  function prettyDecl(ret, name, params) {
+    return ret + ' (*' + name + ')(' + normalizeParams(params) + ')';
+  }
+  function declSigOf(ret, params) {
+    return ret + ' (*)(' + normalizeParams(params) + ')';
+  }
+
+  // ============================================================
+  // Parsers
+  // ============================================================
+  const RET_TYPES = 'int|void|long|short|float|double|char';
+
+  function tryParseDecl(line) {
+    const t = line.trim().replace(/;\s*$/, '');
+    // ret (*name)(params)  [= func]
+    const re = new RegExp(
+      '^(' + RET_TYPES + ')\\s*\\(\\s*\\*\\s*([A-Za-z_]\\w*)\\s*\\)\\s*\\(([^()]*)\\)\\s*(?:=\\s*(&?\\s*[A-Za-z_]\\w*)\\s*)?$'
+    );
+    const m = t.match(re);
+    if (!m) return null;
+    const init = m[4] ? m[4].replace(/^&\s*/, '').trim() : null;
+    return { ret: m[1], name: m[2], params: m[3].trim(), init: init };
+  }
+  function tryParseAssign(line) {
+    const t = line.trim().replace(/;\s*$/, '');
+    const m = t.match(/^([A-Za-z_]\w*)\s*=\s*(&?\s*[A-Za-z_]\w*)\s*$/);
+    if (!m) return null;
+    // Only treat as pointer assignment if LHS is a known pointer.
+    if (!pointers.has(m[1])) return null;
+    return { name: m[1], rhs: m[2].replace(/^&\s*/, '').trim() };
+  }
+  function tryParseCall(line) {
+    const t = line.trim().replace(/;\s*$/, '');
+    const m = t.match(/^([A-Za-z_]\w*)\s*\(\s*([^()]*)\s*\)$/);
+    if (!m) return null;
+    const args = m[2].trim() === '' ? [] : m[2].split(',').map(a => a.trim());
+    return { callee: m[1], args: args };
+  }
+  function tryParseBareName(line) {
+    const t = line.trim().replace(/;\s*$/, '');
+    const m = t.match(/^&?\s*([A-Za-z_]\w*)$/);
+    if (!m) return null;
+    return { name: m[1] };
+  }
+
+  // ============================================================
+  // Evaluators
+  // ============================================================
+  function resolveCallable(token) {
+    // Returns { name, kind, impl, sig, via } or throws.
+    if (FUNCS[token]) {
+      const f = FUNCS[token];
+      return { name: token, kind: f.kind, impl: f.impl, sig: f.sig, via: null };
+    }
+    if (pointers.has(token)) {
+      const p = pointers.get(token);
+      if (!p.target) throw new Error("'" + token + "' is unbound (NULL). Point it at a function first.");
+      const f = FUNCS[p.target];
+      return { name: p.target, kind: f.kind, impl: f.impl, sig: f.sig, via: token };
+    }
+    throw new Error("'" + token + "' is not a known function or function pointer.");
+  }
+
+  function evalDecl(parsed) {
+    const declSig = declSigOf(parsed.ret, parsed.params);
+    if (pointers.has(parsed.name)) {
+      throw new Error("'" + parsed.name + "' is already declared. Use assignment (" + parsed.name + " = func;) instead.");
+    }
+    let target = null;
+    if (parsed.init) {
+      if (!FUNCS[parsed.init]) throw new Error("'" + parsed.init + "' is not a known function.");
+      if (stripSig(FUNCS[parsed.init].sig) !== stripSig(declSig)) {
+        throw new Error("signature mismatch: '" + parsed.name + "' is " + declSig +
+          " but '" + parsed.init + "' is " + FUNCS[parsed.init].sig + ".");
+      }
+      target = parsed.init;
+    }
+    pointers.set(parsed.name, {
+      name: parsed.name, declSig: declSig,
+      prettyDecl: prettyDecl(parsed.ret, parsed.name, parsed.params),
+      target: target,
+    });
+    flashPtr = parsed.name;
+    return { kind: 'decl', name: parsed.name, declSig: declSig, target: target };
+  }
+  function evalAssign(parsed) {
+    const p = pointers.get(parsed.name);
+    if (!FUNCS[parsed.rhs]) throw new Error("'" + parsed.rhs + "' is not a known function.");
+    if (stripSig(FUNCS[parsed.rhs].sig) !== stripSig(p.declSig)) {
+      throw new Error("signature mismatch: '" + parsed.name + "' is " + p.declSig +
+        " but '" + parsed.rhs + "' is " + FUNCS[parsed.rhs].sig + ".");
+    }
+    p.target = parsed.rhs;
+    flashPtr = parsed.name;
+    return { kind: 'assign', name: parsed.name, target: parsed.rhs };
+  }
+  function evalBareName(parsed) {
+    const n = parsed.name;
+    if (FUNCS[n]) {
+      return { kind: 'bare-func', name: n, sig: FUNCS[n].sig, addr: FUNCS[n].addr };
+    }
+    if (pointers.has(n)) {
+      const p = pointers.get(n);
+      return { kind: 'bare-ptr', name: n, target: p.target, declSig: p.declSig };
+    }
+    throw new Error("'" + n + "' is not a known function or function pointer.");
+  }
+  function asInt(tok) {
+    if (!/^-?\d+$/.test(tok)) throw new Error("expected an integer argument, got '" + tok + "'.");
+    return parseInt(tok, 10);
+  }
+  function evalCall(parsed) {
+    const callee = parsed.callee;
+    const args = parsed.args;
+
+    // Higher-order library function: print_math(func, x, y)
+    if (callee === 'print_math') {
+      if (args.length !== 3) throw new Error("print_math takes 3 arguments: a function, then two ints.");
+      const fn = resolveCallable(args[0]);
+      if (fn.kind !== 'arith') throw new Error("print_math needs a function of type int (*)(int, int), but '" + args[0] + "' is " + fn.sig + ".");
+      const x = asInt(args[1]), y = asInt(args[2]);
+      const result = fn.impl(x, y);
+      return { kind: 'print-math', fnName: fn.name, via: fn.via, x: x, y: y, result: result };
+    }
+
+    // Higher-order library function: sort_demo(cmp)
+    if (callee === 'sort_demo') {
+      if (args.length !== 1) throw new Error("sort_demo takes 1 argument: a comparator function.");
+      const fn = resolveCallable(args[0]);
+      if (fn.kind !== 'cmp') throw new Error("sort_demo needs a comparator of type int (*)(const void *, const void *), but '" + args[0] + "' is " + fn.sig + ".");
+      const before = DEMO.slice();
+      const after = DEMO.slice().sort((a, b) => fn.impl(a, b));
+      lastSort = { cmpName: fn.name, via: fn.via, before: before, after: after };
+      return { kind: 'sort', cmpName: fn.name, via: fn.via, before: before, after: after };
+    }
+
+    // Direct or through-pointer call
+    const fn = resolveCallable(callee);
+    if (fn.kind === 'arith') {
+      if (args.length !== 2) throw new Error("'" + callee + "' takes 2 int arguments.");
+      const x = asInt(args[0]), y = asInt(args[1]);
+      return { kind: 'call-arith', callee: callee, fnName: fn.name, via: fn.via, x: x, y: y, result: fn.impl(x, y) };
+    }
+    if (fn.kind === 'voidint') {
+      if (args.length !== 1) throw new Error("'" + callee + "' takes 1 int argument.");
+      const x = asInt(args[0]);
+      return { kind: 'call-void', callee: callee, fnName: fn.name, via: fn.via, x: x };
+    }
+    if (fn.kind === 'cmp') {
+      throw new Error("call a comparator through sort_demo(" + callee + "), not directly. Comparators take pointers, which this tool does not let you build by hand.");
+    }
+    throw new Error("don't know how to call '" + callee + "'.");
+  }
+
+  // ============================================================
+  // Dispatcher
+  // ============================================================
+  function runCommand(line) {
+    const t = line.trim();
+    if (!t) return null;
+    const lower = t.toLowerCase().replace(/;?$/, '');
+
+    if (lower === 'clear' || lower === 'reset') {
+      pointers.clear();
+      lastSort = null;
+      return { kind: 'cleared' };
+    }
+    if (lower === 'list') return { kind: 'list' };
+    if (lower === 'help' || lower === '?') return { kind: 'help' };
+
+    const decl = tryParseDecl(t);
+    if (decl) return evalDecl(decl);
+
+    const asg = tryParseAssign(t);
+    if (asg) return evalAssign(asg);
+
+    const call = tryParseCall(t);
+    if (call) return evalCall(call);
+
+    const bare = tryParseBareName(t);
+    if (bare) return evalBareName(bare);
+
+    if (/^(ls|cd|pwd|cat|echo|mkdir|rm|mv|cp|gcc)\b/.test(t)) {
+      throw new Error("funcptr is not a shell. Type C like: int (*op)(int, int) = add;");
+    }
+    throw new Error("couldn't parse '" + t + "'. Try a declaration, an assignment, or a call.");
+  }
+
+  // ============================================================
+  // Terminal output
+  // ============================================================
+  const terminalEl = root.querySelector('#fp-terminal');
+  function termWrite(text, cls) {
+    const span = document.createElement('span');
+    if (cls) span.className = cls;
+    span.textContent = text;
+    terminalEl.appendChild(span);
+  }
+  function termLine(text, cls) {
+    termWrite(text, cls);
+    terminalEl.appendChild(document.createElement('br'));
+    terminalEl.scrollTop = terminalEl.scrollHeight;
+  }
+  function echoCommand(cmd) {
+    termWrite('funcptr> ', 'prompt');
+    termLine(cmd, 'typed');
+  }
+
+  // ============================================================
+  // Bindings pane rendering
+  // ============================================================
+  const bindEl = root.querySelector('#fp-bind-area');
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" })[c]);
+  }
+  function renderLibrary() {
+    let rows = '';
+    for (const name in FUNCS) {
+      const f = FUNCS[name];
+      rows += '<div class="lib-row"><span class="fn">' + name + '</span> <span class="sg">' +
+              escapeHtml(f.sig.replace('(*)', '')) + '</span></div>';
+    }
+    return '<div class="lib-card"><div class="lib-title">Available functions</div>' + rows +
+           '<div class="lib-row" style="border-top:1px dashed #C7CFD9;margin-top:6px;padding-top:6px;color:#6B7280;">' +
+           'higher-order: <span class="fn">print_math</span>(f, x, y), <span class="fn">sort_demo</span>(cmp)</div></div>';
+  }
+  function renderBindings() {
+    let html = '';
+    if (pointers.size === 0) {
+      html = '<div class="bind-empty">No function pointers yet.<br>Declare one on the left.</div>';
+    } else {
+      for (const p of pointers.values()) {
+        const flash = (flashPtr === p.name) ? ' flash' : '';
+        let link;
+        if (p.target) {
+          const f = FUNCS[p.target];
+          link = '<span class="ptr-name">' + p.name + '</span>' +
+                 '<span class="ptr-arrow">&#8594;</span>' +
+                 '<span class="ptr-target">' + p.target + '</span>' +
+                 '<span class="ptr-addr">@ ' + f.addr + '</span>';
+        } else {
+          link = '<span class="ptr-name">' + p.name + '</span>' +
+                 '<span class="ptr-arrow">&#8594;</span>' +
+                 '<span class="ptr-target unbound">NULL</span>';
+        }
+        html += '<div class="ptr-card' + flash + '">' +
+                  '<div class="ptr-decl">' + escapeHtml(p.prettyDecl) + ';</div>' +
+                  '<div class="ptr-link">' + link + '</div>' +
+                '</div>';
+      }
+    }
+    if (lastSort) {
+      const beforeCells = lastSort.before.map(v => '<div class="sort-cell">' + v + '</div>').join('');
+      const afterCells = lastSort.after.map(v => '<div class="sort-cell sorted">' + v + '</div>').join('');
+      const label = lastSort.via ? (lastSort.via + ' \u2192 ' + lastSort.cmpName) : lastSort.cmpName;
+      html += '<div class="sort-card">' +
+                '<div class="sort-expr">sort_demo(' + escapeHtml(label) + ')</div>' +
+                '<div class="sort-row">' + beforeCells + '</div>' +
+                '<div class="sort-arrow">&#8595;</div>' +
+                '<div class="sort-row">' + afterCells + '</div>' +
+              '</div>';
+    }
+    html += renderLibrary();
+    bindEl.innerHTML = html;
+    flashPtr = null;
+  }
+
+  // ============================================================
+  // Diagnose helpers (near-miss feedback)
+  // ============================================================
+  function diagDeclExpected(cmd, expected) {
+    // expected: { ret, name, params, init }
+    const t = cmd.trim();
+    if (!/\(\s*\*/.test(t)) {
+      return "A function pointer needs (*name) with the asterisk inside parentheses. Look at the hint.";
+    }
+    if (expected.init && !/=/.test(t)) {
+      return "This task also binds the pointer. Add = " + expected.init + " before the semicolon.";
+    }
+    if (!/;\s*$/.test(t)) {
+      return "Almost. Don't forget the semicolon at the end.";
+    }
+    return null;
+  }
+
+  // ============================================================
+  // Tasks
+  // ============================================================
+  const tasks = [
+    // --- Section 1: A function is an address ---
+    {
+      section: 'Section 1: A function is an address',
+      label: 'Task 1 of 12',
+      text: "Every function lives somewhere in memory. Ask for the function add by typing its bare name (no parentheses).",
+      hint: 'add',
+      match: (cmd) => /^\s*&?\s*add\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        if (/add\s*\(/.test(cmd)) return "Parentheses would call it. For now type just the name: add";
+        return null;
+      },
+      note: "A bare function name is its address, just like a bare array name is the address of its first element. The type printed, int (*)(int, int), is the type of a pointer to this function."
+    },
+    {
+      label: 'Task 2 of 12',
+      text: "Declare a function pointer named op that can point to add, and bind it to add in the same line.",
+      hint: 'int (*op)(int, int) = add;',
+      match: (cmd) => /^\s*int\s*\(\s*\*\s*op\s*\)\s*\(\s*int\s*,\s*int\s*\)\s*=\s*&?\s*add\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diagDeclExpected(cmd, { ret: 'int', name: 'op', params: 'int, int', init: 'add' }),
+      note: "Read it inside-out: (*op) says op is a pointer; the (int, int) and the leading int say it points to a function taking two ints and returning an int. The right pane now shows op aimed at add."
+    },
+    {
+      label: 'Task 3 of 12',
+      text: "Call add through the pointer. Use op with the arguments 5 and 7.",
+      hint: 'op(5, 7)',
+      match: (cmd) => /^\s*op\s*\(\s*5\s*,\s*7\s*\)\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        if (/^\s*add\s*\(/.test(cmd)) return "That calls add directly. The task wants you to call it through the pointer: op(5, 7).";
+        return null;
+      },
+      note: "Calling through a pointer is identical to calling the function: op(5, 7) does exactly what add(5, 7) does. The pointer is just another name for the same code."
+    },
+
+    // --- Section 2: Swapping behavior ---
+    {
+      section: 'Section 2: Swapping behavior',
+      label: 'Task 4 of 12',
+      text: "Point op at a different function. Assign mult to op.",
+      hint: 'op = mult;',
+      match: (cmd) => /^\s*op\s*=\s*&?\s*mult\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        if (/int\s*\(/.test(cmd)) return "op already exists, so you don't redeclare it. Just assign: op = mult;";
+        return null;
+      },
+      note: "Same variable, new target. Watch the arrow in the right pane move from add to mult. A function pointer is a slot you can repoint whenever you like."
+    },
+    {
+      label: 'Task 5 of 12',
+      text: "Call op with 5 and 7 again. The line is identical to Task 3, but the result will not be.",
+      hint: 'op(5, 7)',
+      match: (cmd) => /^\s*op\s*\(\s*5\s*,\s*7\s*\)\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => null,
+      note: "The call site never changed; the behavior did. This is the entire idea behind callbacks: one place that calls op, and you decide what op means."
+    },
+    {
+      label: 'Task 6 of 12',
+      text: "Try to point op at print_int. It will be rejected. Type the assignment and read the error.",
+      hint: 'op = print_int;',
+      match: (cmd) => /^\s*op\s*=\s*&?\s*print_int\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => null,
+      note: "C checks the whole signature. op is int (*)(int, int); print_int is void (*)(int). Different return type, different parameters, so the assignment is an error. The compiler protects you from calling a function the wrong way."
+    },
+
+    // --- Section 3: Callbacks ---
+    {
+      section: 'Section 3: Callbacks',
+      label: 'Task 7 of 12',
+      text: "print_math is already written for you: it takes a function plus two ints and prints the result. Pass add into it with 5 and 7.",
+      hint: 'print_math(add, 5, 7)',
+      match: (cmd) => /^\s*print_math\s*\(\s*&?\s*add\s*,\s*5\s*,\s*7\s*\)\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        if (/print_math\s*\(\s*add\s*\(/.test(cmd)) return "Pass the function itself, not a call. Use the bare name: print_math(add, 5, 7).";
+        return null;
+      },
+      note: "You passed behavior as an argument. print_math does not know or care what add does; it just calls whatever function pointer it was handed. add is the callback here."
+    },
+    {
+      label: 'Task 8 of 12',
+      text: "Predict first: what will print_math(sub, 10, 3) print? Decide, then type it and check the terminal against your prediction.",
+      hint: 'print_math(sub, 10, 3)',
+      match: (cmd) => /^\s*print_math\s*\(\s*&?\s*sub\s*,\s*10\s*,\s*3\s*\)\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => null,
+      note: "If you predicted 7, you have the model: print_math called sub(10, 3) for you. Predicting output before running is the cheapest test you have. Make it a habit before every submission."
+    },
+
+    // --- Section 4: Generic data with void * ---
+    {
+      section: 'Section 4: Generic data with void *',
+      label: 'Task 9 of 12',
+      text: "Declare a comparator pointer named cmp and bind it to cmp_int_asc. Its parameters are const void *, const void *.",
+      hint: 'int (*cmp)(const void *, const void *) = cmp_int_asc;',
+      match: (cmd) => /^\s*int\s*\(\s*\*\s*cmp\s*\)\s*\(\s*const\s+void\s*\*\s*,\s*const\s+void\s*\*\s*\)\s*=\s*&?\s*cmp_int_asc\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diagDeclExpected(cmd, { ret: 'int', name: 'cmp', params: 'const void *, const void *', init: 'cmp_int_asc' }),
+      note: "const void * means 'a pointer to something, and I will not say what.' That is how one comparator can describe order for any type. The comparator itself casts the void * back to the real type inside its body."
+    },
+    {
+      label: 'Task 10 of 12',
+      text: "sort_demo holds an int array {42, 7, 19, 3}. Hand it your comparator so it knows what order you want.",
+      hint: 'sort_demo(cmp)',
+      match: (cmd) => /^\s*sort_demo\s*\(\s*&?\s*cmp\s*\)\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        if (/sort_demo\s*\(\s*cmp_int_asc\s*\)/.test(cmd)) return "That works too, but for this task pass the pointer you declared: sort_demo(cmp).";
+        return null;
+      },
+      note: "sort_demo never looks at the values itself. Every time it needs to compare two elements it calls back into your comparator through the pointer. That one callback is the only code that knows these are ints."
+    },
+    {
+      label: 'Task 11 of 12',
+      text: "Reverse the order without touching sort_demo. Point cmp at cmp_int_desc instead.",
+      hint: 'cmp = cmp_int_desc;',
+      match: (cmd) => /^\s*cmp\s*=\s*&?\s*cmp_int_desc\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => null,
+      note: "One assignment changes the whole sort. The routine is fixed; the behavior is a parameter. Choosing which function runs, not just what data flows in, is decomposition one level up."
+    },
+    {
+      label: 'Task 12 of 12',
+      text: "Run the sort again with the new comparator and watch the array flip to descending.",
+      hint: 'sort_demo(cmp)',
+      match: (cmd) => /^\s*sort_demo\s*\(\s*&?\s*cmp\s*\)\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => null,
+      note: "Same routine, opposite order, just a different comparator. This is exactly how the standard library qsort works: qsort(base, n, size, cmp). In your lab you will hand qsort your own comparators. Free mode is now unlocked."
+    },
+  ];
+
+  // ============================================================
+  // Walkthrough controller
+  // ============================================================
+  function checkTask(rawCmd) {
+    if (mode === "free" || currentTaskIndex >= tasks.length) return null;
+    const t = tasks[currentTaskIndex];
+    if (t.match(rawCmd)) {
+      process(rawCmd);
+      if (t.note) {
+        termLine('', 'out');
+        termLine('  ' + t.note, 'note');
+      }
+      currentTaskIndex++;
+      consecutiveFails = 0;
+      hideHintPulse();
+      renderTask();
+      if (currentTaskIndex >= tasks.length) {
+        setMode("free");
+        termLine('', 'out');
+        termLine('  Walkthrough complete. Free mode unlocked. Declare, assign, and call any of the library functions.', 'note');
+      }
+      return true;
+    } else {
+      echoCommand(rawCmd);
+      const diag = (t.diagnose && t.diagnose(rawCmd)) || null;
+      if (diag) termLine('  ' + diag, 'err');
+      else termLine("  Not what this task is asking for. Look at the task card above, or click 'Show hint'.", 'err');
+      consecutiveFails++;
+      if (consecutiveFails >= 2) showHintPulse();
+      return false;
+    }
+  }
+  function renderTask() {
+    const fill = root.querySelector('#fp-progress-fill');
+    const label = root.querySelector('#fp-progress-label');
+    const card = root.querySelector('#fp-task-card');
+    const labelEl = root.querySelector('#fp-task-label');
+    const textEl = root.querySelector('#fp-task-text');
+    const hintEl = root.querySelector('#fp-task-hint');
+    const sectionEl = root.querySelector('#fp-section-header');
+    const completionArea = root.querySelector('#fp-completion-area');
+
+    const pct = (currentTaskIndex / tasks.length) * 100;
+    fill.style.width = pct + '%';
+    label.textContent = 'Task ' + Math.min(currentTaskIndex + 1, tasks.length) + ' of ' + tasks.length;
+
+    if (currentTaskIndex >= tasks.length) {
+      card.className = 'task-card complete';
+      labelEl.textContent = 'Complete';
+      textEl.textContent = "You declared function pointers, called through them, swapped behavior, used a callback, and handed a comparator to a generic sort. That is everything Lab 36 asks for.";
+      hintEl.textContent = '';
+      fill.style.width = '100%';
+      label.textContent = 'All tasks complete';
+      sectionEl.textContent = 'All done';
+      completionArea.innerHTML = '';
+      cs210RenderCompletion(completionArea);
+      return;
+    }
+
+    completionArea.innerHTML = '';
+    card.className = 'task-card';
+    const t = tasks[currentTaskIndex];
+    if (t.section) sectionEl.textContent = t.section;
+    labelEl.textContent = t.label;
+    textEl.textContent = t.text;
+    hintEl.textContent = '';
+  }
+  function showHint() {
+    if (currentTaskIndex >= tasks.length) return;
+    const t = tasks[currentTaskIndex];
+    root.querySelector('#fp-task-hint').textContent = 'Hint: ' + (t.hint || '');
+    hideHintPulse();
+  }
+  function showHintPulse() { root.querySelector('#fp-hint-btn').classList.add('pulse'); }
+  function hideHintPulse() { root.querySelector('#fp-hint-btn').classList.remove('pulse'); }
+
+  function reset() {
+    pointers.clear();
+    lastSort = null;
+    flashPtr = null;
+    currentTaskIndex = 0;
+    consecutiveFails = 0;
+    hideHintPulse();
+    setMode("walkthrough");
+    terminalEl.innerHTML = '';
+    termLine('Welcome to the function pointer walkthrough.', 'dim');
+    termLine('Follow the task card above. Type C at the prompt.', 'dim');
+    termLine('', 'out');
+    renderBindings();
+    renderTask();
+  }
+
+  // ============================================================
+  // Run a command and report results
+  // ============================================================
+  function process(line) {
+    echoCommand(line);
+    try {
+      const r = runCommand(line);
+      if (!r) return;
+      if (r.kind === 'bare-func') {
+        termLine('  ' + r.name + ' is a function at ' + r.addr, 'out');
+        termLine('  its type is ' + r.sig, 'out');
+      } else if (r.kind === 'bare-ptr') {
+        termLine('  ' + r.name + ' is a function pointer of type ' + r.declSig, 'out');
+        termLine('  currently points to: ' + (r.target || 'NULL'), 'out');
+      } else if (r.kind === 'decl') {
+        termLine('  declared ' + r.name + ' as ' + r.declSig, 'out');
+        if (r.target) termLine('  ' + r.name + ' now points to ' + r.target, 'ok');
+        else termLine('  ' + r.name + ' is unbound (NULL) until you assign a function', 'out');
+      } else if (r.kind === 'assign') {
+        termLine('  ' + r.name + ' now points to ' + r.target, 'ok');
+      } else if (r.kind === 'call-arith') {
+        const callLabel = r.via ? (r.via + ' (which points to ' + r.fnName + ')') : r.fnName;
+        termLine('  ' + callLabel + '(' + r.x + ', ' + r.y + ') returned ' + r.result, 'out');
+      } else if (r.kind === 'call-void') {
+        termLine('  ' + r.x, 'out');
+      } else if (r.kind === 'print-math') {
+        const callLabel = r.via ? (r.via + ' (which points to ' + r.fnName + ')') : r.fnName;
+        termLine('  print_math called ' + callLabel + '(' + r.x + ', ' + r.y + ')', 'out');
+        termLine('  ' + r.result, 'out');
+      } else if (r.kind === 'sort') {
+        const cmpLabel = r.via ? (r.via + ' (which points to ' + r.cmpName + ')') : r.cmpName;
+        termLine('  sort_demo used ' + cmpLabel + ' to order {' + r.before.join(', ') + '}', 'out');
+        termLine('  result: {' + r.after.join(', ') + '}', 'ok');
+      } else if (r.kind === 'cleared') {
+        termLine('  all function pointers cleared', 'out');
+      } else if (r.kind === 'list') {
+        if (pointers.size === 0) termLine('  no function pointers', 'out');
+        else for (const p of pointers.values())
+          termLine('    ' + p.prettyDecl + ' -> ' + (p.target || 'NULL'), 'out');
+      } else if (r.kind === 'help') {
+        termLine('  bare name:   add            (shows a function address and type)', 'out');
+        termLine('  declare:     int (*op)(int, int) = add;', 'out');
+        termLine('  assign:      op = mult;', 'out');
+        termLine('  call:        op(5, 7)', 'out');
+        termLine('  callback:    print_math(add, 5, 7)', 'out');
+        termLine('  comparator:  int (*cmp)(const void *, const void *) = cmp_int_asc;', 'out');
+        termLine('  generic:     sort_demo(cmp)', 'out');
+        termLine('  meta:        clear   list   help', 'out');
+      }
+      renderBindings();
+    } catch (e) {
+      termLine('  error: ' + e.message, 'err');
+      renderBindings();
+    }
+  }
+
+  // ============================================================
+  // Mode toggle
+  // ============================================================
+  function setMode(newMode) {
+    mode = newMode;
+    const btn = root.querySelector('#fp-mode-btn');
+    const cli = root.querySelector('#fp-cli-input');
+    if (mode === "free") {
+      btn.textContent = 'Return to walkthrough';
+      btn.style.background = '#E6F4EA';
+      btn.style.borderColor = '#2E7D32';
+      btn.style.color = '#1B5E20';
+      if (cli) cli.placeholder = 'free mode: declare, assign, or call any library function';
+    } else {
+      btn.textContent = 'Switch to free mode';
+      btn.style.background = '';
+      btn.style.borderColor = '';
+      btn.style.color = '';
+      if (cli) cli.placeholder = 'follow the task above';
+    }
+  }
+
+  // ============================================================
+  // Input wiring
+  // ============================================================
+  const inputEl = root.querySelector('#fp-cli-input');
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const v = inputEl.value;
+      inputEl.value = '';
+      if (!v.trim()) return;
+      if (mode === "walkthrough") checkTask(v);
+      else process(v);
+    }
+  });
+  root.querySelector('#fp-hint-btn').addEventListener('click', showHint);
+  root.querySelector('#fp-reset-btn').addEventListener('click', reset);
+  root.querySelector('#fp-mode-btn').addEventListener('click', () => {
+    if (mode === "walkthrough") {
+      setMode("free");
+      termLine('', 'out');
+      termLine('  Free mode. Declare, assign, and call any of the library functions in the right pane.', 'note');
+    } else {
+      setMode("walkthrough");
+      termLine('', 'out');
+      termLine('  Walkthrough mode. Follow the task card above.', 'note');
+    }
+  });
+
+  // Boot
+  reset();
+})();
+</script>
+
+
+    </div>
+  </details>
+
+  <!-- ===================== 6. AFTER CLASS ===================== -->
+  <details id="after-class" style="margin-bottom: 24px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      6. After Class
+    </summary>
+    <div style="padding: 18px 22px;">
+      <ul style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Finish Lab 36 if you did not complete it in class. Push to GitHub Classroom before Lesson 37.</li>
+        <li style="margin-bottom: 6px;">Complete the Lesson 36 reflection in Blackboard using your walkthrough completion code.</li>
+        <li style="margin-bottom: 6px;">Read ahead for Lesson 37 (defensive programming and reading existing C code). Real code leans on function pointers heavily, so today's lesson is what lets you read it.</li>
+        <li style="margin-bottom: 0;">Function pointers and bitwise operators are both fair game in the team PEX work period. If you are on a team, this is useful leverage.</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== HELP NOTE ===================== -->
+  <div style="background: #F5F7FA; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 3px; font-size: 13.5px; color: #4A5568;">
+    <strong style="color: #00205B;">Need help?</strong> Schedule EI with your instructor. Bring the specific declaration you are stuck reading or the exact compiler message, and a screenshot of the walkthrough if it is about the walkthrough. The course Resources section has the full reference material for self-service. Specific questions get unstuck quickly.
+  </div>
+
+</div>

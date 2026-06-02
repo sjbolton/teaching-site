@@ -1,0 +1,1920 @@
+<!-- ============================================================
+     CS210 — Lesson 12
+     Pointers Introduction
+     Self-contained: all CSS inline. Native <details> for collapsing.
+     Pointer walkthrough widget embedded inline in section 5.
+     Paste into Blackboard Ultra via Document → Add HTML block.
+     ============================================================ -->
+
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 980px; margin: 0 auto; line-height: 1.6;">
+
+  <!-- ===================== LIGHT HEADER ===================== -->
+  <div style="border-left: 5px solid #003087; padding: 8px 0 8px 18px; margin-bottom: 24px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 2px;">CS210 &middot; Block 2 &middot; Lesson 12</div>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 600; color: #00205B;">Pointers Introduction</h1>
+    <div style="font-size: 14px; color: #4A5568; margin-top: 4px;">Addresses &middot; The &amp; operator &middot; Pointer declarations &middot; Dereferencing &middot; NULL</div>
+  </div>
+
+  <!-- ===================== AT A GLANCE ===================== -->
+  <div style="background: #F5F7FA; border-left: 4px solid #B5B7BA; padding: 14px 18px; margin-bottom: 22px; font-size: 14px;">
+    <strong style="color: #00205B;">At a glance:</strong> The hardest and newest topic in CS210. Every variable lives at an address in memory, and a pointer is a variable that holds one of those addresses. Get the picture of "address vs value" locked in today and the rest of the block (arithmetic, pass by pointer, malloc) follows naturally. The pointer walkthrough in Section 5 shows you addresses and arrows as you type; the lab makes you write the syntax yourself.
+  </div>
+
+  <!-- ===================== TABLE OF CONTENTS ===================== -->
+  <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 20px; margin-bottom: 24px; border-radius: 3px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Contents</div>
+    <ol style="margin: 0; padding-left: 22px; font-size: 14px;">
+      <li style="margin-bottom: 4px;"><a href="#objectives" style="color: #003087; text-decoration: none;">Lesson Objectives</a></li>
+      <li style="margin-bottom: 4px;"><a href="#readings" style="color: #003087; text-decoration: none;">Assigned Readings</a></li>
+      <li style="margin-bottom: 4px;"><a href="#pre-class" style="color: #003087; text-decoration: none;">Pre-Class Work</a></li>
+      <li style="margin-bottom: 4px;"><a href="#materials" style="color: #003087; text-decoration: none;">Lesson Materials and Overview</a></li>
+      <li style="margin-bottom: 4px;"><a href="#in-class" style="color: #003087; text-decoration: none;">In-Class Work</a></li>
+      <li style="margin-bottom: 0;"><a href="#after-class" style="color: #003087; text-decoration: none;">After Class</a></li>
+    </ol>
+  </div>
+
+  <!-- ===================== 1. OBJECTIVES ===================== -->
+  <details id="objectives" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      1. Lesson Objectives
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 10px 0; font-style: italic;">By the end of this lesson, cadets will be able to:</p>
+      <ol style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Distinguish between a variable&#x2019;s value and its memory address. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+        <li style="margin-bottom: 6px;">Declare pointer variables and assign them using the address-of operator. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+        <li style="margin-bottom: 6px;">Access the value pointed to by a pointer using the dereference operator. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+        <li style="margin-bottom: 0;">Recognize the role of NULL pointers and check for them appropriately. <span style="color: #6B7280; font-size: 12px;">(Outcomes 2, 7)</span></li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 2. READINGS ===================== -->
+  <details id="readings" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      2. Assigned Readings
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 12px 0;">Complete before class. This is the hardest reading of the course so far. Plan extra time and read slowly.</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <thead>
+          <tr style="background: #E8EDF5; color: #00205B;">
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 130px;">Source</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9;">Sections</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 220px;">Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;"><a href="https://beej.us/guide/bgc/" style="color: #003087; text-decoration: underline;">Beej-C</a></td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Chapter 5 (Pointers &mdash; Cower In Fear!)</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">All seven subsections. Read every one.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 9px 12px;">King, <em>C Programming: A Modern Approach</em></td>
+            <td style="padding: 9px 12px;">Chapter 11 (Pointers)</td>
+            <td style="padding: 9px 12px; color: #4A5568;">Optional alternate explanation if Beej is not clicking</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <!-- ===================== 3. PRE-CLASS WORK ===================== -->
+  <details id="pre-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      3. Pre-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 18px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #6B5300; font-size: 14px; margin-bottom: 4px;">Do this first</div>
+        <div style="font-size: 14px; color: #5A4B00;">Plan on 45 to 60 minutes. This is the hardest reading of the course so far. Do not skim. If something is not clicking, mark the spot and bring a specific question to class.</div>
+      </div>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 0 0 10px 0;">Pre-Class Checklist</h3>
+
+      <!-- Step 1: Reading -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">1</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Read Beej-C Chapter 5 (Pointers &mdash; Cower In Fear!)</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">All seven subsections. Read every one carefully. Make sure you can answer these checkpoint questions in your own words before class:</div>
+            <ul style="font-size: 13.5px; margin: 0 0 6px 0; padding-left: 20px;">
+              <li style="margin-bottom: 3px;">What is the difference between a variable&#x2019;s value and its address?</li>
+              <li style="margin-bottom: 3px;">What does the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;</code> operator do?</li>
+              <li style="margin-bottom: 3px;">What does the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">*</code> operator do in a declaration vs in an expression?</li>
+              <li style="margin-bottom: 3px;">Why is dereferencing a NULL pointer dangerous?</li>
+              <li style="margin-bottom: 0;">In <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">int *p, q;</code>, what are the types of <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">p</code> and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">q</code>?</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Try a small program -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">2</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Try the &amp; example from the reading</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">Type Beej&#x2019;s first <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;</code> example into a new file and run it. See an address come out on your machine.</div>
+            <div style="background: #1E2A3A; color: #E8EDF5; padding: 10px 14px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.5;">
+              <span style="color: #6B7280;">// pointer_check.c</span><br>
+              <span style="color: #C586C0;">#include</span> <span style="color: #CE9178;">&lt;stdio.h&gt;</span><br>
+              <br>
+              <span style="color: #569CD6;">int</span> <span style="color: #DCDCAA;">main</span>(<span style="color: #569CD6;">void</span>) {<br>
+              &nbsp;&nbsp;<span style="color: #569CD6;">int</span> i = <span style="color: #B5CEA8;">42</span>;<br>
+              &nbsp;&nbsp;<span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"value of i: %d\n"</span>, i);<br>
+              &nbsp;&nbsp;<span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"address of i: %p\n"</span>, (<span style="color: #569CD6;">void</span> *)&amp;i);<br>
+              &nbsp;&nbsp;<span style="color: #C586C0;">return</span> <span style="color: #B5CEA8;">0</span>;<br>
+              }
+            </div>
+            <div style="font-size: 13.5px; color: #4A5568; margin-top: 8px;">The address will be a long hex number that changes between runs. That is normal. The point is to see your own variable&#x2019;s address with your own eyes.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Skim widget -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 8px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">3</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Skim the In-Class section below</div>
+            <div style="font-size: 14px;">You will see a pointer walkthrough widget. No need to use it yet; just know what it looks like. Each row shows a variable&#x2019;s address and value. Pointers draw an arrow to whatever they point at.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ===================== 4. LESSON MATERIALS AND OVERVIEW ===================== -->
+  <details id="materials" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      4. Lesson Materials and Overview
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 18px 0;">Pointers are the topic that separates &#x201C;I&#x2019;ve written some C&#x201D; from &#x201C;I can read any C codebase.&#x201D; The mental model takes a beat to land. Once it does, every later topic in this block (pointer arithmetic, pass by pointer, malloc, structs with pointer fields) builds on the same picture. So we start slow and concrete: addresses, the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;</code> operator, pointer variables, dereferencing, and NULL. That&#x2019;s it for today.</p>
+
+      <!-- Subsection navigation -->
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 18px; margin-bottom: 22px; border-radius: 3px;">
+        <div style="font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">Jump to</div>
+        <div style="font-size: 13.5px;">
+          <a href="#slides" style="color: #003087; text-decoration: none; margin-right: 14px;">Slides</a>
+          <a href="#mental-model" style="color: #003087; text-decoration: none; margin-right: 14px;">Mental Model</a>
+          <a href="#address-of" style="color: #003087; text-decoration: none; margin-right: 14px;">Address-of</a>
+          <a href="#pointer-decl" style="color: #003087; text-decoration: none; margin-right: 14px;">Declaring Pointers</a>
+          <a href="#dereference" style="color: #003087; text-decoration: none; margin-right: 14px;">Dereferencing</a>
+          <a href="#null" style="color: #003087; text-decoration: none; margin-right: 14px;">NULL</a>
+          <a href="#gotchas" style="color: #003087; text-decoration: none;">Gotchas</a>
+        </div>
+      </div>
+
+      <!-- Slides -->
+      <h3 id="slides" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0; scroll-margin-top: 16px;">Slides</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">The Lesson 12 deck covers the mental model, the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;</code> operator, pointer declarations, the dereference operator, NULL, and the declaration gotcha. The slides set up the in-class lecture; the pointer walkthrough is where you practice each piece yourself.</p>
+
+      <!-- =========================================================
+           EDIT ME: Lesson 12 slide deck link
+           Replace href="#" below with the SharePoint share URL once the
+           deck is published. Leave target="_blank" and rel="noopener".
+           ========================================================= -->
+      <p style="margin: 0 0 18px 0;">
+        <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 10px 20px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 14px;">Open Lesson 12 slides &rarr;</a>
+      </p>
+
+      <!-- Mental Model -->
+      <h3 id="mental-model" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Mental model: memory is numbered boxes</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Think of memory as a long row of numbered boxes, each holding one byte. The number on each box is its <strong>address</strong>. When you write <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">int x = 42;</code>, the compiler picks four consecutive boxes, writes the bits of 42 into them, and from then on the name <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">x</code> refers to those boxes. The address of the first box is the address of <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">x</code>.</p>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">A <strong>pointer</strong> is a variable whose value is an address. Same idea as a variable holding 42, except the number it holds is the location of some other variable. That&#x2019;s it. Everything else in this lesson is syntax for asking &#x201C;what is the address of this variable?&#x201D; and &#x201C;what is at the address this pointer holds?&#x201D;</p>
+
+      <!-- Address-of -->
+      <h3 id="address-of" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">The address-of operator: &amp;</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">The <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;</code> operator, when placed in front of a variable, gives you the address of that variable. The result is a pointer.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">int</span> x = <span style="color: #B5CEA8;">42</span>;<br>
+        <span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"%d\n"</span>, x);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #6B7280;">// 42 (the value)</span><br>
+        <span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"%p\n"</span>, (<span style="color: #569CD6;">void</span> *)&amp;x);&nbsp;<span style="color: #6B7280;">// 0x7ffe... (the address)</span>
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Print pointer values with <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">%p</code>. Cast to <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">(void *)</code> to keep the compiler quiet. The exact number you see will be different on every run; that&#x2019;s the operating system handing your program a different stretch of memory each time, and it is normal.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">You can recognize the address-of operator in any expression: a single <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;</code> in front of a variable name. (Double <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;&amp;</code> is &#x201C;logical and&#x201D; from CS110, totally unrelated.)</p>
+
+      <div style="background: #F0F4FA; border-left: 4px solid #003087; padding: 14px 18px; margin: 0 0 18px 0; border-radius: 3px;">
+        <p style="font-size: 14.5px; margin: 0;"><strong style="color: #00205B;">If this looks familiar, it should.</strong> Every <code style="background: #E5EBF5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">scanf</code> call back in Lesson 3 used the <code style="background: #E5EBF5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;</code> operator: <code style="background: #E5EBF5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">scanf("%d", &amp;x)</code>. We described it then as a required syntactic ritual without explaining why. Now you can see it: <code style="background: #E5EBF5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">scanf</code> needs to know WHERE to store the value you type, and <code style="background: #E5EBF5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;x</code> gives it that location. The full payoff lands at Lesson 14, when we look at how any function can use a pointer parameter to modify its caller&#x2019;s variables.</p>
+      </div>
+
+      <!-- Pointer Declarations -->
+      <h3 id="pointer-decl" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Declaring pointer variables</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">A pointer declaration looks like a regular variable declaration with a <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">*</code> inserted before the name. The type before the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">*</code> is the type of the thing the pointer will point at.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">int</span> x = <span style="color: #B5CEA8;">42</span>;<br>
+        <span style="color: #569CD6;">int</span> *p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #6B7280;">// p is a pointer to an int (uninitialized!)</span><br>
+        p = &amp;x;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #6B7280;">// p now holds the address of x</span>
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Read the declaration as &#x201C;p is a pointer to an int.&#x201D; The type matters: an <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">int *</code> can only point at <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">int</code>s. A <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">char *</code> can only point at <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">char</code>s. This becomes important when we get to pointer arithmetic in Lesson 13.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">An uninitialized pointer is dangerous. It holds whatever garbage bits were in those bytes already. Treat that garbage as a random address and the program will crash (or worse, silently corrupt memory). Always assign a real address to a pointer before you use it. If you do not have one yet, assign <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">NULL</code> (see below).</p>
+
+      <!-- Dereferencing -->
+      <h3 id="dereference" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">The dereference operator: *</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">When you have a pointer, the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">*</code> operator (used in an expression, not a declaration) gives you access to the thing the pointer points at. You can read it, write it, do arithmetic with it; it acts as an alias for the original variable.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">int</span> x = <span style="color: #B5CEA8;">42</span>;<br>
+        <span style="color: #569CD6;">int</span> *p = &amp;x;<br>
+        <br>
+        <span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"%d\n"</span>, *p);&nbsp;&nbsp;<span style="color: #6B7280;">// 42 (read x through p)</span><br>
+        *p = <span style="color: #B5CEA8;">100</span>;<br>
+        <span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"%d\n"</span>, x);&nbsp;&nbsp;&nbsp;<span style="color: #6B7280;">// 100 (x changed, because *p IS x)</span>
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">The two uses of <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">*</code> are the most confusing part of pointer syntax. In <strong>a declaration</strong> like <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">int *p;</code>, the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">*</code> means &#x201C;this variable is a pointer.&#x201D; In <strong>an expression</strong> like <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">*p = 100</code>, the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">*</code> means &#x201C;follow the pointer and use the thing it points at.&#x201D; Same character, different jobs. Context tells you which.</p>
+
+      <!-- NULL -->
+      <h3 id="null" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">NULL: the &#x201C;points at nothing&#x201D; pointer</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">NULL</code> is a special value that means &#x201C;this pointer does not currently point at anything.&#x201D; You can assign it to any pointer of any type. Use it to mark a pointer as &#x201C;not ready yet&#x201D; instead of leaving it uninitialized.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">int</span> *p = <span style="color: #569CD6;">NULL</span>;&nbsp;<span style="color: #6B7280;">// safe: explicitly not pointing anywhere</span><br>
+        <br>
+        <span style="color: #C586C0;">if</span> (p != <span style="color: #569CD6;">NULL</span>) {<br>
+        &nbsp;&nbsp;<span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"%d\n"</span>, *p);&nbsp;<span style="color: #6B7280;">// only dereference if it's safe</span><br>
+        }
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Dereferencing a NULL pointer crashes your program. The operating system specifically watches for reads and writes to address zero and kills your process. This is actually good news: a crash you can find in seconds is better than a silent memory corruption you might hunt for hours.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">The habit that prevents this: any pointer that might be NULL gets checked with <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">if (p != NULL)</code> before dereferencing. You will see this pattern constantly in C code from Lesson 15 onward.</p>
+
+      <!-- Gotchas -->
+      <h3 id="gotchas" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Two declaration gotchas</h3>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><strong style="color: #00205B;">The asterisk binds to the name, not the type.</strong> When declaring multiple variables on one line, the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">*</code> only applies to the name immediately after it. The line below declares one pointer and one plain int, despite what your eyes might tell you.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">int</span> *p, q;&nbsp;&nbsp;<span style="color: #6B7280;">// p is int*, q is int. NOT both pointers.</span><br>
+        <span style="color: #569CD6;">int</span> *p, *q;&nbsp;<span style="color: #6B7280;">// Both pointers. Each one needs its own *.</span>
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">The cs210 style rule: in CS210, declare one variable per line. It is more typing but it eliminates this whole class of bug.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><strong style="color: #00205B;">Pointer types must match.</strong> An <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">int *</code> cannot point at a <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">double</code>. The compiler will warn you and the bytes will be misinterpreted if you ignore the warning.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">double</span> d = <span style="color: #B5CEA8;">3.14</span>;<br>
+        <span style="color: #569CD6;">int</span> *p = &amp;d;&nbsp;&nbsp;<span style="color: #6B7280;">// warning: incompatible pointer types</span>
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">When you compile with <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">-Wall -Werror</code> (which you are, per the cs210 Makefile), the compiler will refuse to build. Fix the types; don&#x2019;t cast the warning away.</p>
+
+    </div>
+  </details>
+
+  <!-- ===================== 5. IN-CLASS WORK ===================== -->
+  <details id="in-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      5. In-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 16px 0;">Three things to do in class. Use the checklist to track your progress.</p>
+
+      <ul style="list-style: none; padding: 0; margin: 0 0 24px 0; font-size: 14.5px;">
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Take Quiz 4 (Recursion I).</strong>
+          <span style="color: #4A5568;">Covers Lesson 11 content. Your instructor will tell you when in the period to take it. About 15 minutes.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Work through the pointer walkthrough below.</strong>
+          <span style="color: #4A5568;">Twelve guided tasks across four sections. Watch addresses, arrows, and dereferencing in action. About 25 minutes.</span>
+        </li>
+        <li style="margin-bottom: 0; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Complete Lab 12: Pointer Basics.</strong>
+          <span style="color: #4A5568;">Autograded through GitHub Classroom. Full instructions in the lab repo.</span>
+          <!-- =========================================================
+               EDIT ME: Lab 12 GitHub Classroom assignment link
+               Replace href="#" with the classroom.github.com/a/... invite
+               URL once the assignment is published.
+               ========================================================= -->
+          <div style="margin-top: 8px; margin-left: 28px;">
+            <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 6px 14px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 13px;">Accept Lab 12 on GitHub Classroom &rarr;</a>
+          </div>
+        </li>
+      </ul>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 18px 0 10px 0;">Pointer Walkthrough</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Twelve tasks across four sections. Type each C statement at the prompt. The terminal shows what the parser did; the right pane shows the current memory state with addresses and arrows from pointers to their targets.</p>
+
+<!-- ============================================================
+     CS210 Lesson 12 - Pointer Walkthrough Widget
+     Template-aligned style. Native HTML/CSS + scoped JS.
+     Derived from the cmem walkthrough pattern. Adds address column
+     and SVG pointer arrows.
+     Paste as a block; runs anywhere the parent page allows <script>.
+     ============================================================ -->
+<style>
+.cs210-ptr * { box-sizing: border-box; }
+.cs210-ptr {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-ptr h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-ptr .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 22px;
+}
+.cs210-ptr .progress-bar {
+  background: #E5E7EB;
+  border-radius: 3px;
+  height: 8px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.cs210-ptr .progress-fill {
+  background: #003087;
+  height: 100%;
+  transition: width 0.3s ease;
+}
+.cs210-ptr .progress-label {
+  font-size: 12px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-ptr .section-header {
+  background: #E8EDF5;
+  color: #00205B;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.cs210-ptr .task-card {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  border-radius: 3px;
+}
+.cs210-ptr .task-card.complete {
+  background: #E6F4EA;
+  border-left-color: #2E7D32;
+}
+.cs210-ptr .task-label {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B5300;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.cs210-ptr .task-card.complete .task-label {
+  color: #1B5E20;
+}
+.cs210-ptr .task-text {
+  font-size: 15px;
+  color: #1a1a1a;
+}
+.cs210-ptr .task-hint {
+  font-size: 12.5px;
+  color: #6B7280;
+  margin-top: 6px;
+  font-style: italic;
+}
+
+/* Two-pane area: terminal left, memory right (40/60 split) */
+.cs210-ptr .panes {
+  display: grid;
+  grid-template-columns: 2fr 3fr;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+@media (max-width: 760px) {
+  .cs210-ptr .panes { grid-template-columns: 1fr; }
+}
+.cs210-ptr .terminal {
+  background: #1E2A3A;
+  color: #E8EDF5;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13.5px;
+  line-height: 1.5;
+  border-radius: 4px;
+  padding: 14px 18px;
+  min-height: 380px;
+  max-height: 440px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.cs210-ptr .terminal .prompt { color: #7FB3D5; }
+.cs210-ptr .terminal .typed { color: #FFFFFF; }
+.cs210-ptr .terminal .out { color: #B5BEC8; }
+.cs210-ptr .terminal .note { color: #F0B92C; }
+.cs210-ptr .terminal .err { color: #F47A7A; }
+.cs210-ptr .terminal .ok { color: #7FD17F; }
+.cs210-ptr .terminal .dim { color: #6B7280; }
+
+.cs210-ptr .memory-pane {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  padding: 12px 14px;
+  min-height: 380px;
+  max-height: 440px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+}
+.cs210-ptr .memory-pane-header {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #E5E7EB;
+}
+.cs210-ptr .memory-empty {
+  color: #6B7280;
+  font-style: italic;
+  font-size: 13px;
+  text-align: center;
+  padding: 80px 10px;
+}
+
+/* Memory table layout */
+.cs210-ptr .mem-table-wrap {
+  position: relative;
+}
+.cs210-ptr .mem-row-grid {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  column-gap: 10px;
+  align-items: center;
+  font-size: 11px;
+  color: #6B7280;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 4px;
+  padding: 0 8px;
+}
+.cs210-ptr .mem-row {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  column-gap: 10px;
+  align-items: center;
+  padding: 8px;
+  margin-bottom: 4px;
+  border-radius: 3px;
+  background: #F8FAFC;
+  border: 1px solid #E5E7EB;
+  position: relative;
+}
+.cs210-ptr .mem-row.pointer {
+  background: #F0F4FA;
+  border-color: #C7D3E5;
+}
+.cs210-ptr .mem-row.justAdded {
+  animation: cs210-ptr-flash 1.0s ease-out;
+}
+.cs210-ptr .mem-row.justChanged {
+  animation: cs210-ptr-flash-gold 1.0s ease-out;
+}
+@keyframes cs210-ptr-flash {
+  0%   { background: #DCEAF7; }
+  100% { background: #F8FAFC; }
+}
+@keyframes cs210-ptr-flash-gold {
+  0%   { background: #FFF1C9; }
+  100% { background: #F8FAFC; }
+}
+.cs210-ptr .mem-row.pointer.justAdded {
+  animation: cs210-ptr-flash-ptr 1.0s ease-out;
+}
+.cs210-ptr .mem-row.pointer.justChanged {
+  animation: cs210-ptr-flash-gold-ptr 1.0s ease-out;
+}
+@keyframes cs210-ptr-flash-ptr {
+  0%   { background: #DCEAF7; }
+  100% { background: #F0F4FA; }
+}
+@keyframes cs210-ptr-flash-gold-ptr {
+  0%   { background: #FFF1C9; }
+  100% { background: #F0F4FA; }
+}
+.cs210-ptr .mem-addr {
+  font-family: Consolas, monospace;
+  font-size: 11.5px;
+  color: #4A5568;
+  white-space: nowrap;
+}
+.cs210-ptr .mem-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.cs210-ptr .mem-decl {
+  font-family: Consolas, monospace;
+  font-size: 12.5px;
+  color: #00205B;
+  font-weight: 600;
+}
+.cs210-ptr .mem-value {
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  color: #1a1a1a;
+}
+.cs210-ptr .mem-value .label {
+  color: #6B7280;
+  font-size: 11px;
+  margin-right: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+.cs210-ptr .mem-value.warn {
+  color: #B8002F;
+}
+.cs210-ptr .mem-value.null-val {
+  color: #B8002F;
+  font-weight: 600;
+}
+.cs210-ptr .arrow-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 5;
+}
+.cs210-ptr .arrow-svg path {
+  fill: none;
+  stroke: #003087;
+  stroke-width: 2;
+}
+.cs210-ptr .arrow-svg .arrow-head {
+  fill: #003087;
+  stroke: none;
+}
+.cs210-ptr .null-marker {
+  display: inline-block;
+  color: #B8002F;
+  font-weight: 700;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  letter-spacing: 1px;
+}
+
+.cs210-ptr .input-row {
+  display: flex;
+  background: #1E2A3A;
+  border-radius: 4px;
+  padding: 8px 14px;
+  margin-bottom: 14px;
+  border: 1px solid #003087;
+}
+.cs210-ptr .input-prompt {
+  color: #7FB3D5;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  margin-right: 8px;
+  align-self: center;
+  white-space: nowrap;
+}
+.cs210-ptr .input-row input {
+  flex: 1;
+  background: transparent;
+  color: #FFFFFF;
+  border: none;
+  outline: none;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  padding: 4px 0;
+}
+.cs210-ptr .controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.cs210-ptr .btn {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  padding: 6px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #00205B;
+  font-family: inherit;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.cs210-ptr .btn:hover { background: #F5F7FA; }
+@keyframes cs210-ptr-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(240, 185, 44, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0); }
+}
+.cs210-ptr .btn.pulse {
+  background: #FFF8E1;
+  border-color: #F0B92C;
+  color: #6B5300;
+  font-weight: 600;
+  animation: cs210-ptr-pulse 1.5s infinite;
+}
+.cs210-ptr .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #4A5568;
+  margin-top: 12px;
+}
+.cs210-ptr .help-note strong { color: #00205B; }
+
+/* Name modal overlay - scoped to widget container, not viewport */
+.cs210-ptr .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  border-radius: 6px;
+}
+.cs210-ptr .name-modal {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-ptr .name-modal h2 {
+  color: #00205B;
+  font-size: 20px;
+  margin: 0 0 10px 0;
+}
+.cs210-ptr .name-modal p {
+  color: #4A5568;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+.cs210-ptr .name-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-ptr .name-modal input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-ptr .name-modal-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-ptr .name-modal-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-ptr .name-modal-btn:not(:disabled):hover {
+  background: #00205B;
+}
+/* Completion screen */
+.cs210-ptr .completion-screen {
+  background: #ffffff;
+  border: 2px solid #2E7D32;
+  border-radius: 6px;
+  padding: 24px 28px;
+  margin-top: 16px;
+}
+.cs210-ptr .completion-screen .cs-heading {
+  color: #1B5E20;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 6px 0;
+}
+.cs210-ptr .completion-screen .cs-name-line {
+  font-size: 15px;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+}
+.cs210-ptr .completion-screen .cs-name-line strong {
+  color: #00205B;
+}
+.cs210-ptr .completion-screen .cs-code-block {
+  background: #F0F4FA;
+  border: 1px solid #003087;
+  border-radius: 4px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.cs210-ptr .completion-screen .cs-code-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #4A5568;
+  margin-bottom: 4px;
+}
+.cs210-ptr .completion-screen .cs-code-value {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 28px;
+  font-weight: 700;
+  color: #00205B;
+  letter-spacing: 3px;
+}
+.cs210-ptr .completion-screen .cs-copy-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-ptr .completion-screen .cs-copy-btn:hover {
+  background: #00205B;
+}
+.cs210-ptr .completion-screen .cs-copy-btn.copied {
+  background: #2E7D32;
+}
+.cs210-ptr .completion-screen .cs-timestamp {
+  font-size: 13px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-ptr .completion-screen .cs-reminder {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 14px;
+  color: #6B5300;
+  line-height: 1.5;
+}
+.cs210-ptr .completion-screen .cs-reminder strong {
+  color: #4A3A00;
+}
+</style>
+
+<div class="cs210-ptr">
+
+<div class="name-modal-backdrop" id="ptr-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Blackboard reflection.</p>
+    <input type="text" id="cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="cadet-name-btn" disabled>Start the walkthrough</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 12 &middot; Pointer Walkthrough</h1>
+<div class="subtitle">A guided tour through addresses, the &amp; operator, pointer declarations, dereferencing, and NULL. Type each C statement on the input line. The terminal shows what happened; the right pane shows memory with arrows from pointers to their targets.</div>
+
+<div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width: 0%;"></div></div>
+<div class="progress-label" id="progress-label">Task 0 of 12</div>
+
+<div class="section-header" id="section-header">Section 1: Addresses and the &amp; operator</div>
+
+<div class="task-card" id="task-card">
+  <div class="task-label" id="task-label">Current task</div>
+  <div class="task-text" id="task-text">Loading...</div>
+  <div class="task-hint" id="task-hint"></div>
+</div>
+
+<div class="panes">
+  <div class="terminal" id="terminal"></div>
+  <div class="memory-pane">
+    <div class="memory-pane-header">Memory</div>
+    <div id="memory-area">
+      <div class="memory-empty">No variables yet.<br>Type a declaration on the left.</div>
+    </div>
+  </div>
+</div>
+
+<div class="input-row">
+  <span class="input-prompt">ptr&gt;</span>
+  <input type="text" id="cli-input" autocomplete="off" spellcheck="false" placeholder="try: int x = 42;">
+</div>
+
+<div class="controls">
+  <button class="btn" id="hint-btn">Show hint</button>
+  <button class="btn" id="reset-btn">Reset</button>
+  <button class="btn" id="mode-btn">Switch to free mode</button>
+</div>
+
+<div class="help-note">
+  <strong>How this works:</strong> This is not a real C compiler. It is a teaching tool that shows you addresses and pointer relationships you cannot see in normal terminal output. The task card tells you what to type next; only the expected command will advance the walkthrough so the memory state stays predictable. Mistype twice and the hint button will pulse. After the walkthrough completes, free mode unlocks automatically so you can experiment.
+</div>
+
+<div id="completion-area"></div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-ptr');
+  if (!root) return;
+
+  // ============================================================
+  // CS210 widget completion utilities
+  // Salt -> deterministic 6-char code via FNV-1a.
+  // Alphabet excludes 0, 1, O, I (uppercase only output).
+  // ============================================================
+  const CS210_SALT = "lesson12_pointer_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  // Name-modal gating: widget stays blocked until name entered.
+  // Pre-fill from localStorage if available. If already set, skip the modal entirely.
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#ptr-name-modal-backdrop');
+    const input = root.querySelector('#cadet-name-input');
+    const btn = root.querySelector('#cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length >= 2) {
+        // Already entered (likely on the same page in another widget, or in a
+        // previous visit). Adopt it and skip the modal.
+        cs210CadetName = stored.trim();
+        backdrop.style.display = 'none';
+        return;
+      }
+    } catch (e) { /* localStorage may be disabled */ }
+
+    function updateBtn() {
+      btn.disabled = input.value.trim().length < 2;
+    }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', function() {
+      const name = input.value.trim();
+      if (name.length < 2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+      // Dismiss any sibling widget modals on the same page. When new widgets
+      // are added to the course, add their backdrop IDs to this query.
+      const siblings = document.querySelectorAll(
+        '#name-modal-backdrop, #bw-name-modal-backdrop, #ptrmath-name-modal-backdrop, #duality-name-modal-backdrop'
+      );
+      siblings.forEach(function(m) { m.style.display = 'none'; });
+      const cli = root.querySelector('#cli-input');
+      if (cli) cli.focus();
+    });
+    setTimeout(function() { input.focus(); }, 50);
+  })();
+
+  function cs210RenderCompletion(area) {
+    if (!area) return;
+    if (root.querySelector('#cs210-completion-overlay')) return;
+    const now = new Date();
+    const ts = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const safeName = (cs210CadetName || 'Cadet').replace(/[<>&"']/g, function(c) {
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+    area.innerHTML =
+      '<div class="completion-screen">' +
+        '<div class="cs-heading">Walkthrough complete</div>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value">' + CS210_CODE + '</div></div>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+      '</div>';
+    const overlay = document.createElement('div');
+    overlay.id = 'cs210-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.style.background = 'rgba(27, 94, 32, 0.55)';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">Walkthrough complete</h2>' +
+        '<p>Take a screenshot of this box. You will need the code and a visual of this screen for the Blackboard reflection.</p>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value" id="cs-code-value">' + CS210_CODE + '</div></div>' +
+          '<button class="cs-copy-btn" id="cs-copy-btn" type="button">Copy code</button>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+        '<div class="cs-reminder" style="margin-bottom:14px;">' +
+          '<strong>Next step:</strong> Open the Lesson 12 reflection in Blackboard. Enter this code, answer the reflection prompt, and attach your screenshot.' +
+        '</div>' +
+        '<button class="name-modal-btn" id="cs-overlay-close" type="button" style="background:#2E7D32;">Got it &mdash; close this</button>' +
+      '</div>';
+    root.appendChild(overlay);
+    const closeBtn = overlay.querySelector('#cs-overlay-close');
+    if (closeBtn) closeBtn.addEventListener('click', function() { overlay.style.display = 'none'; });
+    const copyBtn = overlay.querySelector('#cs-copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function() {
+        const text = CS210_CODE;
+        const ok = function() {
+          copyBtn.textContent = 'Copied';
+          copyBtn.classList.add('copied');
+          setTimeout(function() {
+            copyBtn.textContent = 'Copy code';
+            copyBtn.classList.remove('copied');
+          }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(ok, function() {
+            cs210FallbackCopy(text); ok();
+          });
+        } else {
+          cs210FallbackCopy(text); ok();
+        }
+      });
+    }
+  }
+  function cs210FallbackCopy(text) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e) { /* nothing else to do */ }
+  }
+
+  // ============================================================
+  // Type metadata (64-bit Linux gcc)
+  // L12 widget supports: int, char, double for values.
+  // Pointer types: int*, char*, double*.
+  // ============================================================
+  const TYPES = {
+    "int":    { size: 4, signed: true, category: "int", min: -2147483648n, max: 2147483647n },
+    "char":   { size: 1, signed: true, category: "int", min: -128n, max: 127n },
+    "double": { size: 8, signed: true, category: "float" },
+  };
+  // For pointer type matching
+  const POINTER_TYPES = ["int *", "char *", "double *"];
+
+  // ============================================================
+  // State
+  // ============================================================
+  // variables: { name, kind: 'value'|'pointer', type, address, ... }
+  // For value vars: { kind:'value', type, name, address, value (BigInt or number) }
+  // For pointer vars: { kind:'pointer', pointeeType, name, address, target: name|null|'uninit', value }
+  //   value: for display only. target='uninit' means uninitialized; target=null means NULL.
+  const variables = [];
+  let nextValueAddr = 0x1000n;    // Plain variables: 0x1000, 0x1004, 0x1008...
+  let nextPointerAddr = 0x2000n;  // Pointers: 0x2000, 0x2008, 0x2010... (8 bytes each)
+  let currentTaskIndex = 0;
+  let consecutiveFails = 0;
+  let mode = "walkthrough";
+  let recentlyChanged = null; // name of var to flash on next render
+  let recentlyAdded = null;   // name of var that just appeared
+
+  // ============================================================
+  // Helpers
+  // ============================================================
+  function addrHex(addr) { return "0x" + addr.toString(16).toUpperCase(); }
+  function findVar(name) { return variables.find(v => v.name === name); }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" })[c]);
+  }
+  function escapeRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+
+  // ============================================================
+  // Value parser (for plain int/char/double values)
+  // ============================================================
+  function parseValue(typeName, rawVal) {
+    rawVal = String(rawVal).trim();
+    if (typeName === "double") {
+      const v = parseFloat(rawVal);
+      if (isNaN(v)) throw new Error("not a valid number: " + rawVal);
+      return v;
+    }
+    // int / char
+    const cl = rawVal.match(/^'(.)'$/);
+    if (cl) return BigInt(cl[1].charCodeAt(0));
+    if (/^-?\d+$/.test(rawVal)) return BigInt(rawVal);
+    throw new Error("not a valid value for " + typeName + ": " + rawVal);
+  }
+
+  // ============================================================
+  // Parsers
+  // ============================================================
+  // Plain value declaration: int x = 42;  char c = 'A';  double d = 3.14;
+  // Also: int x;  (uninitialized)
+  function tryParseValueDecl(line) {
+    const t = line.trim().replace(/;?\s*$/, "");
+    // Make sure it's not a pointer decl first
+    if (/\*/.test(t)) return null;
+    const m = t.match(/^(int|char|double)\s+([A-Za-z_]\w*)\s*(?:=\s*(.+))?$/);
+    if (!m) return null;
+    return { type: m[1], name: m[2], value: m[3] || null };
+  }
+  // Pointer declaration: int *p;  int *p = &x;  int *p = NULL;
+  function tryParsePointerDecl(line) {
+    const t = line.trim().replace(/;?\s*$/, "");
+    const m = t.match(/^(int|char|double)\s*\*\s*([A-Za-z_]\w*)\s*(?:=\s*(.+))?$/);
+    if (!m) return null;
+    return { pointeeType: m[1], name: m[2], value: m[3] || null };
+  }
+  // Pointer assignment: p = &x;  p = NULL;  p = q;
+  function tryParsePointerAssign(line) {
+    const t = line.trim().replace(/;?\s*$/, "");
+    const m = t.match(/^([A-Za-z_]\w*)\s*=\s*(.+)$/);
+    if (!m) return null;
+    // Reject if LHS is a known value variable (handled by tryParseValueAssign or *p=...).
+    // We'll let the evaluator decide.
+    return { lhs: m[1], rhs: m[2].trim() };
+  }
+  // Write through pointer: *p = value;
+  function tryParseDerefAssign(line) {
+    const t = line.trim().replace(/;?\s*$/, "");
+    const m = t.match(/^\*\s*([A-Za-z_]\w*)\s*=\s*(.+)$/);
+    if (!m) return null;
+    return { ptrName: m[1], rhs: m[2].trim() };
+  }
+  // Print value or address expression: printf("...", &x);  printf("...", *p);
+  // For simplicity we accept bare expressions: &x   *p   p   x
+  function tryParsePrintExpr(line) {
+    const t = line.trim().replace(/;?\s*$/, "");
+    // printf with %d/%p/%c/%f and one arg
+    const m = t.match(/^printf\s*\(\s*"([^"]*)"\s*,\s*(.+)\s*\)$/);
+    if (!m) return null;
+    return { fmt: m[1], arg: m[2].trim() };
+  }
+  // Bare expression evaluation: &x  *p  p  x  (for inspection)
+  function tryParseBareExpr(line) {
+    const t = line.trim().replace(/;?\s*$/, "");
+    if (/^&\s*[A-Za-z_]\w*$/.test(t)) return { kind: "addrOf", arg: t.replace(/^&\s*/, "") };
+    if (/^\*\s*[A-Za-z_]\w*$/.test(t)) return { kind: "deref", arg: t.replace(/^\*\s*/, "") };
+    if (/^[A-Za-z_]\w*$/.test(t)) return { kind: "name", arg: t };
+    return null;
+  }
+
+  // ============================================================
+  // Evaluators
+  // ============================================================
+  function evalValueDecl(parsed) {
+    const existing = findVar(parsed.name);
+    if (existing) throw new Error("redeclared: '" + parsed.name + "' already exists.");
+    let value, valueDisplay, uninit = false;
+    if (parsed.value === null) {
+      uninit = true;
+      valueDisplay = "(uninitialized)";
+      value = null;
+    } else {
+      value = parseValue(parsed.type, parsed.value);
+      valueDisplay = parsed.type === "char"
+        ? (parsed.value.match(/^'.'$/) ? parsed.value : value.toString())
+        : value.toString();
+    }
+    const meta = TYPES[parsed.type];
+    // Align address based on size
+    if (nextValueAddr % BigInt(meta.size) !== 0n) {
+      nextValueAddr += BigInt(meta.size) - (nextValueAddr % BigInt(meta.size));
+    }
+    const v = {
+      kind: 'value',
+      type: parsed.type,
+      name: parsed.name,
+      address: nextValueAddr,
+      value: value,
+      valueDisplay: valueDisplay,
+      uninit: uninit,
+      originalInput: parsed.value,
+    };
+    nextValueAddr += BigInt(meta.size);
+    variables.push(v);
+    recentlyAdded = parsed.name;
+    return { kind: "var-added", variable: v };
+  }
+  function evalPointerDecl(parsed) {
+    const existing = findVar(parsed.name);
+    if (existing) throw new Error("redeclared: '" + parsed.name + "' already exists.");
+    // Align pointer to 8 bytes
+    if (nextPointerAddr % 8n !== 0n) {
+      nextPointerAddr += 8n - (nextPointerAddr % 8n);
+    }
+    const v = {
+      kind: 'pointer',
+      pointeeType: parsed.pointeeType,
+      name: parsed.name,
+      address: nextPointerAddr,
+      target: 'uninit',
+      targetAddr: null,
+      initExpr: parsed.value,  // for display only
+    };
+    nextPointerAddr += 8n;
+    variables.push(v);
+    recentlyAdded = parsed.name;
+
+    if (parsed.value !== null) {
+      // Initialize the pointer immediately
+      assignPointerValue(v, parsed.value);
+    }
+    return { kind: "ptr-added", variable: v };
+  }
+  // Assign an RHS value (address-of, NULL, or another pointer) to a pointer variable.
+  function assignPointerValue(ptrVar, rhs) {
+    rhs = rhs.trim();
+    if (rhs === "NULL" || rhs === "0") {
+      ptrVar.target = null;
+      ptrVar.targetAddr = null;
+      return;
+    }
+    // &name
+    const aof = rhs.match(/^&\s*([A-Za-z_]\w*)$/);
+    if (aof) {
+      const target = findVar(aof[1]);
+      if (!target) throw new Error("'" + aof[1] + "' is not declared.");
+      if (target.kind !== 'value') throw new Error("&" + aof[1] + ": cannot take the address of a pointer like this in L12.");
+      // Type check
+      if (target.type !== ptrVar.pointeeType) {
+        throw new Error("type mismatch: " + ptrVar.pointeeType + " * cannot point at a " + target.type + ".");
+      }
+      ptrVar.target = target.name;
+      ptrVar.targetAddr = target.address;
+      return;
+    }
+    // another pointer name
+    const nameMatch = rhs.match(/^([A-Za-z_]\w*)$/);
+    if (nameMatch) {
+      const src = findVar(nameMatch[1]);
+      if (!src) throw new Error("'" + nameMatch[1] + "' is not declared.");
+      if (src.kind !== 'pointer') throw new Error("'" + nameMatch[1] + "' is not a pointer.");
+      if (src.pointeeType !== ptrVar.pointeeType) {
+        throw new Error("type mismatch: " + ptrVar.pointeeType + " * cannot be assigned from " + src.pointeeType + " *.");
+      }
+      ptrVar.target = src.target;
+      ptrVar.targetAddr = src.targetAddr;
+      return;
+    }
+    throw new Error("cannot assign '" + rhs + "' to pointer. Use &variable, NULL, or another pointer.");
+  }
+  // p = &x;  p = NULL;  also: x = 5; (plain value reassignment)
+  function evalAssign(parsed) {
+    const lhs = findVar(parsed.lhs);
+    if (!lhs) throw new Error("'" + parsed.lhs + "' is not declared.");
+    if (lhs.kind === 'pointer') {
+      assignPointerValue(lhs, parsed.rhs);
+      recentlyChanged = lhs.name;
+      return { kind: "ptr-reassigned", variable: lhs };
+    }
+    if (lhs.kind === 'value') {
+      const v = parseValue(lhs.type, parsed.rhs);
+      lhs.value = v;
+      lhs.valueDisplay = (lhs.type === "char" && /^'.'$/.test(parsed.rhs)) ? parsed.rhs : v.toString();
+      lhs.uninit = false;
+      lhs.originalInput = parsed.rhs;
+      recentlyChanged = lhs.name;
+      return { kind: "val-reassigned", variable: lhs };
+    }
+    throw new Error("unexpected variable kind");
+  }
+  // *p = 100;
+  function evalDerefAssign(parsed) {
+    const ptr = findVar(parsed.ptrName);
+    if (!ptr) throw new Error("'" + parsed.ptrName + "' is not declared.");
+    if (ptr.kind !== 'pointer') throw new Error("'" + parsed.ptrName + "' is not a pointer. You can only dereference a pointer.");
+    if (ptr.target === null) throw new Error("Cannot dereference a NULL pointer. Dereferencing NULL crashes the program.");
+    if (ptr.target === 'uninit') throw new Error("'" + parsed.ptrName + "' has not been assigned to point at anything. Dereferencing it is undefined behavior.");
+    const tgt = findVar(ptr.target);
+    if (!tgt) throw new Error("internal error: target variable missing");
+    const v = parseValue(tgt.type, parsed.rhs);
+    tgt.value = v;
+    tgt.valueDisplay = (tgt.type === "char" && /^'.'$/.test(parsed.rhs)) ? parsed.rhs : v.toString();
+    tgt.uninit = false;
+    tgt.originalInput = parsed.rhs;
+    recentlyChanged = tgt.name;
+    return { kind: "deref-write", ptr: ptr, target: tgt, value: v };
+  }
+  // Bare expr: &x, *p, p, x
+  function evalBareExpr(parsed) {
+    if (parsed.kind === "addrOf") {
+      const v = findVar(parsed.arg);
+      if (!v) throw new Error("'" + parsed.arg + "' is not declared.");
+      if (v.kind === 'pointer') throw new Error("In L12, we only take addresses of plain variables.");
+      return { kind: "expr-result", text: "&" + parsed.arg, value: addrHex(v.address), label: "address" };
+    }
+    if (parsed.kind === "deref") {
+      const ptr = findVar(parsed.arg);
+      if (!ptr) throw new Error("'" + parsed.arg + "' is not declared.");
+      if (ptr.kind !== 'pointer') throw new Error("'" + parsed.arg + "' is not a pointer.");
+      if (ptr.target === null) throw new Error("Cannot dereference a NULL pointer. Dereferencing NULL crashes the program.");
+      if (ptr.target === 'uninit') throw new Error("'" + parsed.arg + "' has not been assigned to point at anything.");
+      const tgt = findVar(ptr.target);
+      return { kind: "expr-result", text: "*" + parsed.arg, value: tgt.valueDisplay, label: "value at " + addrHex(tgt.address) };
+    }
+    if (parsed.kind === "name") {
+      const v = findVar(parsed.arg);
+      if (!v) throw new Error("'" + parsed.arg + "' is not declared.");
+      if (v.kind === 'pointer') {
+        const tgtStr = v.target === null ? "NULL"
+                     : v.target === 'uninit' ? "(uninitialized)"
+                     : addrHex(v.targetAddr);
+        return { kind: "expr-result", text: parsed.arg, value: tgtStr, label: "pointer value (target address)" };
+      }
+      return { kind: "expr-result", text: parsed.arg, value: v.valueDisplay, label: "value" };
+    }
+    throw new Error("unknown expression");
+  }
+  // printf("...", expr)
+  function evalPrintf(parsed) {
+    const argExpr = tryParseBareExpr(parsed.arg);
+    if (!argExpr) throw new Error("could not evaluate printf argument: " + parsed.arg);
+    const r = evalBareExpr(argExpr);
+    return { kind: "printf-result", fmt: parsed.fmt, expr: r.text, value: r.value, label: r.label };
+  }
+
+  // ============================================================
+  // Dispatcher
+  // ============================================================
+  function runCommand(line) {
+    const t = line.trim();
+    if (!t) return null;
+    const lower = t.toLowerCase().replace(/;?$/, "");
+
+    if (lower === "clear" || lower === "reset") {
+      variables.length = 0;
+      nextValueAddr = 0x1000n;
+      nextPointerAddr = 0x2000n;
+      return { kind: "cleared" };
+    }
+    if (lower === "list") return { kind: "list" };
+    if (lower === "help" || lower === "?") return { kind: "help" };
+
+    // printf
+    const pf = tryParsePrintExpr(t);
+    if (pf) return evalPrintf(pf);
+
+    // *p = ...
+    const da = tryParseDerefAssign(t);
+    if (da) return evalDerefAssign(da);
+
+    // Pointer declaration (has * after type)
+    const pd = tryParsePointerDecl(t);
+    if (pd) return evalPointerDecl(pd);
+
+    // Value declaration (no * in it)
+    const vd = tryParseValueDecl(t);
+    if (vd) return evalValueDecl(vd);
+
+    // Bare expression (no = sign)
+    if (!/=/.test(t)) {
+      const be = tryParseBareExpr(t);
+      if (be) return evalBareExpr(be);
+    }
+
+    // Assignment (last because it's the most permissive)
+    const a = tryParsePointerAssign(t);
+    if (a) return evalAssign(a);
+
+    if (/^(ls|cd|pwd|cat|echo|mkdir|rm|mv|cp)\b/.test(t)) {
+      throw new Error("This is not a shell. Type C statements like: int x = 42;");
+    }
+    throw new Error("couldn't parse '" + t + "'. Type a C declaration, assignment, or expression.");
+  }
+
+  // ============================================================
+  // Terminal output
+  // ============================================================
+  const terminalEl = root.querySelector('#terminal');
+  function termWrite(text, cls) {
+    const span = document.createElement('span');
+    if (cls) span.className = cls;
+    span.textContent = text;
+    terminalEl.appendChild(span);
+  }
+  function termLine(text, cls) {
+    termWrite(text, cls);
+    terminalEl.appendChild(document.createElement('br'));
+    terminalEl.scrollTop = terminalEl.scrollHeight;
+  }
+  function echoCommand(cmd) {
+    termWrite('ptr> ', 'prompt');
+    termLine(cmd, 'typed');
+  }
+
+  // ============================================================
+  // Memory pane rendering (with SVG arrows)
+  // ============================================================
+  const memEl = root.querySelector('#memory-area');
+  function renderMemory() {
+    const pane = memEl.closest('.memory-pane');
+    const wasAtBottom = pane && (pane.scrollHeight - pane.scrollTop - pane.clientHeight < 40);
+    if (variables.length === 0) {
+      memEl.innerHTML = '<div class="memory-empty">No variables yet.<br>Type a declaration on the left.</div>';
+      return;
+    }
+
+    // Build the rows
+    let html = '<div class="mem-table-wrap" id="mem-table-wrap">';
+    html += '<div class="mem-row-grid"><div>Address</div><div>Variable</div></div>';
+    for (const v of variables) {
+      const flashClass =
+        v.name === recentlyAdded ? ' justAdded' :
+        v.name === recentlyChanged ? ' justChanged' : '';
+      const ptrClass = v.kind === 'pointer' ? ' pointer' : '';
+      if (v.kind === 'value') {
+        const valTxt = v.uninit ? '<span class="warn">' + escapeHtml(v.valueDisplay) + '</span>' : escapeHtml(v.valueDisplay);
+        const decl = v.uninit ? (v.type + ' ' + v.name) : (v.type + ' ' + v.name + ' = ' + escapeHtml(v.originalInput));
+        html +=
+          '<div class="mem-row' + ptrClass + flashClass + '" id="row-' + v.name + '" data-name="' + v.name + '">' +
+            '<div class="mem-addr">' + addrHex(v.address) + '</div>' +
+            '<div class="mem-body">' +
+              '<div class="mem-decl">' + escapeHtml(decl) + ';</div>' +
+              '<div class="mem-value"><span class="label">value</span>' + valTxt + '</div>' +
+            '</div>' +
+          '</div>';
+      } else {
+        // pointer
+        let ptrVal;
+        if (v.target === null) {
+          ptrVal = '<span class="null-marker">NULL</span>';
+        } else if (v.target === 'uninit') {
+          ptrVal = '<span class="mem-value warn">(uninitialized)</span>';
+        } else {
+          ptrVal = '<span style="color:#003087; font-weight:600;">' + addrHex(v.targetAddr) + '</span>';
+        }
+        const decl = v.initExpr
+          ? v.pointeeType + ' *' + v.name + ' = ' + v.initExpr
+          : v.pointeeType + ' *' + v.name;
+        html +=
+          '<div class="mem-row pointer' + flashClass + '" id="row-' + v.name + '" data-name="' + v.name + '">' +
+            '<div class="mem-addr">' + addrHex(v.address) + '</div>' +
+            '<div class="mem-body">' +
+              '<div class="mem-decl">' + escapeHtml(decl) + ';</div>' +
+              '<div class="mem-value"><span class="label">value</span>' + ptrVal + '</div>' +
+            '</div>' +
+          '</div>';
+      }
+    }
+    html += '<svg class="arrow-svg" id="arrow-svg"></svg>';
+    html += '</div>';
+    memEl.innerHTML = html;
+
+    // After DOM is in place, compute arrows.
+    // Use rAF so layout has settled before measuring.
+    requestAnimationFrame(drawArrows);
+
+    if (wasAtBottom) pane.scrollTop = pane.scrollHeight;
+
+    // Clear the flash markers after a tick
+    setTimeout(function() {
+      recentlyAdded = null;
+      recentlyChanged = null;
+    }, 50);
+  }
+  function drawArrows() {
+    const svg = root.querySelector('#arrow-svg');
+    const wrap = root.querySelector('#mem-table-wrap');
+    if (!svg || !wrap) return;
+
+    // Size the SVG to the wrap.
+    const wrapRect = wrap.getBoundingClientRect();
+    svg.setAttribute('width', wrapRect.width);
+    svg.setAttribute('height', wrapRect.height);
+    svg.style.width = wrapRect.width + 'px';
+    svg.style.height = wrapRect.height + 'px';
+    // Clear existing
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+    // Define arrow head marker
+    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+    defs.innerHTML =
+      '<marker id="cs210-ptr-arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">' +
+        '<path d="M 0 0 L 10 5 L 0 10 z" class="arrow-head" fill="#003087"/>' +
+      '</marker>';
+    svg.appendChild(defs);
+
+    for (const v of variables) {
+      if (v.kind !== 'pointer') continue;
+      if (v.target === null || v.target === 'uninit') continue;
+      const srcRow = root.querySelector('#row-' + v.name);
+      const dstRow = root.querySelector('#row-' + v.target);
+      if (!srcRow || !dstRow) continue;
+      const sr = srcRow.getBoundingClientRect();
+      const dr = dstRow.getBoundingClientRect();
+      // Coordinates relative to the wrap.
+      // Arrow starts at right side of source row, curves up/down to LEFT
+      // edge of target row's body so it stays inside the pane.
+      const x1 = sr.right - wrapRect.left - 6;
+      const y1 = sr.top - wrapRect.top + sr.height / 2;
+      const x2 = dr.left - wrapRect.left + 96; // just right of address column
+      const y2 = dr.top - wrapRect.top + dr.height / 2;
+      // Bend out to the right edge then sweep back to target left.
+      // Use control points to make a clean S-curve.
+      const rightX = Math.min(wrapRect.width - 8, Math.max(x1, x2) + 24);
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      const d = 'M ' + x1 + ' ' + y1 +
+                ' C ' + rightX + ' ' + y1 + ', ' +
+                       rightX + ' ' + y2 + ', ' +
+                       x2 + ' ' + y2;
+      path.setAttribute('d', d);
+      path.setAttribute('marker-end', 'url(#cs210-ptr-arrowhead)');
+      svg.appendChild(path);
+    }
+  }
+
+  // ============================================================
+  // Diagnose helpers (specific feedback for near-misses)
+  // ============================================================
+  function diagValueDecl(cmd, exp) {
+    const trimmed = cmd.trim();
+    const noSemi = new RegExp(
+      "^\\s*" + exp.type + "\\s+" + exp.name + "\\s*=\\s*" + escapeRegex(exp.value) + "\\s*$"
+    );
+    if (noSemi.test(trimmed)) return "Almost. Don't forget the semicolon at the end.";
+    const anyDecl = trimmed.match(/^\s*([a-z]+)\s+([A-Za-z_]\w*)\s*(?:=\s*(.+?))?\s*;?\s*$/i);
+    if (anyDecl) {
+      const ut = anyDecl[1], un = anyDecl[2], uv = (anyDecl[3] || "").trim();
+      if (ut !== exp.type && un === exp.name) return "Close. Check the type. The task wants '" + exp.type + "'.";
+      if (un !== exp.name && ut === exp.type) return "Close. Check the variable name. The task wants '" + exp.name + "'.";
+      if (uv !== exp.value && ut === exp.type && un === exp.name)
+        return "Close. Check the value. The task wants '" + exp.value + "'.";
+    }
+    return null;
+  }
+  function diagPointerDecl(cmd, exp) {
+    const trimmed = cmd.trim();
+    // Common mistake: missing the *
+    if (new RegExp("^\\s*" + exp.pointeeType + "\\s+" + exp.name + "\\s*=").test(trimmed)) {
+      return "Close. A pointer declaration needs an asterisk: " + exp.pointeeType + " *" + exp.name + ".";
+    }
+    // Common mistake: wrong RHS
+    if (new RegExp("^\\s*" + exp.pointeeType + "\\s*\\*\\s*" + exp.name + "\\s*$").test(trimmed)) {
+      return "Almost. Don't forget the semicolon at the end.";
+    }
+    if (exp.value !== null) {
+      const re = new RegExp("^\\s*" + exp.pointeeType + "\\s*\\*\\s*" + exp.name + "\\s*=\\s*" + escapeRegex(exp.value) + "\\s*$");
+      if (re.test(trimmed)) return "Almost. Don't forget the semicolon at the end.";
+    }
+    return null;
+  }
+  function diagPointerAssign(cmd, exp) {
+    const trimmed = cmd.trim();
+    const noSemi = new RegExp("^\\s*" + exp.lhs + "\\s*=\\s*" + escapeRegex(exp.rhs) + "\\s*$");
+    if (noSemi.test(trimmed)) return "Almost. Don't forget the semicolon at the end.";
+    // Missing the &
+    if (exp.rhs.startsWith("&")) {
+      const targetName = exp.rhs.slice(1);
+      if (new RegExp("^\\s*" + exp.lhs + "\\s*=\\s*" + targetName + "\\s*;?\\s*$").test(trimmed)) {
+        return "Close. To put the address of " + targetName + " into " + exp.lhs + ", use &" + targetName + ".";
+      }
+    }
+    return null;
+  }
+
+  // ============================================================
+  // Tasks
+  // ============================================================
+  const tasks = [
+    // --- Section 1: Addresses and the & operator ---
+    {
+      section: 'Section 1: Addresses and the & operator',
+      label: 'Task 1 of 12',
+      text: 'Declare an int named x with value 42. Same syntax as Lesson 2 — this gets us a variable to take the address of.',
+      hint: 'int x = 42;',
+      match: (cmd) => /^\s*int\s+x\s*=\s*42\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diagValueDecl(cmd, { type: "int", name: "x", value: "42" }),
+      note: 'x lives at the address shown on the left of its row. The compiler chose this spot; every run of a real program will see a different address.'
+    },
+    {
+      label: 'Task 2 of 12',
+      text: 'Print the address of x using the & operator. Just type the expression: &x',
+      hint: '&x',
+      match: (cmd) => /^\s*&\s*x\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^\s*x\s*;?\s*$/.test(t)) return "That gives you x's value (42), not its address. Use &x to get the address.";
+        if (/^\s*\*\s*x\s*;?\s*$/.test(t)) return "*x doesn't make sense — x is not a pointer, it's an int. To get x's address, use &x.";
+        return null;
+      },
+      note: '&x is the address of x. It is a pointer value, the same number you see in the Address column of x\'s row.'
+    },
+    {
+      label: 'Task 3 of 12',
+      text: 'Declare a second int named y with value 7. We will point at it next.',
+      hint: 'int y = 7;',
+      match: (cmd) => /^\s*int\s+y\s*=\s*7\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diagValueDecl(cmd, { type: "int", name: "y", value: "7" }),
+      note: 'y is placed at a different address than x. Every variable gets its own slot in memory.'
+    },
+
+    // --- Section 2: Pointer variables ---
+    {
+      section: 'Section 2: Pointer variables',
+      label: 'Task 4 of 12',
+      text: 'Declare a pointer to an int named p. Use no initial value yet so you can see what an uninitialized pointer looks like.',
+      hint: 'int *p;',
+      match: (cmd) => /^\s*int\s*\*\s*p\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^\s*int\s+p\s*;\s*$/.test(t)) return "That declared a plain int, not a pointer. A pointer needs an asterisk: int *p;";
+        if (/^\s*int\s*\*\s*p\s*$/.test(t)) return "Almost. Don't forget the semicolon.";
+        return diagPointerDecl(cmd, { pointeeType: "int", name: "p", value: null });
+      },
+      note: 'p is a pointer to an int. Right now it has not been told what to point at — its value is garbage. Dereferencing it would crash. We will fix that next.'
+    },
+    {
+      label: 'Task 5 of 12',
+      text: 'Make p point at x. Assign &x to p.',
+      hint: 'p = &x;',
+      match: (cmd) => /^\s*p\s*=\s*&\s*x\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diagPointerAssign(cmd, { lhs: "p", rhs: "&x" }),
+      note: 'p now holds the address of x. Look at the right pane — an arrow is drawn from p to x. That is the picture of "p points at x."'
+    },
+    {
+      label: 'Task 6 of 12',
+      text: 'Read the value of x through p. Dereference p with the * operator.',
+      hint: '*p',
+      match: (cmd) => /^\s*\*\s*p\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^\s*p\s*;?\s*$/.test(t)) return "That gives you the value of p itself (the address). To get the value at that address, use *p.";
+        if (/^\s*&\s*p\s*;?\s*$/.test(t)) return "&p would be the address of p itself, not the value it points to. Use *p.";
+        return null;
+      },
+      note: '*p is 42 — the same as x. The * operator follows the pointer to the variable it points at. As long as p points at x, *p IS x.'
+    },
+    {
+      label: 'Task 7 of 12',
+      text: 'Change x to 100 by writing through p. Use *p on the left side of the assignment.',
+      hint: '*p = 100;',
+      match: (cmd) => /^\s*\*\s*p\s*=\s*100\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^\s*p\s*=\s*100\s*;\s*$/.test(t)) return "That would overwrite p's value (the address) with 100, treating 100 as an address. Use *p = 100 to write through the pointer.";
+        if (/^\s*x\s*=\s*100\s*;\s*$/.test(t)) return "That works in C, but this task is about writing through the pointer. Use *p = 100;";
+        if (/^\s*\*\s*p\s*=\s*100\s*$/.test(t)) return "Almost. Don't forget the semicolon.";
+        return null;
+      },
+      note: 'x is now 100. The arrow did not move; we changed the value AT the location p points to. *p on the left of = means "store at the location p points to."'
+    },
+
+    // --- Section 3: Pointer reassignment ---
+    {
+      section: 'Section 3: Pointer reassignment',
+      label: 'Task 8 of 12',
+      text: 'Make p point at y instead. Reassign p with the address of y.',
+      hint: 'p = &y;',
+      match: (cmd) => /^\s*p\s*=\s*&\s*y\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diagPointerAssign(cmd, { lhs: "p", rhs: "&y" }),
+      note: 'The arrow swings to y. p is a variable too — it can be reassigned. x is unchanged at 100; we are just pointing somewhere new.'
+    },
+    {
+      label: 'Task 9 of 12',
+      text: 'Read what p now points at. Dereference p.',
+      hint: '*p',
+      match: (cmd) => /^\s*\*\s*p\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => null,
+      note: '*p is now 7 — the value of y. The same syntax (*p) gives a different result because p points somewhere different. The pointer is a redirection mechanism.'
+    },
+
+    // --- Section 4: NULL ---
+    {
+      section: 'Section 4: NULL',
+      label: 'Task 10 of 12',
+      text: 'Set p to NULL. This marks p as "not currently pointing at anything."',
+      hint: 'p = NULL;',
+      match: (cmd) => /^\s*p\s*=\s*NULL\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^\s*p\s*=\s*null\s*;\s*$/.test(t)) return "NULL is uppercase in C. Try: p = NULL;";
+        if (/^\s*p\s*=\s*0\s*;\s*$/.test(t)) return "p = 0 also works in C, but for this task use the explicit NULL: p = NULL;";
+        if (/^\s*p\s*=\s*NULL\s*$/.test(t)) return "Almost. Don't forget the semicolon.";
+        return null;
+      },
+      note: 'The arrow disappears. p now holds NULL (address 0). This is a safe state — it explicitly says "do not follow me." But dereferencing NULL crashes, so we still have to be careful.'
+    },
+    {
+      label: 'Task 11 of 12',
+      text: 'Try to dereference p now. See what the walkthrough says when you do.',
+      hint: '*p',
+      match: (cmd) => /^\s*\*\s*p\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => null,
+      note: 'Error message in the terminal: dereferencing NULL crashes the program. The walkthrough catches it for you; real C would segfault. This is why you check for NULL before dereferencing in real code.'
+    },
+    {
+      label: 'Task 12 of 12',
+      text: 'Declare a second int pointer q and initialize it to point at x in one line.',
+      hint: 'int *q = &x;',
+      match: (cmd) => /^\s*int\s*\*\s*q\s*=\s*&\s*x\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^\s*int\s+q\s*=\s*&\s*x\s*;\s*$/.test(t)) return "Close. q needs to be a pointer: int *q = &x;";
+        if (/^\s*int\s*\*\s*q\s*=\s*x\s*;\s*$/.test(t)) return "Close. To point at x, use &x (the address), not x (the value).";
+        return diagPointerDecl(cmd, { pointeeType: "int", name: "q", value: "&x" });
+      },
+      note: 'Two pointers can point at the same variable. q and p have different addresses themselves, but both could refer to x. Multiple ways to reach the same data is normal in C.'
+    },
+  ];
+
+  // ============================================================
+  // Walkthrough controller
+  // ============================================================
+  function checkTask(rawCmd) {
+    if (mode === "free" || currentTaskIndex >= tasks.length) return null;
+    const t = tasks[currentTaskIndex];
+    if (t.match(rawCmd)) {
+      process(rawCmd);
+      if (t.note) {
+        termLine('', 'out');
+        termLine('  ' + t.note, 'note');
+      }
+      currentTaskIndex++;
+      consecutiveFails = 0;
+      hideHintPulse();
+      renderTask();
+      if (currentTaskIndex >= tasks.length) {
+        setMode("free");
+        termLine('', 'out');
+        termLine('  Walkthrough complete. Free mode unlocked. Type any C statement to keep exploring.', 'note');
+      }
+      return true;
+    } else {
+      echoCommand(rawCmd);
+      const diag = (t.diagnose && t.diagnose(rawCmd)) || null;
+      if (diag) {
+        termLine('  ' + diag, 'err');
+      } else {
+        termLine("  Not what this task is asking for. Look at the task card above, or click 'Show hint'.", 'err');
+      }
+      consecutiveFails++;
+      if (consecutiveFails >= 2) showHintPulse();
+      return false;
+    }
+  }
+  function renderTask() {
+    const fill = root.querySelector('#progress-fill');
+    const label = root.querySelector('#progress-label');
+    const card = root.querySelector('#task-card');
+    const labelEl = root.querySelector('#task-label');
+    const textEl = root.querySelector('#task-text');
+    const hintEl = root.querySelector('#task-hint');
+    const sectionEl = root.querySelector('#section-header');
+    const completionArea = root.querySelector('#completion-area');
+
+    const pct = (currentTaskIndex / tasks.length) * 100;
+    fill.style.width = pct + '%';
+    label.textContent = 'Task ' + Math.min(currentTaskIndex + 1, tasks.length) + ' of ' + tasks.length;
+
+    if (currentTaskIndex >= tasks.length) {
+      card.className = 'task-card complete';
+      labelEl.textContent = 'Complete';
+      textEl.textContent = "You worked through every key concept of Lesson 12: addresses, &, pointer declarations, dereferencing, reassignment, and NULL. You're ready for Lab 12.";
+      hintEl.textContent = '';
+      fill.style.width = '100%';
+      label.textContent = 'All tasks complete';
+      sectionEl.textContent = 'All done';
+      completionArea.innerHTML = '';
+      cs210RenderCompletion(completionArea);
+      return;
+    }
+
+    completionArea.innerHTML = '';
+    card.className = 'task-card';
+    const t = tasks[currentTaskIndex];
+    if (t.section) sectionEl.textContent = t.section;
+    labelEl.textContent = t.label;
+    textEl.textContent = t.text;
+    hintEl.textContent = '';
+  }
+  function showHint() {
+    if (currentTaskIndex >= tasks.length) return;
+    const t = tasks[currentTaskIndex];
+    root.querySelector('#task-hint').textContent = 'Hint: ' + (t.hint || '');
+    hideHintPulse();
+  }
+  function showHintPulse() { root.querySelector('#hint-btn').classList.add('pulse'); }
+  function hideHintPulse() { root.querySelector('#hint-btn').classList.remove('pulse'); }
+
+  function reset() {
+    variables.length = 0;
+    nextValueAddr = 0x1000n;
+    nextPointerAddr = 0x2000n;
+    currentTaskIndex = 0;
+    consecutiveFails = 0;
+    recentlyAdded = null;
+    recentlyChanged = null;
+    hideHintPulse();
+    setMode("walkthrough");
+    terminalEl.innerHTML = '';
+    termLine('Welcome to the pointer walkthrough.', 'dim');
+    termLine('Follow the task card above. Type C statements at the prompt.', 'dim');
+    termLine('', 'out');
+    renderMemory();
+    renderTask();
+  }
+
+  // ============================================================
+  // Run a command and report results
+  // ============================================================
+  function process(line) {
+    echoCommand(line);
+    try {
+      const r = runCommand(line);
+      if (!r) return;
+      if (r.kind === "var-added") {
+        const v = r.variable;
+        termLine('  ' + v.type + ' ' + v.name + ' at ' + addrHex(v.address) + ', ' + TYPES[v.type].size + ' bytes', 'out');
+      } else if (r.kind === "ptr-added") {
+        const v = r.variable;
+        const tgtStr = v.target === null ? "NULL" : v.target === 'uninit' ? "(uninitialized)" : addrHex(v.targetAddr);
+        termLine('  ' + v.pointeeType + ' *' + v.name + ' at ' + addrHex(v.address) + ', 8 bytes, value: ' + tgtStr, 'out');
+      } else if (r.kind === "ptr-reassigned") {
+        const v = r.variable;
+        const tgtStr = v.target === null ? "NULL" : v.target === 'uninit' ? "(uninitialized)" : addrHex(v.targetAddr);
+        termLine('  ' + v.name + ' now holds ' + tgtStr, 'out');
+      } else if (r.kind === "val-reassigned") {
+        const v = r.variable;
+        termLine('  ' + v.name + ' is now ' + v.valueDisplay, 'out');
+      } else if (r.kind === "deref-write") {
+        termLine('  wrote ' + r.target.valueDisplay + ' to ' + r.target.name + ' through *' + r.ptr.name, 'out');
+      } else if (r.kind === "expr-result") {
+        termLine('  ' + r.text + ' = ' + r.value + '  (' + r.label + ')', 'out');
+      } else if (r.kind === "printf-result") {
+        termLine('  ' + r.value, 'out');
+      } else if (r.kind === "cleared") {
+        termLine('  memory cleared', 'out');
+      } else if (r.kind === "list") {
+        if (variables.length === 0) termLine('  no variables', 'out');
+        else {
+          termLine('  ' + variables.length + ' variable(s):', 'out');
+          for (const v of variables) {
+            if (v.kind === 'value') {
+              termLine('    ' + v.type + ' ' + v.name + ' = ' + v.valueDisplay + '  @ ' + addrHex(v.address), 'out');
+            } else {
+              const tgtStr = v.target === null ? "NULL" : v.target === 'uninit' ? "(uninitialized)" : addrHex(v.targetAddr) + " (-> " + v.target + ")";
+              termLine('    ' + v.pointeeType + ' *' + v.name + ' = ' + tgtStr + '  @ ' + addrHex(v.address), 'out');
+            }
+          }
+        }
+      } else if (r.kind === "help") {
+        termLine('  declarations:  int x = 42;   int *p;   int *p = &x;   int *p = NULL;', 'out');
+        termLine('  assignments:   p = &x;   p = NULL;   *p = 100;   x = 5;', 'out');
+        termLine('  expressions:   x   &x   p   *p', 'out');
+        termLine('  meta:          clear  list  help', 'out');
+      }
+      renderMemory();
+    } catch (e) {
+      termLine('  error: ' + e.message, 'err');
+    }
+  }
+
+  // ============================================================
+  // Mode toggle
+  // ============================================================
+  function setMode(newMode) {
+    mode = newMode;
+    const btn = root.querySelector('#mode-btn');
+    const cli = root.querySelector('#cli-input');
+    if (mode === "free") {
+      btn.textContent = 'Return to walkthrough';
+      btn.style.background = '#E6F4EA';
+      btn.style.borderColor = '#2E7D32';
+      btn.style.color = '#1B5E20';
+      if (cli) cli.placeholder = 'free mode: type any pointer statement';
+    } else {
+      btn.textContent = 'Switch to free mode';
+      btn.style.background = '';
+      btn.style.borderColor = '';
+      btn.style.color = '';
+      if (cli) cli.placeholder = 'follow the task above';
+    }
+  }
+
+  // ============================================================
+  // Input wiring
+  // ============================================================
+  const inputEl = root.querySelector('#cli-input');
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const v = inputEl.value;
+      inputEl.value = '';
+      if (!v.trim()) return;
+      if (mode === "walkthrough") {
+        checkTask(v);
+      } else {
+        process(v);
+      }
+    }
+  });
+  root.querySelector('#hint-btn').addEventListener('click', showHint);
+  root.querySelector('#reset-btn').addEventListener('click', reset);
+  root.querySelector('#mode-btn').addEventListener('click', () => {
+    if (mode === "walkthrough") {
+      setMode("free");
+      termLine('', 'out');
+      termLine('  Free mode. Type any pointer statement: declarations, assignments, expressions.', 'note');
+    } else {
+      setMode("walkthrough");
+      termLine('', 'out');
+      termLine('  Walkthrough mode. Follow the task card above.', 'note');
+    }
+  });
+
+  // Re-draw arrows on window resize
+  window.addEventListener('resize', function() { drawArrows(); });
+
+  // Boot
+  reset();
+})();
+</script>
+
+
+    </div>
+  </details>
+
+  <!-- ===================== 6. AFTER CLASS ===================== -->
+  <details id="after-class" style="margin-bottom: 24px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      6. After Class
+    </summary>
+    <div style="padding: 18px 22px;">
+      <ul style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Finish Lab 12 if you did not complete it in class. Submit through GitHub Classroom before Lesson 13.</li>
+        <li style="margin-bottom: 6px;">Submit the Lesson 12 reflection in Blackboard. You will need the completion code from the pointer walkthrough plus a screenshot of the completion screen.</li>
+        <li style="margin-bottom: 6px;">Read Beej-C Chapter 11 (Pointers II: Arithmetic) for Lesson 13. We&#x2019;ll extend today&#x2019;s walkthrough with pointer arithmetic and the array-pointer connection.</li>
+        <li style="margin-bottom: 6px;">Replay the walkthrough in free mode. Try declaring your own variables and pointing at them. See if you can predict the address before you press Enter.</li>
+        <li style="margin-bottom: 0;">Heads up: Quiz 5 at Lesson 14 covers today&#x2019;s pointer introduction material.</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== HELP NOTE ===================== -->
+  <div style="background: #F5F7FA; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 3px; font-size: 13.5px; color: #4A5568;">
+    <strong style="color: #00205B;">Need help?</strong> Schedule EI with your instructor. Bring specific code or specific screenshots, and the exact error message or output you do not understand. Specific questions get unstuck quickly. For Git issues (push rejected, merge conflicts, recovering work), check the Git troubleshooting reference card in Blackboard under Resources before opening a help request.
+  </div>
+
+</div>

@@ -1,0 +1,1827 @@
+<!-- ============================================================
+     CS210 — Lesson 24
+     Git in Depth I: Branching, Merging, Conflict Resolution
+     Self-contained: all CSS inline. Native <details> for collapsing.
+     Two CLI walkthrough widgets embedded inline in Section 5.
+     Paste into Blackboard Ultra via Document → Add HTML block.
+     ============================================================ -->
+
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 980px; margin: 0 auto; line-height: 1.6;">
+
+  <!-- ===================== LIGHT HEADER ===================== -->
+  <div style="border-left: 5px solid #003087; padding: 8px 0 8px 18px; margin-bottom: 24px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 2px;">CS210 &middot; Block 3 &middot; Lesson 24</div>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 600; color: #00205B;">Git in Depth I: Branching, Merging, Conflict Resolution</h1>
+    <div style="font-size: 14px; color: #4A5568; margin-top: 4px;">Branches &middot; HEAD &middot; Fast-forward vs three-way merge &middot; Conflict markers &middot; Resolve, stage, commit</div>
+  </div>
+
+  <!-- ===================== AT A GLANCE ===================== -->
+  <div style="background: #F5F7FA; border-left: 4px solid #B5B7BA; padding: 14px 18px; margin-bottom: 22px; font-size: 14px;">
+    <strong style="color: #00205B;">At a glance:</strong> You have used Git as one straight line of commits. Today history learns to fork and rejoin. You will create branches, merge them, and resolve your first merge conflict — the skill the team project depends on. Two guided walkthroughs in Section 5 take you through branching and conflict resolution step by step; the lab has you resolve a real conflict for a grade. No C code today: the graded skill is the Git workflow itself.
+  </div>
+
+  <!-- ===================== TABLE OF CONTENTS ===================== -->
+  <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 20px; margin-bottom: 24px; border-radius: 3px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Contents</div>
+    <ol style="margin: 0; padding-left: 22px; font-size: 14px;">
+      <li style="margin-bottom: 4px;"><a href="#objectives" style="color: #003087; text-decoration: none;">Lesson Objectives</a></li>
+      <li style="margin-bottom: 4px;"><a href="#readings" style="color: #003087; text-decoration: none;">Assigned Readings</a></li>
+      <li style="margin-bottom: 4px;"><a href="#pre-class" style="color: #003087; text-decoration: none;">Pre-Class Work</a></li>
+      <li style="margin-bottom: 4px;"><a href="#materials" style="color: #003087; text-decoration: none;">Lesson Materials and Overview</a></li>
+      <li style="margin-bottom: 4px;"><a href="#in-class" style="color: #003087; text-decoration: none;">In-Class Work</a></li>
+      <li style="margin-bottom: 0;"><a href="#after-class" style="color: #003087; text-decoration: none;">After Class</a></li>
+    </ol>
+  </div>
+
+  <!-- ===================== 1. OBJECTIVES ===================== -->
+  <details id="objectives" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">1. Lesson Objectives</summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 10px 0; font-style: italic;">By the end of this lesson, cadets will be able to:</p>
+      <ol style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Create, switch between, and delete Git branches. <span style="color: #6B7280; font-size: 12px;">(Outcomes 6, 7)</span></li>
+        <li style="margin-bottom: 6px;">Distinguish a fast-forward merge from a three-way merge by reading the commit graph. <span style="color: #6B7280; font-size: 12px;">(Outcome 6)</span></li>
+        <li style="margin-bottom: 6px;">Resolve a merge conflict by editing the conflict markers and completing the merge commit. <span style="color: #6B7280; font-size: 12px;">(Outcome 6)</span></li>
+        <li style="margin-bottom: 0;">Use <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">git status</code> and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">git log</code> to stay oriented, and apply branching strategies appropriate to a project's complexity. <span style="color: #6B7280; font-size: 12px;">(Outcomes 6, 7)</span></li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 2. READINGS ===================== -->
+  <details id="readings" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">2. Assigned Readings</summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 12px 0;">Complete before class. These set the vocabulary we will use.</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <thead>
+          <tr style="background: #E8EDF5; color: #00205B;">
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 130px;">Source</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9;">Sections</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 230px;">Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;"><a href="https://beej.us/guide/bggit/" style="color: #003087; text-decoration: underline;">Beej-Git</a></td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Ch. 5-6 (Branches and Fast-Forward Merges, Merging and Conflicts)</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">The exact mechanics we practice in class: branches, both kinds of merge, and conflict resolution</td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="font-size: 13px; color: #6B7280; margin: 12px 0 0 0; font-style: italic;">If branches and merges are brand new to you, read both chapters closely; they map one-to-one onto the two walkthroughs in Section 5.</p>
+    </div>
+  </details>
+
+  <!-- ===================== 3. PRE-CLASS WORK ===================== -->
+  <details id="pre-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">3. Pre-Class Work</summary>
+    <div style="padding: 18px 22px;">
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 18px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #6B5300; font-size: 14px; margin-bottom: 4px;">Do this first</div>
+        <div style="font-size: 14px; color: #5A4B00;">Plan on 30 to 40 minutes for the reading and a quick repo check. Most of the learning happens during the in-class walkthroughs; come ready to type Git commands.</div>
+      </div>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 0 0 10px 0;">Pre-Class Checklist</h3>
+
+      <!-- Step 1: Reading -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">1</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Read Beej-Git Ch. 5-6</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">Come in knowing what these words mean, even if loosely:</div>
+            <ul style="font-size: 13.5px; margin: 0 0 6px 0; padding-left: 20px;">
+              <li style="margin-bottom: 3px;"><strong>branch</strong> and <strong>HEAD</strong></li>
+              <li style="margin-bottom: 3px;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">git switch</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">git branch</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">git merge</code></li>
+              <li style="margin-bottom: 3px;"><strong>fast-forward</strong> vs <strong>three-way</strong> merge</li>
+              <li style="margin-bottom: 0;"><strong>merge conflict</strong> and conflict markers (<code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">=======</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code>)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Repo check -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">2</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Confirm Git works in your terminal</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">Open your terminal and confirm Git responds. You have used it since Lesson 1; this is just a sanity check.</div>
+            <div style="font-size: 13px; color: #00205B; font-weight: 600; margin-bottom: 4px;">Run:</div>
+            <div style="background: #1E2A3A; color: #E8EDF5; padding: 10px 14px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.5;">
+              <span style="color: #7FB3D5;">$</span> git --version<br>
+              <span style="color: #7FB3D5;">$</span> git status
+            </div>
+            <div style="font-size: 13.5px; color: #4A5568; margin-top: 8px;">If Git is missing or misconfigured, schedule EI before class so setup problems do not block today's lab.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Skim widgets -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 8px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">3</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Skim the In-Class section below</div>
+            <div style="font-size: 14px;">You will see two interactive Git walkthrough widgets. No need to use them yet; just know they are there and what they look like.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ===================== 4. LESSON MATERIALS AND OVERVIEW ===================== -->
+  <details id="materials" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">4. Lesson Materials and Overview</summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; margin: 0 0 18px 0;">Today Git stops being a straight line. The reference below covers the concepts you will see in lecture and practice in the two walkthroughs. Read it before class or use it as a reference during the lab.</p>
+
+      <!-- Subsection navigation -->
+      <div style="background: #F8FAFC; border: 1px solid #E5E7EB; padding: 10px 14px; margin-bottom: 20px; border-radius: 3px; font-size: 13px;">
+        <span style="color: #6B7280; text-transform: uppercase; letter-spacing: 1px; font-size: 11px; font-weight: 600; margin-right: 10px;">Jump to</span>
+        <a href="#branches" style="color: #003087; text-decoration: none; margin-right: 14px;">Branches &amp; HEAD</a>
+        <a href="#merges" style="color: #003087; text-decoration: none; margin-right: 14px;">Two kinds of merge</a>
+        <a href="#conflicts" style="color: #003087; text-decoration: none; margin-right: 14px;">Conflict markers</a>
+        <a href="#strategy" style="color: #003087; text-decoration: none;">Branching strategy</a>
+      </div>
+
+      <!-- Slides -->
+      <h3 style="color: #00205B; font-size: 16px; margin: 0 0 10px 0;">Slide Deck</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">The Lesson 24 deck covers branches and HEAD, the two kinds of merge, reading conflict markers (including how your editor shows them), the resolution workflow, branching strategy, and a look ahead to Lesson 25. The slides are the spine of the in-class lecture; the two walkthroughs are where you practice hands-on.</p>
+
+      <!-- =========================================================
+           EDIT ME: Lesson 24 slide deck link
+           Replace href="#" with the published deck URL (Blackboard
+           file link or SharePoint share link) once uploaded.
+           ========================================================= -->
+      <div style="margin: 0 0 22px 0;">
+        <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 8px 16px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 13px;">Open the Lesson 24 slide deck &rarr;</a>
+      </div>
+
+      <!-- Branches & HEAD -->
+      <h3 id="branches" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Branches and HEAD</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">A commit is a snapshot of your files. A <strong>branch</strong> is nothing more than a lightweight, movable label that points at one commit. <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">HEAD</code> is the special label meaning &ldquo;where you are right now.&rdquo; When you are &ldquo;on main,&rdquo; that literally means <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">HEAD</code> points at the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">main</code> label.</p>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Creating a branch does not copy your files. Git just writes a tiny new label. That is why branches are cheap and used freely. The four commands you need today:</p>
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 12px 16px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.7; margin-bottom: 12px;">
+        <span style="color: #7FB3D5;">$</span> git branch<span style="color: #6B7280;">              # list branches; * marks where you are</span><br>
+        <span style="color: #7FB3D5;">$</span> git switch -c my-order<span style="color: #6B7280;">  # create a branch AND move onto it</span><br>
+        <span style="color: #7FB3D5;">$</span> git switch main<span style="color: #6B7280;">        # move back to an existing branch</span><br>
+        <span style="color: #7FB3D5;">$</span> git branch -d my-order<span style="color: #6B7280;">  # delete a merged branch (just the label)</span>
+      </div>
+      <p style="font-size: 13.5px; color: #4A5568; margin: 0 0 18px 0;">We use <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">git switch</code>, the modern command, rather than the older <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">git checkout</code>. Both do the job; <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">switch</code> states the intent more clearly.</p>
+
+      <!-- Two kinds of merge -->
+      <h3 id="merges" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Two kinds of merge</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">When you merge a branch in, Git does one of two things depending on a single question: <em>did the branch I am merging into move since the two branches split?</em></p>
+      <ul style="font-size: 14.5px; margin: 0 0 12px 0; padding-left: 20px;">
+        <li style="margin-bottom: 8px;"><strong>Fast-forward.</strong> The target branch did not move, so Git simply slides its label forward to the branch tip. No new commit, no conflict possible, history stays a straight line.</li>
+        <li style="margin-bottom: 0;"><strong>Three-way (a real merge).</strong> Both branches moved from a common ancestor, so Git builds a new <strong>merge commit</strong> with two parents to tie them together. If both sides changed the same region of a file, you get a <strong>conflict</strong>.</li>
+      </ul>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">Conflicts only happen in three-way merges, and only when the two sides touched the same lines. A conflict is not an error you caused wrongly; it is Git asking you to make a decision it cannot make for you.</p>
+
+      <!-- Conflict markers -->
+      <h3 id="conflicts" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Reading conflict markers</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">When an auto-merge fails, Git rewrites the contested region of the file with three marker lines. Read them like this:</p>
+      <div style="background: #1E2A3A; padding: 12px 16px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.7; margin-bottom: 12px;">
+        <span style="color: #7FB3D5;">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</span><span style="color: #6B7280;">          &larr; start of YOUR version (the branch you are on)</span><br>
+        <span style="color: #9AD0F5;">Garcia: vanilla latte, oat milk</span><br>
+        <span style="color: #B5BEC8;">=======</span><span style="color: #6B7280;">                  &larr; the fence between the two versions</span><br>
+        <span style="color: #9FE0AE;">Chen: caramel macchiato, extra shot</span><br>
+        <span style="color: #9FE0AE;">&gt;&gt;&gt;&gt;&gt;&gt;&gt; roommate-edits</span><span style="color: #6B7280;">  &larr; end of THEIR version (the incoming branch)</span>
+      </div>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">The top section (between <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</code> and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">=======</code>) is <strong>yours</strong>. The bottom section (between <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">=======</code> and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code>) is <strong>theirs</strong>. Your editor shows the same thing with colored &ldquo;Current Change&rdquo; and &ldquo;Incoming Change&rdquo; buttons; those buttons just edit these exact marker lines for you.</p>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><strong style="color: #B8002F;">The single most common mistake:</strong> leaving marker lines in the file. The markers are not data. To resolve a conflict you delete all three marker lines and leave the file reading the way it should. Then the four-step workflow:</p>
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 12px 16px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.7; margin-bottom: 12px;">
+        <span style="color: #7FB3D5;">$</span> git merge roommate-edits<span style="color: #6B7280;">  # 1. triggers the conflict</span><br>
+        <span style="color: #6B7280;">  (edit the file: fix it, delete the markers)   # 2.</span><br>
+        <span style="color: #7FB3D5;">$</span> git add coffee_run.txt<span style="color: #6B7280;">      # 3. mark it resolved (most-forgotten step!)</span><br>
+        <span style="color: #7FB3D5;">$</span> git commit<span style="color: #6B7280;">                  # 4. seal the merge commit</span>
+      </div>
+      <p style="font-size: 13.5px; color: #4A5568; margin: 0 0 18px 0;">Lost in the middle of a merge? <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">git merge --abort</code> resets everything to before the merge. Nothing is permanent until step 4.</p>
+
+      <!-- Branching strategy -->
+      <h3 id="strategy" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">When should you branch?</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Branches are cheap, but a tangle of them is not free. Match the strategy to the work: commit small solo changes straight to <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">main</code>; branch anything risky or experimental so a failure leaves <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">main</code> untouched; and on a team, use one branch per feature or per person and merge back <em>often</em>. The biggest lesson from past team projects: small, frequent merges keep every conflict tiny, while saving one giant merge for the end guarantees pain. You will live this in the team project soon.</p>
+    </div>
+  </details>
+
+  <!-- ===================== 5. IN-CLASS WORK ===================== -->
+  <details id="in-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">5. In-Class Work</summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 16px 0;">Three things to do in class. Use the checklist to track your progress.</p>
+
+      <ul style="list-style: none; padding: 0; margin: 0 0 24px 0; font-size: 14.5px;">
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Work through the Branch &amp; Merge walkthrough below.</strong>
+          <span style="color: #4A5568;">Fourteen guided tasks: create a branch, commit on it, watch the graph fork, fast-forward merge, and clean up. About 15 minutes. Screenshot the completion code for the reflection.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Work through the Merge Conflict walkthrough below.</strong>
+          <span style="color: #4A5568;">Thirteen guided tasks: trigger a conflict, read the markers, edit the file, stage, and commit. Take it slowly. About 15 minutes. Screenshot this completion code too.</span>
+        </li>
+        <li style="margin-bottom: 0; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Complete Lab 24: Resolve a Merge Conflict.</strong>
+          <span style="color: #4A5568;">Auto-graded through Gradescope. Resolve a real conflict in a two-branch repo. Full instructions in the lab repo.</span>
+          <!-- =========================================================
+               EDIT ME: Lab 24 GitHub Classroom assignment link
+               Replace href="#" with the classroom.github.com/a/... invite
+               URL once the assignment is published.
+               ========================================================= -->
+          <div style="margin-top: 8px; margin-left: 28px;">
+            <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 6px 14px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 13px;">Accept Lab 24 on GitHub Classroom &rarr;</a>
+          </div>
+        </li>
+      </ul>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 18px 0 10px 0;">Widget 1: Branch &amp; Merge Walkthrough</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Fourteen tasks across five sections. Type each Git command at the prompt. The left pane is your terminal; the right pane draws the commit graph as it changes.</p>
+
+<!-- ============================================================
+     CS210 Lesson 24 - Branch & Merge Walkthrough Widget
+     CLI archetype (adapted from L2 cmem). Native HTML/CSS + scoped JS.
+     Left pane: simulated git terminal. Right pane: live commit graph.
+     Paste as a block; runs anywhere the parent page allows <script>.
+     ============================================================ -->
+<style>
+.cs210-branch * { box-sizing: border-box; }
+.cs210-branch {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-branch h1 { color: #00205B; font-size: 24px; margin: 0 0 6px 0; }
+.cs210-branch .subtitle { color: #4A5568; font-size: 14px; margin-bottom: 22px; }
+.cs210-branch .progress-bar { background: #E5E7EB; border-radius: 3px; height: 8px; overflow: hidden; margin-bottom: 6px; }
+.cs210-branch .progress-fill { background: #003087; height: 100%; transition: width 0.3s ease; }
+.cs210-branch .progress-label { font-size: 12px; color: #6B7280; margin-bottom: 18px; }
+.cs210-branch .section-header {
+  background: #E8EDF5; color: #00205B; padding: 8px 14px; border-radius: 3px;
+  font-size: 13px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px;
+}
+.cs210-branch .task-card { background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 14px; border-radius: 3px; }
+.cs210-branch .task-card.complete { background: #E6F4EA; border-left-color: #2E7D32; }
+.cs210-branch .task-label { font-size: 12px; letter-spacing: 1.5px; color: #6B5300; text-transform: uppercase; font-weight: 600; margin-bottom: 4px; }
+.cs210-branch .task-card.complete .task-label { color: #1B5E20; }
+.cs210-branch .task-text { font-size: 15px; color: #1a1a1a; }
+.cs210-branch .task-text code {
+  background: #1E2A3A; color: #E8EDF5; padding: 1px 6px; border-radius: 3px;
+  font-family: Consolas, monospace; font-size: 13px;
+}
+.cs210-branch .task-detail { font-size: 13.5px; color: #4A5568; margin-top: 8px; }
+.cs210-branch .task-hint { font-size: 12.5px; color: #6B7280; margin-top: 6px; font-style: italic; }
+
+/* Two-pane area: terminal left, graph right */
+.cs210-branch .panes { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 12px; }
+@media (max-width: 760px) { .cs210-branch .panes { grid-template-columns: 1fr; } }
+.cs210-branch .terminal {
+  background: #1E2A3A; color: #E8EDF5; font-family: Consolas, 'Courier New', monospace;
+  font-size: 13px; line-height: 1.5; border-radius: 4px; padding: 14px 18px;
+  min-height: 380px; max-height: 440px; overflow-y: auto; white-space: pre-wrap; word-break: break-word;
+}
+.cs210-branch .terminal .prompt { color: #7FB3D5; }
+.cs210-branch .terminal .typed { color: #FFFFFF; }
+.cs210-branch .terminal .out { color: #B5BEC8; }
+.cs210-branch .terminal .note { color: #F0B92C; }
+.cs210-branch .terminal .err { color: #F47A7A; }
+.cs210-branch .terminal .ok { color: #7FD17F; }
+.cs210-branch .terminal .dim { color: #6B7280; }
+
+.cs210-branch .graph-pane {
+  background: #ffffff; border: 1px solid #D0D5DD; border-radius: 4px; padding: 14px 16px;
+  min-height: 380px; max-height: 440px; overflow-y: auto;
+}
+.cs210-branch .graph-pane-header {
+  font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; font-weight: 600;
+  margin-bottom: 4px; padding-bottom: 8px; border-bottom: 1px solid #E5E7EB;
+}
+.cs210-branch .graph-pane-sub { font-size: 11px; color: #9AA3AD; font-family: Consolas, monospace; margin-bottom: 14px; }
+.cs210-branch .graph-svg { width: 100%; display: block; }
+
+/* Commit-graph node styling lives in SVG; these are for the legend */
+.cs210-branch .graph-legend { margin-top: 10px; font-size: 11px; color: #6B7280; display: flex; gap: 14px; flex-wrap: wrap; }
+.cs210-branch .graph-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.cs210-branch .lg-swatch { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+
+.cs210-branch .input-row {
+  display: flex; background: #1E2A3A; border-radius: 4px; padding: 8px 14px; margin-bottom: 14px; border: 1px solid #003087;
+}
+.cs210-branch .input-prompt { color: #7FB3D5; font-family: Consolas, monospace; font-size: 14px; margin-right: 8px; align-self: center; white-space: nowrap; }
+.cs210-branch .input-row input { flex: 1; background: transparent; color: #FFFFFF; border: none; outline: none; font-family: Consolas, monospace; font-size: 14px; padding: 4px 0; }
+.cs210-branch .controls { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+.cs210-branch .btn { background: #ffffff; border: 1px solid #C7CFD9; padding: 6px 14px; border-radius: 3px; font-size: 13px; cursor: pointer; color: #00205B; font-family: inherit; transition: box-shadow 0.2s ease, transform 0.2s ease; }
+.cs210-branch .btn:hover { background: #F5F7FA; }
+@keyframes cs210-branch-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(240, 185, 44, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0); }
+}
+.cs210-branch .btn.pulse { background: #FFF8E1; border-color: #F0B92C; color: #6B5300; font-weight: 600; animation: cs210-branch-pulse 1.5s infinite; }
+.cs210-branch .help-note { background: #F5F7FA; border: 1px solid #D0D5DD; padding: 12px 16px; border-radius: 3px; font-size: 13px; color: #4A5568; margin-top: 12px; }
+.cs210-branch .help-note strong { color: #00205B; }
+
+/* Name modal overlay (scoped to widget) */
+.cs210-branch .name-modal-backdrop { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 32, 91, 0.55); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+.cs210-branch .name-modal { background: #ffffff; border-radius: 6px; padding: 28px 32px; max-width: 460px; width: 90%; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25); font-family: 'Segoe UI', Arial, sans-serif; }
+.cs210-branch .name-modal h2 { color: #00205B; font-size: 20px; margin: 0 0 10px 0; }
+.cs210-branch .name-modal p { color: #4A5568; font-size: 14px; line-height: 1.5; margin: 0 0 16px 0; }
+.cs210-branch .name-modal input { width: 100%; padding: 10px 12px; font-size: 15px; border: 1px solid #CBD5E0; border-radius: 4px; margin-bottom: 14px; font-family: inherit; }
+.cs210-branch .name-modal input:focus { outline: none; border-color: #003087; box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15); }
+.cs210-branch .name-modal-btn { background: #003087; color: #ffffff; border: none; padding: 10px 20px; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.cs210-branch .name-modal-btn:disabled { background: #A0AEC0; cursor: not-allowed; }
+.cs210-branch .name-modal-btn:not(:disabled):hover { background: #00205B; }
+
+/* Completion screen */
+.cs210-branch .completion-screen { background: #ffffff; border: 2px solid #2E7D32; border-radius: 6px; padding: 24px 28px; margin-top: 16px; }
+.cs210-branch .completion-screen .cs-heading { color: #1B5E20; font-size: 20px; font-weight: 600; margin: 0 0 6px 0; }
+.cs210-branch .completion-screen .cs-name-line { font-size: 15px; color: #1a1a1a; margin-bottom: 16px; }
+.cs210-branch .completion-screen .cs-name-line strong { color: #00205B; }
+.cs210-branch .completion-screen .cs-code-block { background: #F0F4FA; border: 1px solid #003087; border-radius: 4px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+.cs210-branch .completion-screen .cs-code-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: #4A5568; margin-bottom: 4px; }
+.cs210-branch .completion-screen .cs-code-value { font-family: 'Consolas', 'Courier New', monospace; font-size: 28px; font-weight: 700; color: #00205B; letter-spacing: 3px; }
+.cs210-branch .completion-screen .cs-copy-btn { background: #003087; color: #ffffff; border: none; padding: 8px 14px; border-radius: 3px; font-size: 13px; cursor: pointer; font-family: inherit; }
+.cs210-branch .completion-screen .cs-copy-btn:hover { background: #00205B; }
+.cs210-branch .completion-screen .cs-copy-btn.copied { background: #2E7D32; }
+.cs210-branch .completion-screen .cs-timestamp { font-size: 13px; color: #6B7280; margin-bottom: 18px; }
+.cs210-branch .completion-screen .cs-reminder { background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 12px 16px; border-radius: 3px; font-size: 14px; color: #6B5300; line-height: 1.5; }
+.cs210-branch .completion-screen .cs-reminder strong { color: #4A3A00; }
+</style>
+
+<div class="cs210-branch">
+
+<div class="name-modal-backdrop" id="br-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Lesson 24 reflection.</p>
+    <input type="text" id="br-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="br-cadet-name-btn" disabled>Start the walkthrough</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 24 &middot; Branch &amp; Merge Walkthrough</h1>
+<div class="subtitle">A guided tour through branching, switching, committing on a branch, and a fast-forward merge. Type each git command on the input line. The left pane is your terminal; the right pane is the commit graph, the same picture <code style="background:#1E2A3A;color:#E8EDF5;padding:1px 5px;border-radius:3px;font-family:Consolas,monospace;font-size:12px;">git log --oneline --graph --all</code> draws.</div>
+
+<div class="progress-bar"><div class="progress-fill" id="br-progress-fill" style="width: 0%;"></div></div>
+<div class="progress-label" id="br-progress-label">Task 0 of 14</div>
+
+<div class="section-header" id="br-section-header">Section 1: Orient yourself</div>
+
+<div class="task-card" id="br-task-card">
+  <div class="task-label" id="br-task-label">Current task</div>
+  <div class="task-text" id="br-task-text">Loading...</div>
+  <div class="task-detail" id="br-task-detail"></div>
+  <div class="task-hint" id="br-task-hint"></div>
+</div>
+
+<div class="panes">
+  <div class="terminal" id="br-terminal"></div>
+  <div class="graph-pane">
+    <div class="graph-pane-header">Commit graph</div>
+    <div class="graph-pane-sub" id="br-graph-sub">on branch main</div>
+    <div id="br-graph-area"></div>
+    <div class="graph-legend">
+      <span><span class="lg-swatch" style="background:#003087;"></span>commit</span>
+      <span><span class="lg-swatch" style="background:#F0B92C;"></span>branch label</span>
+      <span><span class="lg-swatch" style="background:#2E7D32;"></span>HEAD</span>
+    </div>
+  </div>
+</div>
+
+<div class="input-row">
+  <span class="input-prompt" id="br-shell-prompt">~/coffee-run (main)$</span>
+  <input type="text" id="br-cli-input" autocomplete="off" spellcheck="false" placeholder="follow the task above">
+</div>
+
+<div class="controls">
+  <button class="btn" id="br-hint-btn">Show hint</button>
+  <button class="btn" id="br-reset-btn">Reset</button>
+</div>
+
+<div class="help-note">
+  <strong>How this works:</strong> This is not a real shell. It is a teaching tool that simulates the git commands in this lesson so the commit graph on the right stays predictable. The task card tells you exactly what to type next; only the expected command advances the walkthrough. Mistype twice and the hint button pulses. The prompt on the input line shows your current branch in parentheses, exactly like a real configured shell.
+</div>
+
+<div id="br-completion-area"></div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-branch');
+  if (!root) return;
+
+  // ============================================================
+  // Completion code: FNV-1a -> 6 chars. Salt per blueprint.
+  // ============================================================
+  const CS210_SALT = "lesson24_branch_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0; }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) { out += CS210_ALPHABET[Number(pool & 31n)]; pool >>= 5n; }
+    return out;
+  }
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  // ---- Name modal (scoped) -------------------------------------------------
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#br-name-modal-backdrop');
+    const input = root.querySelector('#br-cadet-name-input');
+    const btn = root.querySelector('#br-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length >= 2) { cs210CadetName = stored.trim(); backdrop.style.display = 'none'; return; }
+    } catch (e) {}
+    function updateBtn() { btn.disabled = input.value.trim().length < 2; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', function(e) { if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); } });
+    btn.addEventListener('click', function() {
+      const name = input.value.trim();
+      if (name.length < 2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+      const siblings = document.querySelectorAll('#cf-name-modal-backdrop');
+      siblings.forEach(function(m) { m.style.display = 'none'; });
+      const cli = root.querySelector('#br-cli-input');
+      if (cli) cli.focus();
+    });
+    setTimeout(function() { input.focus(); }, 50);
+  })();
+
+  function cs210RenderCompletion(area) {
+    if (!area) return;
+    if (root.querySelector('#br-completion-overlay')) return;
+    const now = new Date();
+    const ts = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const safeName = (cs210CadetName || 'Cadet').replace(/[<>&"']/g, function(c) { return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c]; });
+    area.innerHTML =
+      '<div class="completion-screen">' +
+        '<div class="cs-heading">Walkthrough complete</div>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block"><div><div class="cs-code-label">Completion code</div>' +
+        '<div class="cs-code-value">' + CS210_CODE + '</div></div></div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+      '</div>';
+    const overlay = document.createElement('div');
+    overlay.id = 'br-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.style.background = 'rgba(27, 94, 32, 0.55)';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">Walkthrough complete</h2>' +
+        '<p>Take a screenshot of this box. You will need the code and a visual of this screen for the Lesson 24 reflection.</p>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block"><div><div class="cs-code-label">Completion code</div>' +
+        '<div class="cs-code-value" id="br-code-value">' + CS210_CODE + '</div></div>' +
+        '<button class="cs-copy-btn" id="br-copy-btn" type="button">Copy code</button></div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+        '<div class="cs-reminder" style="margin-bottom:14px;"><strong>Next step:</strong> Open the Lesson 24 reflection in Blackboard. Enter this code, answer the reflection prompt, and attach your screenshot.</div>' +
+        '<button class="name-modal-btn" id="br-overlay-close" type="button" style="background:#2E7D32;">Got it &mdash; close this</button>' +
+      '</div>';
+    root.appendChild(overlay);
+    const closeBtn = overlay.querySelector('#br-overlay-close');
+    if (closeBtn) closeBtn.addEventListener('click', function() { overlay.style.display = 'none'; });
+    const copyBtn = overlay.querySelector('#br-copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function() {
+        const text = CS210_CODE;
+        const ok = function() { copyBtn.textContent = 'Copied'; copyBtn.classList.add('copied'); setTimeout(function() { copyBtn.textContent = 'Copy code'; copyBtn.classList.remove('copied'); }, 1500); };
+        if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text).then(ok, function() { cs210FallbackCopy(text); ok(); }); }
+        else { cs210FallbackCopy(text); ok(); }
+      });
+    }
+  }
+  function cs210FallbackCopy(text) {
+    try { const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); } catch (e) {}
+  }
+
+  // ============================================================
+  // Terminal helpers
+  // ============================================================
+  const terminalEl = root.querySelector('#br-terminal');
+  function termWrite(text, cls) { const s = document.createElement('span'); if (cls) s.className = cls; s.textContent = text; terminalEl.appendChild(s); }
+  function termLine(text, cls) { termWrite(text, cls); terminalEl.appendChild(document.createElement('br')); terminalEl.scrollTop = terminalEl.scrollHeight; }
+  function echoCommand(cmd) { termWrite(shellPrefix() + ' ', 'prompt'); termLine(cmd, 'typed'); }
+  function shellPrefix() { return '~/coffee-run (' + state.head + ')$'; }
+
+  // ============================================================
+  // Repo model
+  //   commits: array of { id, msg, parents:[ids], col }
+  //   branches: { name -> commitId }
+  //   head: branch name (this sim never detaches HEAD)
+  // ============================================================
+  const COMMIT_IDS = ['a1b2c3d', 'e4f5a6b', '9c8d7e6', 'f0a1b2c', '3d4e5f6', '7a8b9c0', 'b1c2d3e'];
+  let state;
+  function initState() {
+    state = {
+      commits: [
+        { id: COMMIT_IDS[0], msg: 'Start the coffee run list', parents: [], col: 0 },
+        { id: COMMIT_IDS[1], msg: 'Add header and date',       parents: [COMMIT_IDS[0]], col: 0 },
+      ],
+      branches: { main: COMMIT_IDS[1] },
+      head: 'main',
+      nextIdx: 2,
+    };
+  }
+  function tipOf(branch) { return state.branches[branch]; }
+  function commitById(id) { return state.commits.find(c => c.id === id); }
+  function isAncestor(ancId, descId) {
+    // is ancId an ancestor of (or equal to) descId?
+    const seen = new Set(); const stack = [descId];
+    while (stack.length) { const cur = stack.pop(); if (cur === ancId) return true; if (seen.has(cur)) continue; seen.add(cur); const c = commitById(cur); if (c) for (const p of c.parents) stack.push(p); }
+    return false;
+  }
+
+  // ============================================================
+  // Commit-graph renderer (SVG). Mirrors `git log --graph --all`.
+  // Lays commits oldest-at-bottom, newest-at-top, one row each,
+  // columns by branch lane. Branch labels and HEAD drawn as tags.
+  // ============================================================
+  const graphArea = root.querySelector('#br-graph-area');
+  function renderGraph() {
+    root.querySelector('#br-graph-sub').textContent = 'on branch ' + state.head;
+    // Order commits: a simple topological-ish order by insertion is fine here
+    // since this sim builds them in order. Newest last in array -> top of graph.
+    const commits = state.commits.slice();
+    // assign rows: array order, but display reversed (newest at top)
+    const n = commits.length;
+    const rowH = 54, padTop = 18, padLeft = 28, colW = 46;
+    const rowY = {}; // id -> y
+    commits.forEach((c, i) => { rowY[c.id] = padTop + (n - 1 - i) * rowH; });
+    const maxCol = Math.max(0, ...commits.map(c => c.col));
+    const width = padLeft + (maxCol) * colW + 230;
+    const height = padTop + n * rowH + 10;
+    const laneColors = ['#003087', '#B8002F', '#6B3FA0'];
+
+    let svg = '<svg class="graph-svg" viewBox="0 0 ' + width + ' ' + height + '" xmlns="http://www.w3.org/2000/svg" style="min-height:' + height + 'px;">';
+    // edges (parent links)
+    for (const c of commits) {
+      const cx = padLeft + c.col * colW, cy = rowY[c.id];
+      for (const p of c.parents) {
+        const pc = commitById(p); if (!pc) continue;
+        const px = padLeft + pc.col * colW, py = rowY[p];
+        const col = laneColors[Math.max(c.col, pc.col) % laneColors.length];
+        if (px === cx) {
+          svg += '<line x1="' + cx + '" y1="' + cy + '" x2="' + px + '" y2="' + py + '" stroke="' + col + '" stroke-width="2"/>';
+        } else {
+          // curved connector between lanes
+          const midY = (cy + py) / 2;
+          svg += '<path d="M ' + cx + ' ' + cy + ' C ' + cx + ' ' + midY + ', ' + px + ' ' + midY + ', ' + px + ' ' + py + '" fill="none" stroke="' + col + '" stroke-width="2"/>';
+        }
+      }
+    }
+    // nodes + commit text
+    for (const c of commits) {
+      const cx = padLeft + c.col * colW, cy = rowY[c.id];
+      const col = laneColors[c.col % laneColors.length];
+      svg += '<circle cx="' + cx + '" cy="' + cy + '" r="8" fill="' + col + '" stroke="#ffffff" stroke-width="2"/>';
+      // labels: which branches point here? is HEAD here?
+      const here = Object.keys(state.branches).filter(b => state.branches[b] === c.id);
+      let tagX = cx + 18;
+      // HEAD tag first if head points to a branch at this commit
+      if (here.includes(state.head)) {
+        svg += tagSvg(tagX, cy, 'HEAD', '#2E7D32', '#E6F4EA');
+        tagX += 58;
+      }
+      for (const b of here) {
+        svg += tagSvg(tagX, cy, b, '#9A6A00', '#FFF3CF');
+        tagX += 14 + b.length * 8.2 + 12;
+      }
+      // commit id + message after the tags
+      svg += '<text x="' + tagX + '" y="' + (cy - 3) + '" font-family="Consolas,monospace" font-size="11" fill="#6B7280">' + c.id + '</text>';
+      svg += '<text x="' + tagX + '" y="' + (cy + 12) + '" font-family="Segoe UI,Arial,sans-serif" font-size="11.5" fill="#1a1a1a">' + escapeXml(truncate(c.msg, 26)) + '</text>';
+    }
+    svg += '</svg>';
+    graphArea.innerHTML = svg;
+  }
+  function tagSvg(x, y, label, stroke, fill) {
+    const w = 14 + label.length * 8.2;
+    return '<g>' +
+      '<rect x="' + x + '" y="' + (y - 11) + '" rx="3" ry="3" width="' + w + '" height="22" fill="' + fill + '" stroke="' + stroke + '" stroke-width="1.5"/>' +
+      '<text x="' + (x + w / 2) + '" y="' + (y + 4) + '" text-anchor="middle" font-family="Consolas,monospace" font-size="11" font-weight="700" fill="' + stroke + '">' + escapeXml(label) + '</text>' +
+      '</g>';
+  }
+  function truncate(s, n) { return s.length > n ? s.slice(0, n - 1) + '\u2026' : s; }
+  function escapeXml(s) { return String(s).replace(/[<>&]/g, c => ({ '<':'&lt;', '>':'&gt;', '&':'&amp;' }[c])); }
+
+  // ============================================================
+  // Command execution (only the verbs this lesson uses)
+  // Returns array of {text, cls} lines to print, or throws.
+  // ============================================================
+  function runCommand(raw) {
+    const cmd = raw.trim().replace(/\s+/g, ' ');
+    const out = [];
+    let m;
+
+    if (/^git status$/.test(cmd)) {
+      out.push(['On branch ' + state.head, 'out']);
+      out.push(['nothing to commit, working tree clean', 'out']);
+      return out;
+    }
+    if (/^git log( --oneline)?( --graph)?( --all)?$/.test(cmd)) {
+      // print newest first
+      for (let i = state.commits.length - 1; i >= 0; i--) {
+        const c = state.commits[i];
+        const here = Object.keys(state.branches).filter(b => state.branches[b] === c.id);
+        let refs = '';
+        if (here.length) {
+          const parts = [];
+          if (here.includes(state.head)) parts.push('HEAD -> ' + state.head);
+          for (const b of here) if (b !== state.head) parts.push(b);
+          refs = ' (' + parts.join(', ') + ')';
+        }
+        out.push([c.id + refs + ' ' + c.msg, 'out']);
+      }
+      return out;
+    }
+    if (/^git branch$/.test(cmd)) {
+      const names = Object.keys(state.branches).sort();
+      for (const b of names) out.push([(b === state.head ? '* ' : '  ') + b, b === state.head ? 'ok' : 'out']);
+      return out;
+    }
+    if ((m = cmd.match(/^git switch -c ([\w./-]+)$/))) {
+      const name = m[1];
+      if (state.branches[name] != null) throw new Error("fatal: a branch named '" + name + "' already exists");
+      state.branches[name] = tipOf(state.head);
+      state.head = name;
+      out.push(["Switched to a new branch '" + name + "'", 'out']);
+      return out;
+    }
+    if ((m = cmd.match(/^git switch ([\w./-]+)$/))) {
+      const name = m[1];
+      if (state.branches[name] == null) throw new Error("fatal: invalid reference: " + name);
+      state.head = name;
+      out.push(["Switched to branch '" + name + "'", 'out']);
+      return out;
+    }
+    if ((m = cmd.match(/^git commit -m "(.+)"$/)) || (m = cmd.match(/^git commit -m '(.+)'$/))) {
+      const msg = m[1];
+      const parentId = tipOf(state.head);
+      const parentCommit = commitById(parentId);
+      const id = COMMIT_IDS[state.nextIdx] || ('c' + state.nextIdx + 'aaaa0');
+      state.nextIdx++;
+      const newCommit = { id, msg, parents: [parentId], col: parentCommit ? parentCommit.col : 0 };
+      // lane: if head branch has diverged from main lane, give it col 1
+      if (state.head !== 'main') newCommit.col = 1;
+      state.commits.push(newCommit);
+      state.branches[state.head] = id;
+      out.push(['[' + state.head + ' ' + id + '] ' + msg, 'out']);
+      out.push([' 1 file changed, 1 insertion(+)', 'out']);
+      return out;
+    }
+    if ((m = cmd.match(/^git merge ([\w./-]+)$/))) {
+      const other = m[1];
+      if (state.branches[other] == null) throw new Error("merge: " + other + " - not something we can merge");
+      const headTip = tipOf(state.head), otherTip = tipOf(other);
+      if (headTip === otherTip) { out.push(['Already up to date.', 'out']); return out; }
+      if (isAncestor(headTip, otherTip)) {
+        // fast-forward: move head branch label to otherTip
+        state.branches[state.head] = otherTip;
+        // pull merged commits into head's lane visually
+        out.push(['Updating ' + headTip.slice(0,7) + '..' + otherTip.slice(0,7), 'out']);
+        out.push(['Fast-forward', 'note']);
+        out.push([' coffee_run.txt | 2 +-', 'out']);
+        return out;
+      }
+      throw new Error('This walkthrough only covers fast-forward merges. (Diverged branches and conflicts come next.)');
+    }
+    if ((m = cmd.match(/^git branch -d ([\w./-]+)$/))) {
+      const name = m[1];
+      if (state.branches[name] == null) throw new Error("error: branch '" + name + "' not found");
+      if (name === state.head) throw new Error("error: cannot delete branch '" + name + "' checked out");
+      const tip = state.branches[name];
+      delete state.branches[name];
+      out.push(["Deleted branch " + name + " (was " + tip.slice(0,7) + ").", 'out']);
+      return out;
+    }
+    if (/^git/.test(cmd)) throw new Error("This command is not part of the walkthrough. Follow the task card.");
+    throw new Error("Unknown command. This simulated shell only understands the git commands in this lesson.");
+  }
+
+  // ============================================================
+  // Tasks
+  // ============================================================
+  let currentTaskIndex = 0;
+  let consecutiveFails = 0;
+
+  const tasks = [
+    // --- Section 1: Orient yourself ---
+    { section: 'Section 1: Orient yourself',
+      label: 'Task 1 of 14',
+      text: 'Every repo you have used so far has been one straight line of commits. Before we branch, get your bearings. Run git status.',
+      detail: 'git status answers two questions: which branch am I on, and do I have uncommitted changes? Always run it when you are unsure where you are.',
+      hint: 'git status',
+      match: (c) => /^git status$/.test(c.trim()),
+      diagnose: (c) => /^git\s+stat/.test(c.trim()) ? "Close. The command is exactly: git status" : null,
+      note: 'Clean tree, on branch main. This is the safe state to start branching from. Notice the prompt on the input line also shows (main).' },
+
+    { label: 'Task 2 of 14',
+      text: 'See the history as a graph. Run git log --oneline.',
+      detail: 'The right pane already draws the graph for you, but in your real terminal this is how you see it. Newest commit prints first.',
+      hint: 'git log --oneline',
+      match: (c) => /^git log --oneline$/.test(c.trim()),
+      diagnose: (c) => /^git log/.test(c.trim()) ? "Close. For this task type exactly: git log --oneline" : null,
+      note: 'Two commits so far, both on main. HEAD -> main means HEAD is pointing at the main branch, and main is pointing at the newest commit.' },
+
+    { label: 'Task 3 of 14',
+      text: 'List your branches. Run git branch.',
+      detail: 'The asterisk marks the branch you are currently on. Right now there is only one.',
+      hint: 'git branch',
+      match: (c) => /^git branch$/.test(c.trim()),
+      diagnose: (c) => null,
+      note: 'One branch, main, and the asterisk shows you are on it. A branch is just a movable label pointing at a commit.' },
+
+    // --- Section 2: Make a branch ---
+    { section: 'Section 2: Make a branch and move onto it',
+      label: 'Task 4 of 14',
+      text: 'You want to add your drink order without disturbing main. Create a branch named my-order and switch to it in one step: git switch -c my-order',
+      detail: 'git switch -c NAME creates a new branch at your current commit AND moves HEAD onto it. The -c means "create." Watch the prompt change to (my-order).',
+      hint: 'git switch -c my-order',
+      match: (c) => /^git switch -c my-order$/.test(c.trim()),
+      diagnose: (c) => {
+        const t = c.trim();
+        if (/^git checkout -b my-order$/.test(t)) return "That is the older command and it works in real git. For this lesson use the modern form: git switch -c my-order";
+        if (/^git branch my-order$/.test(t)) return "Close. git branch creates the branch but does NOT switch to it. Use git switch -c my-order to do both.";
+        if (/^git switch -c /.test(t)) return "Right command, check the branch name. The task wants exactly: my-order";
+        return null;
+      },
+      note: 'New branch my-order created at the same commit as main, and HEAD moved onto it. Both labels sit on the same commit for now. The prompt now reads (my-order).' },
+
+    { label: 'Task 5 of 14',
+      text: 'Confirm where you are. Run git branch again.',
+      detail: 'You should now see two branches, with the asterisk on my-order.',
+      hint: 'git branch',
+      match: (c) => /^git branch$/.test(c.trim()),
+      diagnose: (c) => null,
+      note: 'Two branches now. The asterisk moved to my-order. main has not moved and is exactly where you left it.' },
+
+    // --- Section 3: Commit on the branch ---
+    { section: 'Section 3: Commit on your branch',
+      label: 'Task 6 of 14',
+      text: 'Add your order. Make a commit: git commit -m "Add my latte order"',
+      detail: 'In a real repo you would edit coffee_run.txt and git add it first. The widget handles the file edit; you make the commit. Use double quotes around the message.',
+      hint: 'git commit -m "Add my latte order"',
+      match: (c) => /^git commit -m ["'].+["']$/.test(c.trim()) && /latte/i.test(c),
+      diagnose: (c) => {
+        const t = c.trim();
+        if (/^git commit$/.test(t)) return "You need a commit message. Add -m and your message in quotes: git commit -m \"Add my latte order\"";
+        if (/^git commit -m [^"']/.test(t)) return "Wrap the message in quotes: git commit -m \"Add my latte order\"";
+        if (/^git commit -m ["'].+["']$/.test(t)) return "Right shape. For this task, include the word 'latte' so the example stays consistent: git commit -m \"Add my latte order\"";
+        return null;
+      },
+      note: 'A new commit landed on my-order. Look at the graph: my-order moved up to the new commit, and main stayed behind. The branch labels now point at different commits. This is the whole point of a branch.' },
+
+    { label: 'Task 7 of 14',
+      text: 'Make one more commit on this branch: git commit -m "Add oat milk note"',
+      detail: 'Two commits of your own now sit on my-order, stacked above main.',
+      hint: 'git commit -m "Add oat milk note"',
+      match: (c) => /^git commit -m ["'].+["']$/.test(c.trim()) && /oat/i.test(c),
+      diagnose: (c) => {
+        const t = c.trim();
+        if (/^git commit -m ["'].+["']$/.test(t)) return "Right shape. For this task include the word 'oat': git commit -m \"Add oat milk note\"";
+        if (/^git commit/.test(t)) return "Add a quoted message: git commit -m \"Add oat milk note\"";
+        return null;
+      },
+      note: 'my-order is now two commits ahead of main. The graph shows your branch climbing while main sits still. Nobody on main can see your changes yet.' },
+
+    { label: 'Task 8 of 14',
+      text: 'Look at the full graph. Run git log --oneline --all',
+      detail: 'The --all flag shows commits from every branch, not just the one you are on. This is how you see the whole picture in a real terminal.',
+      hint: 'git log --oneline --all',
+      match: (c) => /^git log --oneline --all$/.test(c.trim()),
+      diagnose: (c) => /^git log/.test(c.trim()) ? "Close. Type exactly: git log --oneline --all" : null,
+      note: 'You can see both branch tips. my-order has the two new commits; main is still pointing at the older commit. HEAD -> my-order confirms where you are.' },
+
+    // --- Section 4: Fast-forward merge ---
+    { section: 'Section 4: Merge it back (fast-forward)',
+      label: 'Task 9 of 14',
+      text: 'You are ready to fold your work into main. First switch back to main: git switch main',
+      detail: 'You always merge INTO the branch you are standing on. So to update main, you must be on main first. No -c this time, because main already exists.',
+      hint: 'git switch main',
+      match: (c) => /^git switch main$/.test(c.trim()),
+      diagnose: (c) => {
+        const t = c.trim();
+        if (/^git switch -c main$/.test(t)) return "No -c here. main already exists, so just: git switch main";
+        if (/^git checkout main$/.test(t)) return "That works in real git, but use the modern form for this lesson: git switch main";
+        return null;
+      },
+      note: 'Back on main. The prompt reads (main) again. Your two commits still exist on my-order; you just are not standing on them right now. main has not changed.' },
+
+    { label: 'Task 10 of 14',
+      text: 'Now merge your branch into main: git merge my-order',
+      detail: 'main is a direct ancestor of my-order, so git can simply slide the main label forward. That is a FAST-FORWARD merge: no new merge commit, just a label move.',
+      hint: 'git merge my-order',
+      match: (c) => /^git merge my-order$/.test(c.trim()),
+      diagnose: (c) => {
+        const t = c.trim();
+        if (/^git merge main$/.test(t)) return "You are already on main. Merge the OTHER branch in: git merge my-order";
+        if (/^git merge/.test(t)) return "Check the branch name. Merge the branch with your work: git merge my-order";
+        return null;
+      },
+      note: 'Fast-forward! main jumped forward to the same commit as my-order. No merge commit was needed because main had not moved since you branched. The output literally says "Fast-forward." Both labels now sit on the same commit.' },
+
+    { label: 'Task 11 of 14',
+      text: 'Confirm the merge. Run git log --oneline --all',
+      detail: 'main and my-order should now point at the same commit.',
+      hint: 'git log --oneline --all',
+      match: (c) => /^git log --oneline --all$/.test(c.trim()),
+      diagnose: (c) => /^git log/.test(c.trim()) ? "Type exactly: git log --oneline --all" : null,
+      note: 'HEAD -> main and my-order both label the newest commit. They are perfectly in sync. The two commits you made on the branch are now part of main history.' },
+
+    // --- Section 5: Clean up ---
+    { section: 'Section 5: Clean up',
+      label: 'Task 12 of 14',
+      text: 'The branch has served its purpose. Delete the label: git branch -d my-order',
+      detail: 'Deleting a branch removes only the label, not the commits. The commits are safely part of main now. git uses lowercase -d, which refuses to delete unmerged work as a safety check.',
+      hint: 'git branch -d my-order',
+      match: (c) => /^git branch -d my-order$/.test(c.trim()),
+      diagnose: (c) => {
+        const t = c.trim();
+        if (/^git branch -D my-order$/.test(t)) return "Capital -D forces deletion even of unmerged work. Here the branch is merged, so use the safe lowercase: git branch -d my-order";
+        if (/^git delete/.test(t) || /^git rm/.test(t)) return "Not quite. Deleting a branch is: git branch -d my-order";
+        return null;
+      },
+      note: 'The my-order label is gone, but every commit it pointed to is still in main. Deleting a merged branch never loses work; it just tidies up.' },
+
+    { label: 'Task 13 of 14',
+      text: 'Confirm cleanup. Run git branch.',
+      detail: 'Only main should remain.',
+      hint: 'git branch',
+      match: (c) => /^git branch$/.test(c.trim()),
+      diagnose: (c) => null,
+      note: 'Back to a single branch, main, with all your work folded in. This is the clean end state after a successful branch-and-merge cycle.' },
+
+    { label: 'Task 14 of 14',
+      text: 'One last look at the history: git log --oneline',
+      detail: 'A clean linear history with your work merged in. This is exactly what a finished feature branch looks like after a fast-forward merge.',
+      hint: 'git log --oneline',
+      match: (c) => /^git log --oneline$/.test(c.trim()),
+      diagnose: (c) => /^git log/.test(c.trim()) ? "Type exactly: git log --oneline" : null,
+      note: 'Four commits, all on main, newest first. You created a branch, did work on it, merged it back with a fast-forward, and cleaned up. That is the core branch workflow. Next: what happens when two branches BOTH move and git cannot just fast-forward?' },
+  ];
+
+  // ============================================================
+  // Controller
+  // ============================================================
+  function checkTask(raw) {
+    if (currentTaskIndex >= tasks.length) return;
+    const t = tasks[currentTaskIndex];
+    if (t.match(raw)) {
+      // execute for real, print output, then advance
+      echoCommand(raw);
+      try {
+        const lines = runCommand(raw);
+        for (const [text, cls] of lines) termLine('  ' + text, cls);
+      } catch (e) {
+        // A matched task should never throw, but guard anyway
+        termLine('  ' + e.message, 'err');
+      }
+      if (t.note) { termLine('', 'out'); termLine('  ' + t.note, 'note'); }
+      currentTaskIndex++;
+      consecutiveFails = 0;
+      hideHintPulse();
+      renderGraph();
+      renderTask();
+      if (currentTaskIndex >= tasks.length) {
+        termLine('', 'out');
+        termLine('  Walkthrough complete. Scroll down for your completion code.', 'ok');
+      }
+    } else {
+      echoCommand(raw);
+      // Was it a real-but-wrong git command? Try to run it for a realistic error,
+      // but DO NOT mutate state on a non-matching task — just diagnose.
+      const diag = (t.diagnose && t.diagnose(raw)) || null;
+      if (diag) termLine('  ' + diag, 'err');
+      else termLine("  Not what this task is asking for. Re-read the task card above, or click 'Show hint'.", 'err');
+      consecutiveFails++;
+      if (consecutiveFails >= 2) showHintPulse();
+    }
+  }
+
+  function renderTask() {
+    const fill = root.querySelector('#br-progress-fill');
+    const label = root.querySelector('#br-progress-label');
+    const card = root.querySelector('#br-task-card');
+    const labelEl = root.querySelector('#br-task-label');
+    const textEl = root.querySelector('#br-task-text');
+    const detailEl = root.querySelector('#br-task-detail');
+    const hintEl = root.querySelector('#br-task-hint');
+    const sectionEl = root.querySelector('#br-section-header');
+    const completionArea = root.querySelector('#br-completion-area');
+
+    fill.style.width = (currentTaskIndex / tasks.length * 100) + '%';
+    label.textContent = 'Task ' + Math.min(currentTaskIndex + 1, tasks.length) + ' of ' + tasks.length;
+
+    if (currentTaskIndex >= tasks.length) {
+      card.className = 'task-card complete';
+      labelEl.textContent = 'Complete';
+      textEl.textContent = 'You worked through the full branch lifecycle: create, switch, commit, fast-forward merge, and delete. The next widget shows what happens when a merge cannot fast-forward.';
+      detailEl.textContent = '';
+      hintEl.textContent = '';
+      fill.style.width = '100%';
+      label.textContent = 'All tasks complete';
+      sectionEl.textContent = 'All done';
+      completionArea.innerHTML = '';
+      cs210RenderCompletion(completionArea);
+      return;
+    }
+    completionArea.innerHTML = '';
+    card.className = 'task-card';
+    const t = tasks[currentTaskIndex];
+    if (t.section) sectionEl.textContent = t.section;
+    labelEl.textContent = t.label;
+    textEl.innerHTML = renderInlineCode(t.text);
+    detailEl.textContent = t.detail || '';
+    hintEl.textContent = '';
+    root.querySelector('#br-shell-prompt').textContent = shellPrefix();
+  }
+  function renderInlineCode(s) {
+    // Wrap "git ..." command fragments that appear after a colon in <code>. Keep simple: escape then wrap known patterns.
+    const esc = s.replace(/[<>&]/g, c => ({ '<':'&lt;', '>':'&gt;', '&':'&amp;' }[c]));
+    return esc.replace(/(git [a-z][\w".\- ]*?)(?=$|\.|,| Watch| The | so | because | No )/g, '<code>$1</code>');
+  }
+
+  function showHint() {
+    if (currentTaskIndex >= tasks.length) return;
+    root.querySelector('#br-task-hint').textContent = 'Type: ' + (tasks[currentTaskIndex].hint || '');
+    hideHintPulse();
+  }
+  function showHintPulse() { root.querySelector('#br-hint-btn').classList.add('pulse'); }
+  function hideHintPulse() { root.querySelector('#br-hint-btn').classList.remove('pulse'); }
+
+  function reset() {
+    initState();
+    currentTaskIndex = 0;
+    consecutiveFails = 0;
+    hideHintPulse();
+    terminalEl.innerHTML = '';
+    termLine('Simulated git shell for the Lesson 24 branch walkthrough.', 'dim');
+    termLine('Follow the task card above. Type each git command at the prompt.', 'dim');
+    termLine('', 'out');
+    renderGraph();
+    renderTask();
+    const overlay = root.querySelector('#br-completion-overlay');
+    if (overlay) overlay.remove();
+  }
+
+  // Input wiring
+  const inputEl = root.querySelector('#br-cli-input');
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const v = inputEl.value; inputEl.value = '';
+      if (!v.trim()) return;
+      checkTask(v);
+    }
+  });
+  root.querySelector('#br-hint-btn').addEventListener('click', showHint);
+  root.querySelector('#br-reset-btn').addEventListener('click', reset);
+
+  reset();
+})();
+</script>
+
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 30px 0 10px 0;">Widget 2: Merge Conflict Walkthrough</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Thirteen tasks across five sections. You will trigger a real conflict, read the markers in the middle pane, fix the file, and finish the merge. This is the part that trips people up the first time, so the widget narrates every step.</p>
+
+<!-- ============================================================
+     CS210 Lesson 24 - Merge Conflict Walkthrough Widget
+     CLI archetype (adapted from L2 cmem). Native HTML/CSS + scoped JS.
+     Left: simulated git terminal. Middle: the file under merge, with
+     live conflict markers. Right: a small commit graph for orientation.
+     This is the high-confusion topic, so every step narrates what is
+     about to happen, what the cadet will see, and what to do about it.
+     ============================================================ -->
+<style>
+.cs210-conflict * { box-sizing: border-box; }
+.cs210-conflict {
+  font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; line-height: 1.55;
+  max-width: 980px; margin: 0 auto; padding: 20px; background: #ffffff; position: relative;
+}
+.cs210-conflict h1 { color: #00205B; font-size: 24px; margin: 0 0 6px 0; }
+.cs210-conflict .subtitle { color: #4A5568; font-size: 14px; margin-bottom: 22px; }
+.cs210-conflict .progress-bar { background: #E5E7EB; border-radius: 3px; height: 8px; overflow: hidden; margin-bottom: 6px; }
+.cs210-conflict .progress-fill { background: #003087; height: 100%; transition: width 0.3s ease; }
+.cs210-conflict .progress-label { font-size: 12px; color: #6B7280; margin-bottom: 18px; }
+.cs210-conflict .section-header {
+  background: #E8EDF5; color: #00205B; padding: 8px 14px; border-radius: 3px;
+  font-size: 13px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px;
+}
+.cs210-conflict .task-card { background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 14px; border-radius: 3px; }
+.cs210-conflict .task-card.complete { background: #E6F4EA; border-left-color: #2E7D32; }
+.cs210-conflict .task-label { font-size: 12px; letter-spacing: 1.5px; color: #6B5300; text-transform: uppercase; font-weight: 600; margin-bottom: 4px; }
+.cs210-conflict .task-card.complete .task-label { color: #1B5E20; }
+.cs210-conflict .task-text { font-size: 15px; color: #1a1a1a; }
+.cs210-conflict .task-text code { background: #1E2A3A; color: #E8EDF5; padding: 1px 6px; border-radius: 3px; font-family: Consolas, monospace; font-size: 13px; }
+.cs210-conflict .task-detail { font-size: 13.5px; color: #4A5568; margin-top: 8px; }
+.cs210-conflict .task-detail code { background: #EEF1F5; color: #00205B; padding: 1px 5px; border-radius: 3px; font-family: Consolas, monospace; font-size: 12.5px; }
+.cs210-conflict .task-hint { font-size: 12.5px; color: #6B7280; margin-top: 6px; font-style: italic; }
+
+/* Panes: terminal | file | graph */
+.cs210-conflict .panes { display: grid; grid-template-columns: 1.1fr 1.1fr 0.8fr; gap: 12px; margin-bottom: 12px; }
+@media (max-width: 900px) { .cs210-conflict .panes { grid-template-columns: 1fr; } }
+.cs210-conflict .terminal {
+  background: #1E2A3A; color: #E8EDF5; font-family: Consolas, 'Courier New', monospace; font-size: 12.5px;
+  line-height: 1.5; border-radius: 4px; padding: 14px 16px; min-height: 400px; max-height: 460px;
+  overflow-y: auto; white-space: pre-wrap; word-break: break-word;
+}
+.cs210-conflict .terminal .prompt { color: #7FB3D5; }
+.cs210-conflict .terminal .typed { color: #FFFFFF; }
+.cs210-conflict .terminal .out { color: #B5BEC8; }
+.cs210-conflict .terminal .note { color: #F0B92C; }
+.cs210-conflict .terminal .err { color: #F47A7A; }
+.cs210-conflict .terminal .ok { color: #7FD17F; }
+.cs210-conflict .terminal .dim { color: #6B7280; }
+
+/* File pane: shows coffee_run.txt; conflict markers styled like VSCode */
+.cs210-conflict .file-pane { border: 1px solid #D0D5DD; border-radius: 4px; min-height: 400px; max-height: 460px; overflow-y: auto; background: #FbFcFd; }
+.cs210-conflict .file-head { background: #F0F2F5; border-bottom: 1px solid #D0D5DD; padding: 7px 12px; font-family: Consolas, monospace; font-size: 12px; color: #4A5568; display: flex; justify-content: space-between; }
+.cs210-conflict .file-head .dirty { color: #B8002F; font-weight: 700; }
+.cs210-conflict .file-body { padding: 0; font-family: Consolas, 'Courier New', monospace; font-size: 12.5px; }
+.cs210-conflict .fl { display: flex; border-bottom: 1px solid #F0F2F5; }
+.cs210-conflict .fl .ln { width: 30px; flex: none; text-align: right; padding: 3px 8px 3px 0; color: #B0B7C0; background: #F5F7FA; user-select: none; }
+.cs210-conflict .fl .tx { padding: 3px 10px; white-space: pre-wrap; word-break: break-word; flex: 1; }
+.cs210-conflict .fl.marker-ours-head { background: #E6F0FB; }
+.cs210-conflict .fl.marker-ours-head .tx { color: #1B4F8A; font-weight: 700; }
+.cs210-conflict .fl.ours { background: #EAF4FF; }
+.cs210-conflict .fl.ours .tx { color: #0B3A66; }
+.cs210-conflict .fl.marker-sep { background: #EFEFEF; }
+.cs210-conflict .fl.marker-sep .tx { color: #6B7280; font-weight: 700; }
+.cs210-conflict .fl.theirs { background: #EAF7EE; }
+.cs210-conflict .fl.theirs .tx { color: #14592B; }
+.cs210-conflict .fl.marker-theirs-tail { background: #E3F3E9; }
+.cs210-conflict .fl.marker-theirs-tail .tx { color: #14592B; font-weight: 700; }
+.cs210-conflict .vscode-tag { display:inline-block; font-family:'Segoe UI',Arial,sans-serif; font-size:10px; letter-spacing:0.4px; padding:1px 6px; border-radius:3px; margin-left:8px; vertical-align:middle; }
+.cs210-conflict .vscode-tag.current { background:#1B4F8A; color:#fff; }
+.cs210-conflict .vscode-tag.incoming { background:#14592B; color:#fff; }
+.cs210-conflict .file-clean-note { padding: 10px 12px; font-family:'Segoe UI',Arial,sans-serif; font-size:12px; color:#2E7D32; background:#E6F4EA; border-top:1px solid #CDE7D4; }
+
+/* Graph pane (compact) */
+.cs210-conflict .graph-pane { border: 1px solid #D0D5DD; border-radius: 4px; min-height: 400px; max-height: 460px; overflow-y: auto; padding: 12px; background:#fff; }
+.cs210-conflict .graph-pane-header { font-size: 10px; letter-spacing: 1.2px; color: #6B7280; text-transform: uppercase; font-weight: 600; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #E5E7EB; }
+.cs210-conflict .graph-svg { width: 100%; display: block; }
+
+.cs210-conflict .input-row { display: flex; background: #1E2A3A; border-radius: 4px; padding: 8px 14px; margin-bottom: 14px; border: 1px solid #003087; }
+.cs210-conflict .input-prompt { color: #7FB3D5; font-family: Consolas, monospace; font-size: 14px; margin-right: 8px; align-self: center; white-space: nowrap; }
+.cs210-conflict .input-row input { flex: 1; background: transparent; color: #FFFFFF; border: none; outline: none; font-family: Consolas, monospace; font-size: 14px; padding: 4px 0; }
+.cs210-conflict .controls { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+.cs210-conflict .btn { background: #ffffff; border: 1px solid #C7CFD9; padding: 6px 14px; border-radius: 3px; font-size: 13px; cursor: pointer; color: #00205B; font-family: inherit; transition: box-shadow 0.2s ease; }
+.cs210-conflict .btn:hover { background: #F5F7FA; }
+@keyframes cs210-conflict-pulse { 0% { box-shadow: 0 0 0 0 rgba(240,185,44,0.7); } 70% { box-shadow: 0 0 0 10px rgba(240,185,44,0); } 100% { box-shadow: 0 0 0 0 rgba(240,185,44,0); } }
+.cs210-conflict .btn.pulse { background: #FFF8E1; border-color: #F0B92C; color: #6B5300; font-weight: 600; animation: cs210-conflict-pulse 1.5s infinite; }
+.cs210-conflict .editor-row { display:none; gap:8px; margin-bottom:14px; }
+.cs210-conflict .editor-row.show { display:block; }
+.cs210-conflict .editor-row textarea { width:100%; min-height:120px; font-family:Consolas,monospace; font-size:13px; padding:10px 12px; border:1px solid #003087; border-radius:4px; line-height:1.5; resize:vertical; }
+.cs210-conflict .editor-row .editor-label { font-size:13px; color:#00205B; font-weight:600; margin-bottom:6px; }
+.cs210-conflict .editor-row .editor-help { font-size:12px; color:#6B7280; margin-bottom:8px; }
+.cs210-conflict .editor-actions { margin-top:8px; display:flex; gap:8px; }
+.cs210-conflict .editor-actions .btn-primary { background:#003087; color:#fff; border:none; }
+.cs210-conflict .editor-actions .btn-primary:hover { background:#00205B; }
+
+.cs210-conflict .help-note { background: #F5F7FA; border: 1px solid #D0D5DD; padding: 12px 16px; border-radius: 3px; font-size: 13px; color: #4A5568; margin-top: 12px; }
+.cs210-conflict .help-note strong { color: #00205B; }
+
+/* Name modal + completion (scoped) */
+.cs210-conflict .name-modal-backdrop { position: absolute; top:0; left:0; right:0; bottom:0; background: rgba(0,32,91,0.55); display:flex; align-items:center; justify-content:center; z-index:9999; }
+.cs210-conflict .name-modal { background:#fff; border-radius:6px; padding:28px 32px; max-width:460px; width:90%; box-shadow:0 12px 40px rgba(0,0,0,0.25); }
+.cs210-conflict .name-modal h2 { color:#00205B; font-size:20px; margin:0 0 10px 0; }
+.cs210-conflict .name-modal p { color:#4A5568; font-size:14px; line-height:1.5; margin:0 0 16px 0; }
+.cs210-conflict .name-modal input { width:100%; padding:10px 12px; font-size:15px; border:1px solid #CBD5E0; border-radius:4px; margin-bottom:14px; font-family:inherit; }
+.cs210-conflict .name-modal input:focus { outline:none; border-color:#003087; box-shadow:0 0 0 2px rgba(0,48,135,0.15); }
+.cs210-conflict .name-modal-btn { background:#003087; color:#fff; border:none; padding:10px 20px; border-radius:4px; font-size:14px; font-weight:600; cursor:pointer; }
+.cs210-conflict .name-modal-btn:disabled { background:#A0AEC0; cursor:not-allowed; }
+.cs210-conflict .name-modal-btn:not(:disabled):hover { background:#00205B; }
+.cs210-conflict .completion-screen { background:#fff; border:2px solid #2E7D32; border-radius:6px; padding:24px 28px; margin-top:16px; }
+.cs210-conflict .completion-screen .cs-heading { color:#1B5E20; font-size:20px; font-weight:600; margin:0 0 6px 0; }
+.cs210-conflict .completion-screen .cs-name-line { font-size:15px; color:#1a1a1a; margin-bottom:16px; }
+.cs210-conflict .completion-screen .cs-name-line strong { color:#00205B; }
+.cs210-conflict .completion-screen .cs-code-block { background:#F0F4FA; border:1px solid #003087; border-radius:4px; padding:16px 20px; display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:14px; }
+.cs210-conflict .completion-screen .cs-code-label { font-size:12px; text-transform:uppercase; letter-spacing:1.5px; color:#4A5568; margin-bottom:4px; }
+.cs210-conflict .completion-screen .cs-code-value { font-family:Consolas,monospace; font-size:28px; font-weight:700; color:#00205B; letter-spacing:3px; }
+.cs210-conflict .completion-screen .cs-copy-btn { background:#003087; color:#fff; border:none; padding:8px 14px; border-radius:3px; font-size:13px; cursor:pointer; }
+.cs210-conflict .completion-screen .cs-copy-btn:hover { background:#00205B; }
+.cs210-conflict .completion-screen .cs-copy-btn.copied { background:#2E7D32; }
+.cs210-conflict .completion-screen .cs-timestamp { font-size:13px; color:#6B7280; margin-bottom:18px; }
+.cs210-conflict .completion-screen .cs-reminder { background:#FFF8E1; border-left:4px solid #F0B92C; padding:12px 16px; border-radius:3px; font-size:14px; color:#6B5300; line-height:1.5; }
+.cs210-conflict .completion-screen .cs-reminder strong { color:#4A3A00; }
+</style>
+
+<div class="cs210-conflict">
+
+<div class="name-modal-backdrop" id="cf-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Lesson 24 reflection.</p>
+    <input type="text" id="cf-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="cf-cadet-name-btn" disabled>Start the walkthrough</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 24 &middot; Merge Conflict Walkthrough</h1>
+<div class="subtitle">This is the part that trips everyone up the first time. Take it slowly. You and a teammate both edited the same line of <code style="background:#1E2A3A;color:#E8EDF5;padding:1px 5px;border-radius:3px;font-family:Consolas,monospace;font-size:12px;">coffee_run.txt</code>. You will trigger the conflict on purpose, read what git wrote into the file, fix it by hand, and finish the merge. The middle pane is the actual file; watch it change as you go.</div>
+
+<div class="progress-bar"><div class="progress-fill" id="cf-progress-fill" style="width: 0%;"></div></div>
+<div class="progress-label" id="cf-progress-label">Task 0 of 13</div>
+
+<div class="section-header" id="cf-section-header">Section 1: See the setup</div>
+
+<div class="task-card" id="cf-task-card">
+  <div class="task-label" id="cf-task-label">Current task</div>
+  <div class="task-text" id="cf-task-text">Loading...</div>
+  <div class="task-detail" id="cf-task-detail"></div>
+  <div class="task-hint" id="cf-task-hint"></div>
+</div>
+
+<div class="panes">
+  <div class="terminal" id="cf-terminal"></div>
+  <div class="file-pane">
+    <div class="file-head"><span>coffee_run.txt</span><span id="cf-file-status"></span></div>
+    <div class="file-body" id="cf-file-body"></div>
+  </div>
+  <div class="graph-pane">
+    <div class="graph-pane-header">Branches</div>
+    <div id="cf-graph-area"></div>
+  </div>
+</div>
+
+<!-- The hand-edit step swaps this in: a real textarea the cadet edits -->
+<div class="editor-row" id="cf-editor-row">
+  <div class="editor-label">Edit coffee_run.txt to resolve the conflict</div>
+  <div class="editor-help" id="cf-editor-help"></div>
+  <textarea id="cf-editor" spellcheck="false"></textarea>
+  <div class="editor-actions">
+    <button class="btn btn-primary" id="cf-editor-save">Save the file</button>
+    <button class="btn" id="cf-editor-reset">Restore conflict markers</button>
+  </div>
+</div>
+
+<div class="input-row">
+  <span class="input-prompt" id="cf-shell-prompt">~/coffee-run (main)$</span>
+  <input type="text" id="cf-cli-input" autocomplete="off" spellcheck="false" placeholder="follow the task above">
+</div>
+
+<div class="controls">
+  <button class="btn" id="cf-hint-btn">Show hint</button>
+  <button class="btn" id="cf-reset-btn">Reset</button>
+</div>
+
+<div class="help-note">
+  <strong>If you ever feel lost:</strong> a half-finished merge is not dangerous. Running <code style="background:#EEF1F5;color:#00205B;padding:1px 5px;border-radius:3px;font-family:Consolas,monospace;font-size:12px;">git merge --abort</code> in your real terminal throws the whole merge away and puts the file back exactly as it was, so you can start over. Nothing you do during a conflict is permanent until you commit. This simulated shell understands the commands the task asks for; follow the card and you cannot break anything.
+</div>
+
+<div id="cf-completion-area"></div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-conflict');
+  if (!root) return;
+
+  // ---- Completion code ----
+  const CS210_SALT = "lesson24_conflict_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  function cs210Fnv1a(s){let h=0x811c9dc5;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=(h+((h<<1)+(h<<4)+(h<<7)+(h<<8)+(h<<24)))>>>0;}return h>>>0;}
+  function cs210CodeFromSalt(salt){const h1=cs210Fnv1a(salt);const h2=cs210Fnv1a(salt+'|cs210');let pool=BigInt(h1)|(BigInt(h2)<<32n);let out='';for(let i=0;i<6;i++){out+=CS210_ALPHABET[Number(pool&31n)];pool>>=5n;}return out;}
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  // ---- Name modal ----
+  (function(){
+    const backdrop=root.querySelector('#cf-name-modal-backdrop');
+    const input=root.querySelector('#cf-cadet-name-input');
+    const btn=root.querySelector('#cf-cadet-name-btn');
+    if(!backdrop||!input||!btn)return;
+    try{const stored=window.localStorage&&window.localStorage.getItem('cs210_cadet_name');if(stored&&stored.trim().length>=2){cs210CadetName=stored.trim();backdrop.style.display='none';return;}}catch(e){}
+    function upd(){btn.disabled=input.value.trim().length<2;}
+    upd();input.addEventListener('input',upd);
+    input.addEventListener('keydown',function(e){if(e.key==='Enter'&&!btn.disabled){e.preventDefault();btn.click();}});
+    btn.addEventListener('click',function(){const name=input.value.trim();if(name.length<2)return;cs210CadetName=name;try{window.localStorage&&window.localStorage.setItem('cs210_cadet_name',name);}catch(e){}backdrop.style.display='none';const sib=document.querySelectorAll('#br-name-modal-backdrop');sib.forEach(function(m){m.style.display='none';});const cli=root.querySelector('#cf-cli-input');if(cli)cli.focus();});
+    setTimeout(function(){input.focus();},50);
+  })();
+
+  function cs210RenderCompletion(area){
+    if(!area)return; if(root.querySelector('#cf-completion-overlay'))return;
+    const now=new Date();const ts=now.toLocaleString('en-US',{dateStyle:'medium',timeStyle:'short'});
+    const safeName=(cs210CadetName||'Cadet').replace(/[<>&"']/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];});
+    area.innerHTML='<div class="completion-screen"><div class="cs-heading">Walkthrough complete</div><div class="cs-name-line">Cadet: <strong>'+safeName+'</strong></div><div class="cs-code-block"><div><div class="cs-code-label">Completion code</div><div class="cs-code-value">'+CS210_CODE+'</div></div></div><div class="cs-timestamp">Completed: '+ts+'</div></div>';
+    const overlay=document.createElement('div');overlay.id='cf-completion-overlay';overlay.className='name-modal-backdrop';overlay.style.background='rgba(27,94,32,0.55)';
+    overlay.innerHTML='<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;"><h2 style="color:#1B5E20;">Conflict resolved</h2><p>Take a screenshot of this box. You will need the code and a visual of this screen for the Lesson 24 reflection.</p><div class="cs-name-line">Cadet: <strong>'+safeName+'</strong></div><div class="cs-code-block"><div><div class="cs-code-label">Completion code</div><div class="cs-code-value" id="cf-code-value">'+CS210_CODE+'</div></div><button class="cs-copy-btn" id="cf-copy-btn" type="button">Copy code</button></div><div class="cs-timestamp">Completed: '+ts+'</div><div class="cs-reminder" style="margin-bottom:14px;"><strong>Next step:</strong> Open the Lesson 24 reflection in Blackboard. Enter this code, answer the reflection prompt, and attach your screenshot.</div><button class="name-modal-btn" id="cf-overlay-close" type="button" style="background:#2E7D32;">Got it &mdash; close this</button></div>';
+    root.appendChild(overlay);
+    const cb=overlay.querySelector('#cf-overlay-close');if(cb)cb.addEventListener('click',function(){overlay.style.display='none';});
+    const copy=overlay.querySelector('#cf-copy-btn');
+    if(copy)copy.addEventListener('click',function(){const t=CS210_CODE;const ok=function(){copy.textContent='Copied';copy.classList.add('copied');setTimeout(function(){copy.textContent='Copy code';copy.classList.remove('copied');},1500);};if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(ok,function(){fb(t);ok();});}else{fb(t);ok();}});
+    function fb(text){try{const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}catch(e){}}
+  }
+
+  // ---- Terminal helpers ----
+  const terminalEl = root.querySelector('#cf-terminal');
+  function termWrite(t,c){const s=document.createElement('span');if(c)s.className=c;s.textContent=t;terminalEl.appendChild(s);}
+  function termLine(t,c){termWrite(t,c);terminalEl.appendChild(document.createElement('br'));terminalEl.scrollTop=terminalEl.scrollHeight;}
+  function echoCommand(cmd){termWrite(shellPrefix()+' ','prompt');termLine(cmd,'typed');}
+  function shellPrefix(){
+    if(state.mergeState==='conflict') return '~/coffee-run (main|MERGING)$';
+    return '~/coffee-run ('+state.head+')$';
+  }
+
+  // ============================================================
+  // State
+  //   The file has a fixed prologue, a contested line region, and an epilogue.
+  //   "ours" (main) wrote one line; "theirs" (roommate-edits) wrote another.
+  //   mergeState: 'clean' -> 'conflict' -> 'resolved' -> 'committed'
+  // ============================================================
+  const PROLOGUE = ['# Coffee Run - Friday 0700', '# Submit orders before the run leaves', '', 'Bolton: black coffee, large'];
+  const OURS_LINE = 'Garcia: vanilla latte, oat milk';        // added on main
+  const THEIRS_LINE = 'Chen: caramel macchiato, extra shot';  // added on roommate-edits
+  const EPILOGUE = ['', '# total orders pending tally'];
+
+  let state, fileLines, fileHasMarkers;
+  function initState() {
+    state = { head: 'main', mergeState: 'clean' };
+    // Before the merge, main's working file (ours already committed on main):
+    fileLines = PROLOGUE.concat([OURS_LINE]).concat(EPILOGUE);
+    fileHasMarkers = false;
+  }
+
+  // Build the conflicted file (what git writes on a failed auto-merge)
+  function conflictedLines() {
+    return PROLOGUE.concat([
+      '<<<<<<< HEAD',
+      OURS_LINE,
+      '=======',
+      THEIRS_LINE,
+      '>>>>>>> roommate-edits'
+    ]).concat(EPILOGUE);
+  }
+
+  // ---- File pane renderer ----
+  const fileBody = root.querySelector('#cf-file-body');
+  const fileStatus = root.querySelector('#cf-file-status');
+  function renderFile() {
+    fileBody.innerHTML = '';
+    fileLines.forEach((line, i) => {
+      const row = document.createElement('div');
+      row.className = 'fl';
+      let extra = '';
+      if (line === '<<<<<<< HEAD') { row.classList.add('marker-ours-head'); extra = '<span class="vscode-tag current">Current Change (HEAD / main)</span>'; }
+      else if (line === '=======') row.classList.add('marker-sep');
+      else if (line === '>>>>>>> roommate-edits') { row.classList.add('marker-theirs-tail'); extra = '<span class="vscode-tag incoming">Incoming Change (roommate-edits)</span>'; }
+      else if (fileHasMarkers && lineIsOurs(i)) row.classList.add('ours');
+      else if (fileHasMarkers && lineIsTheirs(i)) row.classList.add('theirs');
+      row.innerHTML = '<span class="ln">' + (i + 1) + '</span><span class="tx">' + escapeHtml(line) + (extra) + '</span>';
+      fileBody.appendChild(row);
+    });
+    if (state.mergeState === 'conflict') fileStatus.innerHTML = '<span class="dirty">! conflict</span>';
+    else if (state.mergeState === 'resolved') fileStatus.innerHTML = '<span style="color:#2E7D32;font-weight:700;">resolved (not yet added)</span>';
+    else if (state.mergeState === 'committed') fileStatus.innerHTML = '<span style="color:#2E7D32;font-weight:700;">merged</span>';
+    else fileStatus.textContent = '';
+  }
+  function lineIsOurs(i) {
+    // between <<<<<<< and =======
+    const open = fileLines.indexOf('<<<<<<< HEAD');
+    const sep = fileLines.indexOf('=======');
+    return open >= 0 && sep >= 0 && i > open && i < sep;
+  }
+  function lineIsTheirs(i) {
+    const sep = fileLines.indexOf('=======');
+    const close = fileLines.indexOf('>>>>>>> roommate-edits');
+    return sep >= 0 && close >= 0 && i > sep && i < close;
+  }
+  function escapeHtml(s){return String(s).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));}
+
+  // ---- Branch graph (compact) ----
+  const graphArea = root.querySelector('#cf-graph-area');
+  function renderGraph() {
+    // Two tips diverged from a common base, plus a merge commit once committed.
+    const W = 200, rowH = 46, padTop = 16, baseX = 24, oursX = 24, theirsX = 96;
+    let nodes, edges;
+    if (state.mergeState === 'committed') {
+      // base -> ours -> merge ; base -> theirs -> merge
+      const yBase = padTop + 3 * rowH, yMid = padTop + 1.5 * rowH, yMerge = padTop;
+      nodes = [
+        { x: baseX, y: yBase, label: '', id: 'base' },
+        { x: oursX, y: yMid, label: '', id: 'ours' },
+        { x: theirsX, y: yMid, label: 'roommate-edits', id: 'theirs', tagcolor:'#9A6A00', tagfill:'#FFF3CF' },
+        { x: oursX, y: yMerge, label: 'HEAD,main', id: 'merge', tagcolor:'#2E7D32', tagfill:'#E6F4EA' },
+      ];
+      edges = [['base','ours'],['ours','merge'],['base','theirs'],['theirs','merge']];
+    } else {
+      const yBase = padTop + 2 * rowH, yTip = padTop;
+      nodes = [
+        { x: baseX, y: yBase, label: '', id: 'base' },
+        { x: oursX, y: yTip, label: 'HEAD,main', id: 'ours', tagcolor:'#2E7D32', tagfill:'#E6F4EA' },
+        { x: theirsX, y: yTip, label: 'roommate-edits', id: 'theirs', tagcolor:'#9A6A00', tagfill:'#FFF3CF' },
+      ];
+      edges = [['base','ours'],['base','theirs']];
+    }
+    const H = padTop + 4 * rowH;
+    const byId = {}; nodes.forEach(n => byId[n.id] = n);
+    let svg = '<svg class="graph-svg" viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" style="min-height:'+H+'px;">';
+    for (const [a,b] of edges) {
+      const na = byId[a], nb = byId[b];
+      if (na.x === nb.x) svg += '<line x1="'+na.x+'" y1="'+na.y+'" x2="'+nb.x+'" y2="'+nb.y+'" stroke="#9AA3AD" stroke-width="2"/>';
+      else { const my=(na.y+nb.y)/2; svg += '<path d="M '+na.x+' '+na.y+' C '+na.x+' '+my+', '+nb.x+' '+my+', '+nb.x+' '+nb.y+'" fill="none" stroke="#9AA3AD" stroke-width="2"/>'; }
+    }
+    for (const n of nodes) {
+      const fill = n.id === 'merge' ? '#2E7D32' : (n.id === 'theirs' ? '#B8002F' : '#003087');
+      svg += '<circle cx="'+n.x+'" cy="'+n.y+'" r="7" fill="'+fill+'" stroke="#fff" stroke-width="2"/>';
+      if (n.label) {
+        const w = 12 + n.label.length * 6.6;
+        svg += '<rect x="'+(n.x+12)+'" y="'+(n.y-10)+'" rx="3" width="'+w+'" height="20" fill="'+(n.tagfill||'#EEE')+'" stroke="'+(n.tagcolor||'#888')+'" stroke-width="1.3"/>';
+        svg += '<text x="'+(n.x+12+w/2)+'" y="'+(n.y+4)+'" text-anchor="middle" font-family="Consolas,monospace" font-size="10" font-weight="700" fill="'+(n.tagcolor||'#888')+'">'+escapeHtml(n.label)+'</text>';
+      }
+    }
+    svg += '</svg>';
+    graphArea.innerHTML = svg;
+  }
+
+  // ============================================================
+  // The hand-edit step: show the textarea, validate the resolution.
+  // Accept ANY resolution that (a) removes all three marker lines and
+  // (b) keeps at least one of the two contested names. The "Right"
+  // answer per the lab is alphabetical, but the widget teaches the
+  // mechanics, so we accept ours-only, theirs-only, or both-in-any-order.
+  // ============================================================
+  const editorRow = root.querySelector('#cf-editor-row');
+  const editorTA = root.querySelector('#cf-editor');
+  const editorHelp = root.querySelector('#cf-editor-help');
+  function openEditor() {
+    editorTA.value = fileLines.join('\n');
+    editorHelp.innerHTML = 'Delete the three marker lines (the <code style="font-family:Consolas,monospace">&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>, <code style="font-family:Consolas,monospace">=======</code>, and <code style="font-family:Consolas,monospace">&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code> lines). Keep the order line(s) you want. The lab will ask for a specific rule; here, any clean result works so you can feel the mechanics. Then click Save.';
+    editorRow.classList.add('show');
+    editorTA.focus();
+  }
+  function closeEditor() { editorRow.classList.remove('show'); }
+  function validateResolution(text) {
+    const lines = text.split('\n');
+    const hasMarker = lines.some(l => /^<<<<<<<|^=======|^>>>>>>>/.test(l.trim()));
+    if (hasMarker) return { ok: false, reason: 'There are still conflict markers in the file. Remove every line that starts with <<<<<<<, =======, or >>>>>>>.' };
+    const keptOurs = lines.some(l => l.trim() === OURS_LINE);
+    const keptTheirs = lines.some(l => l.trim() === THEIRS_LINE);
+    if (!keptOurs && !keptTheirs) return { ok: false, reason: 'You removed both order lines. Keep at least one of the two orders (Garcia or Chen).' };
+    return { ok: true, keptOurs, keptTheirs };
+  }
+
+  // ============================================================
+  // Command execution (only what this lesson needs)
+  // ============================================================
+  function runCommand(raw) {
+    const cmd = raw.trim().replace(/\s+/g, ' ');
+    const out = [];
+    if (/^git status$/.test(cmd)) {
+      if (state.mergeState === 'conflict') {
+        out.push(['On branch main', 'out']);
+        out.push(['You have unmerged paths.', 'err']);
+        out.push(['  (fix conflicts and run "git commit")', 'dim']);
+        out.push(['  (use "git merge --abort" to abort the merge)', 'dim']);
+        out.push(['', 'out']);
+        out.push(['Unmerged paths:', 'out']);
+        out.push(['  (use "git add <file>..." to mark resolution)', 'dim']);
+        out.push(['        both modified:   coffee_run.txt', 'err']);
+      } else if (state.mergeState === 'resolved') {
+        out.push(['On branch main', 'out']);
+        out.push(['All conflicts fixed but you are still merging.', 'ok']);
+        out.push(['  (use "git commit" to conclude merge)', 'dim']);
+        out.push(['', 'out']);
+        out.push(['Changes to be committed:', 'out']);
+        out.push(['        modified:   coffee_run.txt', 'ok']);
+      } else {
+        out.push(['On branch ' + state.head, 'out']);
+        out.push(['nothing to commit, working tree clean', 'out']);
+      }
+      return out;
+    }
+    if (/^git branch$/.test(cmd)) {
+      out.push(['* main', 'ok']);
+      out.push(['  roommate-edits', 'out']);
+      return out;
+    }
+    if (/^cat coffee_run\.txt$/.test(cmd)) {
+      for (const l of fileLines) out.push([l === '' ? ' ' : l, 'out']);
+      return out;
+    }
+    if (/^git merge roommate-edits$/.test(cmd)) {
+      if (state.mergeState !== 'clean') throw new Error('A merge is already in progress. Finish it or run git merge --abort.');
+      // trigger conflict
+      state.mergeState = 'conflict';
+      fileLines = conflictedLines();
+      fileHasMarkers = true;
+      out.push(['Auto-merging coffee_run.txt', 'out']);
+      out.push(['CONFLICT (content): Merge conflict in coffee_run.txt', 'err']);
+      out.push(['Automatic merge failed; fix conflicts and then commit the result.', 'err']);
+      return out;
+    }
+    if (/^git merge --abort$/.test(cmd)) {
+      if (state.mergeState !== 'conflict' && state.mergeState !== 'resolved') throw new Error('There is no merge to abort.');
+      state.mergeState = 'clean';
+      fileLines = PROLOGUE.concat([OURS_LINE]).concat(EPILOGUE);
+      fileHasMarkers = false;
+      out.push(['Merge aborted. The file is back to how it was before you started.', 'out']);
+      return out;
+    }
+    if (/^git add coffee_run\.txt$/.test(cmd) || /^git add \.$/.test(cmd)) {
+      if (state.mergeState === 'conflict') throw new Error('coffee_run.txt still has conflict markers. Edit and save the file first, then add it.');
+      if (state.mergeState === 'resolved') { out.push(['(file staged)', 'dim']); return out; }
+      out.push(['nothing to add; working tree clean', 'out']); return out;
+    }
+    if (/^git commit( -m ".*")?$/.test(cmd) || /^git commit( -m '.*')?$/.test(cmd) || /^git commit$/.test(cmd)) {
+      if (state.mergeState !== 'resolved') throw new Error('Nothing staged to commit. Resolve the conflict and git add the file first.');
+      state.mergeState = 'committed';
+      fileHasMarkers = false;
+      out.push(['[main 5f3c9a1] Merge branch \'roommate-edits\'', 'out']);
+      return out;
+    }
+    if (/^git log( --oneline)?( --graph)?( --all)?$/.test(cmd)) {
+      if (state.mergeState === 'committed') {
+        out.push(['*   5f3c9a1 (HEAD -> main) Merge branch \'roommate-edits\'', 'out']);
+        out.push(['|\\', 'out']);
+        out.push(['| * b2d4e6f (roommate-edits) Add Chen order', 'out']);
+        out.push(['* | a1c3e5d Add Garcia order', 'out']);
+        out.push(['|/', 'out']);
+        out.push(['* 9f0a1b2 Start the coffee run list', 'out']);
+      } else {
+        out.push(['* a1c3e5d (HEAD -> main) Add Garcia order', 'out']);
+        out.push(['* 9f0a1b2 Start the coffee run list', 'out']);
+      }
+      return out;
+    }
+    if (/^git/.test(cmd)) throw new Error('This command is not part of the walkthrough. Follow the task card.');
+    throw new Error('This simulated shell only understands the commands this lesson uses.');
+  }
+
+  // ============================================================
+  // Tasks
+  // ============================================================
+  let currentTaskIndex = 0, consecutiveFails = 0;
+  const tasks = [
+    // Section 1: setup
+    { section: 'Section 1: See the setup',
+      label: 'Task 1 of 13',
+      text: 'Two branches exist: main (where you are) and roommate-edits. Confirm that with git branch.',
+      detail: 'You are on main. Your roommate did their work on a separate branch called roommate-edits. Both of you edited the same part of coffee_run.txt.',
+      hint: 'git branch',
+      match: (c) => /^git branch$/.test(c.trim()),
+      diagnose: (c) => null,
+      note: 'Two branches. You are on main (the asterisk). The branch graph on the right shows them split from a common starting commit. Both touched the same line, which is what sets up the conflict.' },
+
+    { label: 'Task 2 of 13',
+      text: 'Look at the current file before merging. Run cat coffee_run.txt',
+      detail: 'Right now the file is clean and has your order on it. Read it so you can recognize what changes when the conflict appears.',
+      hint: 'cat coffee_run.txt',
+      match: (c) => /^cat coffee_run\.txt$/.test(c.trim()),
+      diagnose: (c) => /coffee/.test(c) ? "Close. Type exactly: cat coffee_run.txt" : null,
+      note: 'A normal, readable file. Your line (Garcia) is there. Keep this picture in mind, because git is about to scribble all over it.' },
+
+    // Section 2: trigger
+    { section: 'Section 2: Trigger the conflict',
+      label: 'Task 3 of 13',
+      text: 'Try to merge your roommate\'s branch into main: git merge roommate-edits',
+      detail: 'Both branches changed the same line, so git cannot decide which version wins. It will stop and hand the decision to you. This is expected. Do not panic when you see CONFLICT.',
+      hint: 'git merge roommate-edits',
+      match: (c) => /^git merge roommate-edits$/.test(c.trim()),
+      diagnose: (c) => {
+        const t=c.trim();
+        if(/^git merge main$/.test(t)) return "You are already on main; you merge the OTHER branch in. Type: git merge roommate-edits";
+        if(/^git merge/.test(t)) return "Check the branch name: git merge roommate-edits";
+        return null;
+      },
+      note: 'CONFLICT. Read the message: "Automatic merge failed; fix conflicts and then commit the result." This is git asking for help, not an error you caused wrongly. Look at the file pane: git just rewrote coffee_run.txt with conflict markers. We will read them next.' },
+
+    { label: 'Task 4 of 13',
+      text: 'Check your situation. Run git status.',
+      detail: 'During a conflict, git status is your best friend. It tells you that you are mid-merge and which file needs fixing.',
+      hint: 'git status',
+      match: (c) => /^git status$/.test(c.trim()),
+      diagnose: (c) => null,
+      note: 'Notice three things: "You have unmerged paths," "both modified: coffee_run.txt," and the reminder that you can abort with git merge --abort. Your prompt also changed to (main|MERGING) so you always know you are mid-merge.' },
+
+    // Section 3: read the markers
+    { section: 'Section 3: Read what git wrote',
+      label: 'Task 5 of 13',
+      text: 'Look closely at the file pane on the middle. Find the three marker lines git added. When you have spotted all three, type ready to continue.',
+      detail: 'Git inserted three special lines into the file. Top marker: 7 less-than signs and HEAD. Middle marker: 7 equals signs. Bottom marker: 7 greater-than signs and the other branch name. The colored labels (Current Change / Incoming Change) are what VSCode adds on top of these same markers.',
+      hint: 'ready',
+      match: (c) => /^ready$/i.test(c.trim()),
+      diagnose: (c) => null,
+      note: 'Good. Those three lines are not part of your data. They are git\'s way of fencing off the disagreement so you can see both versions side by side.' },
+
+    { label: 'Task 6 of 13',
+      text: 'Read the TOP section. The lines between <<<<<<< HEAD and ======= are YOUR version (the branch you are on, main). What name is in your version? Type that last name.',
+      detail: 'Everything from the <<<<<<< HEAD marker down to the ======= marker is "ours" -- the side you were standing on when you started the merge. VSCode labels this "Current Change."',
+      hint: 'Garcia',
+      match: (c) => /^garcia$/i.test(c.trim()),
+      diagnose: (c) => {
+        if(/chen/i.test(c)) return "That name is in the BOTTOM section (theirs). The top section, between <<<<<<< HEAD and =======, holds your version. Read that one.";
+        return "Look at the lines between <<<<<<< HEAD and =======. Type the last name you see there.";
+      },
+      note: 'Right. The top half is yours: Garcia. This is the change that already lived on main before the merge.' },
+
+    { label: 'Task 7 of 13',
+      text: 'Now read the BOTTOM section. The lines between ======= and >>>>>>> roommate-edits are THEIR version. What last name is there? Type it.',
+      detail: 'Everything from ======= down to >>>>>>> roommate-edits is "theirs" -- the change coming in from the other branch. VSCode labels this "Incoming Change."',
+      hint: 'Chen',
+      match: (c) => /^chen$/i.test(c.trim()),
+      diagnose: (c) => {
+        if(/garcia/i.test(c)) return "That is the TOP section (yours). The bottom section, between ======= and >>>>>>>, holds their version. Read that one.";
+        return "Look at the lines between ======= and >>>>>>> roommate-edits. Type the last name you see there.";
+      },
+      note: 'Right. The bottom half is theirs: Chen. So the disagreement is simply: your line says Garcia, their line says Chen, and git does not know which should be on that line, or whether both should.' },
+
+    // Section 4: resolve
+    { section: 'Section 4: Make the file Right',
+      label: 'Task 8 of 13',
+      text: 'Time to fix it by hand. Type edit to open coffee_run.txt in an editor.',
+      detail: 'In your real toolchain you would open the file in VSCode or your editor. Here, typing edit opens a text box with the current file. Your job: delete the three marker lines and decide what the final line(s) should be.',
+      hint: 'edit',
+      match: (c) => /^edit$/i.test(c.trim()),
+      diagnose: (c) => null,
+      note: 'The editor is open below the panes. You will see the file exactly as git left it, markers and all. Resolving means making the file read the way it SHOULD, then deleting every marker line.' },
+
+    { label: 'Task 9 of 13',
+      text: 'In the editor below: remove all three marker lines (<<<<<<<, =======, >>>>>>>). Keep the order(s) you want -- you can keep both names, or just one. Then click "Save the file." A real lab will give you a specific rule; here any clean result is accepted so you can practice the mechanics.',
+      detail: 'The key idea: the markers are NOT data. The final file should contain only the real lines you want, with no <<<<<<<, =======, or >>>>>>> anywhere. Leftover markers are the single most common reason a "resolved" merge breaks later.',
+      hint: 'Delete the three marker lines in the editor, keep at least one order line, then click Save the file.',
+      isEditorStep: true,
+      note: 'Saved. Look at the file pane: clean again, no markers. But you are NOT done. git still thinks the file is in conflict until you tell it you have resolved it. That is the next step, and it is the one people forget.' },
+
+    // Section 5: finish the merge
+    { section: 'Section 5: Finish the merge',
+      label: 'Task 10 of 13',
+      text: 'Tell git the conflict is resolved by staging the file: git add coffee_run.txt',
+      detail: 'Saving the file fixed the CONTENT. git add marks the file as "resolved" so git stops treating it as conflicted. Forgetting this step is the number one reason a merge seems stuck.',
+      hint: 'git add coffee_run.txt',
+      match: (c) => /^git add (coffee_run\.txt|\.)$/.test(c.trim()),
+      diagnose: (c) => {
+        const t=c.trim();
+        if(/^git add/.test(t)) return "Right verb. Add the file by name: git add coffee_run.txt";
+        return "To mark the conflict resolved, stage the file: git add coffee_run.txt";
+      },
+      note: 'Staged. git now considers the conflict resolved. One step left: actually record the merge with a commit.' },
+
+    { label: 'Task 11 of 13',
+      text: 'Check your progress. Run git status.',
+      detail: 'It should now say all conflicts are fixed but you are still merging, and prompt you to commit.',
+      hint: 'git status',
+      match: (c) => /^git status$/.test(c.trim()),
+      diagnose: (c) => null,
+      note: '"All conflicts fixed but you are still merging." This is the green light. The file is staged and ready; the only thing left is to seal it with a commit.' },
+
+    { label: 'Task 12 of 13',
+      text: 'Complete the merge with a commit: git commit -m "Merge roommate-edits"',
+      detail: 'This creates the MERGE COMMIT -- the special commit with two parents that ties both branches together. After this, the merge is done.',
+      hint: 'git commit -m "Merge roommate-edits"',
+      match: (c) => /^git commit( -m ["'].*["'])?$/.test(c.trim()),
+      diagnose: (c) => {
+        const t=c.trim();
+        if(/^git merge/.test(t)) return "The merge is already in progress; you finish it with a commit, not another merge. Type: git commit -m \"Merge roommate-edits\"";
+        if(/^git commit/.test(t)) return "Close. A message is optional here, but the cleanest form is: git commit -m \"Merge roommate-edits\"";
+        return null;
+      },
+      note: 'Merge commit created. The conflict is fully resolved and recorded. The branch graph on the right now shows the two lines coming back together into a single merge commit that main points to.' },
+
+    { label: 'Task 13 of 13',
+      text: 'See the merge in the history: git log --oneline --graph',
+      detail: 'The graph output shows the two branches splitting and rejoining at your merge commit. That diamond shape is the visual signature of a real (non-fast-forward) merge.',
+      hint: 'git log --oneline --graph',
+      match: (c) => /^git log --oneline --graph( --all)?$/.test(c.trim()),
+      diagnose: (c) => /^git log/.test(c.trim()) ? "Type exactly: git log --oneline --graph" : null,
+      note: 'There it is: two lines split off the starting commit and rejoin at the merge commit. You triggered a conflict, read the markers, made the file Right, staged it, and committed. That is the entire conflict-resolution workflow. In lab you will do this for real, with a specific resolution rule to follow.' },
+  ];
+
+  // ============================================================
+  // Controller
+  // ============================================================
+  function checkInput(raw) {
+    if (currentTaskIndex >= tasks.length) return;
+    const t = tasks[currentTaskIndex];
+
+    // Editor step is advanced by the Save button, not by typed input.
+    if (t.isEditorStep) {
+      echoCommand(raw);
+      termLine('  Use the editor box below to fix the file, then click "Save the file." (Typing here will not advance this step.)', 'err');
+      consecutiveFails++;
+      if (consecutiveFails >= 2) showHintPulse();
+      return;
+    }
+
+    if (t.match(raw)) {
+      echoCommand(raw);
+      const r = raw.trim();
+      // Dispatch: meta-verbs (edit/ready) and short answer-words (Garcia/Chen)
+      // are NOT git commands and must not be routed through runCommand.
+      if (/^edit$/i.test(r)) {
+        openEditor();
+      } else if (/^ready$/i.test(r)) {
+        termLine('  Markers spotted. Moving on.', 'ok');
+      } else if (/^(git |cat )/.test(r)) {
+        try {
+          const lines = runCommand(raw);
+          for (const [text, cls] of lines) termLine('  ' + text, cls);
+        } catch (e) {
+          termLine('  ' + e.message, 'err');
+          // A matched git task should not throw; if it does, do not advance.
+          return;
+        }
+      } else {
+        // An accepted free-text answer (e.g. a last name). Acknowledge simply.
+        termLine('  Correct.', 'ok');
+      }
+      if (t.note) { termLine('', 'out'); termLine('  ' + t.note, 'note'); }
+      currentTaskIndex++;
+      consecutiveFails = 0;
+      hideHintPulse();
+      renderFile();
+      renderGraph();
+      renderTask();
+      if (currentTaskIndex >= tasks.length) {
+        termLine('', 'out');
+        termLine('  Walkthrough complete. Scroll down for your completion code.', 'ok');
+      }
+    } else {
+      echoCommand(raw);
+      // Let real-but-wrong commands print a realistic error WITHOUT advancing,
+      // but only when they are safe (status/branch/cat/abort). Merge/add/commit
+      // out of order should just be diagnosed so state stays on-rails.
+      const t2 = raw.trim().replace(/\s+/g,' ');
+      const safeProbe = /^(git status|git branch|cat coffee_run\.txt|git merge --abort|git log( --oneline)?( --graph)?( --all)?)$/.test(t2);
+      if (safeProbe) {
+        try { const lines = runCommand(raw); for (const [text, cls] of lines) termLine('  ' + text, cls); }
+        catch (e) { termLine('  ' + e.message, 'err'); }
+        termLine('  (That ran, but it is not what this task asked for. Re-read the task card.)', 'dim');
+      } else {
+        const diag = (t.diagnose && t.diagnose(raw)) || null;
+        if (diag) termLine('  ' + diag, 'err');
+        else termLine("  Not what this task is asking for. Re-read the task card above, or click 'Show hint'.", 'err');
+      }
+      consecutiveFails++;
+      if (consecutiveFails >= 2) showHintPulse();
+    }
+  }
+
+  // Editor save handling
+  root.querySelector('#cf-editor-save').addEventListener('click', function() {
+    const t = tasks[currentTaskIndex];
+    if (!t || !t.isEditorStep) return;
+    const text = editorTA.value;
+    const res = validateResolution(text);
+    if (!res.ok) {
+      termLine('  ' + res.reason, 'err');
+      consecutiveFails++;
+      if (consecutiveFails >= 2) showHintPulse();
+      return;
+    }
+    // Apply the resolution to the file model.
+    fileLines = text.split('\n');
+    fileHasMarkers = false;
+    state.mergeState = 'resolved';
+    closeEditor();
+    echoCommand('(saved coffee_run.txt in editor)');
+    termLine('  File saved with no conflict markers.', 'ok');
+    if (t.note) { termLine('', 'out'); termLine('  ' + t.note, 'note'); }
+    currentTaskIndex++;
+    consecutiveFails = 0;
+    hideHintPulse();
+    renderFile();
+    renderGraph();
+    renderTask();
+  });
+  root.querySelector('#cf-editor-reset').addEventListener('click', function() {
+    editorTA.value = conflictedLines().join('\n');
+    editorTA.focus();
+  });
+
+  function renderTask() {
+    const fill = root.querySelector('#cf-progress-fill');
+    const label = root.querySelector('#cf-progress-label');
+    const card = root.querySelector('#cf-task-card');
+    const labelEl = root.querySelector('#cf-task-label');
+    const textEl = root.querySelector('#cf-task-text');
+    const detailEl = root.querySelector('#cf-task-detail');
+    const hintEl = root.querySelector('#cf-task-hint');
+    const sectionEl = root.querySelector('#cf-section-header');
+    const completionArea = root.querySelector('#cf-completion-area');
+
+    fill.style.width = (currentTaskIndex / tasks.length * 100) + '%';
+    label.textContent = 'Task ' + Math.min(currentTaskIndex + 1, tasks.length) + ' of ' + tasks.length;
+
+    if (currentTaskIndex >= tasks.length) {
+      card.className = 'task-card complete';
+      labelEl.textContent = 'Complete';
+      textEl.textContent = 'You resolved a real merge conflict end to end: triggered it, read the markers, edited the file, staged it, and committed the merge. This is exactly the lab workflow.';
+      detailEl.textContent = '';
+      hintEl.textContent = '';
+      fill.style.width = '100%';
+      label.textContent = 'All tasks complete';
+      sectionEl.textContent = 'All done';
+      closeEditor();
+      completionArea.innerHTML = '';
+      cs210RenderCompletion(completionArea);
+      return;
+    }
+    completionArea.innerHTML = '';
+    card.className = 'task-card';
+    const t = tasks[currentTaskIndex];
+    if (t.section) sectionEl.textContent = t.section;
+    labelEl.textContent = t.label;
+    textEl.innerHTML = renderInlineCode(t.text);
+    detailEl.innerHTML = renderInlineCodeDetail(t.detail || '');
+    hintEl.textContent = '';
+    root.querySelector('#cf-shell-prompt').textContent = shellPrefix();
+  }
+  function renderInlineCode(s) {
+    const esc = s.replace(/[<>&]/g, c => ({ '<':'&lt;', '>':'&gt;', '&':'&amp;' }[c]));
+    // wrap explicit command-looking fragments
+    return esc.replace(/(git [a-z][\w".'\- ]*?|cat coffee_run\.txt)(?=$|\.|,| When| Then| A )/g, '<code>$1</code>');
+  }
+  function renderInlineCodeDetail(s) {
+    return s.replace(/[<>&]/g, c => ({ '<':'&lt;', '>':'&gt;', '&':'&amp;' }[c]));
+  }
+
+  function showHint() {
+    if (currentTaskIndex >= tasks.length) return;
+    root.querySelector('#cf-task-hint').textContent = 'Hint: ' + (tasks[currentTaskIndex].hint || '');
+    hideHintPulse();
+  }
+  function showHintPulse() { root.querySelector('#cf-hint-btn').classList.add('pulse'); }
+  function hideHintPulse() { root.querySelector('#cf-hint-btn').classList.remove('pulse'); }
+
+  function reset() {
+    initState();
+    currentTaskIndex = 0; consecutiveFails = 0;
+    hideHintPulse();
+    closeEditor();
+    terminalEl.innerHTML = '';
+    termLine('Simulated git shell for the Lesson 24 conflict walkthrough.', 'dim');
+    termLine('Follow the task card. Take it one step at a time; conflicts are not dangerous.', 'dim');
+    termLine('', 'out');
+    renderFile();
+    renderGraph();
+    renderTask();
+    const overlay = root.querySelector('#cf-completion-overlay');
+    if (overlay) overlay.remove();
+  }
+
+  const inputEl = root.querySelector('#cf-cli-input');
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const v = inputEl.value; inputEl.value = '';
+      if (!v.trim()) return;
+      checkInput(v);
+    }
+  });
+  root.querySelector('#cf-hint-btn').addEventListener('click', showHint);
+  root.querySelector('#cf-reset-btn').addEventListener('click', reset);
+
+  reset();
+})();
+</script>
+
+
+    </div>
+  </details>
+
+  <!-- ===================== 6. AFTER CLASS ===================== -->
+  <details id="after-class" style="margin-bottom: 24px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">6. After Class</summary>
+    <div style="padding: 18px 22px;">
+      <ul style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Finish Lab 24 if you did not complete it in class. Submit through Gradescope.</li>
+        <li style="margin-bottom: 6px;">Submit <strong>both</strong> widget completion codes on the Lesson 24 reflection, with a screenshot of each completion screen.</li>
+        <li style="margin-bottom: 6px;">Read Beej-Git Ch. 7 and beyond, plus the code-review notes, for Lesson 25 (collaboration, remotes, pull requests, code review).</li>
+        <li style="margin-bottom: 0;">Looking ahead: Lesson 25 takes today's solo-machine branching and merging to a whole team. The conflict skills you built today carry over unchanged.</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== HELP NOTE ===================== -->
+  <div style="background: #F5F7FA; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 3px; font-size: 13.5px; color: #4A5568;">
+    <strong style="color: #00205B;">Need help?</strong> Schedule EI with your instructor. Bring the exact Git message or output you do not understand. For common Git problems (rejected pushes, detached HEAD, undoing a merge), see the
+    <!-- =========================================================
+         EDIT ME: Git troubleshooting reference card link
+         Replace href="#" with the published one-page Git
+         troubleshooting card URL (same card linked on every
+         lesson page L1-L23).
+         ========================================================= -->
+    <a href="#" target="_blank" rel="noopener" style="color: #003087; text-decoration: underline; font-weight: 600;">one-page Git troubleshooting card</a>.
+  </div>
+
+</div>

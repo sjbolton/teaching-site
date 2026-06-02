@@ -1,0 +1,1732 @@
+<!-- ============================================================
+     CS210 - Lesson 16
+     Memory Bugs and valgrind
+     Self-contained: all CSS inline. Native <details> for collapsing.
+     valgrind walkthrough widget embedded inline in section 5.
+     Paste into Blackboard Ultra via Document -> Add HTML block.
+     ============================================================ -->
+
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 980px; margin: 0 auto; line-height: 1.6;">
+
+  <!-- ===================== LIGHT HEADER ===================== -->
+  <div style="border-left: 5px solid #003087; padding: 8px 0 8px 18px; margin-bottom: 24px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 2px;">CS210 &middot; Block 2 &middot; Lesson 16</div>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 600; color: #00205B;">Memory Bugs and valgrind</h1>
+    <div style="font-size: 14px; color: #4A5568; margin-top: 4px;">Memory leaks &middot; Use-after-free &middot; Out-of-bounds &middot; Uninitialized reads &middot; realloc pitfalls &middot; Double-free &middot; Reading valgrind output</div>
+  </div>
+
+  <!-- ===================== AT A GLANCE ===================== -->
+  <div style="background: #F5F7FA; border-left: 4px solid #B5B7BA; padding: 14px 18px; margin-bottom: 22px; font-size: 14px;">
+    <strong style="color: #00205B;">At a glance:</strong> Yesterday you allocated and freed heap memory by hand; today you learn what happens when you do it wrong. The six classic memory bug classes &mdash; leak, use-after-free, out-of-bounds, uninitialized read, realloc-loses-original, double-free &mdash; and the tool that catches them: valgrind.
+  </div>
+
+  <!-- ===================== TABLE OF CONTENTS ===================== -->
+  <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 20px; margin-bottom: 24px; border-radius: 3px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Contents</div>
+    <ol style="margin: 0; padding-left: 22px; font-size: 14px;">
+      <li style="margin-bottom: 4px;"><a href="#objectives" style="color: #003087; text-decoration: none;">Lesson Objectives</a></li>
+      <li style="margin-bottom: 4px;"><a href="#readings" style="color: #003087; text-decoration: none;">Assigned Readings</a></li>
+      <li style="margin-bottom: 4px;"><a href="#pre-class" style="color: #003087; text-decoration: none;">Pre-Class Work</a></li>
+      <li style="margin-bottom: 4px;"><a href="#materials" style="color: #003087; text-decoration: none;">Lesson Materials and Overview</a></li>
+      <li style="margin-bottom: 4px;"><a href="#in-class" style="color: #003087; text-decoration: none;">In-Class Work</a></li>
+      <li style="margin-bottom: 0;"><a href="#after-class" style="color: #003087; text-decoration: none;">After Class</a></li>
+    </ol>
+  </div>
+
+  <!-- ===================== 1. OBJECTIVES ===================== -->
+  <details id="objectives" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      1. Lesson Objectives
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 10px 0; font-style: italic;">By the end of this lesson, cadets will be able to:</p>
+      <ol style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Identify common C memory bugs: leaks, double-frees, use-after-free, out-of-bounds access, uninitialized reads, and realloc misuse. <span style="color: #6B7280; font-size: 12px;">(Outcome 3)</span></li>
+        <li style="margin-bottom: 6px;">Run a C program under <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">valgrind</code> to detect memory errors. <span style="color: #6B7280; font-size: 12px;">(Outcome 3, 7)</span></li>
+        <li style="margin-bottom: 0;">Interpret valgrind output to locate and resolve memory bugs. <span style="color: #6B7280; font-size: 12px;">(Outcome 3, 7)</span></li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 2. READINGS ===================== -->
+  <details id="readings" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      2. Assigned Readings
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 12px 0;">Complete before class. The Beej sections set up the realloc material; the supplementary notes introduce valgrind, which is new to CS210.</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <thead>
+          <tr style="background: #E8EDF5; color: #00205B;">
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 180px;">Source</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9;">Sections</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 240px;">Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;"><a href="https://beej.us/guide/bgc/" style="color: #003087; text-decoration: underline;">Beej-C</a></td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Chapter 12, &sect;12.5 (realloc) and &sect;12.6 (typical bugs)</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Continues from L15. realloc is the one heap call not yet covered; &sect;12.6 lists the bug classes we will hunt today.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 9px 12px;">Supplementary notes</td>
+            <td style="padding: 9px 12px;">valgrind primer (linked in Section 4)</td>
+            <td style="padding: 9px 12px; color: #4A5568;">valgrind is new to CS210. The primer covers what it does, how to run it, and how to read the report it produces.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <!-- ===================== 3. PRE-CLASS WORK ===================== -->
+  <details id="pre-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      3. Pre-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 18px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #6B5300; font-size: 14px; margin-bottom: 4px;">Do this first</div>
+        <div style="font-size: 14px; color: #5A4B00;">Plan on 25 to 35 minutes for the reading and the toolchain check. valgrind needs to be installed and runnable before class starts.</div>
+      </div>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 0 0 10px 0;">Pre-Class Checklist</h3>
+
+      <!-- Step 1: Reading -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">1</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Read Beej-C &sect;12.5 and &sect;12.6 plus the valgrind primer</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">Beej finishes up the heap with realloc, then lists the typical bugs. The valgrind primer (linked in Section 4) shows you what the tool looks like in action.</div>
+            <ul style="font-size: 13.5px; margin: 0 0 6px 0; padding-left: 20px;">
+              <li style="margin-bottom: 3px;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">realloc</code> and the loses-original pattern</li>
+              <li style="margin-bottom: 3px;">Leak, use-after-free, out-of-bounds, uninitialized read, double-free</li>
+              <li style="margin-bottom: 0;">What valgrind does and the shape of its output</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Install valgrind -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">2</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Install valgrind and verify it runs</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">In your terminal, install valgrind, then make sure it can run on any small program. Test with your hello.c from Lesson 1 if you still have it.</div>
+            <div style="font-size: 13px; color: #00205B; font-weight: 600; margin-bottom: 4px;">Run:</div>
+            <div style="background: #1E2A3A; color: #E8EDF5; padding: 10px 14px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.5;">
+              <span style="color: #7FB3D5;">$</span> sudo apt update &amp;&amp; sudo apt install valgrind<br>
+              <span style="color: #7FB3D5;">$</span> valgrind --version<br>
+              <span style="color: #7FB3D5;">$</span> gcc -g hello.c -o hello<br>
+              <span style="color: #7FB3D5;">$</span> valgrind ./hello
+            </div>
+            <div style="font-size: 13.5px; color: #4A5568; margin-top: 8px;">If anything goes wrong, schedule EI before class. valgrind setup problems will block today's lab.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Skim widget -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 8px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">3</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Skim the In-Class section below</div>
+            <div style="font-size: 14px;">You will see a valgrind walkthrough widget. No need to use it yet; just know it is there and what it looks like.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ===================== 4. LESSON MATERIALS AND OVERVIEW ===================== -->
+  <details id="materials" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      4. Lesson Materials and Overview
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 18px 0;">Yesterday you learned the rules of the heap. Today is the day those rules get broken, and the day you learn to find the breaks. valgrind is a runtime tool that watches every allocation and every memory access your program makes. When something goes wrong, it tells you what kind of wrong, where it happened in your source, and (often) which earlier allocation is involved. Reading its output is a skill on its own.</p>
+
+      <!-- Subsection navigation -->
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 18px; margin-bottom: 22px; border-radius: 3px;">
+        <div style="font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">Jump to</div>
+        <div style="font-size: 13.5px;">
+          <a href="#slides" style="color: #003087; text-decoration: none; margin-right: 14px;">Slides</a>
+          <a href="#six-bugs" style="color: #003087; text-decoration: none; margin-right: 14px;">Six Bug Classes</a>
+          <a href="#realloc" style="color: #003087; text-decoration: none; margin-right: 14px;">realloc</a>
+          <a href="#workflow" style="color: #003087; text-decoration: none; margin-right: 14px;">valgrind Workflow</a>
+          <a href="#limits" style="color: #003087; text-decoration: none;">What valgrind Misses</a>
+        </div>
+      </div>
+
+      <!-- Slides -->
+      <h3 id="slides" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0; scroll-margin-top: 16px;">Slides</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">The Lesson 16 deck covers the six bug classes, one slide per class, with the valgrind output for each. Then a workflow slide on reading the output, then an honest look at what valgrind cannot catch.</p>
+
+      <p style="margin: 0 0 18px 0;">
+        <!-- EDIT ME: replace href with the SharePoint link to the Lesson 16 slide deck -->
+        <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 10px 20px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 14px;">Open Lesson 16 slides &rarr;</a>
+        <span style="display: inline-block; margin-left: 10px; font-size: 12.5px; color: #6B7280;">replace href with your SharePoint link</span>
+      </p>
+
+      <!-- Six bug classes -->
+      <h3 id="six-bugs" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">The six bug classes</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">These are the six classes valgrind catches reliably. They cover almost every heap-related crash you will write in this course. Memorize the names; the bug log in the lab asks for them.</p>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 18px;">
+        <thead>
+          <tr style="background: #00205B; color: #ffffff;">
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 200px;">Bug class</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600;">What it means</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 240px;">valgrind signal</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-weight: 600;">Memory leak</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Allocated with malloc, never freed. No live pointer at program exit.</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">definitely lost</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-weight: 600;">Use-after-free</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Read or write through a pointer after that block was freed.</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">Invalid read/write of size N</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-weight: 600;">Out-of-bounds write</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Wrote past the end (or before the start) of an allocation.</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">N bytes after a block</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-weight: 600;">Uninitialized read</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Used a heap value before storing anything into it. Garbage in, garbage out.</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">uninitialised value</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-weight: 600;">realloc loses original</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Assigned realloc's result directly to the only pointer to the old block. On failure, the old block leaks AND the pointer is NULL.</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; color: #6B7280;">leak; pattern visible in source</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; font-weight: 600;">Double-free</td>
+            <td style="padding: 8px 12px;">Called free on the same block twice. Corrupts the heap.</td>
+            <td style="padding: 8px 12px; font-family: Consolas, monospace; font-size: 13px;">Invalid free / double free</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- realloc -->
+      <h3 id="realloc" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">realloc and the loses-original pattern</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">realloc(ptr, new_size)</code> resizes an existing heap block. It may grow the block in place or copy the contents to a new larger block and free the old one. Either way, you must use its return value.</p>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">The trap is the natural-feeling pattern:</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #6B7280;">// WRONG: if realloc fails, ptr becomes NULL and the old block leaks</span><br>
+        ptr = realloc(ptr, new_size);
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">If realloc fails, it returns NULL. The old block is still valid and still allocated; you just lost the only pointer to it. Now you cannot read from it and you cannot free it.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #6B7280;">// RIGHT: use a temp pointer, check before assigning</span><br>
+        <span style="color: #569CD6;">char</span> *tmp = realloc(ptr, new_size);<br>
+        <span style="color: #C586C0;">if</span> (tmp == <span style="color: #569CD6;">NULL</span>) {<br>
+        &nbsp;&nbsp;<span style="color: #6B7280;">// handle failure; ptr is still valid</span><br>
+        &nbsp;&nbsp;<span style="color: #C586C0;">return</span> -1;<br>
+        }<br>
+        ptr = tmp;
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">This is one of the bugs in today's lab.</p>
+
+      <!-- valgrind workflow -->
+      <h3 id="workflow" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">The valgrind workflow</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">valgrind is not a debugger. You do not step through code with it. You run your program under it, and it watches every memory access. When it sees something suspicious, it prints a report.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #7FB3D5;">$</span> gcc <span style="color: #B5CEA8;">-g</span> -Wall -Werror -o myprog myprog.c<br>
+        <span style="color: #7FB3D5;">$</span> valgrind --leak-check=full ./myprog
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Two things matter. First, compile with <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">-g</code> so valgrind can show you file names and line numbers. Second, read the output from the top. Errors cascade. The first one is almost always the most useful; the rest are often consequences of the first.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">The loop:</p>
+      <ol style="font-size: 14.5px; margin: 0 0 18px 0; padding-left: 22px;">
+        <li style="margin-bottom: 4px;">Read the first error in the report.</li>
+        <li style="margin-bottom: 4px;">Follow the stack trace to the file:line where it happened.</li>
+        <li style="margin-bottom: 4px;">Change one thing.</li>
+        <li style="margin-bottom: 4px;">Recompile and rerun valgrind.</li>
+        <li style="margin-bottom: 0;">Did the error class change? Good. Repeat until valgrind is silent.</li>
+      </ol>
+
+      <!-- Limits -->
+      <h3 id="limits" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">What valgrind cannot catch</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">valgrind is a runtime tool, so it only sees the code paths your test inputs actually exercise. A bug that lives in an error-handling branch never visited by your tests stays hidden. Reading the code matters too.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">valgrind also does not catch:</p>
+      <ul style="font-size: 14.5px; margin: 0 0 18px 0; padding-left: 22px;">
+        <li style="margin-bottom: 4px;"><strong>Stack overflows.</strong> Recursion that runs too deep.</li>
+        <li style="margin-bottom: 4px;"><strong>Logic bugs.</strong> If your loop iterates 99 times instead of 100, valgrind is happy. Your output is wrong.</li>
+        <li style="margin-bottom: 4px;"><strong>Race conditions.</strong> Two threads stepping on each other. Different tool (helgrind).</li>
+        <li style="margin-bottom: 4px;"><strong>Reads of valid garbage.</strong> A heap value that WAS initialized, just to the wrong value. That is a logic bug.</li>
+        <li style="margin-bottom: 0;"><strong>File and socket leaks.</strong> Forgetting to close a file. Different tool (lsof).</li>
+      </ul>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">A clean valgrind report does not mean your program is bug-free. It means your program is not making the specific class of mistakes valgrind watches for, on the specific inputs you ran.</p>
+
+    </div>
+  </details>
+
+  <!-- ===================== 5. IN-CLASS WORK ===================== -->
+  <details id="in-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      5. In-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 16px 0;">Two things to do in class. The widget builds your pattern recognition; the lab applies it under valgrind.</p>
+
+      <ul style="list-style: none; padding: 0; margin: 0 0 24px 0; font-size: 14.5px;">
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Work through the valgrind walkthrough below.</strong>
+          <span style="color: #4A5568;">Four buggy programs, three tasks each: classify the bug, locate it in the source, propose a fix. About 25 minutes.</span>
+        </li>
+        <li style="margin-bottom: 0; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <!-- EDIT ME: replace href with the GitHub Classroom invite link for Lab 16 -->
+          <strong style="color: #00205B;">Complete <a href="#" target="_blank" rel="noopener" style="color: #003087; text-decoration: underline;">Lab 16: compliments.c</a>.</strong>
+          <span style="color: #4A5568;">A small C program with six memory bugs, one of each class. Find them with valgrind, fix them, document them. Auto-graded through GitHub Classroom.</span>
+        </li>
+      </ul>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 18px 0 10px 0;">valgrind Walkthrough</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Twelve tasks across four mini-programs. Read the source, read the valgrind output, and classify what is wrong. The point is to build the pattern: what does each bug class look like in the report?</p>
+
+<!-- ============================================================
+     CS210 Lesson 16 - valgrind Walkthrough Widget
+     Read four buggy C programs and the valgrind output they produce.
+     For each: classify the bug, locate it in source, propose a fix.
+     Pattern: cmem_walkthrough.html (terminal-style, scoped JS).
+     ============================================================ -->
+<style>
+.cs210-vg * { box-sizing: border-box; }
+.cs210-vg {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-vg h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-vg .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 22px;
+}
+.cs210-vg .progress-bar {
+  background: #E5E7EB;
+  border-radius: 3px;
+  height: 8px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.cs210-vg .progress-fill {
+  background: #003087;
+  height: 100%;
+  transition: width 0.3s ease;
+}
+.cs210-vg .progress-label {
+  font-size: 12px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-vg .section-header {
+  background: #E8EDF5;
+  color: #00205B;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.cs210-vg .task-card {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  border-radius: 3px;
+}
+.cs210-vg .task-card.complete {
+  background: #E6F4EA;
+  border-left-color: #2E7D32;
+}
+.cs210-vg .task-label {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B5300;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.cs210-vg .task-card.complete .task-label {
+  color: #1B5E20;
+}
+.cs210-vg .task-text {
+  font-size: 15px;
+  color: #1a1a1a;
+}
+.cs210-vg .task-hint {
+  font-size: 12.5px;
+  color: #6B7280;
+  margin-top: 6px;
+  font-style: italic;
+}
+.cs210-vg .task-accept {
+  font-size: 12.5px;
+  color: #4A5568;
+  margin-top: 6px;
+}
+.cs210-vg .task-accept code {
+  background: #F0F4FA;
+  padding: 1px 6px;
+  border-radius: 2px;
+  font-size: 12px;
+}
+
+/* Two-pane area: source left, valgrind output right */
+.cs210-vg .panes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+@media (max-width: 760px) {
+  .cs210-vg .panes { grid-template-columns: 1fr; }
+}
+.cs210-vg .source-pane,
+.cs210-vg .vg-pane {
+  background: #1E2A3A;
+  color: #E8EDF5;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 12.5px;
+  line-height: 1.55;
+  border-radius: 4px;
+  min-height: 380px;
+  max-height: 440px;
+  overflow-y: auto;
+}
+.cs210-vg .pane-header {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: #A8B5C6;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding: 10px 14px 8px 14px;
+  border-bottom: 1px solid #2D3A4A;
+  background: #182230;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.cs210-vg .pane-body {
+  padding: 10px 14px 14px 14px;
+  white-space: pre;
+  font-variant-ligatures: none;
+}
+.cs210-vg .src-line {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.cs210-vg .src-num {
+  color: #6B7280;
+  text-align: right;
+  min-width: 24px;
+  user-select: none;
+  flex-shrink: 0;
+}
+.cs210-vg .src-text {
+  white-space: pre;
+  flex: 1;
+}
+.cs210-vg .src-line.flagged .src-num,
+.cs210-vg .src-line.flagged .src-text {
+  background: rgba(244, 122, 122, 0.18);
+}
+.cs210-vg .src-line.fixed .src-num,
+.cs210-vg .src-line.fixed .src-text {
+  background: rgba(127, 209, 127, 0.16);
+}
+.cs210-vg .vg-pane .vg-header {
+  color: #F0B92C;
+}
+.cs210-vg .vg-pane .vg-err {
+  color: #F47A7A;
+}
+.cs210-vg .vg-pane .vg-note {
+  color: #B5BEC8;
+}
+.cs210-vg .vg-pane .vg-ok {
+  color: #7FD17F;
+}
+.cs210-vg .vg-pane .vg-dim {
+  color: #6B7280;
+}
+
+/* Terminal for input/feedback */
+.cs210-vg .terminal {
+  background: #1E2A3A;
+  color: #E8EDF5;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13.5px;
+  line-height: 1.5;
+  border-radius: 4px;
+  padding: 14px 18px;
+  margin-bottom: 12px;
+  min-height: 120px;
+  max-height: 200px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.cs210-vg .terminal .prompt { color: #7FB3D5; }
+.cs210-vg .terminal .typed { color: #FFFFFF; }
+.cs210-vg .terminal .out { color: #B5BEC8; }
+.cs210-vg .terminal .note { color: #F0B92C; }
+.cs210-vg .terminal .err { color: #F47A7A; }
+.cs210-vg .terminal .ok { color: #7FD17F; }
+.cs210-vg .terminal .dim { color: #6B7280; }
+
+.cs210-vg .input-row {
+  display: flex;
+  background: #1E2A3A;
+  border-radius: 4px;
+  padding: 8px 14px;
+  margin-bottom: 14px;
+  border: 1px solid #003087;
+}
+.cs210-vg .input-prompt {
+  color: #7FB3D5;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  margin-right: 8px;
+  align-self: center;
+  white-space: nowrap;
+}
+.cs210-vg .input-row input {
+  flex: 1;
+  background: transparent;
+  color: #FFFFFF;
+  border: none;
+  outline: none;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  padding: 4px 0;
+}
+.cs210-vg .controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.cs210-vg .btn {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  padding: 6px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #00205B;
+  font-family: inherit;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.cs210-vg .btn:hover { background: #F5F7FA; }
+@keyframes cs210-vg-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(240, 185, 44, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0); }
+}
+.cs210-vg .btn.pulse {
+  background: #FFF8E1;
+  border-color: #F0B92C;
+  color: #6B5300;
+  font-weight: 600;
+  animation: cs210-vg-pulse 1.5s infinite;
+}
+.cs210-vg .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #4A5568;
+  margin-top: 12px;
+}
+.cs210-vg .help-note strong { color: #00205B; }
+
+/* Bug class chips inside the task card for quick reference */
+.cs210-vg .chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.cs210-vg .chip {
+  background: #F0F4FA;
+  border: 1px solid #C7CFD9;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11.5px;
+  font-family: Consolas, monospace;
+  color: #00205B;
+}
+
+/* Name modal overlay (scoped, absolute) */
+.cs210-vg .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.cs210-vg .name-modal {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-vg .name-modal h2 {
+  color: #00205B;
+  font-size: 20px;
+  margin: 0 0 10px 0;
+}
+.cs210-vg .name-modal p {
+  color: #4A5568;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+.cs210-vg .name-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-vg .name-modal input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-vg .name-modal-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-vg .name-modal-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-vg .name-modal-btn:not(:disabled):hover {
+  background: #00205B;
+}
+
+/* Completion screen (inline footer) */
+.cs210-vg .completion-screen {
+  background: #ffffff;
+  border: 2px solid #2E7D32;
+  border-radius: 6px;
+  padding: 24px 28px;
+  margin-top: 16px;
+}
+.cs210-vg .completion-screen .cs-heading {
+  color: #1B5E20;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 6px 0;
+}
+.cs210-vg .completion-screen .cs-subheading {
+  color: #4A5568;
+  font-size: 14px;
+  margin: 0 0 18px 0;
+}
+.cs210-vg .completion-screen .cs-name-line {
+  font-size: 15px;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+}
+.cs210-vg .completion-screen .cs-name-line strong {
+  color: #00205B;
+}
+.cs210-vg .completion-screen .cs-code-block {
+  background: #F0F4FA;
+  border: 1px solid #003087;
+  border-radius: 4px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.cs210-vg .completion-screen .cs-code-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #4A5568;
+  margin-bottom: 4px;
+}
+.cs210-vg .completion-screen .cs-code-value {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 28px;
+  font-weight: 700;
+  color: #00205B;
+  letter-spacing: 3px;
+}
+.cs210-vg .completion-screen .cs-copy-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-vg .completion-screen .cs-copy-btn:hover {
+  background: #00205B;
+}
+.cs210-vg .completion-screen .cs-copy-btn.copied {
+  background: #2E7D32;
+}
+.cs210-vg .completion-screen .cs-timestamp {
+  font-size: 13px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-vg .completion-screen .cs-reminder {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 14px;
+  color: #6B5300;
+  line-height: 1.5;
+}
+.cs210-vg .completion-screen .cs-reminder strong {
+  color: #4A3A00;
+}
+</style>
+
+<div class="cs210-vg">
+
+<div class="name-modal-backdrop" id="vg-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Lesson 16 reflection.</p>
+    <input type="text" id="vg-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="vg-cadet-name-btn" disabled>Start the walkthrough</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 16 &middot; valgrind Walkthrough</h1>
+<div class="subtitle">Four small C programs. Each one has exactly one memory bug. Read the source on the left and the valgrind output on the right, then classify the bug, point to the line, and propose a fix.</div>
+
+<div class="progress-bar"><div class="progress-fill" id="vg-progress-fill" style="width: 0%;"></div></div>
+<div class="progress-label" id="vg-progress-label">Task 0 of 12</div>
+
+<div class="section-header" id="vg-section-header">Program 1: the leaky greeter</div>
+
+<div class="task-card" id="vg-task-card">
+  <div class="task-label" id="vg-task-label">Current task</div>
+  <div class="task-text" id="vg-task-text">Loading...</div>
+  <div class="task-accept" id="vg-task-accept"></div>
+  <div class="task-hint" id="vg-task-hint"></div>
+</div>
+
+<div class="panes">
+  <div class="source-pane">
+    <div class="pane-header" id="vg-src-header">greeter.c</div>
+    <div class="pane-body" id="vg-source-area"></div>
+  </div>
+  <div class="vg-pane">
+    <div class="pane-header" id="vg-out-header">valgrind output</div>
+    <div class="pane-body" id="vg-output-area"></div>
+  </div>
+</div>
+
+<div class="terminal" id="vg-terminal"></div>
+
+<div class="input-row">
+  <span class="input-prompt">valgrind&gt;</span>
+  <input type="text" id="vg-cli-input" autocomplete="off" spellcheck="false" placeholder="answer the task above">
+</div>
+
+<div class="controls">
+  <button class="btn" id="vg-hint-btn">Show hint</button>
+  <button class="btn" id="vg-reset-btn">Reset</button>
+</div>
+
+<div class="help-note">
+  <strong>How this works:</strong> Each program is short enough to read in one sitting. The valgrind output on the right is what you'd see if you actually ran the program with <code>valgrind --leak-check=full ./prog</code>. Each task asks one specific thing: classify the bug (one or two words), point to the line in the source, or describe the fix. Mistype twice and the hint button will pulse.
+</div>
+
+<div id="vg-completion-area"></div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-vg');
+  if (!root) return;
+
+  // ============================================================
+  // CS210 widget completion utilities
+  // Salt -> deterministic 6-char code via FNV-1a.
+  // Alphabet excludes 0, 1, O, I (uppercase only output).
+  // ============================================================
+  const CS210_SALT = "lesson16_valgrind_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  // Name-modal gating with cross-widget dedup.
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#vg-name-modal-backdrop');
+    const input = root.querySelector('#vg-cadet-name-input');
+    const btn = root.querySelector('#vg-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length >= 2) {
+        cs210CadetName = stored.trim();
+        backdrop.style.display = 'none';
+        return;
+      }
+    } catch (e) { /* localStorage may be disabled */ }
+
+    function updateBtn() {
+      btn.disabled = input.value.trim().length < 2;
+    }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', function() {
+      const name = input.value.trim();
+      if (name.length < 2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+      // Dismiss any sibling widget modals on the same page (forward-compatible list).
+      const siblings = document.querySelectorAll(
+        '#name-modal-backdrop, #bw-name-modal-backdrop, #ptrmath-name-modal-backdrop, ' +
+        '#duality-name-modal-backdrop, #ma-name-modal-backdrop'
+      );
+      siblings.forEach(function(m) { m.style.display = 'none'; });
+      const cli = root.querySelector('#vg-cli-input');
+      if (cli) cli.focus();
+    });
+    setTimeout(function() { input.focus(); }, 50);
+  })();
+
+  function cs210RenderCompletion(area) {
+    if (!area) return;
+    if (root.querySelector('#vg-completion-overlay')) return;
+    const now = new Date();
+    const ts = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const safeName = (cs210CadetName || 'Cadet').replace(/[<>&"']/g, function(c) {
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+    area.innerHTML =
+      '<div class="completion-screen">' +
+        '<div class="cs-heading">Walkthrough complete</div>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value">' + CS210_CODE + '</div></div>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+      '</div>';
+    const overlay = document.createElement('div');
+    overlay.id = 'vg-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.style.background = 'rgba(27, 94, 32, 0.55)';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">Walkthrough complete</h2>' +
+        '<p>Take a screenshot of this box. You will need the code and a visual of this screen for the Lesson 16 reflection.</p>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value" id="vg-code-value">' + CS210_CODE + '</div></div>' +
+          '<button class="cs-copy-btn" id="vg-copy-btn" type="button">Copy code</button>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+        '<div class="cs-reminder" style="margin-bottom:14px;">' +
+          '<strong>Next step:</strong> Open the Lesson 16 reflection in Blackboard. Enter this code, answer the reflection prompt, and attach your screenshot.' +
+        '</div>' +
+        '<button class="name-modal-btn" id="vg-overlay-close" type="button" style="background:#2E7D32;">Got it &mdash; close this</button>' +
+      '</div>';
+    root.appendChild(overlay);
+    const closeBtn = overlay.querySelector('#vg-overlay-close');
+    if (closeBtn) closeBtn.addEventListener('click', function() { overlay.style.display = 'none'; });
+    const copyBtn = overlay.querySelector('#vg-copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function() {
+        const ok = function() {
+          copyBtn.textContent = 'Copied';
+          copyBtn.classList.add('copied');
+          setTimeout(function() {
+            copyBtn.textContent = 'Copy code';
+            copyBtn.classList.remove('copied');
+          }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(CS210_CODE).then(ok, function() {
+            cs210FallbackCopy(CS210_CODE); ok();
+          });
+        } else {
+          cs210FallbackCopy(CS210_CODE); ok();
+        }
+      });
+    }
+  }
+  function cs210FallbackCopy(text) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e) { /* nothing else to do */ }
+  }
+
+  // ============================================================
+  // Programs and valgrind output
+  // Four programs, each with one bug class.
+  //
+  // Each program object has:
+  //   file:     filename for the source pane header
+  //   src:      array of source lines (1-indexed in display)
+  //   buggyLine: 1-indexed line number of the bug
+  //   fixedSrc: array of corrected source lines (for the "fix" reveal)
+  //   vgOutput: array of {text, kind} for the valgrind output pane
+  //             kinds: 'header', 'err', 'note', 'ok', 'dim'
+  // ============================================================
+  const programs = [
+    // ----- Program 1: memory leak in greeter -----
+    {
+      file: "greeter.c",
+      src: [
+        "#include <stdio.h>",
+        "#include <stdlib.h>",
+        "#include <string.h>",
+        "",
+        "char *build_greeting(const char *name) {",
+        "    char *buf = malloc(64);",
+        "    if (buf == NULL) return NULL;",
+        "    snprintf(buf, 64, \"Hello, %s!\", name);",
+        "    return buf;",
+        "}",
+        "",
+        "int main(void) {",
+        "    char *msg = build_greeting(\"Cadet\");",
+        "    printf(\"%s\\n\", msg);",
+        "    return 0;",
+        "}",
+      ],
+      buggyLine: 14,
+      fixedSrc: [
+        "#include <stdio.h>",
+        "#include <stdlib.h>",
+        "#include <string.h>",
+        "",
+        "char *build_greeting(const char *name) {",
+        "    char *buf = malloc(64);",
+        "    if (buf == NULL) return NULL;",
+        "    snprintf(buf, 64, \"Hello, %s!\", name);",
+        "    return buf;",
+        "}",
+        "",
+        "int main(void) {",
+        "    char *msg = build_greeting(\"Cadet\");",
+        "    printf(\"%s\\n\", msg);",
+        "    free(msg);",
+        "    return 0;",
+        "}",
+      ],
+      vgOutput: [
+        { text: "==4217== Memcheck, a memory error detector",                kind: "header" },
+        { text: "==4217== Command: ./greeter",                                kind: "dim" },
+        { text: "==4217==",                                                   kind: "dim" },
+        { text: "Hello, Cadet!",                                              kind: "ok" },
+        { text: "==4217==",                                                   kind: "dim" },
+        { text: "==4217== HEAP SUMMARY:",                                     kind: "header" },
+        { text: "==4217==     in use at exit: 64 bytes in 1 blocks",          kind: "err" },
+        { text: "==4217==   total heap usage: 2 allocs, 1 frees, 1,088 bytes allocated", kind: "note" },
+        { text: "==4217==",                                                   kind: "dim" },
+        { text: "==4217== 64 bytes in 1 blocks are definitely lost in loss record 1 of 1", kind: "err" },
+        { text: "==4217==    at 0x4848899: malloc (vg_replace_malloc.c:431)", kind: "note" },
+        { text: "==4217==    by 0x10918A: build_greeting (greeter.c:6)",      kind: "note" },
+        { text: "==4217==    by 0x1091E0: main (greeter.c:13)",               kind: "note" },
+        { text: "==4217==",                                                   kind: "dim" },
+        { text: "==4217== LEAK SUMMARY:",                                     kind: "header" },
+        { text: "==4217==    definitely lost: 64 bytes in 1 blocks",          kind: "err" },
+        { text: "==4217==    indirectly lost: 0 bytes in 0 blocks",           kind: "dim" },
+        { text: "==4217==      possibly lost: 0 bytes in 0 blocks",           kind: "dim" },
+        { text: "==4217==    still reachable: 0 bytes in 0 blocks",           kind: "dim" },
+        { text: "==4217==         suppressed: 0 bytes in 0 blocks",           kind: "dim" },
+        { text: "==4217==",                                                   kind: "dim" },
+        { text: "==4217== ERROR SUMMARY: 1 errors from 1 contexts",           kind: "err" },
+      ],
+    },
+    // ----- Program 2: use-after-free in scorekeeper -----
+    {
+      file: "scorekeeper.c",
+      src: [
+        "#include <stdio.h>",
+        "#include <stdlib.h>",
+        "",
+        "int *make_scores(int n) {",
+        "    int *s = malloc(n * sizeof(int));",
+        "    if (s == NULL) return NULL;",
+        "    for (int i = 0; i < n; i++) s[i] = (i + 1) * 10;",
+        "    return s;",
+        "}",
+        "",
+        "int main(void) {",
+        "    int *scores = make_scores(4);",
+        "    if (scores == NULL) return 1;",
+        "    free(scores);",
+        "    printf(\"Top score: %d\\n\", scores[3]);",
+        "    return 0;",
+        "}",
+      ],
+      buggyLine: 15,
+      fixedSrc: [
+        "#include <stdio.h>",
+        "#include <stdlib.h>",
+        "",
+        "int *make_scores(int n) {",
+        "    int *s = malloc(n * sizeof(int));",
+        "    if (s == NULL) return NULL;",
+        "    for (int i = 0; i < n; i++) s[i] = (i + 1) * 10;",
+        "    return s;",
+        "}",
+        "",
+        "int main(void) {",
+        "    int *scores = make_scores(4);",
+        "    if (scores == NULL) return 1;",
+        "    printf(\"Top score: %d\\n\", scores[3]);",
+        "    free(scores);",
+        "    return 0;",
+        "}",
+      ],
+      vgOutput: [
+        { text: "==4318== Memcheck, a memory error detector",                kind: "header" },
+        { text: "==4318== Command: ./scorekeeper",                            kind: "dim" },
+        { text: "==4318==",                                                   kind: "dim" },
+        { text: "==4318== Invalid read of size 4",                            kind: "err" },
+        { text: "==4318==    at 0x1091CE: main (scorekeeper.c:15)",           kind: "note" },
+        { text: "==4318==  Address 0x4a8404c is 12 bytes inside a block of size 16 free'd", kind: "err" },
+        { text: "==4318==    at 0x484A77C: free (vg_replace_malloc.c:989)",   kind: "note" },
+        { text: "==4318==    by 0x1091C0: main (scorekeeper.c:14)",           kind: "note" },
+        { text: "==4318==  Block was alloc'd at",                             kind: "note" },
+        { text: "==4318==    at 0x4848899: malloc (vg_replace_malloc.c:431)", kind: "note" },
+        { text: "==4318==    by 0x10917A: make_scores (scorekeeper.c:5)",     kind: "note" },
+        { text: "==4318==    by 0x10919A: main (scorekeeper.c:12)",           kind: "note" },
+        { text: "==4318==",                                                   kind: "dim" },
+        { text: "Top score: 40",                                              kind: "ok" },
+        { text: "==4318==",                                                   kind: "dim" },
+        { text: "==4318== HEAP SUMMARY:",                                     kind: "header" },
+        { text: "==4318==     in use at exit: 0 bytes in 0 blocks",           kind: "ok" },
+        { text: "==4318==   total heap usage: 2 allocs, 2 frees, 1,040 bytes allocated", kind: "note" },
+        { text: "==4318==",                                                   kind: "dim" },
+        { text: "==4318== All heap blocks were freed -- no leaks are possible", kind: "ok" },
+        { text: "==4318==",                                                   kind: "dim" },
+        { text: "==4318== ERROR SUMMARY: 1 errors from 1 contexts",           kind: "err" },
+      ],
+    },
+    // ----- Program 3: out-of-bounds write in tally -----
+    {
+      file: "tally.c",
+      src: [
+        "#include <stdio.h>",
+        "#include <stdlib.h>",
+        "",
+        "int main(void) {",
+        "    int n = 5;",
+        "    int *votes = malloc(n * sizeof(int));",
+        "    if (votes == NULL) return 1;",
+        "",
+        "    for (int i = 0; i <= n; i++) {",
+        "        votes[i] = i * 2;",
+        "    }",
+        "",
+        "    printf(\"votes[0]=%d, votes[4]=%d\\n\", votes[0], votes[4]);",
+        "    free(votes);",
+        "    return 0;",
+        "}",
+      ],
+      buggyLine: 10,
+      fixedSrc: [
+        "#include <stdio.h>",
+        "#include <stdlib.h>",
+        "",
+        "int main(void) {",
+        "    int n = 5;",
+        "    int *votes = malloc(n * sizeof(int));",
+        "    if (votes == NULL) return 1;",
+        "",
+        "    for (int i = 0; i < n; i++) {",
+        "        votes[i] = i * 2;",
+        "    }",
+        "",
+        "    printf(\"votes[0]=%d, votes[4]=%d\\n\", votes[0], votes[4]);",
+        "    free(votes);",
+        "    return 0;",
+        "}",
+      ],
+      vgOutput: [
+        { text: "==4422== Memcheck, a memory error detector",                kind: "header" },
+        { text: "==4422== Command: ./tally",                                  kind: "dim" },
+        { text: "==4422==",                                                   kind: "dim" },
+        { text: "==4422== Invalid write of size 4",                           kind: "err" },
+        { text: "==4422==    at 0x10918E: main (tally.c:10)",                 kind: "note" },
+        { text: "==4422==  Address 0x4a84054 is 0 bytes after a block of size 20 alloc'd", kind: "err" },
+        { text: "==4422==    at 0x4848899: malloc (vg_replace_malloc.c:431)", kind: "note" },
+        { text: "==4422==    by 0x109174: main (tally.c:6)",                  kind: "note" },
+        { text: "==4422==",                                                   kind: "dim" },
+        { text: "votes[0]=0, votes[4]=8",                                     kind: "ok" },
+        { text: "==4422==",                                                   kind: "dim" },
+        { text: "==4422== HEAP SUMMARY:",                                     kind: "header" },
+        { text: "==4422==     in use at exit: 0 bytes in 0 blocks",           kind: "ok" },
+        { text: "==4422==   total heap usage: 2 allocs, 2 frees, 1,044 bytes allocated", kind: "note" },
+        { text: "==4422==",                                                   kind: "dim" },
+        { text: "==4422== All heap blocks were freed -- no leaks are possible", kind: "ok" },
+        { text: "==4422==",                                                   kind: "dim" },
+        { text: "==4422== ERROR SUMMARY: 1 errors from 1 contexts",           kind: "err" },
+      ],
+    },
+    // ----- Program 4: uninitialized read in stats -----
+    {
+      file: "stats.c",
+      src: [
+        "#include <stdio.h>",
+        "#include <stdlib.h>",
+        "",
+        "int main(void) {",
+        "    int n = 4;",
+        "    int *vals = malloc(n * sizeof(int));",
+        "    if (vals == NULL) return 1;",
+        "",
+        "    vals[0] = 10;",
+        "    vals[1] = 20;",
+        "    vals[3] = 40;",
+        "",
+        "    int sum = 0;",
+        "    for (int i = 0; i < n; i++) sum += vals[i];",
+        "    printf(\"sum = %d\\n\", sum);",
+        "",
+        "    free(vals);",
+        "    return 0;",
+        "}",
+      ],
+      buggyLine: 14,
+      fixedSrc: [
+        "#include <stdio.h>",
+        "#include <stdlib.h>",
+        "",
+        "int main(void) {",
+        "    int n = 4;",
+        "    int *vals = calloc(n, sizeof(int));",
+        "    if (vals == NULL) return 1;",
+        "",
+        "    vals[0] = 10;",
+        "    vals[1] = 20;",
+        "    vals[3] = 40;",
+        "",
+        "    int sum = 0;",
+        "    for (int i = 0; i < n; i++) sum += vals[i];",
+        "    printf(\"sum = %d\\n\", sum);",
+        "",
+        "    free(vals);",
+        "    return 0;",
+        "}",
+      ],
+      vgOutput: [
+        { text: "==4533== Memcheck, a memory error detector",                kind: "header" },
+        { text: "==4533== Command: ./stats",                                  kind: "dim" },
+        { text: "==4533==",                                                   kind: "dim" },
+        { text: "==4533== Conditional jump or move depends on uninitialised value(s)", kind: "err" },
+        { text: "==4533==    at 0x4901C20: __vfprintf_internal (vfprintf-internal.c:1377)", kind: "note" },
+        { text: "==4533==    by 0x48F0E16: printf (printf.c:33)",             kind: "note" },
+        { text: "==4533==    by 0x1091E2: main (stats.c:15)",                 kind: "note" },
+        { text: "==4533==  Uninitialised value was created by a heap allocation", kind: "err" },
+        { text: "==4533==    at 0x4848899: malloc (vg_replace_malloc.c:431)", kind: "note" },
+        { text: "==4533==    by 0x109174: main (stats.c:6)",                  kind: "note" },
+        { text: "==4533==",                                                   kind: "dim" },
+        { text: "==4533== Use of uninitialised value of size 8",              kind: "err" },
+        { text: "==4533==    at 0x49018BE: _itoa_word (_itoa.c:177)",         kind: "note" },
+        { text: "==4533==    by 0x4904F8B: __vfprintf_internal (vfprintf-internal.c:1377)", kind: "note" },
+        { text: "==4533==    by 0x48F0E16: printf (printf.c:33)",             kind: "note" },
+        { text: "==4533==    by 0x1091E2: main (stats.c:15)",                 kind: "note" },
+        { text: "==4533==",                                                   kind: "dim" },
+        { text: "sum = 1234567",                                              kind: "ok" },
+        { text: "==4533==",                                                   kind: "dim" },
+        { text: "==4533== HEAP SUMMARY:",                                     kind: "header" },
+        { text: "==4533==     in use at exit: 0 bytes in 0 blocks",           kind: "ok" },
+        { text: "==4533==   total heap usage: 2 allocs, 2 frees, 1,040 bytes allocated", kind: "note" },
+        { text: "==4533==",                                                   kind: "dim" },
+        { text: "==4533== ERROR SUMMARY: 2 errors from 2 contexts",           kind: "err" },
+      ],
+    },
+  ];
+
+  // ============================================================
+  // Tasks: 3 per program (classify, locate, fix) = 12 total
+  // ============================================================
+  function normalize(s) {
+    return String(s || '').toLowerCase().trim().replace(/[.,;!?]+$/, '').replace(/\s+/g, ' ');
+  }
+  function matchesAny(cmd, accepted) {
+    const n = normalize(cmd);
+    return accepted.some(a => normalize(a) === n);
+  }
+  function matchesLine(cmd, lineNum) {
+    const m = String(cmd).match(/\d+/);
+    if (!m) return false;
+    return parseInt(m[0], 10) === lineNum;
+  }
+
+  const tasks = [
+    // ===== Program 1: leak =====
+    {
+      programIndex: 0,
+      section: 'Program 1: the leaky greeter',
+      label: 'Task 1 of 12',
+      text: 'Classify the bug. What kind of memory error does valgrind report here? Answer in one or two words.',
+      acceptDisplay: 'memory leak, leak, definitely lost',
+      hint: 'memory leak',
+      match: (cmd) => matchesAny(cmd, [
+        'leak', 'memory leak', 'mem leak', 'definitely lost', 'lost', 'leaked memory'
+      ]),
+      diagnose: (cmd) => {
+        const n = normalize(cmd);
+        if (n.includes('free')) return "Not quite. There is no double-free here; look at the LEAK SUMMARY.";
+        if (n.includes('uninit')) return "Look at the heap summary at the end. valgrind reports a different bug class.";
+        if (n.includes('overflow') || n.includes('bound')) return "valgrind isn't reporting an out-of-bounds access here. What does 'definitely lost' tell you?";
+        return null;
+      },
+      note: 'valgrind reports "64 bytes in 1 blocks are definitely lost". The allocation in build_greeting was never freed in main. This is the classic memory leak.',
+    },
+    {
+      programIndex: 0,
+      label: 'Task 2 of 12',
+      text: 'Which line of main is the source of the leak? Type the line number.',
+      acceptDisplay: 'a number — the line where the leaked memory was last in scope',
+      hint: 'line 14: main returns without freeing msg',
+      match: (cmd) => matchesLine(cmd, 14),
+      diagnose: (cmd) => {
+        const m = String(cmd).match(/\d+/);
+        if (!m) return "Type just the line number.";
+        const n = parseInt(m[0], 10);
+        if (n === 6) return "Line 6 is where the memory was allocated, but the leak happens because main never frees what build_greeting returned. Look at main.";
+        if (n === 13) return "Line 13 receives the pointer. The leak is the missing action just before main exits.";
+        if (n === 9) return "Line 9 returns the pointer to main. That's fine; the leak is in main.";
+        return "Look at the last few lines of main. What's missing right before return 0?";
+      },
+      note: 'The pointer msg goes out of scope when main returns. With no free, the heap block is unreachable forever. ownership rule from L15: whoever holds the last reference is responsible for freeing.',
+    },
+    {
+      programIndex: 0,
+      label: 'Task 3 of 12',
+      text: 'Propose the fix. What single statement should be added, and where? Answer with the C statement (we will accept either with or without semicolon).',
+      acceptDisplay: 'the missing call',
+      hint: 'free(msg);',
+      match: (cmd) => {
+        const n = normalize(cmd).replace(/\s+/g, '');
+        return /^free\(msg\);?$/.test(n);
+      },
+      diagnose: (cmd) => {
+        const n = normalize(cmd);
+        if (n.includes('free(buf)')) return "Close, but in main the pointer is named msg, not buf. buf was the name inside build_greeting.";
+        if (n.includes('return')) return "We're looking for the call that should appear BEFORE return 0;.";
+        if (n.includes('delete') || n.includes('dispose')) return "C uses free(), not delete or dispose.";
+        if (n.startsWith('free')) return "Close. The fix is free(msg) on the pointer main is holding.";
+        return null;
+      },
+      note: 'Add free(msg); just before return 0; in main. The source pane on the right now shows the fixed version, highlighted.',
+      onSuccess: (state) => { state.showFix = true; },
+    },
+    // ===== Program 2: use-after-free =====
+    {
+      programIndex: 1,
+      section: 'Program 2: the scorekeeper',
+      label: 'Task 4 of 12',
+      text: 'Classify the bug. valgrind starts with "Invalid read of size 4". What memory error class is this? Use the standard name.',
+      acceptDisplay: 'use-after-free, use after free, uaf',
+      hint: 'use-after-free',
+      match: (cmd) => matchesAny(cmd, [
+        'use after free', 'use-after-free', 'uaf', 'read after free',
+        'use-after free', 'use after-free', 'used after free',
+      ]),
+      diagnose: (cmd) => {
+        const n = normalize(cmd);
+        if (n.includes('double free')) return "Read the output again: there's only one free in the program. valgrind says the read is invalid because the memory was freed first.";
+        if (n.includes('leak')) return "Look at the HEAP SUMMARY at the end — 0 bytes lost. The bug is something else.";
+        if (n === 'invalid read') return "Close. valgrind's 'Invalid read' has a name when the address points to memory that was freed earlier. What's that called?";
+        return null;
+      },
+      note: 'valgrind: "Address ... is 12 bytes inside a block of size 16 free\'d". The block was freed, then read. Classic use-after-free. valgrind cleanly shows both the read site AND where free was called.',
+    },
+    {
+      programIndex: 1,
+      label: 'Task 5 of 12',
+      text: "Which line of main does valgrind blame for the invalid read? Type the line number.",
+      acceptDisplay: 'a number',
+      hint: 'line 15: printf reads scores[3] after free',
+      match: (cmd) => matchesLine(cmd, 15),
+      diagnose: (cmd) => {
+        const m = String(cmd).match(/\d+/);
+        if (!m) return "Type just the line number.";
+        const n = parseInt(m[0], 10);
+        if (n === 14) return "Line 14 is the free call — valgrind reports that as 'free\\'d at' but the invalid read is somewhere else.";
+        if (n === 12) return "Line 12 is the allocation. The invalid read happens later.";
+        if (n === 5) return "Line 5 is inside make_scores; that allocation is fine.";
+        return "Read the first stack trace in the output: at 0x... main (scorekeeper.c:??).";
+      },
+      note: 'valgrind shows the read site at scorekeeper.c:15. The printf dereferences scores[3] after free(scores) has run.',
+    },
+    {
+      programIndex: 1,
+      label: 'Task 6 of 12',
+      text: 'Propose the fix. Should free move, or should the printf move? Answer "move free" or "move printf".',
+      acceptDisplay: 'move free OR move printf',
+      hint: 'move free below the printf',
+      match: (cmd) => {
+        const n = normalize(cmd);
+        return /\bmove\s*(the\s*)?free\b/.test(n) ||
+               /\bmove\s*(the\s*)?printf\b/.test(n) ||
+               /\bfree\s+(after|below|later)\b/.test(n) ||
+               /\bswap\b/.test(n);
+      },
+      diagnose: (cmd) => {
+        const n = normalize(cmd);
+        if (n.includes('remove free')) return "Removing free would create a leak. We want both the read and the free, just in the right order.";
+        if (n.includes('add free')) return "There's already a free; the order is wrong.";
+        return "One of the two lines (free, printf) is in the wrong order. Which one moves?";
+      },
+      note: 'Either answer is fine: the goal is to free the block AFTER its last use. The fixed source shows free moved to just before return.',
+      onSuccess: (state) => { state.showFix = true; },
+    },
+    // ===== Program 3: OOB write =====
+    {
+      programIndex: 2,
+      section: 'Program 3: the tally',
+      label: 'Task 7 of 12',
+      text: 'Classify the bug. valgrind starts with "Invalid write of size 4" past the end of an allocation. Name this bug class. Two-word answer is fine.',
+      acceptDisplay: 'out-of-bounds write, buffer overflow, out of bounds',
+      hint: 'out-of-bounds write',
+      match: (cmd) => {
+        const n = normalize(cmd);
+        return matchesAny(cmd, [
+          'out of bounds', 'out-of-bounds', 'out of bounds write', 'out-of-bounds write',
+          'oob', 'oob write', 'buffer overflow', 'overflow', 'overrun', 'buffer overrun',
+          'heap overflow', 'heap buffer overflow', 'array out of bounds',
+        ]) || /\bout.of.bounds\b/.test(n);
+      },
+      diagnose: (cmd) => {
+        const n = normalize(cmd);
+        if (n.includes('leak')) return "Look at the HEAP SUMMARY: 0 bytes lost. That's not the bug.";
+        if (n.includes('uninit')) return "valgrind doesn't say 'Uninitialised' here. Look at the first error line.";
+        if (n.includes('use after free')) return "There's only one free, and it runs after the read. The error is about WRITING past the allocation.";
+        return "Look at 'Address ... is 0 bytes after a block of size 20'. What does 'after a block' tell you?";
+      },
+      note: 'valgrind: "0 bytes after a block of size 20 alloc\'d". The loop wrote to votes[5], one int past the 5-int allocation. Classic off-by-one out-of-bounds write.',
+    },
+    {
+      programIndex: 2,
+      label: 'Task 8 of 12',
+      text: 'Where is the bug in the source? Type the line number where the invalid write happens.',
+      acceptDisplay: 'a number',
+      hint: 'line 10: votes[i] = i * 2 inside the loop',
+      match: (cmd) => matchesLine(cmd, 10),
+      diagnose: (cmd) => {
+        const m = String(cmd).match(/\d+/);
+        if (!m) return "Type just the line number.";
+        const n = parseInt(m[0], 10);
+        if (n === 9) return "Line 9 is the loop header; the off-by-one is there in the condition, but valgrind reports the write itself, which is on the next line.";
+        if (n === 6) return "Line 6 allocates 5 ints. That's correct — the bug is the WRITE that goes too far.";
+        if (n === 13) return "Line 13 reads valid indices (0 and 4). The bug is the write earlier.";
+        return "Read the first error: at 0x... main (tally.c:??).";
+      },
+      note: 'The write at line 10 is fine for i = 0 through 4 but invalid for i = 5. The off-by-one is the <= in line 9.',
+    },
+    {
+      programIndex: 2,
+      label: 'Task 9 of 12',
+      text: 'Propose the fix to the loop header on line 9. Type the corrected for-loop header. The widget accepts the standard fix.',
+      acceptDisplay: 'the fixed for-loop header',
+      hint: 'for (int i = 0; i < n; i++) {',
+      match: (cmd) => {
+        const n = normalize(cmd).replace(/\s+/g, '');
+        return /^for\(inti=0;i<n;i\+\+\){?$/.test(n) ||
+               /^for\(inti=0;i<5;i\+\+\){?$/.test(n);
+      },
+      diagnose: (cmd) => {
+        const n = normalize(cmd);
+        if (n.includes('<=')) return "That's still <=, which is the bug. The fix is to use strict <.";
+        if (n.includes('i < n - 1') || n.includes('i<n-1')) return "That would work but it under-counts (you'd miss votes[4]). The cleaner fix uses < n.";
+        if (n.startsWith('for')) return "Close. Check the comparison and that you have all three for-loop parts.";
+        return null;
+      },
+      note: 'Change i <= n to i < n. The loop now runs i from 0 to 4 inclusive, which is exactly the valid index range for an array of 5.',
+      onSuccess: (state) => { state.showFix = true; },
+    },
+    // ===== Program 4: uninitialized read =====
+    {
+      programIndex: 3,
+      section: 'Program 4: the stats',
+      label: 'Task 10 of 12',
+      text: 'Classify the bug. valgrind says "Conditional jump or move depends on uninitialised value(s)". What memory bug class is this?',
+      acceptDisplay: 'uninitialized read, uninit read, uninitialised value',
+      hint: 'uninitialized read',
+      match: (cmd) => {
+        const n = normalize(cmd);
+        return /uninit/i.test(n) || matchesAny(cmd, [
+          'uninitialized read', 'uninitialised read', 'uninit read',
+          'reading uninitialized memory', 'use of uninitialized value',
+          'uninitialized value', 'uninitialised value',
+        ]);
+      },
+      diagnose: (cmd) => {
+        const n = normalize(cmd);
+        if (n.includes('leak')) return "0 bytes lost. The bug is something else.";
+        if (n.includes('use after free')) return "Nothing was freed before the read. valgrind says 'uninitialised value' — what does that mean?";
+        if (n.includes('out of bounds') || n.includes('oob')) return "The reads are inside the allocated range. The problem is what's IN the memory.";
+        return "Read the first error line carefully. 'uninitialised value' is the key phrase.";
+      },
+      note: 'malloc returns memory with whatever bytes happened to be sitting there. vals[2] was never assigned. When the loop adds it to sum, sum becomes "tainted" and printf can\'t safely use it.',
+    },
+    {
+      programIndex: 3,
+      label: 'Task 11 of 12',
+      text: 'Which index of vals was never initialized? Type the index (0, 1, 2, or 3).',
+      acceptDisplay: 'an index between 0 and 3',
+      hint: 'vals[0], vals[1], and vals[3] are set explicitly. What about the rest?',
+      match: (cmd) => {
+        const m = String(cmd).match(/\d+/);
+        if (!m) return false;
+        return parseInt(m[0], 10) === 2;
+      },
+      diagnose: (cmd) => {
+        const m = String(cmd).match(/\d+/);
+        if (!m) return "Type just the index number.";
+        const n = parseInt(m[0], 10);
+        if (n === 0) return "Line 9 sets vals[0]. Look at the lines that set vals.";
+        if (n === 1) return "Line 10 sets vals[1]. Look at the lines that set vals.";
+        if (n === 3) return "Line 11 sets vals[3]. What's between 1 and 3?";
+        if (n === 4) return "n is 4, so the valid indices are 0..3.";
+        return "The valid indices are 0..3. Which one is missing?";
+      },
+      note: 'vals[0]=10 on line 9, vals[1]=20 on line 10, vals[3]=40 on line 11. vals[2] was skipped. malloc did not zero it, so its value is whatever junk was in that memory.',
+    },
+    {
+      programIndex: 3,
+      label: 'Task 12 of 12',
+      text: 'Two correct fixes are: (a) set vals[2] explicitly, or (b) zero the whole allocation. Which standard library function gives option (b) in one line? Just the function name is fine.',
+      acceptDisplay: 'a libc function name',
+      hint: 'one of the malloc-family functions zero-fills its result',
+      match: (cmd) => {
+        const n = normalize(cmd).replace(/\(.*\)/, '').replace(/\s+/g, '');
+        return n === 'calloc' || n === 'memset' || /^calloc/.test(n) || /^memset/.test(n);
+      },
+      diagnose: (cmd) => {
+        const n = normalize(cmd);
+        if (n.includes('malloc')) return "malloc returns uninitialised memory — that's the bug. We need something else.";
+        if (n.includes('free')) return "free is for releasing memory, not initialising it.";
+        if (n.includes('init') || n.includes('zero')) return "Close. There's a specific function name. Either calloc (allocates AND zeros) or memset (zeros existing memory).";
+        return "Think malloc-family. Which one starts with 'c' and zero-initialises?";
+      },
+      note: 'calloc(n, sizeof(int)) allocates AND zero-initialises. memset(vals, 0, n * sizeof(int)) zeros after malloc. The fixed source uses calloc for the cleaner pattern.',
+      onSuccess: (state) => { state.showFix = true; },
+    },
+  ];
+
+  // ============================================================
+  // Render state
+  // ============================================================
+  let currentTaskIndex = 0;
+  let consecutiveFails = 0;
+  let showFix = false; // Per-program: when the "fix" task completes, show the fixed source
+
+  const sourceArea = root.querySelector('#vg-source-area');
+  const outputArea = root.querySelector('#vg-output-area');
+  const srcHeader = root.querySelector('#vg-src-header');
+  const outHeader = root.querySelector('#vg-out-header');
+  const terminalEl = root.querySelector('#vg-terminal');
+
+  function termLine(text, kind) {
+    const span = document.createElement('span');
+    span.className = kind || 'out';
+    span.textContent = (text || '') + '\n';
+    terminalEl.appendChild(span);
+    terminalEl.scrollTop = terminalEl.scrollHeight;
+  }
+  function echoCommand(cmd) {
+    const promptSpan = document.createElement('span');
+    promptSpan.className = 'prompt';
+    promptSpan.textContent = 'valgrind> ';
+    const typedSpan = document.createElement('span');
+    typedSpan.className = 'typed';
+    typedSpan.textContent = cmd + '\n';
+    terminalEl.appendChild(promptSpan);
+    terminalEl.appendChild(typedSpan);
+    terminalEl.scrollTop = terminalEl.scrollHeight;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[<>&"]/g, function(c) {
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;' }[c];
+    });
+  }
+  function renderSource() {
+    if (currentTaskIndex >= tasks.length) return;
+    const t = tasks[currentTaskIndex];
+    const prog = programs[t.programIndex];
+    const src = showFix ? prog.fixedSrc : prog.src;
+    const flaggedLine = showFix ? -1 : prog.buggyLine;
+    srcHeader.textContent = prog.file + (showFix ? '  (fixed)' : '');
+    let html = '';
+    for (let i = 0; i < src.length; i++) {
+      const num = i + 1;
+      const cls = num === flaggedLine ? 'src-line flagged'
+                : (showFix && num === prog.buggyLine) ? 'src-line fixed'
+                : 'src-line';
+      html += '<div class="' + cls + '">' +
+              '<span class="src-num">' + num + '</span>' +
+              '<span class="src-text">' + escapeHtml(src[i]) + '</span>' +
+              '</div>';
+    }
+    sourceArea.innerHTML = html;
+  }
+  function renderOutput() {
+    if (currentTaskIndex >= tasks.length) return;
+    const t = tasks[currentTaskIndex];
+    const prog = programs[t.programIndex];
+    outHeader.textContent = 'valgrind output (' + prog.file.replace(/\.c$/, '') + ')';
+    let html = '';
+    for (const ln of prog.vgOutput) {
+      html += '<div class="vg-' + ln.kind + '">' + escapeHtml(ln.text) + '</div>';
+    }
+    outputArea.innerHTML = html;
+  }
+
+  // ============================================================
+  // Tasks controller
+  // ============================================================
+  function renderTask() {
+    const fill = root.querySelector('#vg-progress-fill');
+    const label = root.querySelector('#vg-progress-label');
+    const card = root.querySelector('#vg-task-card');
+    const labelEl = root.querySelector('#vg-task-label');
+    const textEl = root.querySelector('#vg-task-text');
+    const hintEl = root.querySelector('#vg-task-hint');
+    const acceptEl = root.querySelector('#vg-task-accept');
+    const sectionEl = root.querySelector('#vg-section-header');
+    const completionArea = root.querySelector('#vg-completion-area');
+
+    const pct = (currentTaskIndex / tasks.length) * 100;
+    fill.style.width = pct + '%';
+    label.textContent = 'Task ' + Math.min(currentTaskIndex + 1, tasks.length) + ' of ' + tasks.length;
+
+    if (currentTaskIndex >= tasks.length) {
+      card.className = 'task-card complete';
+      labelEl.textContent = 'Complete';
+      textEl.textContent = "You read four valgrind reports and identified four classic memory bug classes. Now do it on real code in Lab 16.";
+      acceptEl.textContent = '';
+      hintEl.textContent = '';
+      fill.style.width = '100%';
+      label.textContent = 'All tasks complete';
+      sectionEl.textContent = 'All done';
+      completionArea.innerHTML = '';
+      cs210RenderCompletion(completionArea);
+      return;
+    }
+
+    completionArea.innerHTML = '';
+    card.className = 'task-card';
+    const t = tasks[currentTaskIndex];
+    if (t.section) sectionEl.textContent = t.section;
+    labelEl.textContent = t.label;
+    textEl.textContent = t.text;
+    if (t.acceptDisplay) {
+      acceptEl.innerHTML = 'Accepted: <code>' + escapeHtml(t.acceptDisplay) + '</code>';
+    } else {
+      acceptEl.textContent = '';
+    }
+    hintEl.textContent = '';
+    renderSource();
+    renderOutput();
+  }
+
+  function checkTask(rawCmd) {
+    if (currentTaskIndex >= tasks.length) return null;
+    const t = tasks[currentTaskIndex];
+
+    // If the cadet is at the first task of a new program, reset showFix
+    // (handled when advancing to it).
+
+    if (t.match(rawCmd)) {
+      echoCommand(rawCmd);
+      termLine('  ' + (t.note || 'Correct.'), 'ok');
+      if (t.onSuccess) t.onSuccess({ get showFix() { return showFix; }, set showFix(v) { showFix = v; } });
+      // If the just-completed task set showFix, re-render source to show fixed version briefly
+      currentTaskIndex++;
+      consecutiveFails = 0;
+      hideHintPulse();
+      // If moving to a new program, clear showFix flag
+      if (currentTaskIndex < tasks.length &&
+          tasks[currentTaskIndex].programIndex !== t.programIndex) {
+        showFix = false;
+      }
+      renderTask();
+      if (currentTaskIndex >= tasks.length) {
+        termLine('', 'out');
+        termLine('  Walkthrough complete. Save your completion code.', 'note');
+      }
+      return true;
+    } else {
+      echoCommand(rawCmd);
+      const diag = (t.diagnose && t.diagnose(rawCmd)) || null;
+      if (diag) {
+        termLine('  ' + diag, 'err');
+      } else {
+        termLine("  Not what this task is asking for. Re-read the task card, or click 'Show hint'.", 'err');
+      }
+      consecutiveFails++;
+      if (consecutiveFails >= 2) showHintPulse();
+      return false;
+    }
+  }
+  function showHint() {
+    if (currentTaskIndex >= tasks.length) return;
+    const t = tasks[currentTaskIndex];
+    root.querySelector('#vg-task-hint').textContent = 'Hint: ' + (t.hint || '');
+    hideHintPulse();
+  }
+  function showHintPulse() { root.querySelector('#vg-hint-btn').classList.add('pulse'); }
+  function hideHintPulse() { root.querySelector('#vg-hint-btn').classList.remove('pulse'); }
+
+  function reset() {
+    currentTaskIndex = 0;
+    consecutiveFails = 0;
+    showFix = false;
+    hideHintPulse();
+    terminalEl.innerHTML = '';
+    termLine('Welcome to the valgrind walkthrough.', 'dim');
+    termLine('Each task asks one specific thing. Type your answer at the prompt and press Enter.', 'dim');
+    termLine('', 'out');
+    const overlay = root.querySelector('#vg-completion-overlay');
+    if (overlay) overlay.remove();
+    const completionArea = root.querySelector('#vg-completion-area');
+    if (completionArea) completionArea.innerHTML = '';
+    renderTask();
+  }
+
+  // ============================================================
+  // Input wiring
+  // ============================================================
+  const inputEl = root.querySelector('#vg-cli-input');
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const v = inputEl.value;
+      inputEl.value = '';
+      if (!v.trim()) return;
+      checkTask(v);
+    }
+  });
+  root.querySelector('#vg-hint-btn').addEventListener('click', showHint);
+  root.querySelector('#vg-reset-btn').addEventListener('click', reset);
+
+  // Boot
+  reset();
+})();
+</script>
+
+
+    </div>
+  </details>
+
+  <!-- ===================== 6. AFTER CLASS ===================== -->
+  <details id="after-class" style="margin-bottom: 24px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      6. After Class
+    </summary>
+    <div style="padding: 18px 22px;">
+      <ul style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Finish Lab 16 if you did not complete it in class. Push to GitHub Classroom before Lesson 17.</li>
+        <li style="margin-bottom: 6px;">Submit the Lesson 16 reflection in Blackboard. It asks for your widget completion code and one short reflection prompt.</li>
+        <li style="margin-bottom: 6px;"><strong>GR2 is tomorrow.</strong> The midterm covers Lessons 1 through 15. Today's tool material (valgrind) is not on GR2; the bug classes may appear as pattern recognition.</li>
+        <li style="margin-bottom: 0;">Review your old labs. Rerun any of them under valgrind. You may find bugs we did not catch the first time.</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== HELP NOTE ===================== -->
+  <div style="background: #F5F7FA; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 3px; font-size: 13.5px; color: #4A5568;">
+    <strong style="color: #00205B;">Need help?</strong> Schedule EI with your instructor. The fastest path is to bring your <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">valgrind_before.txt</code> and point at the specific error you do not understand. Pointing at a specific message gets you unstuck in five minutes; "my code does not work" takes thirty. Check the course Resources section first for valgrind primers and Git troubleshooting before scheduling.
+  </div>
+
+</div>

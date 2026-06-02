@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Writing by Dr. Sarah J. Bolton on computer science education, course design, applied machine learning, and cyber operations." />
-  <title>Writing | Dr. Sarah J. Bolton</title>
+  <meta name="description" content="Course materials and lessons by Dr. Sarah J. Bolton for the USAFA computer science curriculum, including CS210 (Programming in C) and CS220 (Data Structures & Systems Programming)." />
+  <title>Courses | Dr. Sarah J. Bolton</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -190,9 +190,9 @@
       margin-top: 0.5rem;
     }
 
-    .posts { padding: 3rem 0 5rem; }
+    .courses { padding: 3rem 0 5rem; }
 
-    .post-card {
+    .course-card {
       background: var(--bg-card);
       border: 1px solid var(--rule);
       border-radius: var(--radius);
@@ -200,66 +200,37 @@
       margin-bottom: 1.25rem;
       transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     }
-    .post-card:hover {
+    .course-card:hover {
       transform: translateY(-2px);
       box-shadow: var(--shadow);
       border-color: var(--accent-soft);
     }
-    .post-meta {
+    .course-meta {
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.78rem;
       color: var(--ink-mute);
       letter-spacing: 0.04em;
-      margin-bottom: 0.4rem;
+      margin-bottom: 0.5rem;
       display: flex;
       gap: 0.75rem;
       flex-wrap: wrap;
       align-items: center;
     }
-    .post-meta .draft {
-      background: rgba(176, 138, 62, 0.15);
-      color: #a06840;
-      padding: 0.15rem 0.55rem;
-      border-radius: 999px;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      font-size: 0.7rem;
+    .course-code {
+      color: var(--accent);
+      font-weight: 500;
     }
-    .post-card h2 { margin-bottom: 0.5rem; }
-    .post-card h2 a { color: var(--ink); border-bottom: none; }
-    .post-card h2 a:hover { color: var(--accent); }
-    .post-card p { font-size: 0.95rem; margin-bottom: 0; }
-
-    .placeholder-note {
-      background: var(--bg-soft);
-      border-left: 3px solid var(--gold);
-      padding: 1.25rem 1.5rem;
-      border-radius: 0 var(--radius) var(--radius) 0;
-      margin-bottom: 2rem;
-      font-size: 0.95rem;
-      color: var(--ink-soft);
+    .course-card h2 { margin-bottom: 0.5rem; }
+    .course-card h2 a { color: var(--ink); border-bottom: none; }
+    .course-card h2 a:hover { color: var(--accent); }
+    .course-card p { font-size: 0.95rem; margin-bottom: 1rem; }
+    .course-link {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      letter-spacing: 0.02em;
+      font-weight: 500;
     }
-    .placeholder-note strong { color: var(--ink); }
-
-    .upcoming-list {
-      list-style: none;
-      padding: 0;
-      margin-top: 0.75rem;
-    }
-    .upcoming-list li {
-      padding: 0.4rem 0;
-      padding-left: 1.1rem;
-      position: relative;
-      font-size: 0.95rem;
-      color: var(--ink-soft);
-    }
-    .upcoming-list li::before {
-      content: "›";
-      position: absolute;
-      left: 0;
-      color: var(--gold);
-      font-weight: 700;
-    }
+    .course-link::after { content: " →"; }
 
     footer {
       padding: 2.5rem 0;
@@ -291,7 +262,7 @@
       <a href="/#teaching">Teaching</a>
       <a href="/#colloquium">Colloquium &amp; ACCR</a>
       <a href="/#research">Research</a>
-      <a href="/blog/" class="active">Writing</a>
+      <a href="/courses/" class="active">Courses</a>
       <a href="/#cv">CV</a>
       <a href="/#contact">Contact</a>
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">Dark</button>
@@ -301,56 +272,47 @@
 
 <section class="hero">
   <div class="container">
-    <span class="kicker">Writing</span>
-    <h1>Notes from the classroom and the lab</h1>
+    <span class="kicker">Courses</span>
+    <h1>Course materials &amp; lessons</h1>
     <p class="hero-sub">
-      Occasional writing on computer science education, course design, applied machine learning, and the
-      everyday work of building a CS curriculum at a service academy.
+      Lessons, notes, and reference material I build for the courses I teach in the USAFA computer
+      science curriculum. Select a course below to view its materials.
     </p>
   </div>
 </section>
 
-<section class="posts">
+<section class="courses">
   <div class="container">
-<!--
-    <article class="post-card">
-      <div class="post-meta">
-        <span>May 2026</span>
+
+    <article class="course-card">
+      <div class="course-meta">
+        <span class="course-code">CS210</span>
         <span>·</span>
-        <span>CS Education</span>
-        <span>·</span>
-        <span>Course Design</span>
+        <span>Programming in C</span>
       </div>
-      <h2><a href="/blog/rebuilding-cs210/">Rebuilding CS210: Bridging Python and Data Structures with C</a></h2>
+      <h2><a href="/courses/cs210/">Programming in C</a></h2>
       <p>
-        Notes from redesigning the C programming course that sits between an introductory Python course
-        and a systems-heavy data structures course. Toolchain decisions, lab autograding without GitHub
-        Actions, and the Python-to-C culture shock.
+        A second course in programming focusing on C, pointers, and memory management — bridging an
+        introductory Python course and a systems-heavy data structures course. Lessons, labs, and
+        reference material.
       </p>
+      <a class="course-link" href="/courses/cs210/">View course materials</a>
     </article>
--->
-    <div class="placeholder-note">
-      <strong>More on the way.</strong> Posts in progress:
-      <ul class="upcoming-list">
-        <li>Designing a controlled retrieval-practice intervention in an intro programming course</li>
-        <li>Thinking carefully about GenAI in CS course grading</li>
-        <li>SPARK and LMS-driven individualized lesson planning</li>
-      </ul>
-    </div>
 
-    <!--
-      Template for future posts. Copy and uncomment when ready:
-
-      <article class="post-card">
-        <div class="post-meta">
-          <span>2026-MM-DD</span>
-          <span>·</span>
-          <span>CS Education</span>
-        </div>
-        <h2><a href="/blog/post-slug/">Post title goes here</a></h2>
-        <p>One- to two-sentence summary that previews the takeaway.</p>
-      </article>
-    -->
+    <article class="course-card">
+      <div class="course-meta">
+        <span class="course-code">CS220</span>
+        <span>·</span>
+        <span>Data Structures &amp; Systems Programming</span>
+      </div>
+      <h2><a href="/courses/cs220/">Data Structures &amp; Systems Programming</a></h2>
+      <p>
+        Arrays, lists, stacks, queues, trees, hash tables, and related systems concepts — with an
+        emphasis on why a particular data structure is chosen and how it affects performance and
+        maintainability. Lessons, labs, and reference material.
+      </p>
+      <a class="course-link" href="/courses/cs220/">View course materials</a>
+    </article>
 
   </div>
 </section>

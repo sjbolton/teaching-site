@@ -1,0 +1,2972 @@
+<!-- ============================================================
+     CS210 - Lesson 9
+     Arrays
+     Self-contained: all CSS inline. Native <details> for collapsing.
+     Array walkthrough and array rules quiz embedded inline in section 5.
+     Paste into Blackboard Ultra via Document -> Add HTML block.
+     ============================================================ -->
+
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 980px; margin: 0 auto; line-height: 1.6;">
+
+  <!-- ===================== LIGHT HEADER ===================== -->
+  <div style="border-left: 5px solid #003087; padding: 8px 0 8px 18px; margin-bottom: 24px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 2px;">CS210 &middot; Block 2 &middot; Lesson 9</div>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 600; color: #00205B;">Arrays</h1>
+    <div style="font-size: 14px; color: #4A5568; margin-top: 4px;">Contiguous memory &middot; Indexing from 0 &middot; Initialization &middot; Bounds and undefined behavior &middot; The sizeof length idiom</div>
+  </div>
+
+  <!-- ===================== AT A GLANCE ===================== -->
+  <div style="background: #F5F7FA; border-left: 4px solid #B5B7BA; padding: 14px 18px; margin-bottom: 22px; font-size: 14px;">
+    <strong style="color: #00205B;">At a glance:</strong> Arrays are the first composite data type you meet in C. You already know list-like containers from Python, but C arrays come with two new rules: the size is fixed at declaration time, and there is no built-in bounds checking. The walkthrough in Section 5 lets you watch indices and out-of-bounds accesses physically; the quiz catches the common gotchas; the lab puts it all to work on a pilot-themed analysis problem.
+  </div>
+
+  <!-- ===================== TABLE OF CONTENTS ===================== -->
+  <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 20px; margin-bottom: 24px; border-radius: 3px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Contents</div>
+    <ol style="margin: 0; padding-left: 22px; font-size: 14px;">
+      <li style="margin-bottom: 4px;"><a href="#objectives" style="color: #003087; text-decoration: none;">Lesson Objectives</a></li>
+      <li style="margin-bottom: 4px;"><a href="#readings" style="color: #003087; text-decoration: none;">Assigned Readings</a></li>
+      <li style="margin-bottom: 4px;"><a href="#pre-class" style="color: #003087; text-decoration: none;">Pre-Class Work</a></li>
+      <li style="margin-bottom: 4px;"><a href="#materials" style="color: #003087; text-decoration: none;">Lesson Materials and Overview</a></li>
+      <li style="margin-bottom: 4px;"><a href="#in-class" style="color: #003087; text-decoration: none;">In-Class Work</a></li>
+      <li style="margin-bottom: 0;"><a href="#after-class" style="color: #003087; text-decoration: none;">After Class</a></li>
+    </ol>
+  </div>
+
+  <!-- ===================== 1. OBJECTIVES ===================== -->
+  <details id="objectives" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      1. Lesson Objectives
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 10px 0; font-style: italic;">By the end of this lesson, cadets will be able to:</p>
+      <ol style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Declare and initialize arrays of primitive types in C. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+        <li style="margin-bottom: 6px;">Access array elements using indexed notation. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+        <li style="margin-bottom: 0;">Identify and avoid common array bugs including off-by-one errors and out-of-bounds access. <span style="color: #6B7280; font-size: 12px;">(Outcome 3)</span></li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 2. READINGS ===================== -->
+  <details id="readings" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      2. Assigned Readings
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 12px 0;">Complete before class.</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <thead>
+          <tr style="background: #E8EDF5; color: #00205B;">
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 130px;">Source</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9;">Sections</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 220px;">Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;"><a href="https://beej.us/guide/bgc/html/split/arrays.html" style="color: #003087; text-decoration: underline;">Beej-C</a></td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Chapter 6, sections 6.1 through 6.5</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Declaration, initializers, bounds, multidimensional arrays</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 12px 16px; margin-top: 14px; border-radius: 3px; font-size: 13.5px; color: #6B5300;">
+        <strong style="color: #4A3A00;">Stop after section 6.5.</strong> Section 6.6 starts the array-pointer relationship, which is Lesson 12 territory. You will not be able to fully follow it until you have seen pointers, and reading it now will only confuse the mental model we are building today.
+      </div>
+    </div>
+  </details>
+
+  <!-- ===================== 3. PRE-CLASS WORK ===================== -->
+  <details id="pre-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      3. Pre-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 18px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #6B5300; font-size: 14px; margin-bottom: 4px;">Do this first</div>
+        <div style="font-size: 14px; color: #5A4B00;">Plan on 25 to 35 minutes for the reading. The walkthrough widget in class will reinforce everything, but only if you arrive with the syntax already familiar.</div>
+      </div>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 0 0 10px 0;">Pre-Class Checklist</h3>
+
+      <!-- Step 1: Reading -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">1</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Read Beej-C Chapter 6, sections 6.1 through 6.5</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">Section 6.6 starts pointers, which we will cover at Lesson 12. Stop at the end of 6.5. Pay attention to these terms:</div>
+            <ul style="font-size: 13.5px; margin: 0 0 6px 0; padding-left: 20px;">
+              <li style="margin-bottom: 3px;">Array declaration with fixed size</li>
+              <li style="margin-bottom: 3px;">Initializer list, including the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">{0}</code> and designated <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">[i]=v</code> forms</li>
+              <li style="margin-bottom: 3px;">Indexing from 0 and the last valid index</li>
+              <li style="margin-bottom: 3px;">Out of bounds and undefined behavior</li>
+              <li style="margin-bottom: 0;">The <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">sizeof(a)/sizeof(a[0])</code> length idiom</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Skim widget -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 8px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">2</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Skim the In-Class section below</div>
+            <div style="font-size: 14px;">You will see two interactive widgets: an array walkthrough and a self-check quiz. No need to start either yet; just know they are there and what they look like.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ===================== 4. LESSON MATERIALS AND OVERVIEW ===================== -->
+  <details id="materials" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      4. Lesson Materials and Overview
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 18px 0;">An array is a fixed-length row of values, all of the same type, stored back-to-back in memory and accessed by integer index starting at 0. Coming from Python, this will feel almost familiar but not quite: the size is fixed, the indices are bounded, and C does no checking. The reference material below covers what you will see in lecture and use in the walkthrough.</p>
+
+      <!-- Subsection navigation -->
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 18px; margin-bottom: 22px; border-radius: 3px;">
+        <div style="font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">Jump to</div>
+        <div style="font-size: 13.5px;">
+          <a href="#slides" style="color: #003087; text-decoration: none; margin-right: 14px;">Slides</a>
+          <a href="#python-vs-c-arrays" style="color: #003087; text-decoration: none; margin-right: 14px;">Python list vs C array</a>
+          <a href="#declaring" style="color: #003087; text-decoration: none; margin-right: 14px;">Declaring</a>
+          <a href="#initializing" style="color: #003087; text-decoration: none; margin-right: 14px;">Initializing</a>
+          <a href="#indexing" style="color: #003087; text-decoration: none; margin-right: 14px;">Indexing</a>
+          <a href="#oob" style="color: #003087; text-decoration: none; margin-right: 14px;">Bounds</a>
+          <a href="#length" style="color: #003087; text-decoration: none; margin-right: 14px;">Length</a>
+          <a href="#common-bugs" style="color: #003087; text-decoration: none;">Common bugs</a>
+        </div>
+      </div>
+
+      <!-- Slides -->
+      <h3 id="slides" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0; scroll-margin-top: 16px;">Slides</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">The Lesson 9 deck covers the array model, declaration and initialization, indexing, bounds, the length idiom, and common bugs. The slides are the spine of the in-class lecture; the array walkthrough is where you practice each concept hands-on.</p>
+
+      <!-- =========================================================
+           EDIT ME: Lesson 9 slide deck link
+           Replace href="#" below with the SharePoint share URL once the
+           deck is published. Leave target="_blank" and rel="noopener".
+           ========================================================= -->
+      <p style="margin: 0 0 18px 0;">
+        <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 10px 20px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 14px;">Open Lesson 9 slides &rarr;</a>
+      </p>
+
+      <!-- Python vs C arrays -->
+      <h3 id="python-vs-c-arrays" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Python list vs C array</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">In CS110 you used Python lists: <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">scores = [88, 92, 75, 60, 95]</code>. The list grew when you appended, shrank when you popped, knew its own length via <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">len(scores)</code>, and raised an exception if you indexed past the end.</p>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">A C array is a different beast wearing similar syntax. It is a fixed-length block of memory carved out at declaration time. It does not know its own length, cannot grow or shrink, and accessing past the end produces undefined behavior rather than an exception.</p>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 13.5px; margin-bottom: 18px;">
+        <thead>
+          <tr style="background: #00205B; color: #ffffff;">
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; width: 200px;">Behavior</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600;">Python list</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600;">C array</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Size</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Grows and shrinks at runtime</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Fixed at declaration; cannot change</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Element type</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Mixed types allowed</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">All elements must be the same type</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Knows its length</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12px;">len(lst)</code> works anywhere</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12px;">sizeof(a)/sizeof(a[0])</code>, declaration scope only</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Out of bounds</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12px;">IndexError</code> raised</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Undefined behavior; no error</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px;">Memory layout</td>
+            <td style="padding: 8px 12px; color: #4A5568;">Implementation-managed</td>
+            <td style="padding: 8px 12px; color: #4A5568;">Contiguous, predictable</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">The trade is real. In return for the discipline you get speed, predictable memory layout, and the ability to reason about exactly where each element lives. The cost is that you carry the bounds-checking responsibility yourself.</p>
+
+      <!-- Declaring -->
+      <h3 id="declaring" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Declaring an array</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">An array declaration has three parts: the element type, the array name, and the size in square brackets.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">int</span> scores[<span style="color: #B5CEA8;">5</span>];&nbsp;&nbsp;<span style="color: #6B7280;">// five ints, uninitialized at local scope</span>
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Three things to remember:</p>
+      <ul style="font-size: 14px; margin: 0 0 14px 0; padding-left: 22px;">
+        <li style="margin-bottom: 4px;">The size must be a constant expression known at compile time (a literal, or a <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">#define</code>'d constant).</li>
+        <li style="margin-bottom: 4px;">Local (stack) arrays without an initializer contain whatever bytes were in that memory. Do not read them before writing them.</li>
+        <li style="margin-bottom: 0;">Once declared, the size cannot change. There is no <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">append</code>.</li>
+      </ul>
+
+      <!-- Initializing -->
+      <h3 id="initializing" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Initializing an array</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">You can initialize an array at the point of declaration using an initializer list in braces.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">int</span> scores[<span style="color: #B5CEA8;">5</span>] = {<span style="color: #B5CEA8;">88</span>, <span style="color: #B5CEA8;">92</span>, <span style="color: #B5CEA8;">75</span>, <span style="color: #B5CEA8;">60</span>, <span style="color: #B5CEA8;">95</span>};
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 8px 0;">Three variants are worth knowing:</p>
+      <p style="font-size: 14.5px; margin: 0 0 8px 0;"><strong style="color: #00205B;">Zero-fill the rest.</strong> If the initializer has fewer values than the array length, C zero-fills the remaining cells.</p>
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">int</span> counts[<span style="color: #B5CEA8;">4</span>] = {<span style="color: #B5CEA8;">0</span>};&nbsp;&nbsp;<span style="color: #6B7280;">// all four cells are 0</span><br>
+        <span style="color: #569CD6;">int</span> partial[<span style="color: #B5CEA8;">5</span>] = {<span style="color: #B5CEA8;">10</span>, <span style="color: #B5CEA8;">20</span>};&nbsp;&nbsp;<span style="color: #6B7280;">// 10, 20, 0, 0, 0</span>
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 8px 0;"><strong style="color: #00205B;">Inferred size.</strong> If you leave the brackets empty but provide an initializer, C counts the elements for you.</p>
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">int</span> primes[] = {<span style="color: #B5CEA8;">2</span>, <span style="color: #B5CEA8;">3</span>, <span style="color: #B5CEA8;">5</span>, <span style="color: #B5CEA8;">7</span>, <span style="color: #B5CEA8;">11</span>};&nbsp;&nbsp;<span style="color: #6B7280;">// length 5, inferred</span>
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 8px 0;"><strong style="color: #00205B;">Designated initializers.</strong> You can set specific indices by name. After a designated entry, subsequent values continue from there.</p>
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">int</span> marks[<span style="color: #B5CEA8;">5</span>] = {[<span style="color: #B5CEA8;">2</span>]=<span style="color: #B5CEA8;">99</span>, <span style="color: #B5CEA8;">50</span>};&nbsp;&nbsp;<span style="color: #6B7280;">// 0, 0, 99, 50, 0</span>
+      </div>
+
+      <!-- Indexing -->
+      <h3 id="indexing" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Indexing</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Read or write a single element using square brackets with an integer index. <strong>Indices start at 0.</strong></p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">int</span> first = scores[<span style="color: #B5CEA8;">0</span>];&nbsp;&nbsp;<span style="color: #6B7280;">// 88 (the first element)</span><br>
+        scores[<span style="color: #B5CEA8;">3</span>] = <span style="color: #B5CEA8;">100</span>;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #6B7280;">// write 100 to the fourth element</span>
+      </div>
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 12px 16px; margin-bottom: 14px; border-radius: 3px;">
+        <strong style="color: #4A3A00; font-size: 14px;">The single most important rule for arrays:</strong>
+        <div style="font-size: 14.5px; color: #5A4B00; margin-top: 4px;">For an array of length N, the valid indices are <code style="background: #ffffff; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 13px;">0</code> through <code style="background: #ffffff; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 13px;">N-1</code>. The last valid index is always one less than the length.</div>
+      </div>
+
+      <!-- Out of bounds -->
+      <h3 id="oob" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Out of bounds: C does not stop you</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">C performs no runtime bounds checking. Reading or writing an out-of-bounds index produces <em>undefined behavior</em>: the C standard says anything is allowed to happen. In practice you might see:</p>
+      <ul style="font-size: 14.5px; margin: 0 0 12px 0; padding-left: 22px;">
+        <li style="margin-bottom: 3px;">A garbage value (whatever bytes were sitting in that memory).</li>
+        <li style="margin-bottom: 3px;">A plausible-looking value that is not what you intended.</li>
+        <li style="margin-bottom: 3px;">A silent overwrite of another variable nearby in memory.</li>
+        <li style="margin-bottom: 3px;">An immediate crash (segmentation fault).</li>
+        <li style="margin-bottom: 0;">A program that appears to work for hours and then fails on different input.</li>
+      </ul>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">int</span> a[<span style="color: #B5CEA8;">5</span>] = {<span style="color: #B5CEA8;">1</span>, <span style="color: #B5CEA8;">2</span>, <span style="color: #B5CEA8;">3</span>, <span style="color: #B5CEA8;">4</span>, <span style="color: #B5CEA8;">5</span>};<br>
+        <span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"%d\n"</span>, a[<span style="color: #B5CEA8;">5</span>]);&nbsp;&nbsp;<span style="color: #6B7280;">// undefined behavior</span><br>
+        a[<span style="color: #B5CEA8;">7</span>] = <span style="color: #B5CEA8;">42</span>;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #6B7280;">// also undefined behavior; worse</span>
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">Out-of-bounds <em>writes</em> are typically worse than reads. A read returns a bad value but leaves memory intact; a write modifies memory you do not own, potentially corrupting other variables, the call stack, or runtime data. The walkthrough will let you watch this happen.</p>
+
+      <!-- Length -->
+      <h3 id="length" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Computing length: the sizeof idiom</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">C arrays do not store their length. If you need to know it, you compute it from the total byte size divided by the size of one element.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">int</span> scores[<span style="color: #B5CEA8;">5</span>] = {<span style="color: #B5CEA8;">88</span>, <span style="color: #B5CEA8;">92</span>, <span style="color: #B5CEA8;">75</span>, <span style="color: #B5CEA8;">60</span>, <span style="color: #B5CEA8;">95</span>};<br>
+        <span style="color: #569CD6;">size_t</span> length = <span style="color: #569CD6;">sizeof</span>(scores) / <span style="color: #569CD6;">sizeof</span>(scores[<span style="color: #B5CEA8;">0</span>]);<br>
+        <span style="color: #6B7280;">// 20 bytes / 4 bytes = 5</span>
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Two style notes. First, prefer <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">sizeof(a[0])</code> over <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">sizeof(int)</code>; the first survives a type change without rewriting the expression. Second, this only works <em>in the scope where the array is declared.</em></p>
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 12px 16px; margin-bottom: 14px; border-radius: 3px;">
+        <strong style="color: #4A3A00; font-size: 14px;">Foreshadow:</strong>
+        <div style="font-size: 14.5px; color: #5A4B00; margin-top: 4px;">When you pass an array to a function, the function does not get the size; it gets a memory address (we will see exactly why at Lesson 13). Inside that function the sizeof trick gives the wrong answer. The standard fix, which we will adopt in this lesson's lab, is to pass the length as a separate parameter alongside the array. Watch for this pattern in the function signatures.</div>
+      </div>
+
+      <!-- Common bugs -->
+      <h3 id="common-bugs" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Common array bugs</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Almost every array bug in your future career is a variation of one of these four. Internalize them now.</p>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 13.5px; margin-bottom: 18px;">
+        <thead>
+          <tr style="background: #00205B; color: #ffffff;">
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; width: 200px;">Bug</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600;">What it looks like</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-weight: 600;">Off-by-one in a loop</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Writing <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12px;">for (i = 0; i &lt;= n; i++)</code> instead of <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12px;">i &lt; n</code>. The last iteration reads or writes <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12px;">a[n]</code>, one past the end.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-weight: 600;">Using length where last index is wanted</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Asking for "the last element" with <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12px;">a[length]</code> instead of <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12px;">a[length - 1]</code>.</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-weight: 600;">Mismatched length parameter</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Passing a hard-coded count to a function that does not match the actual length of the array you passed.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; font-weight: 600;">Reading uninitialized cells</td>
+            <td style="padding: 8px 12px; color: #4A5568;">Declaring <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12px;">int a[5];</code> at function scope, then reading <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12px;">a[0]</code> before any write. The compiler does not warn; the value is whatever was on the stack.</td>
+          </tr>
+        </tbody>
+      </table>
+
+    </div>
+  </details>
+
+  <!-- ===================== 5. IN-CLASS WORK ===================== -->
+  <details id="in-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      5. In-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 16px 0;">Three things to do in class. Use the checklist to track your progress.</p>
+
+      <ul style="list-style: none; padding: 0; margin: 0 0 24px 0; font-size: 14.5px;">
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Work through the array walkthrough below.</strong>
+          <span style="color: #4A5568;">Nine guided tasks across declarations, indexing, bounds, and the length idiom. About 20 minutes.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Take the array rules self-check.</strong>
+          <span style="color: #4A5568;">Eight questions covering initializer behavior, last valid index, OOB, and the length idiom. 70% to pass. About 10 minutes.</span>
+        </li>
+        <li style="margin-bottom: 0; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Complete Lab 09: Fuel Log Analyzer.</strong>
+          <span style="color: #4A5568;">Auto-graded through GitHub Classroom. Implement seven array functions against a provided header and main.</span>
+          <!-- =========================================================
+               EDIT ME: Lab 09 GitHub Classroom assignment link
+               Replace href="#" with the classroom.github.com/a/... invite
+               URL once the assignment is published.
+               ========================================================= -->
+          <div style="margin-top: 8px; margin-left: 28px;">
+            <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 6px 14px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 13px;">Accept Lab 09 on GitHub Classroom &rarr;</a>
+          </div>
+        </li>
+      </ul>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 18px 0 10px 0;">Array Walkthrough</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Nine tasks across four sections. Type each C statement at the prompt. The terminal shows what happened; the right pane shows the array state with index labels and ghost cells for out-of-bounds accesses.</p>
+
+<!-- ============================================================
+     CS210 Lesson 9 - Array Indexing Walkthrough Widget
+     Template-aligned style. Native HTML/CSS + scoped JS.
+     Descended from binary_walkthrough.html (L2).
+     ============================================================ -->
+<style>
+.cs210-arrw * { box-sizing: border-box; }
+.cs210-arrw {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-arrw h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-arrw .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 22px;
+}
+.cs210-arrw .progress-bar {
+  background: #E5E7EB;
+  border-radius: 3px;
+  height: 8px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.cs210-arrw .progress-fill {
+  background: #003087;
+  height: 100%;
+  transition: width 0.3s ease;
+}
+.cs210-arrw .progress-label {
+  font-size: 12px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-arrw .section-header {
+  background: #E8EDF5;
+  color: #00205B;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.cs210-arrw .task-card {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  border-radius: 3px;
+}
+.cs210-arrw .task-card.complete {
+  background: #E6F4EA;
+  border-left-color: #2E7D32;
+}
+.cs210-arrw .task-label {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B5300;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.cs210-arrw .task-card.complete .task-label { color: #1B5E20; }
+.cs210-arrw .task-text { font-size: 15px; color: #1a1a1a; }
+.cs210-arrw .task-hint {
+  font-size: 12.5px; color: #6B7280; margin-top: 6px; font-style: italic;
+}
+
+.cs210-arrw .panes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+@media (max-width: 760px) {
+  .cs210-arrw .panes { grid-template-columns: 1fr; }
+}
+.cs210-arrw .terminal {
+  background: #1E2A3A;
+  color: #E8EDF5;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13.5px;
+  line-height: 1.5;
+  border-radius: 4px;
+  padding: 14px 18px;
+  min-height: 380px;
+  max-height: 480px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.cs210-arrw .terminal .prompt { color: #7FB3D5; }
+.cs210-arrw .terminal .typed { color: #FFFFFF; }
+.cs210-arrw .terminal .out { color: #B5BEC8; }
+.cs210-arrw .terminal .note { color: #F0B92C; }
+.cs210-arrw .terminal .err { color: #F47A7A; }
+.cs210-arrw .terminal .ok { color: #7FD17F; }
+.cs210-arrw .terminal .dim { color: #6B7280; }
+
+.cs210-arrw .array-pane {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  padding: 14px 16px;
+  min-height: 380px;
+  max-height: 480px;
+  overflow-y: auto;
+}
+.cs210-arrw .array-pane-header {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #E5E7EB;
+}
+.cs210-arrw .empty {
+  color: #6B7280; font-style: italic; font-size: 13px;
+  text-align: center; padding: 80px 10px;
+}
+
+/* Array card */
+.cs210-arrw .arr-card {
+  background: #F8FAFC;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+.cs210-arrw .arr-decl {
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  color: #00205B;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.cs210-arrw .arr-row-container {
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.cs210-arrw .arr-indices,
+.cs210-arrw .arr-cells {
+  display: flex;
+  gap: 2px;
+  align-items: stretch;
+  min-width: max-content;
+}
+.cs210-arrw .arr-indices {
+  font-family: Consolas, monospace;
+  font-size: 10px;
+  color: #6B7280;
+  text-align: center;
+  margin-bottom: 4px;
+}
+.cs210-arrw .arr-idx {
+  flex: 0 0 44px;
+  padding: 2px 0;
+}
+.cs210-arrw .arr-idx.oob {
+  color: #B8002F;
+  font-weight: 700;
+}
+.cs210-arrw .arr-cell {
+  flex: 0 0 44px;
+  background: #E8EDF5;
+  border: 1px solid #C7CFD9;
+  text-align: center;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: #00205B;
+  padding: 8px 0;
+  border-radius: 2px;
+  transition: background 0.3s ease, color 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
+}
+.cs210-arrw .arr-cell.read {
+  background: #BBDEFB;
+  border-color: #1976D2;
+  color: #0D47A1;
+}
+.cs210-arrw .arr-cell.written {
+  animation: cs210-arrw-flip 0.8s ease-out;
+}
+@keyframes cs210-arrw-flip {
+  0%   { transform: scale(1); background: #F0B92C; color: #1a1a1a; box-shadow: 0 0 0 0 rgba(240,185,44,0.7); }
+  50%  { transform: scale(1.18); background: #F0B92C; color: #1a1a1a; box-shadow: 0 0 0 8px rgba(240,185,44,0); }
+  100% { transform: scale(1); }
+}
+.cs210-arrw .arr-cell.ghost {
+  background: #FDECEA;
+  border: 2px dashed #B8002F;
+  color: #B8002F;
+  font-style: italic;
+}
+.cs210-arrw .arr-cell.ghost-written {
+  background: #B8002F;
+  border: 2px dashed #7a0020;
+  color: #ffffff;
+  font-style: normal;
+}
+.cs210-arrw .arr-meta {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed #D0D5DD;
+  font-size: 12px;
+  color: #6B7280;
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.cs210-arrw .arr-meta .meta-item {
+  display: flex;
+  gap: 4px;
+}
+.cs210-arrw .arr-meta .meta-label {
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-size: 10px;
+  font-weight: 600;
+  align-self: center;
+}
+.cs210-arrw .arr-meta .meta-val {
+  font-family: Consolas, monospace;
+  color: #00205B;
+  font-weight: 600;
+}
+.cs210-arrw .arr-warning {
+  margin-top: 8px;
+  background: #FFF4F2;
+  border-left: 3px solid #B8002F;
+  padding: 8px 12px;
+  font-size: 12.5px;
+  color: #7a0020;
+  border-radius: 2px;
+}
+.cs210-arrw .arr-warning strong { color: #5a0018; }
+.cs210-arrw .arr-warning .l13-note {
+  display: block;
+  margin-top: 4px;
+  color: #6B7280;
+  font-style: italic;
+  font-size: 11.5px;
+}
+
+.cs210-arrw .input-row {
+  display: flex;
+  background: #1E2A3A;
+  border-radius: 4px;
+  padding: 8px 14px;
+  margin-bottom: 14px;
+  border: 1px solid #003087;
+}
+.cs210-arrw .input-prompt {
+  color: #7FB3D5;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  margin-right: 8px;
+  align-self: center;
+  white-space: nowrap;
+}
+.cs210-arrw .input-row input {
+  flex: 1;
+  background: transparent;
+  color: #FFFFFF;
+  border: none;
+  outline: none;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  padding: 4px 0;
+}
+.cs210-arrw .controls {
+  display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap;
+}
+.cs210-arrw .btn {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  padding: 6px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #00205B;
+  font-family: inherit;
+  transition: box-shadow 0.2s ease;
+}
+.cs210-arrw .btn:hover { background: #F5F7FA; }
+@keyframes cs210-arrw-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(240, 185, 44, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0); }
+}
+.cs210-arrw .btn.pulse {
+  background: #FFF8E1;
+  border-color: #F0B92C;
+  color: #6B5300;
+  font-weight: 600;
+  animation: cs210-arrw-pulse 1.5s infinite;
+}
+.cs210-arrw .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #4A5568;
+  margin-top: 12px;
+}
+.cs210-arrw .help-note strong { color: #00205B; }
+
+/* Name modal overlay */
+.cs210-arrw .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.cs210-arrw .name-modal {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-arrw .name-modal h2 {
+  color: #00205B;
+  font-size: 20px;
+  margin: 0 0 10px 0;
+}
+.cs210-arrw .name-modal p {
+  color: #4A5568;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+.cs210-arrw .name-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-arrw .name-modal input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-arrw .name-modal-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-arrw .name-modal-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-arrw .name-modal-btn:not(:disabled):hover {
+  background: #00205B;
+}
+
+/* Completion screen */
+.cs210-arrw .completion-screen {
+  background: #ffffff;
+  border: 2px solid #2E7D32;
+  border-radius: 6px;
+  padding: 24px 28px;
+  margin-top: 16px;
+}
+.cs210-arrw .completion-screen .cs-heading {
+  color: #1B5E20;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 6px 0;
+}
+.cs210-arrw .completion-screen .cs-subheading {
+  color: #4A5568;
+  font-size: 14px;
+  margin: 0 0 18px 0;
+}
+.cs210-arrw .completion-screen .cs-name-line {
+  font-size: 15px;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+}
+.cs210-arrw .completion-screen .cs-name-line strong { color: #00205B; }
+.cs210-arrw .completion-screen .cs-code-block {
+  background: #F0F4FA;
+  border: 1px solid #003087;
+  border-radius: 4px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.cs210-arrw .completion-screen .cs-code-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #4A5568;
+  margin-bottom: 4px;
+}
+.cs210-arrw .completion-screen .cs-code-value {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 28px;
+  font-weight: 700;
+  color: #00205B;
+  letter-spacing: 3px;
+}
+.cs210-arrw .completion-screen .cs-copy-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-arrw .completion-screen .cs-copy-btn:hover { background: #00205B; }
+.cs210-arrw .completion-screen .cs-copy-btn.copied { background: #2E7D32; }
+.cs210-arrw .completion-screen .cs-timestamp {
+  font-size: 13px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-arrw .completion-screen .cs-reminder {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 14px;
+  color: #6B5300;
+  line-height: 1.5;
+}
+.cs210-arrw .completion-screen .cs-reminder strong { color: #4A3A00; }
+</style>
+
+<div class="cs210-arrw">
+
+<div class="name-modal-backdrop" id="aw-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Lesson 9 reflection.</p>
+    <input type="text" id="aw-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="aw-cadet-name-btn" disabled>Start the walkthrough</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 9 &middot; Array Indexing Walkthrough</h1>
+<div class="subtitle">Watch what an array actually looks like in memory. Read cells. Write cells. See what happens when you go past the edge &mdash; because C will let you.</div>
+
+<div class="progress-bar"><div class="progress-fill" id="aw-progress-fill" style="width: 0%;"></div></div>
+<div class="progress-label" id="aw-progress-label">Task 0 of 10</div>
+
+<div class="section-header" id="aw-section-header">Section 1: Declaration and initialization</div>
+
+<div class="task-card" id="aw-task-card">
+  <div class="task-label" id="aw-task-label">Current task</div>
+  <div class="task-text" id="aw-task-text">Loading...</div>
+  <div class="task-hint" id="aw-task-hint"></div>
+</div>
+
+<div class="panes">
+  <div class="terminal" id="aw-terminal"></div>
+  <div class="array-pane">
+    <div class="array-pane-header">Array view</div>
+    <div id="aw-area">
+      <div class="empty">No arrays yet.<br>Type a declaration on the left.</div>
+    </div>
+  </div>
+</div>
+
+<div class="input-row">
+  <span class="input-prompt">arr&gt;</span>
+  <input type="text" id="aw-input" autocomplete="off" spellcheck="false" placeholder="follow the task above">
+</div>
+
+<div class="controls">
+  <button class="btn" id="aw-hint-btn">Show hint</button>
+  <button class="btn" id="aw-reset-btn">Reset</button>
+  <button class="btn" id="aw-mode-btn">Switch to free mode</button>
+</div>
+
+<div class="help-note">
+  <strong>How this works:</strong> Each array is drawn as a row of cells with index labels above them. Writes flash gold. Reads light up blue. If you read or write past the end of the array, a red dashed ghost cell appears off the side &mdash; C does not stop you, but the widget shows you that you stepped off the edge.
+</div>
+
+<div id="aw-completion-area"></div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-arrw');
+  if (!root) return;
+
+  // ============================================================
+  // CS210 widget completion utilities
+  // Salt -> deterministic 6-char code via FNV-1a.
+  // Alphabet excludes 0, 1, O, I (uppercase only output).
+  // ============================================================
+  const CS210_SALT = "lesson09_array_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  // Name-modal gating
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#aw-name-modal-backdrop');
+    const input = root.querySelector('#aw-cadet-name-input');
+    const btn = root.querySelector('#aw-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored) input.value = stored;
+    } catch (e) {}
+
+    function updateBtn() {
+      btn.disabled = input.value.trim().length < 2;
+    }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', function() {
+      const name = input.value.trim();
+      if (name.length < 2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+      const cli = root.querySelector('#aw-input');
+      if (cli) cli.focus();
+    });
+    setTimeout(function() { input.focus(); }, 50);
+  })();
+
+  function cs210RenderCompletion(area) {
+    if (!area) return;
+    if (root.querySelector('#aw-cs210-completion-overlay')) return;
+    const now = new Date();
+    const ts = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const safeName = (cs210CadetName || 'Cadet').replace(/[<>&"']/g, function(c) {
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+    area.innerHTML =
+      '<div class="completion-screen">' +
+        '<div class="cs-heading">Walkthrough complete</div>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value">' + CS210_CODE + '</div></div>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+      '</div>';
+    const overlay = document.createElement('div');
+    overlay.id = 'aw-cs210-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.style.background = 'rgba(27, 94, 32, 0.55)';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">Walkthrough complete</h2>' +
+        '<p>Take a screenshot of this box. You will need the code and a visual of this screen for the Lesson 9 reflection.</p>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value" id="aw-cs-code-value">' + CS210_CODE + '</div></div>' +
+          '<button class="cs-copy-btn" id="aw-cs-copy-btn" type="button">Copy code</button>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+        '<div class="cs-reminder" style="margin-bottom:14px;">' +
+          '<strong>Next step:</strong> Open the Lesson 9 reflection in Blackboard. Enter this code, answer the reflection prompt, and attach your screenshot.' +
+        '</div>' +
+        '<button class="name-modal-btn" id="aw-cs-overlay-close" type="button" style="background:#2E7D32;">Got it &mdash; close this</button>' +
+      '</div>';
+    root.appendChild(overlay);
+    const closeBtn = overlay.querySelector('#aw-cs-overlay-close');
+    if (closeBtn) closeBtn.addEventListener('click', function() { overlay.style.display = 'none'; });
+    const copyBtn = overlay.querySelector('#aw-cs-copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function() {
+        const text = CS210_CODE;
+        const ok = function() {
+          copyBtn.textContent = 'Copied';
+          copyBtn.classList.add('copied');
+          setTimeout(function() {
+            copyBtn.textContent = 'Copy code';
+            copyBtn.classList.remove('copied');
+          }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(ok, function() {
+            cs210FallbackCopy(text); ok();
+          });
+        } else {
+          cs210FallbackCopy(text); ok();
+        }
+      });
+    }
+  }
+  function cs210FallbackCopy(text) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e) {}
+  }
+
+  // ============================================================
+  // State
+  // ============================================================
+  // arrays: [{name, length, cells: int[], lastWritten: Set<int>, lastReadIdx: int|null,
+  //          oobRead: {idx, garbage}|null, oobWrite: {idx, value}|null}]
+  const arrays = [];
+  let currentTaskIndex = 0;
+  let consecutiveFails = 0;
+  let mode = "walkthrough";
+
+  function findArray(name) {
+    return arrays.find(a => a.name === name);
+  }
+  function clearTransientState() {
+    for (const a of arrays) {
+      a.lastWritten = new Set();
+      a.lastReadIdx = null;
+      a.oobRead = null;
+      a.oobWrite = null;
+    }
+  }
+
+  // ============================================================
+  // Parsers
+  // ============================================================
+  // Supported syntax:
+  //   int name[N];
+  //   int name[N] = { v1, v2, ... };
+  //   int name[] = { v1, v2, ... };
+  //   int name[N] = { [i]=v, ... };  (designated initializers, partial)
+  //   name[i]                         (read)
+  //   name[i] = value;                (write)
+  //   sizeof(name)
+  //   sizeof(name)/sizeof(name[0])
+  //   sizeof(name) / sizeof(name[0])
+
+  // Parse an initializer list "{...}" content (without the braces).
+  // Returns { kind: 'list', values: [int] } or { kind: 'designated', pairs: [{idx, val}], values: [int] } or null.
+  function parseInitList(body) {
+    body = body.trim();
+    if (body === '') return { kind: 'list', values: [] };
+    const parts = body.split(',').map(p => p.trim()).filter(p => p.length > 0);
+    let hasDesignated = false;
+    const result = [];
+    let cursor = 0;
+    for (const part of parts) {
+      const desigMatch = part.match(/^\[\s*(\d+)\s*\]\s*=\s*(-?\d+)\s*$/);
+      if (desigMatch) {
+        hasDesignated = true;
+        cursor = parseInt(desigMatch[1], 10);
+        result.push({ idx: cursor, val: parseInt(desigMatch[2], 10), wasDesignated: true });
+        cursor++;
+      } else {
+        const litMatch = part.match(/^(-?\d+)$/);
+        if (!litMatch) return null;
+        result.push({ idx: cursor, val: parseInt(litMatch[1], 10), wasDesignated: false });
+        cursor++;
+      }
+    }
+    return { kind: hasDesignated ? 'designated' : 'list', items: result };
+  }
+
+  // Parse `int name[N];`, `int name[N] = {...};`, `int name[] = {...};`
+  function tryParseDecl(line) {
+    const trimmed = line.trim().replace(/;?\s*$/, "");
+    // int <name>[N]  or  int <name>[]
+    const m = trimmed.match(/^int\s+([A-Za-z_]\w*)\s*\[\s*(\d*)\s*\]\s*(=\s*\{([\s\S]*)\})?\s*$/);
+    if (!m) return null;
+    const name = m[1];
+    const sizeStr = m[2];
+    const initBody = m[4];
+    const hasSize = sizeStr.length > 0;
+    const declaredSize = hasSize ? parseInt(sizeStr, 10) : null;
+
+    if (!initBody) {
+      // Uninitialized: must have an explicit size
+      if (!hasSize) return { error: "an array without an initializer needs a size: int " + name + "[5];" };
+      if (declaredSize <= 0) return { error: "array size must be positive" };
+      return { kind: 'decl', name, declaredSize, initialized: false };
+    }
+    const parsed = parseInitList(initBody);
+    if (!parsed) return { error: "could not parse initializer. Try { 10, 20, 30 } or { [2]=99, 50 }" };
+    let length;
+    if (hasSize) {
+      if (declaredSize <= 0) return { error: "array size must be positive" };
+      length = declaredSize;
+      // Check for excess elements
+      const maxIdx = parsed.items.reduce((mx, it) => Math.max(mx, it.idx), -1);
+      if (maxIdx >= length) {
+        return { error: "initializer would write index " + maxIdx + " but " + name + " only has indices 0.." + (length - 1) };
+      }
+    } else {
+      // size inferred from initializer
+      const maxIdx = parsed.items.reduce((mx, it) => Math.max(mx, it.idx), -1);
+      length = maxIdx + 1;
+      if (length === 0) return { error: "an empty initializer needs a declared size" };
+    }
+    return { kind: 'decl', name, declaredSize: length, initialized: true, parsed, hasExplicitSize: hasSize };
+  }
+
+  // Parse `name[i]` or `name[i] = value`
+  function tryParseAccess(line) {
+    const trimmed = line.trim().replace(/;?\s*$/, "");
+    // write form
+    const wm = trimmed.match(/^([A-Za-z_]\w*)\s*\[\s*(-?\d+)\s*\]\s*=\s*(-?\d+)\s*$/);
+    if (wm) {
+      return { kind: 'write', name: wm[1], idx: parseInt(wm[2], 10), val: parseInt(wm[3], 10) };
+    }
+    // read form
+    const rm = trimmed.match(/^([A-Za-z_]\w*)\s*\[\s*(-?\d+)\s*\]\s*$/);
+    if (rm) {
+      return { kind: 'read', name: rm[1], idx: parseInt(rm[2], 10) };
+    }
+    return null;
+  }
+
+  // Parse sizeof forms
+  // sizeof(name)
+  // sizeof(name)/sizeof(name[0])   (also with spaces or sizeof(int))
+  function tryParseSizeof(line) {
+    const t = line.trim().replace(/;?\s*$/, "").replace(/\s+/g, "");
+    // sizeof(name)/sizeof(name[0]) -- the length idiom
+    let m = t.match(/^sizeof\(([A-Za-z_]\w*)\)\/sizeof\(\1\[0\]\)$/);
+    if (m) return { kind: 'length', name: m[1] };
+    // sizeof(name)/sizeof(int)
+    m = t.match(/^sizeof\(([A-Za-z_]\w*)\)\/sizeof\(int\)$/);
+    if (m) return { kind: 'length', name: m[1] };
+    // sizeof(name) alone
+    m = t.match(/^sizeof\(([A-Za-z_]\w*)\)$/);
+    if (m) return { kind: 'sizeof_arr', name: m[1] };
+    // sizeof(name[0])
+    m = t.match(/^sizeof\(([A-Za-z_]\w*)\[0\]\)$/);
+    if (m) return { kind: 'sizeof_elem', name: m[1] };
+    return null;
+  }
+
+  // ============================================================
+  // Evaluators
+  // ============================================================
+  // Returns a result describing what happened, for the terminal output.
+  function evalDecl(parsed) {
+    const existing = arrays.findIndex(a => a.name === parsed.name);
+    const length = parsed.declaredSize;
+    const cells = new Array(length).fill(0);
+    let designatedCount = 0;
+    if (parsed.initialized && parsed.parsed) {
+      // Zero-fill by default; assign provided indices.
+      for (const it of parsed.parsed.items) {
+        if (it.idx >= 0 && it.idx < length) {
+          cells[it.idx] = it.val;
+          if (it.wasDesignated) designatedCount++;
+        }
+      }
+    }
+    const initialized = parsed.initialized;
+    const declText = buildDeclString(parsed);
+    const newArr = {
+      name: parsed.name,
+      length,
+      cells,
+      initialized,
+      declText,
+      lastWritten: new Set(),
+      lastReadIdx: null,
+      oobRead: null,
+      oobWrite: null,
+    };
+    if (existing !== -1) {
+      arrays[existing] = newArr;
+      return { kind: 'arr-added', array: newArr, overwrite: true };
+    } else {
+      arrays.push(newArr);
+      return { kind: 'arr-added', array: newArr, overwrite: false };
+    }
+  }
+
+  function buildDeclString(parsed) {
+    if (!parsed.initialized) {
+      return 'int ' + parsed.name + '[' + parsed.declaredSize + '];';
+    }
+    let body;
+    if (parsed.parsed.kind === 'designated') {
+      body = parsed.parsed.items.map(it => it.wasDesignated ? '[' + it.idx + ']=' + it.val : '' + it.val).join(', ');
+    } else {
+      body = parsed.parsed.items.map(it => '' + it.val).join(', ');
+    }
+    const sizeStr = parsed.hasExplicitSize ? parsed.declaredSize : '';
+    return 'int ' + parsed.name + '[' + sizeStr + '] = { ' + body + ' };';
+  }
+
+  function evalAccess(parsed) {
+    const arr = findArray(parsed.name);
+    if (!arr) throw new Error("no array named '" + parsed.name + "'. Declare one first, like: int a[5] = {1,2,3,4,5};");
+    clearTransientState();
+    if (parsed.kind === 'read') {
+      const idx = parsed.idx;
+      if (idx >= 0 && idx < arr.length) {
+        arr.lastReadIdx = idx;
+        return { kind: 'read-ok', array: arr, idx, val: arr.cells[idx] };
+      } else {
+        // OOB read
+        const garbage = pseudoGarbage(arr.name, idx);
+        arr.oobRead = { idx, garbage };
+        return { kind: 'read-oob', array: arr, idx, val: garbage };
+      }
+    } else { // write
+      const idx = parsed.idx;
+      if (idx >= 0 && idx < arr.length) {
+        arr.cells[idx] = parsed.val;
+        arr.lastWritten = new Set([idx]);
+        return { kind: 'write-ok', array: arr, idx, val: parsed.val };
+      } else {
+        arr.oobWrite = { idx, val: parsed.val };
+        return { kind: 'write-oob', array: arr, idx, val: parsed.val };
+      }
+    }
+  }
+
+  // Deterministic-ish "garbage" value for OOB reads. Stable per (name, idx).
+  function pseudoGarbage(name, idx) {
+    let h = 0x9e3779b9;
+    const s = name + ':' + idx;
+    for (let i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = (h * 16777619) >>> 0;
+    }
+    // Map to a "garbage-looking" int in range that doesn't look like clean data.
+    const positive = h % 2 === 0;
+    const mag = (h % 90000) + 1000;
+    return positive ? mag : -mag;
+  }
+
+  function evalSizeof(parsed) {
+    const arr = findArray(parsed.name);
+    if (!arr) throw new Error("no array named '" + parsed.name + "'. Declare one first.");
+    if (parsed.kind === 'length') {
+      return { kind: 'sizeof-length', array: arr, value: arr.length };
+    }
+    if (parsed.kind === 'sizeof_arr') {
+      return { kind: 'sizeof-arr', array: arr, value: arr.length * 4 };
+    }
+    if (parsed.kind === 'sizeof_elem') {
+      return { kind: 'sizeof-elem', array: arr, value: 4 };
+    }
+  }
+
+  // ============================================================
+  // Dispatcher
+  // ============================================================
+  function runCommand(line) {
+    const t = line.trim();
+    if (!t) return null;
+    const lower = t.toLowerCase().replace(/;?$/, "");
+    if (lower === "clear" || lower === "reset") {
+      arrays.length = 0;
+      return { kind: "cleared" };
+    }
+    if (lower === "help" || lower === "?") return { kind: "help" };
+    if (lower === "list") return { kind: "list" };
+
+    // Declaration?
+    const d = tryParseDecl(t);
+    if (d && d.kind === 'decl') return evalDecl(d);
+    if (d && d.error) throw new Error(d.error);
+
+    // sizeof?
+    const sz = tryParseSizeof(t);
+    if (sz) return evalSizeof(sz);
+
+    // access?
+    const acc = tryParseAccess(t);
+    if (acc) return evalAccess(acc);
+
+    // Pointer syntax -> L12 redirect
+    if (/[*&]/.test(t) && !/\/\*/.test(t)) {
+      throw new Error("pointer syntax (* and &) is introduced at Lesson 12. For now stick to indexed access like a[2] or a[3] = 7;");
+    }
+    // for-loops, while-loops -> not in scope for this widget
+    if (/^\s*(for|while)\b/.test(t)) {
+      throw new Error("this widget runs one statement at a time. Try indexed access directly: a[3] = 7;");
+    }
+    // Shell-ish commands
+    if (/^(ls|cd|pwd|cat|echo|mkdir|rm|mv|cp)\b/.test(t)) {
+      throw new Error("not a shell. Type a declaration like: int a[5] = {10,20,30,40,50};");
+    }
+    // Non-int types
+    if (/^\s*(char|double|float|short|long|unsigned)\b/.test(t)) {
+      throw new Error("this widget only handles int arrays. Lesson 10 covers char arrays (strings).");
+    }
+    throw new Error("couldn't parse '" + t + "'. Try a declaration like: int a[5] = {1,2,3,4,5};");
+  }
+
+  // ============================================================
+  // Terminal output
+  // ============================================================
+  const terminalEl = root.querySelector('#aw-terminal');
+  function termWrite(text, cls) {
+    const span = document.createElement('span');
+    if (cls) span.className = cls;
+    span.textContent = text;
+    terminalEl.appendChild(span);
+  }
+  function termLine(text, cls) {
+    termWrite(text, cls);
+    terminalEl.appendChild(document.createElement('br'));
+    terminalEl.scrollTop = terminalEl.scrollHeight;
+  }
+  function echoCommand(cmd) {
+    termWrite('arr> ', 'prompt');
+    termLine(cmd, 'typed');
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" })[c]);
+  }
+
+  // ============================================================
+  // Array pane rendering
+  // ============================================================
+  const areaEl = root.querySelector('#aw-area');
+
+  function renderArrCard(arr) {
+    // Build cells + ghost cells for OOB.
+    const oobReadIdx = arr.oobRead ? arr.oobRead.idx : null;
+    const oobWriteIdx = arr.oobWrite ? arr.oobWrite.idx : null;
+    const oobIdx = (oobReadIdx !== null) ? oobReadIdx : oobWriteIdx;
+
+    // Determine visible index range. Always show 0..length-1. If OOB, extend toward that idx.
+    let minIdx = 0;
+    let maxIdx = arr.length - 1;
+    if (oobIdx !== null) {
+      if (oobIdx > maxIdx) maxIdx = oobIdx;
+      if (oobIdx < minIdx) minIdx = oobIdx;
+    }
+    // Limit width to keep UI sane: at most ~3 extra cells in either direction.
+    if (oobIdx !== null) {
+      if (oobIdx > arr.length - 1 + 3) maxIdx = arr.length - 1 + 1; // show ellipsis style: just one ghost
+      if (oobIdx < -3) minIdx = -1;
+    }
+
+    let indices = '<div class="arr-indices">';
+    let cells = '<div class="arr-cells">';
+    for (let i = minIdx; i <= maxIdx; i++) {
+      const isInBounds = (i >= 0 && i < arr.length);
+      const idxLabel = i.toString();
+      indices += '<div class="arr-idx' + (isInBounds ? '' : ' oob') + '">' + idxLabel + '</div>';
+      let cellHtml;
+      if (isInBounds) {
+        const isRead = (arr.lastReadIdx === i);
+        const isWritten = arr.lastWritten && arr.lastWritten.has(i);
+        const cls = ['arr-cell'];
+        if (isRead) cls.push('read');
+        if (isWritten) cls.push('written');
+        cellHtml = '<div class="' + cls.join(' ') + '">' + arr.cells[i] + '</div>';
+      } else {
+        // ghost cell
+        if (oobWriteIdx === i) {
+          cellHtml = '<div class="arr-cell ghost-written">' + arr.oobWrite.val + '</div>';
+        } else if (oobReadIdx === i) {
+          const garbage = arr.oobRead.garbage;
+          cellHtml = '<div class="arr-cell ghost">?</div>';
+        } else {
+          cellHtml = '<div class="arr-cell ghost">?</div>';
+        }
+      }
+      cells += cellHtml;
+    }
+    indices += '</div>';
+    cells += '</div>';
+
+    let meta = '<div class="arr-meta">' +
+      '<div class="meta-item"><span class="meta-label">length</span> <span class="meta-val">' + arr.length + '</span></div>' +
+      '<div class="meta-item"><span class="meta-label">last valid index</span> <span class="meta-val">' + (arr.length - 1) + '</span></div>' +
+      '<div class="meta-item"><span class="meta-label">sizeof</span> <span class="meta-val">' + (arr.length * 4) + ' bytes</span></div>' +
+      '</div>';
+
+    let warning = '';
+    if (arr.oobRead) {
+      warning = '<div class="arr-warning">' +
+        '<strong>Out-of-bounds read at index ' + arr.oobRead.idx + '.</strong> ' +
+        arr.name + ' only has indices 0..' + (arr.length - 1) + '. C did not stop you. The value you got is whatever bytes happened to be sitting in that memory &mdash; could be anything. This is <em>undefined behavior</em>.' +
+        '<span class="l13-note">At Lesson 13 you will see exactly which memory you just read.</span>' +
+        '</div>';
+    } else if (arr.oobWrite) {
+      warning = '<div class="arr-warning">' +
+        '<strong>Out-of-bounds write at index ' + arr.oobWrite.idx + '.</strong> ' +
+        'You just wrote ' + arr.oobWrite.val + ' into memory that does not belong to ' + arr.name + '. The compiler did not stop you. In a real program this might overwrite another variable, corrupt the call stack, or crash &mdash; or appear to work for a while and break later.' +
+        '<span class="l13-note">At Lesson 13 you will see exactly whose memory you just wrote into.</span>' +
+        '</div>';
+    }
+
+    return '<div class="arr-card">' +
+           '<div class="arr-decl">' + escapeHtml(arr.declText) + '</div>' +
+           '<div class="arr-row-container">' + indices + cells + '</div>' +
+           meta +
+           warning +
+           '</div>';
+  }
+
+  function isPaneAtBottom(scrollContainer) {
+    if (!scrollContainer) return true;
+    return scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight < 40;
+  }
+  function scrollPaneToBottom(scrollContainer) {
+    if (!scrollContainer) return;
+    scrollContainer.scrollTop = scrollContainer.scrollHeight;
+  }
+  function renderArea() {
+    const pane = areaEl.closest('.array-pane');
+    const wasAtBottom = isPaneAtBottom(pane);
+    if (arrays.length === 0) {
+      areaEl.innerHTML = '<div class="empty">No arrays yet.<br>Type a declaration on the left.</div>';
+      return;
+    }
+    let html = '';
+    for (const arr of arrays) html += renderArrCard(arr);
+    areaEl.innerHTML = html;
+    if (wasAtBottom) scrollPaneToBottom(pane);
+  }
+
+  // ============================================================
+  // Tasks
+  // ============================================================
+  function normalize(s) { return s.trim().replace(/\s+/g, ' ').replace(/;\s*$/, ''); }
+
+  const tasks = [
+    // ----- Section 1: Declaration and initialization -----
+    {
+      section: 'Section 1: Declaration and initialization',
+      label: 'Task 1 of 10',
+      text: 'Declare an int array named scores with length 5 and initial values 88, 92, 75, 60, 95.',
+      hint: 'int scores[5] = {88, 92, 75, 60, 95};',
+      match: (cmd) => /^\s*int\s+scores\s*\[\s*5\s*\]\s*=\s*\{\s*88\s*,\s*92\s*,\s*75\s*,\s*60\s*,\s*95\s*\}\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const c = normalize(cmd);
+        if (/^int\s+scores\s*\[\s*5\s*\]\s*=\s*\{\s*88\s*,\s*92\s*,\s*75\s*,\s*60\s*,\s*95\s*\}$/.test(c)) {
+          return "Almost. Don't forget the semicolon at the end.";
+        }
+        if (/^int\s+\w+\s*\[\s*5\s*\]\s*=/.test(c) && !/scores/.test(c)) return "Check the array name. The task wants 'scores'.";
+        return null;
+      },
+      note: 'scores is now five cells in memory, each holding one int. Indices go from 0 to 4. There is no built-in length field; if you need to know it later, you (the programmer) have to keep track.',
+    },
+    {
+      label: 'Task 2 of 10',
+      text: 'Declare an int array named counts with length 4 and initialize the first element to 0. Watch what happens to the other cells.',
+      hint: 'int counts[4] = {0};',
+      match: (cmd) => /^\s*int\s+counts\s*\[\s*4\s*\]\s*=\s*\{\s*0\s*\}\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const c = normalize(cmd);
+        if (/^int\s+counts\s*\[\s*4\s*\]\s*=\s*\{\s*0\s*\}$/.test(c)) return "Almost. Don't forget the semicolon.";
+        return null;
+      },
+      note: 'All four cells are 0. The initializer only gave a value for index 0, and C zero-filled the rest. "int a[100] = {0};" is the idiomatic way to zero-initialize a whole array.',
+    },
+    {
+      label: 'Task 3 of 10',
+      text: 'Declare an int array named marks with length 5 using a designated initializer: set index 2 to 99 and then index 3 to 50.',
+      hint: 'int marks[5] = {[2]=99, 50};',
+      match: (cmd) => /^\s*int\s+marks\s*\[\s*5\s*\]\s*=\s*\{\s*\[\s*2\s*\]\s*=\s*99\s*,\s*50\s*\}\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        if (/marks\s*\[\s*5\s*\]/.test(cmd) && /\[\s*2\s*\]\s*=\s*99/.test(cmd) && !/50/.test(cmd)) {
+          return "Add the 50 after the designated initializer: {[2]=99, 50}. C keeps filling from there.";
+        }
+        return null;
+      },
+      note: 'Designated initializers let you set specific indices. After [2]=99, the next value (50) fills index 3. Everything else is zero. Result: 0, 0, 99, 50, 0.',
+    },
+
+    // ----- Section 2: Indexed access -----
+    {
+      section: 'Section 2: Indexed access',
+      label: 'Task 4 of 10',
+      text: 'Read the first element of scores. Type scores[0].',
+      hint: 'scores[0]',
+      match: (cmd) => /^\s*scores\s*\[\s*0\s*\]\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        if (/^\s*scores\s*\[\s*1\s*\]/.test(cmd)) return "scores[1] is the second element. The task asked for the first. C arrays start at index 0.";
+        return null;
+      },
+      note: 'scores[0] = 88. The first element is at index 0, not 1. This is the most common off-by-one source for new C programmers, especially coming from languages that hide it or count from 1.',
+    },
+    {
+      label: 'Task 5 of 10',
+      text: 'Write a new value into scores[3]. Set it to 100. Watch the cell flash.',
+      hint: 'scores[3] = 100;',
+      match: (cmd) => /^\s*scores\s*\[\s*3\s*\]\s*=\s*100\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        if (/^\s*scores\s*\[\s*3\s*\]\s*=\s*100\s*$/.test(cmd)) return "Almost. Don't forget the semicolon.";
+        if (/scores\s*\[\s*3\s*\]/.test(cmd) && !/=/.test(cmd)) return "This task wants a write, not a read. Use the form scores[3] = 100;";
+        return null;
+      },
+      note: 'scores[3] is now 100. Reading and writing both use the same square-bracket syntax; the difference is whether the bracketed expression appears on the left of an = (write) or anywhere else (read).',
+    },
+    {
+      label: 'Task 6 of 10',
+      text: 'Read scores[4] &mdash; the last valid element. Notice how the largest valid index is one less than the length.',
+      hint: 'scores[4]',
+      match: (cmd) => /^\s*scores\s*\[\s*4\s*\]\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        if (/^\s*scores\s*\[\s*5\s*\]/.test(cmd)) return "scores[5] is past the end. The array has length 5, so the last valid index is 4. We will go past the end intentionally in the next section.";
+        return null;
+      },
+      note: 'scores[4] = 95. Length 5 means valid indices 0, 1, 2, 3, 4 &mdash; five slots total. The last valid index is always length minus 1. Remember this.',
+    },
+
+    // ----- Section 3: Out of bounds -----
+    {
+      section: 'Section 3: Out of bounds',
+      label: 'Task 7 of 10',
+      text: 'Now read past the end. Type scores[5]. The array does not have index 5 &mdash; let us see what happens.',
+      hint: 'scores[5]',
+      match: (cmd) => /^\s*scores\s*\[\s*5\s*\]\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => null,
+      note: 'C did not stop you. The widget shows a red ghost cell off the right side of the array. In a real program, that value is whatever bytes happen to be in that memory location &mdash; could be plausible-looking data, could be garbage. This is what "undefined behavior" means in practice: the program keeps running, but you have no guarantee about what you got.',
+    },
+    {
+      label: 'Task 8 of 10',
+      text: 'Now try writing past the end. Set scores[7] to 999. This is worse than reading out of bounds.',
+      hint: 'scores[7] = 999;',
+      match: (cmd) => /^\s*scores\s*\[\s*7\s*\]\s*=\s*999\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        if (/scores\s*\[\s*7\s*\]\s*=\s*999\s*$/.test(cmd)) return "Almost. Don't forget the semicolon.";
+        return null;
+      },
+      note: 'Out-of-bounds writes are dangerous. You just wrote 999 into memory that does not belong to scores. In a real program, that memory might belong to another variable, to the call stack, or to data the operating system was holding for you. The program might keep running and corrupt something silently, or it might crash later when the affected memory is read. The compiler does not catch this. You catch it &mdash; or you do not.',
+    },
+
+    // ----- Section 4: Length -----
+    {
+      section: 'Section 4: Computing length',
+      label: 'Task 9 of 10',
+      text: 'Compute the length of scores using sizeof. Type: sizeof(scores)/sizeof(scores[0])',
+      hint: 'sizeof(scores)/sizeof(scores[0])',
+      match: (cmd) => /^\s*sizeof\s*\(\s*scores\s*\)\s*\/\s*sizeof\s*\(\s*scores\s*\[\s*0\s*\]\s*\)\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        if (/^\s*sizeof\s*\(\s*scores\s*\)\s*;?\s*$/.test(cmd)) return "sizeof(scores) alone gives the total byte size. To get the length, divide by the size of one element.";
+        if (/len\s*\(/.test(cmd)) return "C does not have a len() function. The idiom is sizeof(scores)/sizeof(scores[0]).";
+        return null;
+      },
+      note: 'Length = total bytes / bytes per element. For scores, that is 20 / 4 = 5. Important caveat: this trick only works in the scope where the array is declared. When you pass an array to a function, this no longer works &mdash; you will see why at Lesson 13. For now, keep this idiom handy.',
+    },
+
+    // ----- Section 5: Putting it together (testing-as-habit) -----
+    {
+      section: 'Section 5: Putting it together',
+      label: 'Task 10 of 10',
+      text: 'One more. Declare an array named temps using <strong>inferred size</strong> with the four values 70, 65, 60, 58. Before you press Enter, predict in your head: what will sizeof(temps)/sizeof(temps[0]) return after this declaration?',
+      hint: 'int temps[] = {70, 65, 60, 58};',
+      match: (cmd) => /^\s*int\s+temps\s*\[\s*\]\s*=\s*\{\s*70\s*,\s*65\s*,\s*60\s*,\s*58\s*\}\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const c = cmd.trim().replace(/\s+/g, ' ');
+        if (/^int\s+temps\s*\[\s*4\s*\]\s*=/.test(c)) return "Close, but the task wants <strong>inferred size</strong>. Leave the brackets empty: int temps[] = {...};";
+        if (/^int\s+temps\s*\[\s*\]\s*=\s*\{\s*70\s*,\s*65\s*,\s*60\s*,\s*58\s*\}$/.test(c)) return "Almost. Don't forget the semicolon.";
+        return null;
+      },
+      note: 'temps was declared with no explicit size, but C counted the initializer for you and made it length 4. Now run sizeof(temps)/sizeof(temps[0]) yourself in free mode (unlocked after this task) and confirm your prediction. Predicting the answer before running is the testing habit you will rely on for the rest of CS210 &mdash; cheaper to be wrong in your head than wrong in production.',
+    },
+  ];
+
+  // ============================================================
+  // Walkthrough controller
+  // ============================================================
+  function checkTask(rawCmd) {
+    if (mode === "free" || currentTaskIndex >= tasks.length) return null;
+    const t = tasks[currentTaskIndex];
+    if (t.match(rawCmd)) {
+      process(rawCmd);
+      if (t.note) {
+        termLine('', 'out');
+        termLine('  ' + t.note, 'note');
+      }
+      currentTaskIndex++;
+      consecutiveFails = 0;
+      hideHintPulse();
+      renderTask();
+      if (currentTaskIndex >= tasks.length) {
+        setMode("free");
+        termLine('', 'out');
+        termLine('  Array walkthrough complete. Free mode unlocked.', 'note');
+      }
+      return true;
+    } else {
+      echoCommand(rawCmd);
+      const diag = (t.diagnose && t.diagnose(rawCmd)) || null;
+      if (diag) termLine('  ' + diag, 'err');
+      else termLine("  Not what this task is asking for. Look at the task card above, or click 'Show hint'.", 'err');
+      consecutiveFails++;
+      if (consecutiveFails >= 2) showHintPulse();
+      return false;
+    }
+  }
+  function renderTask() {
+    const fill = root.querySelector('#aw-progress-fill');
+    const label = root.querySelector('#aw-progress-label');
+    const card = root.querySelector('#aw-task-card');
+    const labelEl = root.querySelector('#aw-task-label');
+    const textEl = root.querySelector('#aw-task-text');
+    const hintEl = root.querySelector('#aw-task-hint');
+    const sectionEl = root.querySelector('#aw-section-header');
+    const completionArea = root.querySelector('#aw-completion-area');
+
+    const pct = (currentTaskIndex / tasks.length) * 100;
+    fill.style.width = pct + '%';
+    label.textContent = 'Task ' + Math.min(currentTaskIndex + 1, tasks.length) + ' of ' + tasks.length;
+
+    if (currentTaskIndex >= tasks.length) {
+      card.className = 'task-card complete';
+      labelEl.textContent = 'Complete';
+      textEl.textContent = "You declared, initialized, read, wrote, fell off the edge in both directions, and computed length. The mental model for arrays is now: a fixed-length row of cells, indexed from 0, with no built-in bounds checking. Carry that into the lab.";
+      hintEl.textContent = '';
+      fill.style.width = '100%';
+      label.textContent = 'All tasks complete';
+      sectionEl.textContent = 'All done';
+      completionArea.innerHTML = '';
+      cs210RenderCompletion(completionArea);
+      return;
+    }
+    completionArea.innerHTML = '';
+    card.className = 'task-card';
+    const t = tasks[currentTaskIndex];
+    if (t.section) sectionEl.textContent = t.section;
+    labelEl.textContent = t.label;
+    textEl.innerHTML = t.text;
+    hintEl.textContent = '';
+  }
+  function showHint() {
+    if (currentTaskIndex >= tasks.length) return;
+    const t = tasks[currentTaskIndex];
+    root.querySelector('#aw-task-hint').textContent = 'Hint: ' + (t.hint || '');
+    hideHintPulse();
+  }
+  function showHintPulse() { root.querySelector('#aw-hint-btn').classList.add('pulse'); }
+  function hideHintPulse() { root.querySelector('#aw-hint-btn').classList.remove('pulse'); }
+
+  function reset() {
+    arrays.length = 0;
+    currentTaskIndex = 0;
+    consecutiveFails = 0;
+    hideHintPulse();
+    setMode("walkthrough");
+    terminalEl.innerHTML = '';
+    termLine('Welcome to the array walkthrough.', 'dim');
+    termLine('Follow the task card above. Declarations and accesses use real C syntax.', 'dim');
+    termLine('', 'out');
+    renderArea();
+    renderTask();
+    const overlay = root.querySelector('#aw-cs210-completion-overlay');
+    if (overlay) overlay.remove();
+  }
+
+  function setMode(newMode) {
+    mode = newMode;
+    const btn = root.querySelector('#aw-mode-btn');
+    if (mode === "free") {
+      btn.textContent = 'Return to walkthrough';
+      btn.style.background = '#E6F4EA';
+      btn.style.borderColor = '#2E7D32';
+      btn.style.color = '#1B5E20';
+      root.querySelector('#aw-input').placeholder = 'free mode: declarations, indexed access, sizeof';
+    } else {
+      btn.textContent = 'Switch to free mode';
+      btn.style.background = '';
+      btn.style.borderColor = '';
+      btn.style.color = '';
+      root.querySelector('#aw-input').placeholder = 'follow the task above';
+    }
+  }
+
+  function process(line) {
+    echoCommand(line);
+    try {
+      const r = runCommand(line);
+      if (!r) return;
+      if (r.kind === "arr-added") {
+        const a = r.array;
+        if (r.overwrite) {
+          termLine('  ' + a.name + ' redeclared (length ' + a.length + ')', 'out');
+        } else {
+          termLine('  ' + a.name + ' declared (length ' + a.length + ')', 'out');
+        }
+        if (a.initialized) {
+          termLine('  initial values: [' + a.cells.join(', ') + ']', 'out');
+        } else {
+          termLine('  (uninitialized at function scope &mdash; cells contain whatever was in memory)', 'dim');
+        }
+      } else if (r.kind === "read-ok") {
+        termLine('  ' + r.array.name + '[' + r.idx + '] = ' + r.val, 'ok');
+      } else if (r.kind === "read-oob") {
+        termLine('  ' + r.array.name + '[' + r.idx + '] read past the end (length ' + r.array.length + '). The value is undefined.', 'err');
+      } else if (r.kind === "write-ok") {
+        termLine('  ' + r.array.name + '[' + r.idx + '] is now ' + r.val, 'ok');
+      } else if (r.kind === "write-oob") {
+        termLine('  ' + r.array.name + '[' + r.idx + '] = ' + r.val + ' &mdash; OUT OF BOUNDS. You just clobbered memory that is not yours.', 'err');
+      } else if (r.kind === "sizeof-length") {
+        termLine('  length of ' + r.array.name + ' = ' + r.value, 'ok');
+      } else if (r.kind === "sizeof-arr") {
+        termLine('  sizeof(' + r.array.name + ') = ' + r.value + ' bytes', 'out');
+      } else if (r.kind === "sizeof-elem") {
+        termLine('  sizeof(' + r.array.name + '[0]) = ' + r.value + ' bytes', 'out');
+      } else if (r.kind === "cleared") {
+        termLine('  all arrays cleared', 'out');
+      } else if (r.kind === "list") {
+        if (arrays.length === 0) termLine('  no arrays', 'out');
+        else {
+          for (const a of arrays) {
+            termLine('  int ' + a.name + '[' + a.length + '] = [' + a.cells.join(', ') + ']', 'out');
+          }
+        }
+      } else if (r.kind === "help") {
+        termLine('  declarations:  int a[5];   int a[5] = {1,2,3,4,5};   int a[] = {1,2,3};', 'out');
+        termLine('  designated:    int a[5] = {[2]=99, 50};', 'out');
+        termLine('  read:          a[0]', 'out');
+        termLine('  write:         a[3] = 7;', 'out');
+        termLine('  sizeof:        sizeof(a)   sizeof(a)/sizeof(a[0])', 'out');
+        termLine('  meta:          clear  list  help', 'out');
+      }
+      renderArea();
+    } catch (e) {
+      termLine('  error: ' + e.message, 'err');
+    }
+  }
+
+  // ============================================================
+  // Input wiring
+  // ============================================================
+  const inputEl = root.querySelector('#aw-input');
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const v = inputEl.value;
+      inputEl.value = '';
+      if (!v.trim()) return;
+      if (mode === "walkthrough") {
+        checkTask(v);
+      } else {
+        process(v);
+      }
+    }
+  });
+  root.querySelector('#aw-hint-btn').addEventListener('click', showHint);
+  root.querySelector('#aw-reset-btn').addEventListener('click', reset);
+  root.querySelector('#aw-mode-btn').addEventListener('click', () => {
+    if (mode === "walkthrough") {
+      setMode("free");
+      termLine('', 'out');
+      termLine('  Free mode. Any in-scope statement runs.', 'note');
+    } else {
+      setMode("walkthrough");
+      termLine('', 'out');
+      termLine('  Walkthrough mode. Follow the task card above.', 'note');
+    }
+  });
+
+  reset();
+})();
+</script>
+
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 32px 0 10px 0;">Array Rules Self-Check</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Eight questions. Some are quick recall; some are subtle gotchas. Answer each one and click Submit. The final card shows your score and a completion code. You need at least 70% (6 out of 8) for a passing code.</p>
+
+<!-- ============================================================
+     CS210 Lesson 9 - Array Rules Self-Check Quiz
+     Card/slide flow: one question per card, Submit + Next/Back.
+     Score card at end with per-question recap.
+     Two-salt completion code: passing (>=70%) vs non-passing.
+     Descended from binary_quiz.html (L2) with name modal added.
+     ============================================================ -->
+<style>
+.cs210-aquiz * { box-sizing: border-box; }
+.cs210-aquiz {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-aquiz h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-aquiz .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+.cs210-aquiz .threshold-banner {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 10px 14px;
+  border-radius: 3px;
+  font-size: 13.5px;
+  color: #6B5300;
+  margin-bottom: 18px;
+  line-height: 1.5;
+}
+.cs210-aquiz .threshold-banner strong { color: #4A3A00; }
+
+/* Dot progress indicator */
+.cs210-aquiz .dots {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+.cs210-aquiz .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #E5E7EB;
+  border: 1px solid #C7CFD9;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.cs210-aquiz .dot.current {
+  background: #003087;
+  border-color: #00205B;
+  transform: scale(1.25);
+}
+.cs210-aquiz .dot.correct {
+  background: #2E7D32;
+  border-color: #1B5E20;
+}
+.cs210-aquiz .dot.incorrect {
+  background: #B8002F;
+  border-color: #6B0000;
+}
+.cs210-aquiz .dot.score {
+  width: 16px;
+  height: 12px;
+  border-radius: 3px;
+  background: #F0B92C;
+  border-color: #B88800;
+}
+
+/* Card */
+.cs210-aquiz .card {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 6px;
+  padding: 36px 40px;
+  margin-bottom: 14px;
+  min-height: 380px;
+  display: flex;
+  flex-direction: column;
+}
+.cs210-aquiz .card.answered.correct {
+  border-left: 4px solid #2E7D32;
+}
+.cs210-aquiz .card.answered.incorrect {
+  border-left: 4px solid #B8002F;
+}
+
+.cs210-aquiz .q-label {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.cs210-aquiz .q-text {
+  font-size: 17px;
+  margin-bottom: 22px;
+  color: #1a1a1a;
+}
+.cs210-aquiz .q-text code {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-family: Consolas, monospace;
+  font-size: 15px;
+  color: #00205B;
+}
+.cs210-aquiz .q-codeblock {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  padding: 12px 14px;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  color: #00205B;
+  margin: 0 0 18px 0;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+/* Options for multiple choice */
+.cs210-aquiz .options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.cs210-aquiz .option {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 15px;
+  background: #ffffff;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.cs210-aquiz .option:hover:not(.disabled) {
+  background: #F5F7FA;
+  border-color: #003087;
+}
+.cs210-aquiz .option.disabled {
+  cursor: default;
+}
+.cs210-aquiz .option input[type="radio"] {
+  margin-right: 12px;
+  accent-color: #003087;
+}
+.cs210-aquiz .option.selected {
+  border-color: #003087;
+  background: #F0F4FA;
+}
+.cs210-aquiz .option.reveal-correct {
+  border-color: #2E7D32;
+  background: #E6F4EA;
+  font-weight: 600;
+}
+.cs210-aquiz .option.incorrect {
+  border-color: #B8002F;
+  background: #FCE8E8;
+}
+.cs210-aquiz .option code {
+  background: rgba(255,255,255,0.55);
+  border: 1px solid #D0D5DD;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  color: #00205B;
+}
+
+/* Text input */
+.cs210-aquiz .text-input-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.cs210-aquiz .text-input-row input {
+  flex: 1;
+  max-width: 420px;
+  padding: 12px 14px;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  font-family: Consolas, monospace;
+  font-size: 15px;
+  color: #1a1a1a;
+}
+.cs210-aquiz .text-input-row input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-aquiz .text-input-row input.correct {
+  border-color: #2E7D32;
+  background: #E6F4EA;
+}
+.cs210-aquiz .text-input-row input.incorrect {
+  border-color: #B8002F;
+  background: #FCE8E8;
+}
+
+/* Feedback */
+.cs210-aquiz .feedback {
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-size: 14.5px;
+  margin-bottom: 4px;
+}
+.cs210-aquiz .feedback.correct {
+  background: #E6F4EA;
+  border-left: 3px solid #2E7D32;
+  color: #1B5E20;
+}
+.cs210-aquiz .feedback.incorrect {
+  background: #FCE8E8;
+  border-left: 3px solid #B8002F;
+  color: #6B0000;
+}
+.cs210-aquiz .feedback strong { color: inherit; }
+.cs210-aquiz .feedback code {
+  background: rgba(255, 255, 255, 0.7);
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13.5px;
+}
+
+/* Spacer pushes nav to the bottom of the card */
+.cs210-aquiz .spacer { flex: 1; }
+
+/* Navigation row */
+.cs210-aquiz .nav-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  gap: 10px;
+}
+.cs210-aquiz .nav-btn {
+  padding: 10px 18px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+  transition: background 0.15s ease;
+}
+.cs210-aquiz .nav-btn.back {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  color: #00205B;
+}
+.cs210-aquiz .nav-btn.back:hover:not(:disabled) { background: #F5F7FA; }
+.cs210-aquiz .nav-btn.primary {
+  background: #003087;
+  border: 1px solid #00205B;
+  color: #ffffff;
+}
+.cs210-aquiz .nav-btn.primary:hover:not(:disabled) { background: #00205B; }
+.cs210-aquiz .nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.cs210-aquiz .nav-position {
+  font-size: 13px;
+  color: #6B7280;
+  font-weight: 500;
+}
+
+/* Score card */
+.cs210-aquiz .score-card {
+  text-align: center;
+}
+.cs210-aquiz .score-big {
+  font-size: 52px;
+  font-weight: 700;
+  color: #00205B;
+  margin: 4px 0 0 0;
+  line-height: 1;
+}
+.cs210-aquiz .score-card.full-correct .score-big { color: #1B5E20; }
+.cs210-aquiz .score-card.passing .score-big { color: #1B5E20; }
+.cs210-aquiz .score-card.not-passing .score-big { color: #B8002F; }
+.cs210-aquiz .score-label {
+  font-size: 13px;
+  color: #6B7280;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin-bottom: 14px;
+}
+.cs210-aquiz .pct-line {
+  font-size: 14px;
+  color: #4A5568;
+  margin-bottom: 4px;
+}
+.cs210-aquiz .pct-line .pct-pass { color: #1B5E20; font-weight: 700; }
+.cs210-aquiz .pct-line .pct-fail { color: #B8002F; font-weight: 700; }
+.cs210-aquiz .score-message {
+  font-size: 16px;
+  color: #1a1a1a;
+  margin-bottom: 22px;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.cs210-aquiz .score-message.good-job {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1B5E20;
+  margin-bottom: 12px;
+}
+.cs210-aquiz .recap {
+  text-align: left;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid #E5E7EB;
+}
+.cs210-aquiz .recap-title {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.cs210-aquiz .recap-item {
+  display: flex;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #F0F2F5;
+  font-size: 14px;
+}
+.cs210-aquiz .recap-item:last-child { border-bottom: none; }
+.cs210-aquiz .recap-icon {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+}
+.cs210-aquiz .recap-icon.correct { background: #2E7D32; }
+.cs210-aquiz .recap-icon.incorrect { background: #B8002F; }
+.cs210-aquiz .recap-body { flex: 1; }
+.cs210-aquiz .recap-question { color: #1a1a1a; margin-bottom: 4px; }
+.cs210-aquiz .recap-question code {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  color: #00205B;
+}
+.cs210-aquiz .recap-explanation {
+  font-size: 13px;
+  color: #4A5568;
+  font-style: italic;
+}
+.cs210-aquiz .recap-explanation code {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-style: normal;
+  font-size: 12.5px;
+  color: #00205B;
+}
+
+.cs210-aquiz .reset-row {
+  margin-top: 22px;
+  text-align: center;
+}
+.cs210-aquiz .reset-btn {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  padding: 10px 22px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  color: #00205B;
+  font-family: inherit;
+  font-weight: 600;
+}
+.cs210-aquiz .reset-btn:hover { background: #F5F7FA; }
+
+.cs210-aquiz .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #4A5568;
+  margin-top: 18px;
+}
+.cs210-aquiz .help-note strong { color: #00205B; }
+
+/* Name modal overlay */
+.cs210-aquiz .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.cs210-aquiz .name-modal {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-aquiz .name-modal h2 {
+  color: #00205B;
+  font-size: 20px;
+  margin: 0 0 10px 0;
+}
+.cs210-aquiz .name-modal p {
+  color: #4A5568;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+.cs210-aquiz .name-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-aquiz .name-modal input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-aquiz .name-modal-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-aquiz .name-modal-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-aquiz .name-modal-btn:not(:disabled):hover {
+  background: #00205B;
+}
+
+/* Completion code block on score card */
+.cs210-aquiz .cs-code-block {
+  background: #F0F4FA;
+  border: 1px solid #003087;
+  border-radius: 4px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 16px auto;
+  max-width: 480px;
+  text-align: left;
+}
+.cs210-aquiz .cs-code-block.not-passing {
+  border-color: #B8002F;
+  background: #FFF4F2;
+}
+.cs210-aquiz .cs-code-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #4A5568;
+  margin-bottom: 4px;
+}
+.cs210-aquiz .cs-code-value {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 28px;
+  font-weight: 700;
+  color: #00205B;
+  letter-spacing: 3px;
+}
+.cs210-aquiz .cs-code-block.not-passing .cs-code-value { color: #6B0000; }
+.cs210-aquiz .cs-copy-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-aquiz .cs-copy-btn:hover { background: #00205B; }
+.cs210-aquiz .cs-copy-btn.copied { background: #2E7D32; }
+.cs210-aquiz .cs-code-block.not-passing .cs-copy-btn { background: #B8002F; }
+.cs210-aquiz .cs-code-block.not-passing .cs-copy-btn:hover { background: #6B0000; }
+.cs210-aquiz .cs-name-line {
+  font-size: 14px;
+  color: #1a1a1a;
+  margin-bottom: 4px;
+  text-align: center;
+}
+.cs210-aquiz .cs-name-line strong { color: #00205B; }
+.cs210-aquiz .cs-timestamp {
+  font-size: 12.5px;
+  color: #6B7280;
+  text-align: center;
+  margin-bottom: 12px;
+}
+.cs210-aquiz .cs-reminder {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 13.5px;
+  color: #6B5300;
+  line-height: 1.5;
+  text-align: left;
+  max-width: 580px;
+  margin: 16px auto;
+}
+.cs210-aquiz .cs-reminder strong { color: #4A3A00; }
+.cs210-aquiz .cs-reminder.not-passing {
+  background: #FFF4F2;
+  border-left-color: #B8002F;
+  color: #6B0000;
+}
+.cs210-aquiz .cs-reminder.not-passing strong { color: #5a0018; }
+</style>
+
+<div class="cs210-aquiz">
+
+<div class="name-modal-backdrop" id="aq-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Lesson 9 reflection.</p>
+    <input type="text" id="aq-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="aq-cadet-name-btn" disabled>Start the quiz</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 9 &middot; Array Rules Self-Check</h1>
+<div class="subtitle">Eight questions covering declaration, initialization, indexing, bounds, and the sizeof length idiom. Answer each one, submit, and move forward.</div>
+
+<div class="threshold-banner">
+  <strong>Heads up:</strong> You need at least <strong>70% correct (6 out of 8)</strong> to get a passing completion code. Below that, you will get a different code that tells the instructor you did not pass. You can retake the quiz from the score screen.
+</div>
+
+<div class="dots" id="aq-dots"></div>
+
+<div id="aq-card-area"></div>
+
+<div class="help-note">
+  <strong>How this works:</strong> One question per card. Pick or type your answer and click Submit. Feedback appears, then click Next. Answers are locked once submitted, so think before you submit. When you finish all eight, you get a score, a recap, and your completion code.
+</div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-aquiz');
+  if (!root) return;
+
+  // ============================================================
+  // CS210 completion code utilities (two-salt scheme)
+  // ============================================================
+  const CS210_SALT_PASS = "lesson09_array_quiz_completed";
+  const CS210_SALT_FAIL = "lesson09_array_quiz_incomplete";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  // Passing threshold: 70% of 8 questions = 5.6, so >= 6 correct.
+  const PASSING_THRESHOLD = 0.70;
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE_PASS = cs210CodeFromSalt(CS210_SALT_PASS);
+  const CS210_CODE_FAIL = cs210CodeFromSalt(CS210_SALT_FAIL);
+  let cs210CadetName = '';
+
+  // ============================================================
+  // Name modal
+  // ============================================================
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#aq-name-modal-backdrop');
+    const input = root.querySelector('#aq-cadet-name-input');
+    const btn = root.querySelector('#aq-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored) input.value = stored;
+    } catch (e) {}
+
+    function updateBtn() { btn.disabled = input.value.trim().length < 2; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', function() {
+      const name = input.value.trim();
+      if (name.length < 2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+    });
+    setTimeout(function() { input.focus(); }, 50);
+  })();
+
+  function cs210FallbackCopy(text) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e) {}
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" })[c]);
+  }
+
+  // ============================================================
+  // Questions
+  // ============================================================
+  const questions = [
+    {
+      id: 'q1',
+      type: 'choice',
+      text: 'Given <code>int a[5] = {1, 2, 3};</code>, what is the value of <code>a[4]</code>?',
+      options: ['1', '0', 'garbage (undefined)', 'a compile error'],
+      correct: 1,
+      correctFeedback: 'Yes. When you provide an initializer with fewer values than the array length, C zero-fills the rest. a[3] and a[4] are both 0.',
+      incorrectFeedback: 'The answer is <code>0</code>. When an initializer is shorter than the array length, C zero-fills the remaining cells. This is true for any type with an explicit initializer.',
+      shortLabel: 'Zero-fill in shorter initializer',
+    },
+    {
+      id: 'q2',
+      type: 'choice',
+      text: 'Inside <code>main</code>, you write <code>int a[5];</code> (no initializer) and then read <code>a[0]</code>. What value do you get?',
+      options: [
+        '0 (C zero-initializes everything)',
+        'Whatever was in that memory before &mdash; undefined.',
+        'A compile error (uninitialized variable).',
+        '-1 (the default sentinel).',
+      ],
+      correct: 1,
+      correctFeedback: 'Correct. Local arrays without an initializer are uninitialized. Reading them is undefined behavior. The "zero-fill" rule only applies when you provide some kind of initializer.',
+      incorrectFeedback: 'The answer is <strong>undefined</strong>. Without an initializer, local (stack-allocated) arrays contain whatever bytes were in that memory. The compiler does not warn you. Globals do get zero-initialized, but locals do not.',
+      shortLabel: 'Uninitialized local int array',
+    },
+    {
+      id: 'q3',
+      type: 'text',
+      text: 'Given <code>int a[10] = {[5]=50, 60, 70};</code>, what is <code>a[7]</code>?',
+      correct: ['70'],
+      normalize: s => s.trim(),
+      placeholder: 'just the number',
+      correctFeedback: 'Correct. The designated initializer <code>[5]=50</code> sets index 5, then C keeps assigning sequentially: 60 lands at index 6 and 70 lands at index 7.',
+      incorrectFeedback: 'The answer is <code>70</code>. After the designated initializer <code>[5]=50</code>, C continues from index 6: <code>60</code> goes to index 6, then <code>70</code> goes to index 7. Indices 0&ndash;4 and 8&ndash;9 are zero.',
+      shortLabel: 'Designated initializer fall-through fill',
+    },
+    {
+      id: 'q4',
+      type: 'choice',
+      text: 'Given <code>int a[] = {10, 20, 30, 40};</code>, what is the length of <code>a</code>?',
+      options: ['0 (no size specified)', '3', '4', 'A compile error &mdash; you must specify a size.'],
+      correct: 2,
+      correctFeedback: 'Correct. When you leave the size brackets empty but provide an initializer, C counts the elements for you. The array has length 4.',
+      incorrectFeedback: 'The answer is <strong>4</strong>. When you write <code>int a[] = {10, 20, 30, 40};</code>, C counts the initializer elements and uses that as the array length. You only need an explicit size when there is no initializer.',
+      shortLabel: 'Inferred size from initializer',
+    },
+    {
+      id: 'q5',
+      type: 'choice',
+      text: 'You have <code>int a[8];</code> inside a function. Which expression gives the length of the array (the number 8) in that scope?',
+      options: [
+        '<code>sizeof(a)</code>',
+        '<code>sizeof(a) / sizeof(a[0])</code>',
+        '<code>sizeof(a[0])</code>',
+        '<code>len(a)</code>',
+      ],
+      correct: 1,
+      correctFeedback: 'Correct. <code>sizeof(a)</code> gives total bytes (32 here), and <code>sizeof(a[0])</code> gives bytes per element (4). Dividing them gives 8. C has no built-in <code>len</code> function.',
+      incorrectFeedback: 'The answer is <code>sizeof(a) / sizeof(a[0])</code>. <code>sizeof(a)</code> alone is the total byte size of the array (32), not the length. Dividing by <code>sizeof(a[0])</code> gives the element count. C has no <code>len</code> function.',
+      shortLabel: 'sizeof length idiom',
+    },
+    {
+      id: 'q6',
+      type: 'choice',
+      text: 'You declare <code>int a[5];</code>. What is the <em>last valid index</em>?',
+      options: ['0', '4', '5', '6'],
+      correct: 1,
+      correctFeedback: 'Correct. C arrays start at index 0, so a length-5 array has valid indices 0, 1, 2, 3, 4. The last valid index is always length minus one.',
+      incorrectFeedback: 'The answer is <strong>4</strong>. C arrays start at index 0. A length-5 array has indices 0, 1, 2, 3, 4 &mdash; five slots total. Writing <code>a[5]</code> is one past the end. The last valid index is always length minus one.',
+      shortLabel: 'Last valid index of int a[5]',
+    },
+    {
+      id: 'q7',
+      type: 'choice',
+      text: 'You declare <code>int a[5] = {0};</code> and then write <code>a[5] = 42;</code>. What does C do?',
+      options: [
+        'Refuses to compile (out-of-bounds detected).',
+        'Crashes the program immediately.',
+        'Silently writes 42 into memory that does not belong to <code>a</code>.',
+        'Wraps the index and writes to <code>a[0]</code>.',
+      ],
+      correct: 2,
+      correctFeedback: 'Correct. C does no runtime bounds checking. The write happens; it just happens at the wrong location. The program might crash later, corrupt another variable, or appear to work for a while &mdash; you have no guarantee.',
+      incorrectFeedback: 'The answer is <strong>C silently writes 42 into memory that does not belong to <code>a</code></strong>. C has no built-in bounds checking. The write happens; it goes to whatever memory comes after the array. This is one of the classic C bug sources. The compiler does not catch it &mdash; you have to.',
+      shortLabel: 'Out-of-bounds write behavior',
+    },
+    {
+      id: 'q8',
+      type: 'text',
+      text: 'You declare <code>int grades[20];</code> inside a function. Write the C expression that evaluates to the length of the array (the number 20) in that scope. Type just the expression.',
+      correct: [
+        'sizeof(grades)/sizeof(grades[0])',
+        'sizeof(grades) / sizeof(grades[0])',
+        'sizeof grades / sizeof grades[0]',
+        'sizeof(grades)/sizeof(int)',
+        'sizeof(grades) / sizeof(int)',
+      ],
+      normalize: s => s.trim().replace(/\s+/g, ' '),
+      placeholder: 'e.g. sizeof(x)/sizeof(x[0])',
+      correctFeedback: 'Correct. The idiom is <code>sizeof(grades) / sizeof(grades[0])</code>. Total bytes divided by bytes per element gives the count.',
+      incorrectFeedback: 'The expected form is <code>sizeof(grades) / sizeof(grades[0])</code>. <code>sizeof(grades)/sizeof(int)</code> also works since each element is an int, but the <code>sizeof(a[0])</code> form is preferred because it survives a type change.',
+      shortLabel: 'Length-of-array expression for grades[20]',
+    },
+  ];
+
+  const TOTAL = questions.length;
+  const PASS_COUNT = Math.ceil(TOTAL * PASSING_THRESHOLD); // ceil(8 * 0.7) = 6
+
+  const state = questions.map(() => ({ answered: false, correct: false, choice: null, value: '' }));
+  let currentIndex = 0;
+
+  const cardArea = root.querySelector('#aq-card-area');
+  const dotsArea = root.querySelector('#aq-dots');
+
+  function renderDots() {
+    dotsArea.innerHTML = '';
+    for (let i = 0; i < questions.length; i++) {
+      const d = document.createElement('div');
+      d.className = 'dot';
+      if (i === currentIndex && currentIndex < questions.length) d.classList.add('current');
+      else if (state[i].answered) d.classList.add(state[i].correct ? 'correct' : 'incorrect');
+      dotsArea.appendChild(d);
+    }
+    const scoreDot = document.createElement('div');
+    scoreDot.className = 'dot score';
+    if (currentIndex === questions.length) scoreDot.classList.add('current');
+    dotsArea.appendChild(scoreDot);
+  }
+
+  function hasAnswer(i) {
+    const q = questions[i];
+    if (q.type === 'choice') return state[i].choice !== null;
+    return state[i].value && state[i].value.trim().length > 0;
+  }
+
+  function submitAnswer(i) {
+    if (state[i].answered) return;
+    if (!hasAnswer(i)) return;
+    const q = questions[i];
+    let correct = false;
+    if (q.type === 'choice') {
+      correct = (state[i].choice === q.correct);
+    } else {
+      const norm = q.normalize ? q.normalize(state[i].value) : state[i].value.trim();
+      correct = q.correct.includes(norm);
+    }
+    state[i].answered = true;
+    state[i].correct = correct;
+    render();
+  }
+
+  function buildQuestionCard(i) {
+    const q = questions[i];
+    const card = document.createElement('div');
+    card.className = 'card';
+    if (state[i].answered) {
+      card.classList.add('answered');
+      card.classList.add(state[i].correct ? 'correct' : 'incorrect');
+    }
+
+    const label = document.createElement('div');
+    label.className = 'q-label';
+    label.textContent = 'Question ' + (i + 1) + ' of ' + questions.length;
+    card.appendChild(label);
+
+    const text = document.createElement('div');
+    text.className = 'q-text';
+    text.innerHTML = q.text;
+    card.appendChild(text);
+
+    if (q.type === 'choice') {
+      const opts = document.createElement('div');
+      opts.className = 'options';
+      q.options.forEach((optText, j) => {
+        const opt = document.createElement('label');
+        opt.className = 'option';
+        if (state[i].answered) opt.classList.add('disabled');
+        if (state[i].choice === j) opt.classList.add('selected');
+        if (state[i].answered) {
+          if (j === q.correct) opt.classList.add('reveal-correct');
+          if (state[i].choice === j && j !== q.correct) opt.classList.add('incorrect');
+        }
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = q.id;
+        radio.value = j;
+        radio.disabled = state[i].answered;
+        if (state[i].choice === j) radio.checked = true;
+        radio.addEventListener('change', () => {
+          if (state[i].answered) return;
+          state[i].choice = j;
+          render();
+        });
+        opt.appendChild(radio);
+        const span = document.createElement('span');
+        span.innerHTML = optText; // options may contain <code>
+        opt.appendChild(span);
+        opts.appendChild(opt);
+      });
+      card.appendChild(opts);
+    } else {
+      const row = document.createElement('div');
+      row.className = 'text-input-row';
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.placeholder = q.placeholder || '';
+      input.value = state[i].value;
+      input.disabled = state[i].answered;
+      if (state[i].answered) {
+        input.classList.add(state[i].correct ? 'correct' : 'incorrect');
+      }
+      input.addEventListener('input', (e) => {
+        state[i].value = e.target.value;
+        const submitBtn = card.querySelector('.nav-btn.primary');
+        if (submitBtn) submitBtn.disabled = !hasAnswer(i);
+      });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !state[i].answered) {
+          e.preventDefault();
+          submitAnswer(i);
+        }
+      });
+      row.appendChild(input);
+      card.appendChild(row);
+      if (!state[i].answered) {
+        setTimeout(() => input.focus(), 50);
+      }
+    }
+
+    if (state[i].answered) {
+      const fb = document.createElement('div');
+      fb.className = 'feedback ' + (state[i].correct ? 'correct' : 'incorrect');
+      fb.innerHTML = (state[i].correct ? '<strong>Correct.</strong> ' : '<strong>Not quite.</strong> ') +
+                     (state[i].correct ? q.correctFeedback : q.incorrectFeedback);
+      card.appendChild(fb);
+    }
+
+    const spacer = document.createElement('div');
+    spacer.className = 'spacer';
+    card.appendChild(spacer);
+
+    const nav = document.createElement('div');
+    nav.className = 'nav-row';
+
+    const backBtn = document.createElement('button');
+    backBtn.className = 'nav-btn back';
+    backBtn.innerHTML = '&larr; Back';
+    backBtn.disabled = (i === 0);
+    backBtn.addEventListener('click', () => {
+      if (i > 0) { currentIndex--; render(); }
+    });
+    nav.appendChild(backBtn);
+
+    const positionLabel = document.createElement('div');
+    positionLabel.className = 'nav-position';
+    positionLabel.textContent = (i + 1) + ' / ' + questions.length;
+    nav.appendChild(positionLabel);
+
+    if (!state[i].answered) {
+      const submitBtn = document.createElement('button');
+      submitBtn.className = 'nav-btn primary';
+      submitBtn.textContent = 'Submit';
+      submitBtn.disabled = !hasAnswer(i);
+      submitBtn.addEventListener('click', () => submitAnswer(i));
+      nav.appendChild(submitBtn);
+    } else {
+      const nextBtn = document.createElement('button');
+      nextBtn.className = 'nav-btn primary';
+      nextBtn.innerHTML = (i === questions.length - 1) ? 'See score &rarr;' : 'Next &rarr;';
+      nextBtn.addEventListener('click', () => { currentIndex++; render(); });
+      nav.appendChild(nextBtn);
+    }
+
+    card.appendChild(nav);
+    return card;
+  }
+
+  function buildScoreCard() {
+    const card = document.createElement('div');
+    card.className = 'card score-card';
+    const correctCount = state.filter(s => s.correct).length;
+    const passed = correctCount >= PASS_COUNT;
+    if (correctCount === questions.length) card.classList.add('full-correct');
+    if (passed) card.classList.add('passing');
+    else card.classList.add('not-passing');
+
+    const label = document.createElement('div');
+    label.className = 'q-label';
+    label.textContent = 'Quiz complete';
+    card.appendChild(label);
+
+    const msg = document.createElement('div');
+    msg.className = 'score-message good-job';
+    if (correctCount === questions.length) {
+      msg.textContent = 'Perfect score. Excellent work!';
+    } else if (passed) {
+      msg.textContent = 'Passed.';
+    } else {
+      msg.style.color = '#6B0000';
+      msg.textContent = 'Below the passing threshold.';
+    }
+    card.appendChild(msg);
+
+    const scoreBig = document.createElement('div');
+    scoreBig.className = 'score-big';
+    scoreBig.textContent = correctCount + ' / ' + questions.length;
+    card.appendChild(scoreBig);
+
+    const scoreLabel = document.createElement('div');
+    scoreLabel.className = 'score-label';
+    scoreLabel.textContent = 'questions correct';
+    card.appendChild(scoreLabel);
+
+    const pctLine = document.createElement('div');
+    pctLine.className = 'pct-line';
+    const pct = Math.round((correctCount / questions.length) * 100);
+    const cls = passed ? 'pct-pass' : 'pct-fail';
+    const verdict = passed
+      ? 'at or above the 70% passing threshold'
+      : 'below the 70% passing threshold (need ' + PASS_COUNT + ' of ' + questions.length + ')';
+    pctLine.innerHTML = '<span class="' + cls + '">' + pct + '%</span> &mdash; ' + verdict;
+    card.appendChild(pctLine);
+
+    const detail = document.createElement('div');
+    detail.className = 'score-message';
+    if (correctCount === questions.length) {
+      detail.textContent = 'You have the array rules down. Carry this into the lab and trust the bounds discipline.';
+    } else if (passed) {
+      detail.textContent = 'Review the questions you missed below before starting the lab so the gotchas do not bite you.';
+    } else {
+      detail.textContent = 'Review the questions you missed below, then take the quiz again. Schedule EI if any of the patterns are still unclear after that.';
+    }
+    card.appendChild(detail);
+
+    // Completion code block (always shown; code differs by pass/fail)
+    const safeName = (cs210CadetName || 'Cadet').replace(/[<>&"']/g, c =>
+      ({ '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' })[c]
+    );
+    const code = passed ? CS210_CODE_PASS : CS210_CODE_FAIL;
+    const codeWrap = document.createElement('div');
+    codeWrap.className = 'cs-code-block' + (passed ? '' : ' not-passing');
+    codeWrap.innerHTML =
+      '<div>' +
+        '<div class="cs-code-label">' + (passed ? 'Passing completion code' : 'Non-passing completion code') + '</div>' +
+        '<div class="cs-code-value" id="aq-cs-code-value">' + code + '</div>' +
+      '</div>' +
+      '<button class="cs-copy-btn" id="aq-cs-copy-btn" type="button">Copy code</button>';
+    card.appendChild(codeWrap);
+
+    const nameLine = document.createElement('div');
+    nameLine.className = 'cs-name-line';
+    nameLine.innerHTML = 'Cadet: <strong>' + safeName + '</strong>';
+    card.appendChild(nameLine);
+
+    const ts = new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const tsLine = document.createElement('div');
+    tsLine.className = 'cs-timestamp';
+    tsLine.textContent = 'Completed: ' + ts;
+    card.appendChild(tsLine);
+
+    const reminder = document.createElement('div');
+    reminder.className = 'cs-reminder' + (passed ? '' : ' not-passing');
+    if (passed) {
+      reminder.innerHTML = '<strong>Next step:</strong> Take a screenshot of this score card. Enter the code in the Lesson 9 reflection on Blackboard along with your screenshot.';
+    } else {
+      reminder.innerHTML = '<strong>Heads up:</strong> This code is non-passing. If you submit it, your instructor will see that you did not reach 70%. You can click <em>Take the quiz again</em> below to retry before submitting.';
+    }
+    card.appendChild(reminder);
+
+    // Per-question recap
+    const recap = document.createElement('div');
+    recap.className = 'recap';
+    const recapTitle = document.createElement('div');
+    recapTitle.className = 'recap-title';
+    recapTitle.textContent = 'Question recap';
+    recap.appendChild(recapTitle);
+
+    state.forEach((s, i) => {
+      const item = document.createElement('div');
+      item.className = 'recap-item';
+      const icon = document.createElement('div');
+      icon.className = 'recap-icon ' + (s.correct ? 'correct' : 'incorrect');
+      icon.textContent = s.correct ? '\u2713' : '\u2717';
+      item.appendChild(icon);
+      const body = document.createElement('div');
+      body.className = 'recap-body';
+      const q = questions[i];
+      const qLine = document.createElement('div');
+      qLine.className = 'recap-question';
+      qLine.innerHTML = '<strong>Q' + (i + 1) + '.</strong> ' + q.shortLabel;
+      body.appendChild(qLine);
+      if (!s.correct) {
+        const exp = document.createElement('div');
+        exp.className = 'recap-explanation';
+        exp.innerHTML = q.incorrectFeedback;
+        body.appendChild(exp);
+      }
+      item.appendChild(body);
+      recap.appendChild(item);
+    });
+    card.appendChild(recap);
+
+    const resetRow = document.createElement('div');
+    resetRow.className = 'reset-row';
+    const resetBtn = document.createElement('button');
+    resetBtn.className = 'reset-btn';
+    resetBtn.textContent = 'Take the quiz again';
+    resetBtn.addEventListener('click', reset);
+    resetRow.appendChild(resetBtn);
+    card.appendChild(resetRow);
+
+    const nav = document.createElement('div');
+    nav.className = 'nav-row';
+    const backBtn = document.createElement('button');
+    backBtn.className = 'nav-btn back';
+    backBtn.innerHTML = '&larr; Review questions';
+    backBtn.addEventListener('click', () => {
+      currentIndex = questions.length - 1;
+      render();
+    });
+    nav.appendChild(backBtn);
+    const spacer = document.createElement('div');
+    spacer.style.flex = '1';
+    nav.appendChild(spacer);
+    card.appendChild(nav);
+
+    // Wire up the copy button after the card is rendered
+    setTimeout(() => {
+      const copyBtn = root.querySelector('#aq-cs-copy-btn');
+      if (copyBtn) {
+        copyBtn.addEventListener('click', () => {
+          const text = code;
+          const ok = () => {
+            copyBtn.textContent = 'Copied';
+            copyBtn.classList.add('copied');
+            setTimeout(() => {
+              copyBtn.textContent = 'Copy code';
+              copyBtn.classList.remove('copied');
+            }, 1500);
+          };
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(ok, () => { cs210FallbackCopy(text); ok(); });
+          } else {
+            cs210FallbackCopy(text); ok();
+          }
+        });
+      }
+    }, 10);
+
+    return card;
+  }
+
+  function render() {
+    renderDots();
+    cardArea.innerHTML = '';
+    if (currentIndex >= questions.length) {
+      cardArea.appendChild(buildScoreCard());
+    } else {
+      cardArea.appendChild(buildQuestionCard(currentIndex));
+    }
+  }
+
+  function reset() {
+    state.forEach(s => { s.answered = false; s.correct = false; s.choice = null; s.value = ''; });
+    currentIndex = 0;
+    render();
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (!root.contains(document.activeElement)) return;
+    if (document.activeElement && document.activeElement.tagName === 'INPUT' && document.activeElement.type === 'text') return;
+    if (e.key === 'ArrowLeft' && currentIndex > 0) {
+      currentIndex--;
+      render();
+    } else if (e.key === 'ArrowRight') {
+      if (currentIndex >= questions.length) return;
+      if (state[currentIndex].answered) {
+        currentIndex++;
+        render();
+      }
+    }
+  });
+
+  render();
+})();
+</script>
+
+
+    </div>
+  </details>
+
+  <!-- ===================== 6. AFTER CLASS ===================== -->
+  <details id="after-class" style="margin-bottom: 24px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      6. After Class
+    </summary>
+    <div style="padding: 18px 22px;">
+      <ul style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Finish Lab 09: Fuel Log Analyzer if you did not complete it in class. Submit through GitHub Classroom before Lesson 10.</li>
+        <li style="margin-bottom: 6px;">Complete the Lesson 9 reflection on Blackboard. You will need your two completion codes (one from the walkthrough, one from the quiz) and a screenshot of either completion screen.</li>
+        <li style="margin-bottom: 6px;">Read Beej-C Chapter 7 (Strings) for Lesson 10. Strings build directly on what you learned today: they are arrays of char with one extra rule.</li>
+        <li style="margin-bottom: 6px;">Replay the walkthrough in free mode. Try declaring two arrays with the same name, an array of length 1, an index of -1. See what the widget tells you.</li>
+        <li style="margin-bottom: 0;">Heads up: Quiz 3 at Lesson 10 covers arrays and strings together.</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== HELP NOTE ===================== -->
+  <div style="background: #F5F7FA; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 3px; font-size: 13.5px; color: #4A5568;">
+    <strong style="color: #00205B;">Need help?</strong> Schedule EI with your instructor. Bring specific code or specific screenshots, and the exact error or output you do not understand. Specific questions get unstuck quickly.
+  </div>
+
+</div>

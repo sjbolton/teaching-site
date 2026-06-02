@@ -1,0 +1,1810 @@
+<!-- ============================================================
+     CS210 — Lesson 5
+     Loops
+     Self-contained: all CSS inline. Native <details> for collapsing.
+     Loop tracer widget embedded inline in section 5.
+     Paste into Blackboard Ultra via Document → Add HTML block.
+     ============================================================ -->
+
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 980px; margin: 0 auto; line-height: 1.6;">
+
+  <!-- ===================== LIGHT HEADER ===================== -->
+  <div style="border-left: 5px solid #003087; padding: 8px 0 8px 18px; margin-bottom: 24px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 2px;">CS210 &middot; Block 1 &middot; Lesson 5</div>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 600; color: #00205B;">Loops</h1>
+    <div style="font-size: 14px; color: #4A5568; margin-top: 4px;">while &middot; do-while &middot; for &middot; break &middot; continue &middot; counting / accumulating / searching patterns</div>
+  </div>
+
+  <!-- ===================== AT A GLANCE ===================== -->
+  <div style="background: #F5F7FA; border-left: 4px solid #B5B7BA; padding: 14px 18px; margin-bottom: 22px; font-size: 14px;">
+    <strong style="color: #00205B;">At a glance:</strong> Programs that decided things in Lesson 4 now decide them <em>repeatedly</em>. You will meet C's three loop forms (<code>while</code>, <code>do-while</code>, <code>for</code>), the two flow control statements (<code>break</code> and <code>continue</code>), and the three patterns that come up over and over in real code: counting, accumulating, and searching. The Loop Tracer in Section 5 lets you step one iteration at a time and watch variables change. The lab applies the same patterns to an aviation fuel log.
+  </div>
+
+  <!-- ===================== TABLE OF CONTENTS ===================== -->
+  <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 20px; margin-bottom: 24px; border-radius: 3px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Contents</div>
+    <ol style="margin: 0; padding-left: 22px; font-size: 14px;">
+      <li style="margin-bottom: 4px;"><a href="#objectives" style="color: #003087; text-decoration: none;">Lesson Objectives</a></li>
+      <li style="margin-bottom: 4px;"><a href="#readings" style="color: #003087; text-decoration: none;">Assigned Readings</a></li>
+      <li style="margin-bottom: 4px;"><a href="#pre-class" style="color: #003087; text-decoration: none;">Pre-Class Work</a></li>
+      <li style="margin-bottom: 4px;"><a href="#materials" style="color: #003087; text-decoration: none;">Lesson Materials and Overview</a></li>
+      <li style="margin-bottom: 4px;"><a href="#in-class" style="color: #003087; text-decoration: none;">In-Class Work</a></li>
+      <li style="margin-bottom: 0;"><a href="#after-class" style="color: #003087; text-decoration: none;">After Class</a></li>
+    </ol>
+  </div>
+
+  <!-- ===================== 1. OBJECTIVES ===================== -->
+  <details id="objectives" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      1. Lesson Objectives
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 10px 0; font-style: italic;">By the end of this lesson, cadets will be able to:</p>
+      <ol style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Implement iterative logic using <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">while</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">do-while</code>, and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">for</code> loops. <span style="color: #6B7280; font-size: 12px;">(Outcome 1)</span></li>
+        <li style="margin-bottom: 6px;">Apply <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">break</code> and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">continue</code> to control loop flow. <span style="color: #6B7280; font-size: 12px;">(Outcome 1)</span></li>
+        <li style="margin-bottom: 0;">Choose appropriate loop constructs for counting, accumulating, and searching tasks. <span style="color: #6B7280; font-size: 12px;">(Outcomes 1, 3)</span></li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 2. READINGS ===================== -->
+  <details id="readings" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      2. Assigned Readings
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 12px 0;">Complete before class. These set the vocabulary we will use.</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <thead>
+          <tr style="background: #E8EDF5; color: #00205B;">
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 130px;">Source</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9;">Sections</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 220px;">Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;"><a href="https://beej.us/guide/bgc/" style="color: #003087; text-decoration: underline;">Beej-C</a></td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Chapter 3 (the loop sections: while, do-while, for)</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">All three loop forms with C syntax.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 9px 12px;">King, <em>C Programming: A Modern Approach</em></td>
+            <td style="padding: 9px 12px;">Chapter 6 (Loops)</td>
+            <td style="padding: 9px 12px; color: #4A5568;">Optional deeper dive with more worked examples and pattern catalog.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <!-- ===================== 3. PRE-CLASS WORK ===================== -->
+  <details id="pre-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      3. Pre-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 18px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #6B5300; font-size: 14px; margin-bottom: 4px;">Do this first</div>
+        <div style="font-size: 14px; color: #5A4B00;">Plan on 25 to 40 minutes. The reading is short. Bring a clean head: most of the learning happens by stepping through loops in the In-Class section.</div>
+      </div>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 0 0 10px 0;">Pre-Class Checklist</h3>
+
+      <!-- Step 1: Reading -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">1</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Read Beej-C Chapter 3 loop sections</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">Focus on these terms (you should be able to write a one-sentence definition for each):</div>
+            <ul style="font-size: 13.5px; margin: 0 0 6px 0; padding-left: 20px;">
+              <li style="margin-bottom: 3px;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">while</code> loop and the difference from <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">do-while</code></li>
+              <li style="margin-bottom: 3px;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">for</code> loop and its three parts (init, condition, update)</li>
+              <li style="margin-bottom: 3px;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">break</code> and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">continue</code></li>
+              <li style="margin-bottom: 0;">Infinite loop and off-by-one error</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Predict-the-output warmup -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">2</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Warm up: predict what these print</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">Read each snippet on paper. Write down what you think it prints. We will check your predictions with the Loop Tracer in class.</div>
+
+            <div style="background: #1E2A3A; color: #E8EDF5; padding: 10px 14px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.5; margin-bottom: 10px;">
+<span style="color: #7FB3D5;">int</span> i = 0;<br>
+<span style="color: #7FB3D5;">while</span> (i &lt; 3) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;printf(<span style="color: #7FD17F;">"%d "</span>, i);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;i++;<br>
+}
+            </div>
+
+            <div style="background: #1E2A3A; color: #E8EDF5; padding: 10px 14px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.5; margin-bottom: 10px;">
+<span style="color: #7FB3D5;">int</span> sum = 0;<br>
+<span style="color: #7FB3D5;">for</span> (<span style="color: #7FB3D5;">int</span> i = 1; i &lt;= 4; i++) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sum += i;<br>
+}<br>
+printf(<span style="color: #7FD17F;">"%d\n"</span>, sum);
+            </div>
+
+            <div style="font-size: 13px; color: #4A5568;">If both feel obvious, the lesson will move quickly. If either felt tricky, plan to focus on the corresponding round in the Loop Tracer.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Skim -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 8px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">3</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Skim the In-Class section below</div>
+            <div style="font-size: 14px;">The Loop Tracer has 8 rounds. Note that the last two are bug-spotting (off-by-one, infinite loop). You do not need to do anything with the widget yet; just see what it looks like.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ===================== 4. LESSON MATERIALS AND OVERVIEW ===================== -->
+  <details id="materials" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      4. Lesson Materials and Overview
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 18px 0;">Lesson 4 taught your programs to decide. Lesson 5 teaches them to decide again and again. Every loop in C is built from the same three parts: an initial state, a condition that says when to keep going, and an update that moves the state forward. The three loop forms just rearrange those parts. Once that clicks, the bugs become predictable and the right loop form for any job becomes obvious.</p>
+
+      <!-- Subsection navigation -->
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 18px; margin-bottom: 22px; border-radius: 3px;">
+        <div style="font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">Jump to</div>
+        <div style="font-size: 13.5px;">
+          <a href="#slides" style="color: #003087; text-decoration: none; margin-right: 14px;">Slides</a>
+          <a href="#reference-card" style="color: #003087; text-decoration: none; margin-right: 14px;">Reference card</a>
+          <a href="#anatomy" style="color: #003087; text-decoration: none; margin-right: 14px;">Anatomy of a loop</a>
+          <a href="#while" style="color: #003087; text-decoration: none; margin-right: 14px;">while</a>
+          <a href="#do-while" style="color: #003087; text-decoration: none; margin-right: 14px;">do-while</a>
+          <a href="#for" style="color: #003087; text-decoration: none; margin-right: 14px;">for</a>
+          <a href="#break-continue" style="color: #003087; text-decoration: none; margin-right: 14px;">break / continue</a>
+          <a href="#patterns" style="color: #003087; text-decoration: none; margin-right: 14px;">Three patterns</a>
+          <a href="#bugs" style="color: #003087; text-decoration: none; margin-right: 14px;">Common bugs</a>
+          <a href="#dfcs-standard" style="color: #003087; text-decoration: none;">DFCS standard</a>
+        </div>
+      </div>
+
+      <!-- Slides -->
+      <h3 id="slides" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0; scroll-margin-top: 16px;">Slides</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">The Lesson 5 deck walks through the three loop forms, the two flow control statements, the three patterns, and the four common bugs. The deck is the spine of the in class lecture; the Loop Tracer is where you watch every concept play out one step at a time.</p>
+
+      <!-- EDIT ME: replace href="#" with the slide deck URL (SharePoint or hosted location) before publishing. -->
+      <p style="margin: 0 0 18px 0;">
+        <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 10px 20px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 14px;">Open Lesson 5 slides &rarr;</a>
+      </p>
+
+      <!-- Reference card: print-debugging primer -->
+      <h3 id="reference-card" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Reference card: print-debugging</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">A single page reference for finding wrong output bugs in your loops. Keep it open in another tab while you work on Lab 05. Real debugger and valgrind training arrives at Lesson 16, for bugs the source code does not make visible.</p>
+      <!-- EDIT ME: replace href="#" with the print-debugging reference card URL before publishing. -->
+      <p style="margin: 0 0 18px 0;">
+        <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 10px 20px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 14px;">Open print-debugging reference card &rarr;</a>
+      </p>
+
+      <!-- Anatomy -->
+      <h3 id="anatomy" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">The three parts every loop has</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Every loop you will ever write has three parts. Identifying them up front is the fastest way to debug a loop that misbehaves.</p>
+      <ul style="font-size: 14.5px; margin: 0 0 18px 0; padding-left: 22px;">
+        <li style="margin-bottom: 8px;"><strong style="color: #00205B;">Initialization.</strong> The starting state of whatever the loop tracks: a counter, an accumulator, an index, a flag.</li>
+        <li style="margin-bottom: 8px;"><strong style="color: #00205B;">Condition.</strong> The expression checked before (or after) each iteration. While the condition is true, the loop keeps running. When it becomes false, the loop exits.</li>
+        <li style="margin-bottom: 0;"><strong style="color: #00205B;">Update.</strong> What changes at the end of each iteration so the condition eventually becomes false. <em>If the state never moves toward the exit, you have an infinite loop.</em></li>
+      </ul>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">All three loop forms (<code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">while</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">do-while</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">for</code>) have those three parts. They differ only in where the parts go and when the condition gets checked.</p>
+
+      <!-- while -->
+      <h3 id="while" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">while: check first, then run</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">A <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">while</code> loop checks its condition at the top of each iteration. If the condition is false the first time, the body never runs at all.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 12px 16px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.55; margin-bottom: 14px;">
+<span style="color: #7FB3D5;">int</span> i = 0;&nbsp;&nbsp;&nbsp;<span style="color: #6B7280;">// initialization</span><br>
+<span style="color: #7FB3D5;">while</span> (i &lt; 5) {&nbsp;&nbsp;&nbsp;<span style="color: #6B7280;">// condition</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;printf(<span style="color: #7FD17F;">"%d\n"</span>, i);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;i++;&nbsp;&nbsp;&nbsp;<span style="color: #6B7280;">// update</span><br>
+}
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">Use <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">while</code> when you do not know in advance how many iterations you need: reading until end of input, retrying until success, simulating until a condition is reached.</p>
+
+      <!-- do-while -->
+      <h3 id="do-while" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">do-while: run first, then check</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">A <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">do-while</code> loop runs the body once before checking the condition. The body always runs at least once.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 12px 16px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.55; margin-bottom: 14px;">
+<span style="color: #7FB3D5;">int</span> n;<br>
+<span style="color: #7FB3D5;">do</span> {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;printf(<span style="color: #7FD17F;">"Enter a positive number: "</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;scanf(<span style="color: #7FD17F;">"%d"</span>, &amp;n);<br>
+} <span style="color: #7FB3D5;">while</span> (n &lt;= 0);
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 6px 0;">Use <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">do-while</code> when the body has to run at least once before you have anything to check. The classic case is input validation: you cannot check whether the user typed a valid number until they have typed something.</p>
+      <p style="font-size: 13.5px; color: #4A5568; margin: 0 0 18px 0; font-style: italic;">Note the semicolon after the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">while (...)</code> at the end. It is required, and forgetting it is a common compile error.</p>
+
+      <!-- for -->
+      <h3 id="for" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">for: all three parts on one line</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">A <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">for</code> loop puts initialization, condition, and update on the same line. The body is just the body. This is C's loop of choice when you know how many iterations you want.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 12px 16px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.55; margin-bottom: 14px;">
+<span style="color: #7FB3D5;">for</span> (<span style="color: #7FB3D5;">int</span> i = 0; i &lt; 5; i++) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;printf(<span style="color: #7FD17F;">"%d\n"</span>, i);<br>
+}
+      </div>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 14px;">
+        <thead>
+          <tr style="background: #00205B; color: #ffffff;">
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; width: 200px;">Part of <code style="background: rgba(255,255,255,0.15); padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px; color: #ffffff;">for (a; b; c)</code></th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600;">When it runs</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">a (init)</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Once, before the first iteration.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">b (condition)</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Before each iteration (including the first). If false, the loop exits.</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; font-family: Consolas, monospace; font-size: 13px;">c (update)</td>
+            <td style="padding: 8px 12px;">After each iteration, before the next condition check.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p style="font-size: 13.5px; color: #4A5568; margin: 0 0 18px 0; font-style: italic;">The variable declared in the init part (here <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">int i</code>) is scoped to the loop. It does not exist after the loop ends. This is what you want; it makes scoping bugs harder.</p>
+
+      <!-- break / continue -->
+      <h3 id="break-continue" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">break and continue: redirecting flow</h3>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><strong style="color: #00205B;">break</strong> exits the loop immediately. Control jumps to the first statement after the loop's closing brace. Use it when you have found what you were looking for and want to stop early.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 12px 16px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.55; margin-bottom: 14px;">
+<span style="color: #7FB3D5;">for</span> (<span style="color: #7FB3D5;">int</span> i = 0; i &lt; n; i++) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #7FB3D5;">if</span> (a[i] == target) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;found_at = i;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #7FB3D5;">break</span>;&nbsp;&nbsp;&nbsp;<span style="color: #6B7280;">// stop searching</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><strong style="color: #00205B;">continue</strong> skips the rest of the current iteration and jumps to the next iteration's condition check. The loop keeps running; only this trip through the body is cut short.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 12px 16px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.55; margin-bottom: 14px;">
+<span style="color: #7FB3D5;">for</span> (<span style="color: #7FB3D5;">int</span> i = 1; i &lt;= 10; i++) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #7FB3D5;">if</span> (i % 2 == 0) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #7FB3D5;">continue</span>;&nbsp;&nbsp;&nbsp;<span style="color: #6B7280;">// skip evens</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sum += i;<br>
+}
+      </div>
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 12px 16px; margin-bottom: 18px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #6B5300; font-size: 13px; margin-bottom: 4px;">Use sparingly</div>
+        <div style="font-size: 13.5px; color: #5A4B00;">Both <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">break</code> and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">continue</code> hide control flow. A reader has to look inside the body to know when the loop exits, instead of just reading the condition. Use them when they make the code clearer (early-exit searches, skip-the-bad-cases filters) but do not reach for them as the first solution.</div>
+      </div>
+
+      <!-- Three patterns -->
+      <h3 id="patterns" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">The three loop patterns you will use constantly</h3>
+      <p style="font-size: 14.5px; margin: 0 0 14px 0;">Almost every loop you write in CS210 fits one of three patterns. Identifying which pattern you need is the first design decision.</p>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 18px;">
+        <thead>
+          <tr style="background: #00205B; color: #ffffff;">
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 130px;">Pattern</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 240px;">What it tracks</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600;">Typical loop form</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; font-weight: 600; color: #00205B;">Counting</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">A counter (how many times). Print a table, loop N times, walk an array of known size.</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">for</code> (the count goes in the header).</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; font-weight: 600; color: #00205B;">Accumulating</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">A running total or running max / min. Initialize the accumulator <em>before</em> the loop.</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">for</code> over a known range or <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">while</code> while-more-input.</td>
+          </tr>
+          <tr>
+            <td style="padding: 9px 12px; font-weight: 600; color: #00205B;">Searching</td>
+            <td style="padding: 9px 12px; color: #4A5568;">A flag or index that says "found it." Set a sentinel value before the loop; update and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">break</code> on the first match.</td>
+            <td style="padding: 9px 12px; color: #4A5568;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">for</code> with an early <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">break</code>.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">The lab tonight uses all three: a <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">do-while</code> to validate input, a counting <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">for</code> to read N flight entries, and accumulators tracking total fuel, total hours, and the maximum burn flight.</p>
+
+      <!-- Bugs -->
+      <h3 id="bugs" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Four bugs that bite every new C programmer</h3>
+
+      <div style="background: #FFF0F0; border-left: 4px solid #B8002F; padding: 12px 16px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #8B0024; font-size: 14px; margin-bottom: 6px;">Off-by-one</div>
+        <div style="font-size: 13.5px; color: #5A0017; margin-bottom: 8px;">You wrote <code style="background: rgba(184,0,47,0.1); padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">i &lt; 5</code> but you wanted the loop to include 5. Or you wrote <code style="background: rgba(184,0,47,0.1); padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">i &lt;= n</code> when iterating an array of size n. The body runs one too many or one too few times.</div>
+        <div style="font-size: 13px; color: #4A5568;"><strong>Fix:</strong> Always trace the first and last iteration by hand. What is i on entry? What is i on the last iteration the body runs? Compare to what you wanted.</div>
+      </div>
+
+      <div style="background: #FFF0F0; border-left: 4px solid #B8002F; padding: 12px 16px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #8B0024; font-size: 14px; margin-bottom: 6px;">Infinite loop</div>
+        <div style="font-size: 13.5px; color: #5A0017; margin-bottom: 8px;">The loop variable never moves toward the exit. The condition stays true forever; the program hangs.</div>
+        <div style="font-size: 13px; color: #4A5568;"><strong>Fix:</strong> If your terminal hangs on a loop, press Ctrl+C to kill the program. Then check: does something inside the body move the loop variable toward the false case?</div>
+      </div>
+
+      <div style="background: #FFF0F0; border-left: 4px solid #B8002F; padding: 12px 16px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #8B0024; font-size: 14px; margin-bottom: 6px;">Accumulator not initialized</div>
+        <div style="font-size: 13.5px; color: #5A0017; margin-bottom: 8px;">You forgot to set <code style="background: rgba(184,0,47,0.1); padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">int sum;</code> to 0 before the loop. C does not zero locals for you; sum holds whatever bits happened to be there. Output is a huge garbage number, and worse, it changes between runs.</div>
+        <div style="font-size: 13px; color: #4A5568;"><strong>Fix:</strong> Always initialize. <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">int sum = 0;</code> Never <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">int sum;</code> when you mean zero.</div>
+      </div>
+
+      <div style="background: #FFF0F0; border-left: 4px solid #B8002F; padding: 12px 16px; margin-bottom: 8px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #8B0024; font-size: 14px; margin-bottom: 6px;">Stray semicolon after for(...)</div>
+        <div style="font-size: 13.5px; color: #5A0017; margin-bottom: 8px;">You typed <code style="background: rgba(184,0,47,0.1); padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">for (int i = 0; i &lt; 5; i++);</code> with a semicolon right after the parentheses. That semicolon <em>is</em> the loop body. Your real body (the next block) runs exactly once with i = 5 after the empty loop finishes. The compiler does not warn you.</div>
+        <div style="font-size: 13px; color: #4A5568;"><strong>Fix:</strong> Never put a semicolon directly after <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">for (...)</code> or <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">while (...)</code>. The opening brace goes there.</div>
+      </div>
+
+      <!-- DFCS standard reference (required for lessons mapped in the blueprint table) -->
+      <h3 id="dfcs-standard" style="color: #00205B; font-size: 16px; margin: 28px 0 10px 0; scroll-margin-top: 16px;">DFCS C Programming Standard</h3>
+      <p style="font-size: 14.5px; margin: 0 0 10px 0;">Loops introduce five rules from the DFCS C Programming Standard. The standard is the course style guide; you can find the full text in the Resources section.</p>
+      <ul style="margin: 0 0 10px 0; padding-left: 22px; font-size: 14px;">
+        <li style="margin-bottom: 4px;"><strong>&sect;7.3</strong> &mdash; no <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">++</code> or <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">--</code> inside a complex expression. Increment on its own line.</li>
+        <li style="margin-bottom: 4px;"><strong>&sect;7.5</strong> &mdash; no single line loops. Always use braces, even when the body is one statement.</li>
+        <li style="margin-bottom: 4px;"><strong>&sect;7.6</strong> &mdash; avoid <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">break</code> in loops. (Inside <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">switch</code> is fine and expected.) Most search loops can be rewritten with a flag in the condition.</li>
+        <li style="margin-bottom: 4px;"><strong>&sect;7.7</strong> &mdash; avoid <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">continue</code>. Wrap the work in an <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">if</code> instead.</li>
+        <li style="margin-bottom: 4px;"><strong>&sect;7.8</strong> &mdash; never use <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">goto</code>.</li>
+      </ul>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 8px 0;">The two that need the most care: &sect;7.6 and &sect;7.7. <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">break</code> and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">continue</code> work, you will see them in real code, and you need to read them. The standard is not zero tolerance. It is no overuse. Reach for the cleaner alternative first; use the keyword only when it is genuinely clearer than the rewrite.</p>
+
+    </div>
+  </details>
+
+  <!-- ===================== 5. IN-CLASS WORK ===================== -->
+  <details id="in-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      5. In-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 0 0 12px 0;">In-Class Checklist</h3>
+      <ul style="list-style: none; padding: 0; margin: 0 0 24px 0; font-size: 14.5px;">
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Lecture: anatomy, three forms, break / continue, patterns, bugs.</strong>
+          <span style="color: #4A5568;">~25 minutes. Slides + worked examples.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Loop Tracer walkthrough.</strong>
+          <span style="color: #4A5568;">~20 minutes. Step through 8 rounds: while, for, do-while, nested, break, continue, off-by-one bug, infinite-loop bug.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Lab 05: VFR Fuel Log.</strong>
+          <span style="color: #4A5568;">~30 minutes. Read flight entries; print totals, average, max-burn flight, and count over threshold.</span>
+          <!-- EDIT ME: replace href="#" with the Lab 05 GitHub Classroom invite URL before publishing. -->
+          <div style="margin-top: 8px;">
+            <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 6px 14px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 13px;">Open Lab 05 on GitHub Classroom &rarr;</a>
+          </div>
+        </li>
+      </ul>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0;">Loop Tracer</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Step through each round. Watch the loop variable change, watch the accumulator grow, watch break and continue redirect the flow. The state pane on the right tracks everything.</p>
+
+      <!-- ===== WIDGET ===== -->
+      <!-- ============================================================
+     CS210 Lesson 5 - Loop Tracer Walkthrough Widget
+     Pattern: visualization walkthrough (mirrors L2 binary widget).
+     Cadet steps through one iteration at a time. Code pane on the
+     left with the current line highlighted; state pane on the right
+     showing variables, accumulator, and output as the loop runs.
+     8 rounds: while, for, do-while, nested for, break, continue,
+     off-by-one bug, infinite-loop bug.
+     ============================================================ -->
+<style>
+.cs210-loop * { box-sizing: border-box; }
+.cs210-loop {
+  position: relative;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+}
+.cs210-loop h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-loop .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 22px;
+}
+.cs210-loop .progress-bar {
+  background: #E5E7EB;
+  border-radius: 3px;
+  height: 8px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.cs210-loop .progress-fill {
+  background: #003087;
+  height: 100%;
+  transition: width 0.3s ease;
+}
+.cs210-loop .progress-label {
+  font-size: 12px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-loop .section-header {
+  background: #E8EDF5;
+  color: #00205B;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.cs210-loop .task-card {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  border-radius: 3px;
+}
+.cs210-loop .task-card.complete {
+  background: #E6F4EA;
+  border-left-color: #2E7D32;
+}
+.cs210-loop .task-label {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B5300;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.cs210-loop .task-card.complete .task-label { color: #1B5E20; }
+.cs210-loop .task-text { font-size: 15px; color: #1a1a1a; }
+.cs210-loop .task-hint {
+  font-size: 12.5px; color: #6B7280; margin-top: 6px; font-style: italic;
+}
+.cs210-loop .task-question {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #00205B;
+  font-weight: 600;
+}
+
+.cs210-loop .panes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+@media (max-width: 760px) {
+  .cs210-loop .panes { grid-template-columns: 1fr; }
+}
+
+/* Code pane (left) */
+.cs210-loop .code-pane {
+  background: #1E2A3A;
+  color: #E8EDF5;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13.5px;
+  line-height: 1.55;
+  border-radius: 4px;
+  padding: 14px 0;
+  min-height: 380px;
+  max-height: 480px;
+  overflow-y: auto;
+}
+.cs210-loop .code-line {
+  padding: 2px 18px 2px 14px;
+  display: flex;
+  white-space: pre;
+  transition: background 0.2s ease;
+}
+.cs210-loop .code-line.current {
+  background: #F0B92C;
+  color: #1a1a1a;
+}
+.cs210-loop .code-line.current .ln { color: #6B5300; }
+.cs210-loop .code-line .ln {
+  color: #6B7280;
+  width: 26px;
+  text-align: right;
+  margin-right: 14px;
+  flex-shrink: 0;
+  user-select: none;
+}
+.cs210-loop .code-line .src {
+  flex: 1;
+}
+.cs210-loop .code-line .kw { color: #7FB3D5; }
+.cs210-loop .code-line.current .kw { color: #B8002F; font-weight: 700; }
+.cs210-loop .code-line .num { color: #F0B92C; }
+.cs210-loop .code-line.current .num { color: #1a1a1a; font-weight: 700; }
+.cs210-loop .code-line .str { color: #7FD17F; }
+.cs210-loop .code-line.current .str { color: #1B5E20; font-weight: 700; }
+.cs210-loop .code-line .com { color: #6B7280; font-style: italic; }
+.cs210-loop .code-line.current .com { color: #4A5568; }
+
+/* State pane (right) */
+.cs210-loop .state-pane {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  padding: 14px 16px;
+  min-height: 380px;
+  max-height: 480px;
+  overflow-y: auto;
+}
+.cs210-loop .state-section {
+  margin-bottom: 14px;
+}
+.cs210-loop .state-header {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #E5E7EB;
+}
+.cs210-loop .var-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+}
+.cs210-loop .var-table th {
+  background: #F5F7FA;
+  color: #00205B;
+  text-align: left;
+  padding: 6px 10px;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  border-bottom: 1px solid #D0D5DD;
+}
+.cs210-loop .var-table td {
+  padding: 5px 10px;
+  border-bottom: 1px solid #F0F2F5;
+  color: #00205B;
+}
+.cs210-loop .var-table td.val {
+  font-weight: 700;
+  text-align: right;
+  font-size: 14px;
+}
+.cs210-loop .var-table tr.changed td {
+  background: #FFF8E1;
+  animation: cs210-loop-flash 0.6s ease-out;
+}
+@keyframes cs210-loop-flash {
+  0%   { background: #F0B92C; }
+  100% { background: #FFF8E1; }
+}
+.cs210-loop .iter-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+.cs210-loop .iter-tile {
+  background: #E8EDF5;
+  border: 1px solid #C7CFD9;
+  border-radius: 2px;
+  padding: 4px 8px;
+  font-family: Consolas, monospace;
+  font-size: 12px;
+  color: #00205B;
+}
+.cs210-loop .iter-tile.skipped {
+  background: #F5F7FA;
+  color: #9CA3AF;
+  text-decoration: line-through;
+}
+.cs210-loop .iter-tile.broke {
+  background: #FFE0E0;
+  border-color: #B8002F;
+  color: #B8002F;
+  font-weight: 700;
+}
+.cs210-loop .output-buf {
+  background: #1E2A3A;
+  color: #7FD17F;
+  font-family: Consolas, monospace;
+  font-size: 12.5px;
+  line-height: 1.5;
+  border-radius: 3px;
+  padding: 8px 12px;
+  min-height: 40px;
+  white-space: pre-wrap;
+}
+.cs210-loop .output-buf .empty {
+  color: #6B7280;
+  font-style: italic;
+}
+.cs210-loop .note-box {
+  background: #F8FAFC;
+  border-left: 3px solid #003087;
+  padding: 8px 12px;
+  font-size: 12.5px;
+  color: #4A5568;
+  margin-top: 8px;
+  border-radius: 0 3px 3px 0;
+}
+.cs210-loop .note-box.warn {
+  background: #FFF8E1;
+  border-left-color: #F0B92C;
+  color: #6B5300;
+}
+.cs210-loop .note-box.exit {
+  background: #E6F4EA;
+  border-left-color: #2E7D32;
+  color: #1B5E20;
+}
+
+/* Prediction row (for bug-spotting rounds) */
+.cs210-loop .predict-row {
+  margin-bottom: 12px;
+}
+.cs210-loop .predict-prompt {
+  font-size: 13.5px;
+  color: #00205B;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.cs210-loop .predict-options {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.cs210-loop .predict-btn {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  padding: 8px 16px;
+  border-radius: 3px;
+  font-size: 13.5px;
+  cursor: pointer;
+  color: #00205B;
+  font-family: inherit;
+  text-align: left;
+}
+.cs210-loop .predict-btn:hover { background: #F5F7FA; }
+.cs210-loop .predict-btn.chosen {
+  background: #E8EDF5;
+  border-color: #003087;
+}
+.cs210-loop .predict-btn.right {
+  background: #E6F4EA;
+  border-color: #2E7D32;
+  color: #1B5E20;
+  font-weight: 700;
+}
+.cs210-loop .predict-btn.wrong {
+  background: #FFE0E0;
+  border-color: #B8002F;
+  color: #B8002F;
+}
+.cs210-loop .predict-btn:disabled { cursor: default; }
+
+.cs210-loop .controls {
+  display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap;
+}
+.cs210-loop .btn {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  padding: 6px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #00205B;
+  font-family: inherit;
+  transition: box-shadow 0.2s ease;
+}
+.cs210-loop .btn:hover:not(:disabled) { background: #F5F7FA; }
+.cs210-loop .btn:disabled { color: #9CA3AF; cursor: not-allowed; background: #F5F7FA; }
+.cs210-loop .btn.primary {
+  background: #003087;
+  color: #ffffff;
+  border-color: #00205B;
+}
+.cs210-loop .btn.primary:hover:not(:disabled) { background: #00205B; }
+.cs210-loop .btn.primary:disabled { background: #C7CFD9; color: #6B7280; border-color: #C7CFD9; }
+@keyframes cs210-loop-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(0, 48, 135, 0.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(0, 48, 135, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 48, 135, 0); }
+}
+.cs210-loop .btn.pulse {
+  animation: cs210-loop-pulse 1.5s infinite;
+}
+.cs210-loop .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #4A5568;
+  margin-top: 12px;
+}
+.cs210-loop .help-note strong { color: #00205B; }
+.cs210-loop .completion {
+  background: #E6F4EA;
+  border: 1px solid #2E7D32;
+  color: #1B5E20;
+  padding: 16px 20px;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 15px;
+  margin-top: 12px;
+}
+/* Name modal overlay - scoped to widget root via position: absolute.
+   Widget root carries position: relative so the modal covers only the
+   widget container, not the viewport. */
+.cs210-loop .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.cs210-loop .name-modal {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-loop .name-modal h2 {
+  color: #00205B;
+  font-size: 20px;
+  margin: 0 0 10px 0;
+}
+.cs210-loop .name-modal p {
+  color: #4A5568;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+.cs210-loop .name-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-loop .name-modal input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-loop .name-modal-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-loop .name-modal-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-loop .name-modal-btn:not(:disabled):hover {
+  background: #00205B;
+}
+/* Completion screen (inline footer inside the widget body) */
+.cs210-loop .completion-screen {
+  background: #ffffff;
+  border: 2px solid #2E7D32;
+  border-radius: 6px;
+  padding: 24px 28px;
+  margin-top: 16px;
+}
+.cs210-loop .completion-screen .cs-heading {
+  color: #1B5E20;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 6px 0;
+}
+.cs210-loop .completion-screen .cs-subheading {
+  color: #4A5568;
+  font-size: 14px;
+  margin: 0 0 18px 0;
+}
+/* Shared cs-* styles - apply in both the inline footer (.completion-screen)
+   and the overlay (.name-modal) contexts. Scoping here at .cs210-loop level
+   means the same markup looks consistent in either container. */
+.cs210-loop .cs-name-line {
+  font-size: 15px;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+}
+.cs210-loop .cs-name-line strong {
+  color: #00205B;
+}
+.cs210-loop .cs-code-block {
+  background: #F0F4FA;
+  border: 1px solid #003087;
+  border-radius: 4px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.cs210-loop .cs-code-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #4A5568;
+  margin-bottom: 4px;
+}
+.cs210-loop .cs-code-value {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 28px;
+  font-weight: 700;
+  color: #00205B;
+  letter-spacing: 3px;
+}
+.cs210-loop .cs-copy-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-loop .cs-copy-btn:hover {
+  background: #00205B;
+}
+.cs210-loop .cs-copy-btn.copied {
+  background: #2E7D32;
+}
+.cs210-loop .cs-timestamp {
+  font-size: 13px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-loop .cs-reminder {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 14px;
+  color: #6B5300;
+  line-height: 1.5;
+}
+.cs210-loop .cs-reminder strong {
+  color: #4A3A00;
+}
+</style>
+
+<div class="cs210-loop">
+
+<div class="name-modal-backdrop" id="lp-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Blackboard reflection quiz.</p>
+    <input type="text" id="lp-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="lp-cadet-name-btn" disabled>Start the walkthrough</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 5 &middot; Loop Tracer</h1>
+<div class="subtitle">Step through each iteration. Watch the loop variable change, watch the accumulator grow, watch break and continue redirect the flow. The right pane shows the program's state after each step.</div>
+
+<div class="progress-bar"><div class="progress-fill" id="lp-progress-fill" style="width: 0%;"></div></div>
+<div class="progress-label" id="lp-progress-label">Round 0 of 8</div>
+
+<div class="section-header" id="lp-section-header">Section 1: Basic loop forms</div>
+
+<div class="task-card" id="lp-task-card">
+  <div class="task-label" id="lp-task-label">Current round</div>
+  <div class="task-text" id="lp-task-text">Loading...</div>
+  <div class="task-hint" id="lp-task-hint"></div>
+  <div class="task-question" id="lp-task-question"></div>
+</div>
+
+<div id="lp-predict-area"></div>
+
+<div class="panes">
+  <div class="code-pane" id="lp-code"></div>
+  <div class="state-pane" id="lp-state"></div>
+</div>
+
+<div class="controls">
+  <button class="btn primary" id="lp-step-btn">Step</button>
+  <button class="btn" id="lp-run-btn">Run to end</button>
+  <button class="btn" id="lp-reset-btn">Reset round</button>
+  <button class="btn" id="lp-hint-btn">Show hint</button>
+  <button class="btn" id="lp-next-btn" disabled>Next round &rarr;</button>
+</div>
+
+<div class="help-note">
+  <strong>How this works:</strong> The yellow highlight on the left shows which line C is about to execute. Click <em>Step</em> to advance one line at a time, or <em>Run to end</em> to play the rest of the loop through. The right pane tracks every variable and the output buffer. When a loop exits, the reason (condition false, break, end of range) appears in the state pane.
+</div>
+
+<div id="lp-completion-area"></div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-loop');
+  if (!root) return;
+
+  // ============================================================
+  // CS210 widget completion utilities
+  // Salt -> deterministic 6-char code via FNV-1a.
+  // Alphabet excludes 0, 1, O, I (uppercase only output).
+  // ============================================================
+  const CS210_SALT = "lesson05_loop_tracer_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  // Name-modal gating: widget stays blocked until name entered.
+  // Pre-fill from localStorage if available; persists across widgets on
+  // the same lesson page.
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#lp-name-modal-backdrop');
+    const input = root.querySelector('#lp-cadet-name-input');
+    const btn = root.querySelector('#lp-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored) {
+        input.value = stored;
+        cs210CadetName = stored;
+      }
+    } catch (e) { /* localStorage may be disabled */ }
+
+    function updateBtn() {
+      btn.disabled = input.value.trim().length < 2;
+    }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', function() {
+      const name = input.value.trim();
+      if (name.length < 2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+      const step = root.querySelector('#lp-step-btn');
+      if (step) step.focus();
+    });
+    setTimeout(function() { input.focus(); }, 50);
+  })();
+
+  function cs210FallbackCopy(text) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e) { /* nothing else to do */ }
+  }
+  function cs210RenderCompletion(area) {
+    if (!area) return;
+    if (root.querySelector('#cs210-completion-overlay')) return; // already shown
+    const now = new Date();
+    const ts = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const safeName = (cs210CadetName || 'Cadet').replace(/[<>&"']/g, function(c) {
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+    // Inline footer (kept so screenshot of widget body still has the code)
+    area.innerHTML =
+      '<div class="completion-screen">' +
+        '<div class="cs-heading">Walkthrough complete</div>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value">' + CS210_CODE + '</div></div>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+      '</div>';
+    // Overlay (the unmissable version)
+    const overlay = document.createElement('div');
+    overlay.id = 'cs210-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.style.background = 'rgba(27, 94, 32, 0.55)';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">Walkthrough complete</h2>' +
+        '<p>Take a screenshot of this box. You will need the code and a visual of this screen for the Blackboard reflection quiz.</p>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value" id="cs-code-value">' + CS210_CODE + '</div></div>' +
+          '<button class="cs-copy-btn" id="cs-copy-btn" type="button">Copy code</button>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+        '<div class="cs-reminder" style="margin-bottom:14px;">' +
+          '<strong>Next step:</strong> Open the Lesson 5 reflection quiz in Blackboard. Enter this code, answer the reflection prompt, and attach your screenshot.' +
+        '</div>' +
+        '<button class="name-modal-btn" id="cs-overlay-close" type="button" style="background:#2E7D32;">Got it &mdash; close this</button>' +
+      '</div>';
+    root.appendChild(overlay);
+    const closeBtn = overlay.querySelector('#cs-overlay-close');
+    if (closeBtn) closeBtn.addEventListener('click', function() { overlay.style.display = 'none'; });
+    const copyBtn = overlay.querySelector('#cs-copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function() {
+        const text = CS210_CODE;
+        const ok = function() {
+          copyBtn.textContent = 'Copied';
+          copyBtn.classList.add('copied');
+          setTimeout(function() {
+            copyBtn.textContent = 'Copy code';
+            copyBtn.classList.remove('copied');
+          }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(ok, function() {
+            cs210FallbackCopy(text); ok();
+          });
+        } else {
+          cs210FallbackCopy(text); ok();
+        }
+      });
+    }
+  }
+
+  // ============================================================
+  // Helpers
+  // ============================================================
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" })[c]);
+  }
+  // Token-tint a line of C source for the code pane display.
+  function tintLine(src) {
+    let s = escapeHtml(src);
+    // Comments first so they survive
+    s = s.replace(/(\/\/[^\n]*)/g, '<span class="com">$1</span>');
+    // Keywords
+    s = s.replace(/\b(int|while|for|do|if|else|break|continue|return|void|printf|scanf)\b(?![^<]*<\/span>)/g, '<span class="kw">$1</span>');
+    // String literals (rough; suffices for our snippets)
+    s = s.replace(/(&quot;[^&]*?&quot;)/g, '<span class="str">$1</span>');
+    // Numbers
+    s = s.replace(/\b(\d+)\b(?![^<]*<\/span>)/g, '<span class="num">$1</span>');
+    return s;
+  }
+
+  // ============================================================
+  // Round definitions
+  //
+  // Each round is a trace program: a sequence of "steps" the
+  // engine plays through. Each step has:
+  //   line       : which line number is "current" (highlight)
+  //   vars       : full snapshot of variable values after this step
+  //   changed    : array of var names that changed in this step
+  //   output     : full output buffer string after this step
+  //   note       : optional explanation shown in the state pane
+  //   noteKind   : 'info' | 'warn' | 'exit'
+  //   iterTile   : optional iter-strip entry ({label, kind})
+  //
+  // The first step is the "initial" state (before any code runs).
+  // The last step's note typically says why the loop exited.
+  // ============================================================
+
+  const rounds = [
+    // ----------------------------------------------------------
+    // Round 1: simple while counter
+    // ----------------------------------------------------------
+    {
+      section: 'Section 1: Basic loop forms',
+      label: 'Round 1 of 8',
+      text: 'A bare while loop counts from 1 to 5. Before pressing Step, predict what it prints. Then step through and watch the counter increment.',
+      hint: 'The while condition is checked at the top of each iteration. When i becomes 6, 6 <= 5 is false and the loop exits.',
+      code: [
+        'int i = 1;',
+        'while (i <= 5) {',
+        '    printf("%d\\n", i);',
+        '    i++;',
+        '}',
+        'printf("done\\n");',
+      ],
+      question: 'How many lines does this loop print before "done"?',
+      options: [
+        { text: '4 lines (1 through 4).', correct: false },
+        { text: '5 lines (1 through 5).', correct: true },
+        { text: '6 lines (0 through 5).', correct: false },
+        { text: 'Infinite. i is never reset.', correct: false },
+      ],
+      buildSteps: function() {
+        const steps = [];
+        // step 0: initial, line 1 about to run
+        steps.push({ line: 0, vars: {}, output: '', note: 'About to run. Press Step.' });
+        steps.push({ line: 0, vars: { i: 1 }, changed: ['i'], output: '', note: 'i is created and initialized to 1.' });
+        for (let i = 1; i <= 5; i++) {
+          steps.push({ line: 1, vars: { i }, output: stepsLastOutput(steps), note: `Check: is ${i} <= 5? true. Enter the body.` });
+          const newOut = stepsLastOutput(steps) + i + '\n';
+          steps.push({ line: 2, vars: { i }, output: newOut, note: `printf prints ${i} and a newline.`, iterTile: { label: 'i=' + i, kind: 'ok' } });
+          steps.push({ line: 3, vars: { i: i + 1 }, changed: ['i'], output: newOut, note: `i++ : i becomes ${i + 1}.` });
+        }
+        steps.push({ line: 1, vars: { i: 6 }, output: stepsLastOutput(steps), note: 'Check: is 6 <= 5? false. Exit the loop.', noteKind: 'exit' });
+        steps.push({ line: 5, vars: { i: 6 }, output: stepsLastOutput(steps) + 'done\n', note: 'After the loop: print "done".' });
+        return steps;
+      },
+    },
+
+    // ----------------------------------------------------------
+    // Round 2: for loop accumulator
+    // ----------------------------------------------------------
+    {
+      label: 'Round 2 of 8',
+      text: 'A for loop computes the sum 1 + 2 + ... + 10. Before stepping, predict the final value of sum. Then step through and watch the accumulator grow.',
+      hint: 'A for loop folds three steps into one line: init, condition, update. Init runs once at the start; condition is checked before each iteration; update runs at the end of each iteration.',
+      code: [
+        'int sum = 0;',
+        'for (int i = 1; i <= 10; i++) {',
+        '    sum += i;',
+        '}',
+        'printf("sum = %d\\n", sum);',
+      ],
+      question: 'What is the final value of sum?',
+      options: [
+        { text: '45 (sum of 1 through 9).', correct: false },
+        { text: '55 (sum of 1 through 10).', correct: true },
+        { text: '66 (sum of 1 through 11).', correct: false },
+        { text: '10 (the loop bound, not the sum).', correct: false },
+      ],
+      buildSteps: function() {
+        const steps = [];
+        steps.push({ line: 0, vars: {}, output: '', note: 'About to run.' });
+        steps.push({ line: 0, vars: { sum: 0 }, changed: ['sum'], output: '', note: 'sum is created and initialized to 0.' });
+        steps.push({ line: 1, vars: { sum: 0, i: 1 }, changed: ['i'], output: '', note: 'for-init: i becomes 1.' });
+        let runningSum = 0;
+        for (let i = 1; i <= 10; i++) {
+          steps.push({ line: 1, vars: { sum: runningSum, i }, output: '', note: `for-condition: is ${i} <= 10? true. Enter the body.` });
+          runningSum += i;
+          steps.push({ line: 2, vars: { sum: runningSum, i }, changed: ['sum'], output: '', note: `sum += i : sum becomes ${runningSum}.`, iterTile: { label: '+=' + i, kind: 'ok' } });
+          if (i < 10) {
+            steps.push({ line: 1, vars: { sum: runningSum, i: i + 1 }, changed: ['i'], output: '', note: `for-update: i++ makes i = ${i + 1}.` });
+          } else {
+            steps.push({ line: 1, vars: { sum: runningSum, i: 11 }, changed: ['i'], output: '', note: 'for-update: i++ makes i = 11.' });
+          }
+        }
+        steps.push({ line: 1, vars: { sum: 55, i: 11 }, output: '', note: 'for-condition: is 11 <= 10? false. Exit the loop.', noteKind: 'exit' });
+        steps.push({ line: 4, vars: { sum: 55, i: 11 }, output: 'sum = 55\n', note: 'After the loop: print the final sum.' });
+        return steps;
+      },
+    },
+
+    // ----------------------------------------------------------
+    // Round 3: do-while input validation
+    // ----------------------------------------------------------
+    {
+      label: 'Round 3 of 8',
+      text: 'do-while runs the body first, then checks the condition. Perfect for "ask until the answer is valid." Imagine the user types 0, then -2, then 7. Before stepping, predict how many times the body runs.',
+      hint: 'do-while always runs the body at least once because there is no condition to check at the top. This is exactly what you want for "ask the user, then decide whether to ask again."',
+      code: [
+        'int n;',
+        'do {',
+        '    printf("Enter positive: ");',
+        '    scanf("%d", &n);',
+        '} while (n <= 0);',
+        'printf("got %d\\n", n);',
+      ],
+      question: 'How many times does the body run with inputs 0, -2, 7?',
+      options: [
+        { text: 'Once (the body always runs at least once).', correct: false },
+        { text: 'Twice (until a valid value).', correct: false },
+        { text: 'Three times (each input runs the body once).', correct: true },
+        { text: 'Zero times (the condition fails first).', correct: false },
+      ],
+      buildSteps: function() {
+        const steps = [];
+        const inputs = [0, -2, 7];
+        steps.push({ line: 0, vars: {}, output: '', note: 'About to run. The user will type 0, then -2, then 7.' });
+        steps.push({ line: 0, vars: { n: '?' }, changed: ['n'], output: '', note: 'n is declared. Its value is uninitialized until scanf assigns one.' });
+        let out = '';
+        for (let k = 0; k < inputs.length; k++) {
+          const v = inputs[k];
+          steps.push({ line: 2, vars: { n: k === 0 ? '?' : inputs[k - 1] }, output: out, note: 'Run the body. printf prompts the user.' });
+          out += 'Enter positive: ';
+          steps.push({ line: 2, vars: { n: k === 0 ? '?' : inputs[k - 1] }, output: out, note: 'Prompt is now in the output buffer.' });
+          steps.push({ line: 3, vars: { n: v }, changed: ['n'], output: out, note: `scanf reads ${v} from stdin. n becomes ${v}.`, iterTile: { label: 'n=' + v, kind: v <= 0 ? 'skipped' : 'ok' } });
+          if (v <= 0) {
+            steps.push({ line: 4, vars: { n: v }, output: out, note: `while-check: is ${v} <= 0? true. Loop again.`, noteKind: 'warn' });
+          } else {
+            steps.push({ line: 4, vars: { n: v }, output: out, note: `while-check: is ${v} <= 0? false. Exit the loop.`, noteKind: 'exit' });
+          }
+        }
+        out += 'got 7\n';
+        steps.push({ line: 5, vars: { n: 7 }, output: out, note: 'After the loop: print the final value.' });
+        return steps;
+      },
+    },
+
+    // ----------------------------------------------------------
+    // Round 4: nested for - multiplication table row
+    // ----------------------------------------------------------
+    {
+      section: 'Section 2: Nested loops and flow control',
+      label: 'Round 4 of 8',
+      text: 'Nested for loops print a 3-by-3 multiplication table. The outer loop walks down rows, the inner walks across columns. Predict before stepping.',
+      hint: 'For each value of i in the outer loop, the inner loop runs all the way from 1 to 3. That is 3 outer iterations times 3 inner iterations = 9 prints.',
+      code: [
+        'for (int i = 1; i <= 3; i++) {',
+        '    for (int j = 1; j <= 3; j++) {',
+        '        printf("%d ", i * j);',
+        '    }',
+        '    printf("\\n");',
+        '}',
+      ],
+      question: 'How many numbers get printed in total (across all three rows)?',
+      options: [
+        { text: '3 (one per row).', correct: false },
+        { text: '6 (rows + columns).', correct: false },
+        { text: '9 (rows times columns).', correct: true },
+        { text: '12 (counting the newlines).', correct: false },
+      ],
+      buildSteps: function() {
+        const steps = [];
+        steps.push({ line: 0, vars: {}, output: '', note: 'About to run.' });
+        let out = '';
+        for (let i = 1; i <= 3; i++) {
+          steps.push({ line: 0, vars: { i }, changed: ['i'], output: out, note: `Outer for: i = ${i}. Check is ${i} <= 3? true.` });
+          for (let j = 1; j <= 3; j++) {
+            steps.push({ line: 1, vars: { i, j }, changed: ['j'], output: out, note: `Inner for: j = ${j}.` });
+            out += (i * j) + ' ';
+            steps.push({ line: 2, vars: { i, j }, output: out, note: `printf prints ${i} * ${j} = ${i * j}.`, iterTile: { label: `${i}*${j}`, kind: 'ok' } });
+          }
+          steps.push({ line: 1, vars: { i, j: 4 }, output: out, note: 'Inner for: is 4 <= 3? false. Exit inner loop.', noteKind: 'exit' });
+          out += '\n';
+          steps.push({ line: 4, vars: { i, j: 4 }, output: out, note: 'Outer body continues: print a newline.' });
+        }
+        steps.push({ line: 0, vars: { i: 4, j: 4 }, output: out, note: 'Outer for: is 4 <= 3? false. Exit outer loop.', noteKind: 'exit' });
+        return steps;
+      },
+    },
+
+    // ----------------------------------------------------------
+    // Round 5: break early exit (searching for a value)
+    // ----------------------------------------------------------
+    {
+      label: 'Round 5 of 8',
+      text: 'break exits a loop immediately. You will see this in real code, especially in searches. The DFCS C Programming Standard asks you to avoid it when a clean alternative exists — the same search can be written with a flag in the condition instead. This round shows what break does so you can read it; the slide deck covers when to use it and when not.',
+      hint: 'When a[i] == 7 the if body runs, break jumps out of the loop entirely. The remaining elements (1, 9) are never checked.',
+      code: [
+        'int a[] = {3, 5, 7, 1, 9};',
+        'int found_at = -1;',
+        'for (int i = 0; i < 5; i++) {',
+        '    if (a[i] == 7) {',
+        '        found_at = i;',
+        '        break;',
+        '    }',
+        '}',
+        'printf("index: %d\\n", found_at);',
+      ],
+      question: 'How many array elements does the loop inspect before exiting?',
+      options: [
+        { text: 'All 5 (the loop always finishes).', correct: false },
+        { text: '3 (it stops as soon as a[2] == 7).', correct: true },
+        { text: '2 (it stops just before the match).', correct: false },
+        { text: '0 (break exits before the first check).', correct: false },
+      ],
+      buildSteps: function() {
+        const a = [3, 5, 7, 1, 9];
+        const steps = [];
+        steps.push({ line: 0, vars: { a: '{3,5,7,1,9}' }, changed: ['a'], output: '', note: 'Array declared and initialized.' });
+        steps.push({ line: 1, vars: { a: '{3,5,7,1,9}', found_at: -1 }, changed: ['found_at'], output: '', note: 'found_at starts at -1 (sentinel for "not found").' });
+        for (let i = 0; i < a.length; i++) {
+          steps.push({ line: 2, vars: { a: '{3,5,7,1,9}', found_at: i === 2 ? 2 : -1, i }, changed: ['i'], output: '', note: `for-condition: is ${i} < 5? true.` });
+          steps.push({ line: 3, vars: { a: '{3,5,7,1,9}', found_at: -1, i }, output: '', note: `Check: is a[${i}] (${a[i]}) == 7?`, iterTile: { label: `a[${i}]=${a[i]}`, kind: a[i] === 7 ? 'broke' : 'skipped' } });
+          if (a[i] === 7) {
+            steps.push({ line: 4, vars: { a: '{3,5,7,1,9}', found_at: i, i }, changed: ['found_at'], output: '', note: `Match. found_at becomes ${i}.` });
+            steps.push({ line: 5, vars: { a: '{3,5,7,1,9}', found_at: i, i }, output: '', note: 'break: jump straight out of the for loop. The rest of the array is never seen.', noteKind: 'warn' });
+            steps.push({ line: 8, vars: { a: '{3,5,7,1,9}', found_at: i, i }, output: 'index: ' + i + '\n', note: 'After the loop: print found_at.' });
+            return steps;
+          }
+        }
+        return steps;
+      },
+    },
+
+    // ----------------------------------------------------------
+    // Round 6: continue skipping
+    // ----------------------------------------------------------
+    {
+      label: 'Round 6 of 8',
+      text: 'continue jumps to the next iteration immediately. Like break, you will see this in real code (skip-bad-values filters are the classic case). And like break, the DFCS C Programming Standard asks you to avoid it when an if around the work would read more cleanly. Watch what continue does so you can read it; the slide deck covers when each form lands well.',
+      hint: 'When i is even, continue jumps directly to the for-update step (i++). The sum line never executes for that iteration.',
+      code: [
+        'int sum = 0;',
+        'for (int i = 1; i <= 6; i++) {',
+        '    if (i % 2 == 0) {',
+        '        continue;',
+        '    }',
+        '    sum += i;',
+        '}',
+        'printf("odd sum = %d\\n", sum);',
+      ],
+      question: 'What is the final value of sum?',
+      options: [
+        { text: '21 (1 + 2 + 3 + 4 + 5 + 6).', correct: false },
+        { text: '12 (2 + 4 + 6, the evens).', correct: false },
+        { text: '9 (1 + 3 + 5, the odds).', correct: true },
+        { text: '0 (continue skips every iteration).', correct: false },
+      ],
+      buildSteps: function() {
+        const steps = [];
+        steps.push({ line: 0, vars: { sum: 0 }, changed: ['sum'], output: '', note: 'sum = 0.' });
+        let runningSum = 0;
+        for (let i = 1; i <= 6; i++) {
+          steps.push({ line: 1, vars: { sum: runningSum, i }, changed: ['i'], output: '', note: `for: i = ${i}. Condition true.` });
+          steps.push({ line: 2, vars: { sum: runningSum, i }, output: '', note: `Check: is i % 2 (${i % 2}) == 0?` });
+          if (i % 2 === 0) {
+            steps.push({ line: 3, vars: { sum: runningSum, i }, output: '', note: 'i is even. continue: skip the rest of the body, go straight to for-update.', noteKind: 'warn', iterTile: { label: 'i=' + i, kind: 'skipped' } });
+          } else {
+            runningSum += i;
+            steps.push({ line: 5, vars: { sum: runningSum, i }, changed: ['sum'], output: '', note: `i is odd. sum += i : sum = ${runningSum}.`, iterTile: { label: '+=' + i, kind: 'ok' } });
+          }
+        }
+        steps.push({ line: 1, vars: { sum: 9, i: 7 }, changed: ['i'], output: '', note: 'for-update: i = 7. Condition false. Exit.', noteKind: 'exit' });
+        steps.push({ line: 7, vars: { sum: 9, i: 7 }, output: 'odd sum = 9\n', note: 'After the loop: print the odd sum.' });
+        return steps;
+      },
+    },
+
+    // ----------------------------------------------------------
+    // Round 7: off-by-one bug spotting
+    // ----------------------------------------------------------
+    {
+      section: 'Section 3: Common bugs',
+      label: 'Round 7 of 8',
+      text: 'A cadet wanted to print numbers 1 through 5 but wrote i < 5 in the condition. Predict what this prints, then step through to confirm.',
+      hint: 'i < 5 stops as soon as i becomes 5. That means the last iteration runs with i = 4, not i = 5.',
+      code: [
+        'for (int i = 1; i < 5; i++) {',
+        '    printf("%d ", i);',
+        '}',
+        'printf("\\n");',
+      ],
+      question: 'What does this loop print?',
+      options: [
+        { text: '1 2 3 4 5', correct: false },
+        { text: '1 2 3 4', correct: true },
+        { text: '0 1 2 3 4', correct: false },
+        { text: '2 3 4 5', correct: false },
+      ],
+      buildSteps: function() {
+        const steps = [];
+        steps.push({ line: 0, vars: {}, output: '', note: 'About to run.' });
+        let out = '';
+        for (let i = 1; i < 5; i++) {
+          steps.push({ line: 0, vars: { i }, changed: ['i'], output: out, note: `for: i = ${i}. Check is ${i} < 5? true.` });
+          out += i + ' ';
+          steps.push({ line: 1, vars: { i }, output: out, note: `printf prints ${i}.`, iterTile: { label: 'i=' + i, kind: 'ok' } });
+        }
+        steps.push({ line: 0, vars: { i: 5 }, changed: ['i'], output: out, note: 'for-update: i = 5. Check is 5 < 5? false. Exit. The body never sees i = 5.', noteKind: 'exit' });
+        out += '\n';
+        steps.push({ line: 3, vars: { i: 5 }, output: out, note: 'Final newline printed. To print 1 through 5 you would want i <= 5.', noteKind: 'warn' });
+        return steps;
+      },
+    },
+
+    // ----------------------------------------------------------
+    // Round 8: infinite-loop bug spotting
+    // ----------------------------------------------------------
+    {
+      label: 'Round 8 of 8',
+      text: 'A cadet wrote a countdown loop. They want it to count from 5 down to 0. Spot the bug. We will step the first several iterations to show what actually happens.',
+      hint: 'Inside a while loop the loop variable must change toward the exit condition. Here i never moves; the condition stays true forever.',
+      code: [
+        'int i = 5;',
+        'while (i >= 0) {',
+        '    printf("%d ", i);',
+        '    // bug: forgot to decrement i',
+        '}',
+      ],
+      question: 'What is wrong with this loop?',
+      options: [
+        { text: 'The condition should be i > 0, not i >= 0.', correct: false },
+        { text: 'printf needs &i, not i.', correct: false },
+        { text: 'i never decreases, so the loop runs forever.', correct: true },
+        { text: 'The loop variable should be unsigned.', correct: false },
+      ],
+      buildSteps: function() {
+        const steps = [];
+        steps.push({ line: 0, vars: { i: 5 }, changed: ['i'], output: '', note: 'i starts at 5.' });
+        let out = '';
+        // simulate first 4 iterations, then stop with an infinite-loop note
+        for (let k = 0; k < 4; k++) {
+          steps.push({ line: 1, vars: { i: 5 }, output: out, note: 'while-check: is 5 >= 0? true. Iteration ' + (k + 1) + '.' });
+          out += '5 ';
+          steps.push({ line: 2, vars: { i: 5 }, output: out, note: 'printf prints 5.', iterTile: { label: 'iter ' + (k + 1), kind: 'ok' } });
+        }
+        steps.push({ line: 3, vars: { i: 5 }, output: out + '...', note: 'i is still 5. The condition stays true. This loop never ends. The program would have to be killed externally (Ctrl+C in the terminal).', noteKind: 'warn' });
+        return steps;
+      },
+    },
+  ];
+
+  // Helper used inside buildSteps: read the previous step's output buffer.
+  function stepsLastOutput(steps) {
+    if (steps.length === 0) return '';
+    return steps[steps.length - 1].output || '';
+  }
+
+  // ============================================================
+  // State
+  // ============================================================
+  let currentRoundIndex = 0;
+  let currentStepIndex = 0;
+  let currentSteps = [];
+  let runMode = false;        // when true, "Run to end" played through
+  let consecutiveHintReqs = 0;
+  let predictionState = null; // { chosen, correct, locked } | null
+
+  // ============================================================
+  // DOM refs
+  // ============================================================
+  const elProgressFill = root.querySelector('#lp-progress-fill');
+  const elProgressLabel = root.querySelector('#lp-progress-label');
+  const elSectionHeader = root.querySelector('#lp-section-header');
+  const elCard = root.querySelector('#lp-task-card');
+  const elTaskLabel = root.querySelector('#lp-task-label');
+  const elTaskText = root.querySelector('#lp-task-text');
+  const elTaskHint = root.querySelector('#lp-task-hint');
+  const elTaskQuestion = root.querySelector('#lp-task-question');
+  const elPredictArea = root.querySelector('#lp-predict-area');
+  const elCode = root.querySelector('#lp-code');
+  const elState = root.querySelector('#lp-state');
+  const elStepBtn = root.querySelector('#lp-step-btn');
+  const elRunBtn = root.querySelector('#lp-run-btn');
+  const elResetBtn = root.querySelector('#lp-reset-btn');
+  const elHintBtn = root.querySelector('#lp-hint-btn');
+  const elNextBtn = root.querySelector('#lp-next-btn');
+  const elCompletion = root.querySelector('#lp-completion-area');
+
+  // ============================================================
+  // Render code pane
+  // ============================================================
+  function renderCode() {
+    const round = rounds[currentRoundIndex];
+    const step = currentSteps[currentStepIndex];
+    let html = '';
+    for (let i = 0; i < round.code.length; i++) {
+      const cls = (step && step.line === i) ? 'code-line current' : 'code-line';
+      const ln = String(i + 1).padStart(2, ' ');
+      html += '<div class="' + cls + '"><span class="ln">' + ln + '</span><span class="src">' + tintLine(round.code[i]) + '</span></div>';
+    }
+    elCode.innerHTML = html;
+  }
+
+  // ============================================================
+  // Render state pane
+  // ============================================================
+  function renderState() {
+    const step = currentSteps[currentStepIndex];
+    if (!step) {
+      elState.innerHTML = '<div style="color:#6B7280; font-style:italic; text-align:center; padding: 60px 10px;">Press Step to begin.</div>';
+      return;
+    }
+    let html = '';
+
+    // Variables
+    const keys = Object.keys(step.vars);
+    html += '<div class="state-section">';
+    html += '<div class="state-header">Variables</div>';
+    if (keys.length === 0) {
+      html += '<div style="font-style:italic; color:#6B7280; font-size:13px;">(none yet)</div>';
+    } else {
+      html += '<table class="var-table"><thead><tr><th>name</th><th>value</th></tr></thead><tbody>';
+      const changed = new Set(step.changed || []);
+      for (const k of keys) {
+        const cls = changed.has(k) ? 'changed' : '';
+        html += '<tr class="' + cls + '"><td>' + escapeHtml(k) + '</td><td class="val">' + escapeHtml(String(step.vars[k])) + '</td></tr>';
+      }
+      html += '</tbody></table>';
+    }
+    html += '</div>';
+
+    // Iteration strip (tiles up to and including current step)
+    const tiles = [];
+    for (let i = 0; i <= currentStepIndex; i++) {
+      const s = currentSteps[i];
+      if (s && s.iterTile) tiles.push(s.iterTile);
+    }
+    if (tiles.length > 0) {
+      html += '<div class="state-section">';
+      html += '<div class="state-header">Iteration log</div>';
+      html += '<div class="iter-strip">';
+      for (const t of tiles) {
+        const cls = 'iter-tile' + (t.kind === 'skipped' ? ' skipped' : t.kind === 'broke' ? ' broke' : '');
+        html += '<div class="' + cls + '">' + escapeHtml(t.label) + '</div>';
+      }
+      html += '</div></div>';
+    }
+
+    // Output buffer
+    html += '<div class="state-section">';
+    html += '<div class="state-header">Output</div>';
+    if (!step.output || step.output === '') {
+      html += '<div class="output-buf"><span class="empty">(nothing printed yet)</span></div>';
+    } else {
+      html += '<div class="output-buf">' + escapeHtml(step.output) + '</div>';
+    }
+    html += '</div>';
+
+    // Note
+    if (step.note) {
+      const cls = 'note-box' + (step.noteKind === 'warn' ? ' warn' : step.noteKind === 'exit' ? ' exit' : '');
+      html += '<div class="' + cls + '">' + escapeHtml(step.note) + '</div>';
+    }
+    elState.innerHTML = html;
+  }
+
+  // ============================================================
+  // Render task card and prediction area
+  // ============================================================
+  function renderTask() {
+    const pct = (currentRoundIndex / rounds.length) * 100;
+    elProgressFill.style.width = pct + '%';
+    elProgressLabel.textContent = 'Round ' + Math.min(currentRoundIndex + 1, rounds.length) + ' of ' + rounds.length;
+
+    if (currentRoundIndex >= rounds.length) {
+      elCard.className = 'task-card complete';
+      elTaskLabel.textContent = 'Complete';
+      elTaskText.textContent = "You traced every loop form C has, plus break, continue, and the two bugs that bite every first-year programmer. The lab will exercise these patterns end to end.";
+      elTaskHint.textContent = '';
+      elTaskQuestion.textContent = '';
+      elPredictArea.innerHTML = '';
+      elProgressFill.style.width = '100%';
+      elProgressLabel.textContent = 'All rounds complete';
+      elSectionHeader.textContent = 'All done';
+      cs210RenderCompletion(elCompletion);
+      elStepBtn.disabled = true;
+      elRunBtn.disabled = true;
+      elNextBtn.disabled = true;
+      elCode.innerHTML = '';
+      elState.innerHTML = '';
+      return;
+    }
+    elCompletion.innerHTML = '';
+    elCard.className = 'task-card';
+    const round = rounds[currentRoundIndex];
+    if (round.section) elSectionHeader.textContent = round.section;
+    elTaskLabel.textContent = round.label;
+    elTaskText.textContent = round.text;
+    elTaskHint.textContent = '';
+    // Only show the question in the task card when there is NO prediction area
+    // (the prediction area renders the question itself). For non-prediction rounds
+    // the task-question field stays empty.
+    elTaskQuestion.textContent = '';
+
+    // Prediction area only for bug-spotting rounds
+    if (round.options && predictionState === null) {
+      renderPrediction();
+    } else if (round.options && predictionState !== null) {
+      renderPrediction();
+    } else {
+      elPredictArea.innerHTML = '';
+    }
+  }
+
+  function renderPrediction() {
+    const round = rounds[currentRoundIndex];
+    if (!round.options) { elPredictArea.innerHTML = ''; return; }
+    let html = '<div class="predict-row"><div class="predict-prompt">' + escapeHtml(round.question || 'Pick the best answer:') + '</div><div class="predict-options">';
+    for (let i = 0; i < round.options.length; i++) {
+      const opt = round.options[i];
+      let cls = 'predict-btn';
+      if (predictionState !== null) {
+        if (opt.correct) cls += ' right';
+        else if (predictionState.chosen === i) cls += ' wrong';
+      }
+      html += '<button class="' + cls + '" data-idx="' + i + '"' + (predictionState !== null ? ' disabled' : '') + '>' + escapeHtml(opt.text) + '</button>';
+    }
+    html += '</div></div>';
+    elPredictArea.innerHTML = html;
+    if (predictionState === null) {
+      elPredictArea.querySelectorAll('.predict-btn').forEach(b => {
+        b.addEventListener('click', () => {
+          const idx = parseInt(b.dataset.idx, 10);
+          predictionState = { chosen: idx, correct: round.options[idx].correct, locked: true };
+          renderPrediction();
+          // Unlock the step controls once the cadet has committed to an answer.
+          elStepBtn.disabled = currentSteps.length === 0;
+          elRunBtn.disabled = currentSteps.length === 0;
+        });
+      });
+    }
+  }
+
+  // ============================================================
+  // Step controls
+  // ============================================================
+  function loadRound() {
+    const round = rounds[currentRoundIndex];
+    currentSteps = round.buildSteps ? round.buildSteps() : [];
+    currentStepIndex = 0;
+    predictionState = null;
+    runMode = false;
+    consecutiveHintReqs = 0;
+    elHintBtn.classList.remove('pulse');
+    elNextBtn.disabled = (currentRoundIndex >= rounds.length);
+    renderTask();
+    renderCode();
+    renderState();
+    // Step/Run are gated behind the prediction. Every round must have options,
+    // so until predictionState is set the cadet cannot advance the animation.
+    // This enforces the "10-20 meaningful steps; each step requires a decision"
+    // rule from the blueprint - a round cannot complete without a prediction.
+    const gated = round.options && predictionState === null;
+    elStepBtn.disabled = gated || currentSteps.length === 0;
+    elRunBtn.disabled = gated || currentSteps.length === 0;
+  }
+
+  function doStep() {
+    if (currentStepIndex < currentSteps.length - 1) {
+      currentStepIndex++;
+      renderCode();
+      renderState();
+    }
+    if (currentStepIndex >= currentSteps.length - 1) {
+      elStepBtn.disabled = true;
+      elRunBtn.disabled = true;
+      elNextBtn.classList.add('pulse');
+    }
+  }
+  function doRunToEnd() {
+    while (currentStepIndex < currentSteps.length - 1) {
+      currentStepIndex++;
+    }
+    renderCode();
+    renderState();
+    elStepBtn.disabled = true;
+    elRunBtn.disabled = true;
+    elNextBtn.classList.add('pulse');
+  }
+  function doReset() {
+    currentStepIndex = 0;
+    predictionState = null;
+    renderTask();
+    renderCode();
+    renderState();
+    elStepBtn.disabled = currentSteps.length === 0;
+    elRunBtn.disabled = currentSteps.length === 0;
+    elNextBtn.classList.remove('pulse');
+  }
+  function doHint() {
+    const round = rounds[currentRoundIndex];
+    if (round && round.hint) {
+      elTaskHint.textContent = 'Hint: ' + round.hint;
+    }
+    elHintBtn.classList.remove('pulse');
+  }
+  function doNext() {
+    if (currentRoundIndex < rounds.length) {
+      currentRoundIndex++;
+    }
+    elNextBtn.classList.remove('pulse');
+    if (currentRoundIndex >= rounds.length) {
+      renderTask();
+    } else {
+      loadRound();
+    }
+  }
+
+  elStepBtn.addEventListener('click', doStep);
+  elRunBtn.addEventListener('click', doRunToEnd);
+  elResetBtn.addEventListener('click', doReset);
+  elHintBtn.addEventListener('click', doHint);
+  elNextBtn.addEventListener('click', doNext);
+
+  // Initial load
+  loadRound();
+})();
+</script>
+
+      <!-- ===== END WIDGET ===== -->
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 28px 0 10px 0;">Lab 05: VFR Fuel Log</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Read a flight log from stdin and report summary statistics. Each entry is one flight: hours flown and gallons burned. You decide which loop forms to use and which loop patterns each summary needs.</p>
+
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 16px; margin-bottom: 18px; border-radius: 3px;">
+        <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">Lab logistics</div>
+        <ul style="margin: 0; padding-left: 22px; font-size: 13.5px; color: #4A5568;">
+          <li style="margin-bottom: 4px;">Autograded on Gradescope.</li>
+          <li style="margin-bottom: 4px;">3 graded submissions.</li>
+          <li style="margin-bottom: 0;">Worth 2 points. Due before Lesson 6.</li>
+        </ul>
+      </div>
+
+      <p style="font-size: 14px; margin: 0;">Open the README in your repo for the full spec, the input and output format, the exact strings to print, and the test cases.</p>
+    </div>
+  </details>
+
+  <!-- ===================== 6. AFTER CLASS ===================== -->
+  <details id="after-class" style="margin-bottom: 24px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      6. After Class
+    </summary>
+    <div style="padding: 18px 22px;">
+      <ul style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Finish Lab 05 if you did not complete it in class. Submit through GitHub Classroom before Lesson 6.</li>
+        <li style="margin-bottom: 6px;">Read Beej-C Chapter 4 (Functions) for Lesson 6.</li>
+        <li style="margin-bottom: 6px;">Replay the Loop Tracer. Try predicting each round's output before pressing Run.</li>
+        <li style="margin-bottom: 0;">Heads up: Quiz 2 at Lesson 7 covers Lessons 5 and 6 together.</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== HELP NOTE ===================== -->
+  <div style="background: #F5F7FA; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 3px; font-size: 13.5px; color: #4A5568;">
+    <strong style="color: #00205B;">Need help?</strong> Schedule EI with your instructor. Bring specific code or specific screenshots, and the exact error message or output you do not understand. Specific questions get unstuck quickly.
+  </div>
+
+</div>

@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="CS210 — Programming in C. Lessons, labs, and reference material by Dr. Sarah J. Bolton, USAFA." />
+  <title>CS210 — Programming in C | Dr. Sarah J. Bolton</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231a3a5c'/%3E%3Ctext x='50%25' y='52%25' text-anchor='middle' dominant-baseline='middle' font-family='Georgia, serif' font-weight='700' font-size='18' fill='%23e6c068'%3ESB%3C/text%3E%3C/svg%3E" />
+
+  <style>
+    :root {
+      --bg: #fafaf7;
+      --bg-soft: #f3f1ea;
+      --bg-card: #ffffff;
+      --ink: #1c1c1a;
+      --ink-soft: #3d3d39;
+      --ink-mute: #6b6b65;
+      --rule: #d8d4c7;
+      --accent: #1a3a5c;
+      --accent-soft: #2d5a85;
+      --gold: #b08a3e;
+      --gold-soft: #d6b56b;
+      --tag-bg: #ece8db;
+      --tag-ink: #3d3d39;
+      --shadow: 0 1px 2px rgba(28, 28, 26, 0.04), 0 8px 24px rgba(28, 28, 26, 0.06);
+      --radius: 6px;
+    }
+
+    [data-theme="dark"] {
+      --bg: #16181c;
+      --bg-soft: #1d2026;
+      --bg-card: #20242b;
+      --ink: #f2efe8;
+      --ink-soft: #d4d0c7;
+      --ink-mute: #94918a;
+      --rule: #34383f;
+      --accent: #7ba9d4;
+      --accent-soft: #9bbfdf;
+      --gold: #d6b56b;
+      --gold-soft: #e6c895;
+      --tag-bg: #2a2e36;
+      --tag-ink: #d4d0c7;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 17px;
+      line-height: 1.65;
+      color: var(--ink);
+      background: var(--bg);
+      -webkit-font-smoothing: antialiased;
+    }
+    h1, h2, h3 {
+      font-family: 'Fraunces', Georgia, serif;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+    }
+    h1 { font-size: clamp(2rem, 4vw, 2.75rem); line-height: 1.15; margin-bottom: 0.5rem; font-weight: 700; }
+    h2 { font-size: 1.4rem; line-height: 1.3; margin-bottom: 0.5rem; }
+
+    p { margin-bottom: 1rem; color: var(--ink-soft); }
+    a {
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.2s ease;
+    }
+    a:hover { border-bottom-color: var(--accent); }
+
+    .container { max-width: 760px; margin: 0 auto; padding: 0 1.5rem; }
+
+    header.site-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(250, 250, 247, 0.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--rule);
+    }
+    [data-theme="dark"] header.site-header { background: rgba(22, 24, 28, 0.92); }
+
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.85rem 0;
+      max-width: 1120px;
+      margin: 0 auto;
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+
+    .brand {
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--ink);
+      border-bottom: none;
+    }
+    .brand .brand-sub {
+      display: block;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+      color: var(--ink-mute);
+      margin-top: 2px;
+    }
+
+    nav.primary { display: flex; align-items: center; gap: 1.5rem; }
+    nav.primary a {
+      font-size: 0.92rem;
+      color: var(--ink-soft);
+      font-weight: 500;
+    }
+    nav.primary a:hover { color: var(--accent); }
+    nav.primary a.active { color: var(--accent); border-bottom: 1px solid var(--gold); }
+
+    .theme-toggle {
+      background: none;
+      border: 1px solid var(--rule);
+      color: var(--ink-soft);
+      padding: 0.4rem 0.7rem;
+      font-size: 0.8rem;
+      font-family: inherit;
+      border-radius: var(--radius);
+      cursor: pointer;
+    }
+    .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+    .menu-btn {
+      display: none;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--ink);
+      cursor: pointer;
+    }
+
+    @media (max-width: 820px) {
+      nav.primary {
+        position: absolute;
+        top: 100%;
+        right: 1.5rem;
+        background: var(--bg-card);
+        border: 1px solid var(--rule);
+        border-radius: var(--radius);
+        padding: 0.75rem 1rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+        box-shadow: var(--shadow);
+        display: none;
+      }
+      nav.primary.open { display: flex; }
+      .menu-btn { display: block; }
+    }
+
+    .breadcrumb {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+      color: var(--ink-mute);
+      padding-top: 2rem;
+    }
+    .breadcrumb a { color: var(--ink-mute); }
+    .breadcrumb a:hover { color: var(--accent); }
+
+    .hero {
+      padding: 1.25rem 0 2rem;
+      border-bottom: 1px solid var(--rule);
+    }
+    .kicker {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 1rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid var(--gold-soft);
+    }
+    .hero-sub {
+      font-size: 1.1rem;
+      color: var(--ink-soft);
+      max-width: 60ch;
+      margin-top: 0.5rem;
+    }
+
+    .lessons { padding: 3rem 0 5rem; }
+
+    .placeholder-note {
+      background: var(--bg-soft);
+      border-left: 3px solid var(--gold);
+      padding: 1.25rem 1.5rem;
+      border-radius: 0 var(--radius) var(--radius) 0;
+      font-size: 0.95rem;
+      color: var(--ink-soft);
+    }
+    .placeholder-note strong { color: var(--ink); }
+
+    /* Featured link (syllabus / welcome) */
+    .featured-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      background: var(--bg-card);
+      border: 1px solid var(--rule);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 1.1rem 1.5rem;
+      margin-bottom: 1.5rem;
+      color: var(--ink);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .featured-link:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+      border-left-color: var(--accent);
+      border-color: var(--accent-soft);
+    }
+    .featured-link .fl-kicker {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--gold);
+      display: block;
+      margin-bottom: 0.15rem;
+    }
+    .featured-link .fl-title {
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--ink);
+    }
+    .featured-link .fl-arrow {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent);
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    /* Lesson list */
+    .lesson-list {
+      list-style: none;
+      border-top: 1px solid var(--rule);
+    }
+    .lesson-row {
+      display: flex;
+      align-items: baseline;
+      gap: 1rem;
+      padding: 0.85rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      border-left: 2px solid transparent;
+      color: var(--ink);
+      transition: background 0.15s ease, border-color 0.15s ease, padding-left 0.15s ease;
+    }
+    .lesson-row:hover {
+      background: var(--bg-soft);
+      border-left-color: var(--gold);
+      border-bottom-color: var(--rule);
+      padding-left: 1rem;
+    }
+    .lesson-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--gold);
+      font-weight: 500;
+      min-width: 2.25rem;
+      flex-shrink: 0;
+    }
+    .lesson-name { font-size: 0.98rem; color: var(--ink); }
+    .lesson-row:hover .lesson-name { color: var(--accent); }
+
+    footer {
+      padding: 2.5rem 0;
+      background: var(--bg-soft);
+      border-top: 1px solid var(--rule);
+      font-size: 0.85rem;
+      color: var(--ink-mute);
+      text-align: center;
+    }
+    footer p { margin-bottom: 0.4rem; color: var(--ink-mute); }
+    footer a { color: var(--ink-soft); }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="/" class="brand">
+      Sarah J. Bolton, Ph.D.
+      <span class="brand-sub">Assistant Professor · Director, ACCR</span>
+    </a>
+    <button class="menu-btn" id="menuBtn" aria-label="Toggle menu">☰</button>
+    <nav class="primary" id="primaryNav">
+      <a href="/#about">About</a>
+      <a href="/#teaching">Teaching</a>
+      <a href="/#colloquium">Colloquium &amp; ACCR</a>
+      <a href="/#research">Research</a>
+      <a href="/courses/" class="active">Courses</a>
+      <a href="/#cv">CV</a>
+      <a href="/#contact">Contact</a>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">Dark</button>
+    </nav>
+  </div>
+</header>
+
+<div class="container">
+  <p class="breadcrumb"><a href="/courses/">Courses</a> / CS210</p>
+</div>
+
+<section class="hero">
+  <div class="container">
+    <span class="kicker">CS210 · Programming in C</span>
+    <h1>Programming in C</h1>
+    <p class="hero-sub">
+      A second course in programming focusing on C, pointers, and memory management — bridging an
+      introductory Python course and a systems-heavy data structures course. Lessons and reference
+      material are collected here.
+    </p>
+  </div>
+</section>
+
+<section class="lessons">
+  <div class="container">
+
+    <div class="placeholder-note">
+      <strong>Draft.</strong> These materials are a work in progress and subject to change.
+    </div>
+
+    <a class="featured-link" href="CS210_welcome_page.html">
+      <span>
+        <span class="fl-kicker">Start here</span>
+        <span class="fl-title">Welcome &amp; Syllabus</span>
+      </span>
+      <span class="fl-arrow">→</span>
+    </a>
+
+    <ul class="lesson-list">
+      <li><a class="lesson-row" href="lesson01_page.html"><span class="lesson-num">01</span><span class="lesson-name">Course Intro and Toolchain</span></a></li>
+      <li><a class="lesson-row" href="lesson02_page.html"><span class="lesson-num">02</span><span class="lesson-name">Variables and Types</span></a></li>
+      <li><a class="lesson-row" href="lesson03_page.html"><span class="lesson-num">03</span><span class="lesson-name">Operators and Standard Libraries</span></a></li>
+      <li><a class="lesson-row" href="lesson04_page.html"><span class="lesson-num">04</span><span class="lesson-name">Conditionals</span></a></li>
+      <li><a class="lesson-row" href="lesson05_page.html"><span class="lesson-num">05</span><span class="lesson-name">Loops</span></a></li>
+      <li><a class="lesson-row" href="lesson06_page.html"><span class="lesson-num">06</span><span class="lesson-name">Functions</span></a></li>
+      <li><a class="lesson-row" href="lesson07_page.html"><span class="lesson-num">07</span><span class="lesson-name">Make and the Build Process</span></a></li>
+      <li><a class="lesson-row" href="lesson09_page.html"><span class="lesson-num">09</span><span class="lesson-name">Arrays</span></a></li>
+      <li><a class="lesson-row" href="lesson10_page.html"><span class="lesson-num">10</span><span class="lesson-name">C Strings</span></a></li>
+      <li><a class="lesson-row" href="lesson11_page.html"><span class="lesson-num">11</span><span class="lesson-name">Recursion I: First Exposure</span></a></li>
+      <li><a class="lesson-row" href="lesson12_page.html"><span class="lesson-num">12</span><span class="lesson-name">Pointers Introduction</span></a></li>
+      <li><a class="lesson-row" href="lesson13_page.html"><span class="lesson-num">13</span><span class="lesson-name">Pointer Arithmetic</span></a></li>
+      <li><a class="lesson-row" href="lesson14_page.html"><span class="lesson-num">14</span><span class="lesson-name">Pass by Value vs Pass by Pointer</span></a></li>
+      <li><a class="lesson-row" href="lesson15_page.html"><span class="lesson-num">15</span><span class="lesson-name">Stack, Heap, malloc, free</span></a></li>
+      <li><a class="lesson-row" href="lesson16_page.html"><span class="lesson-num">16</span><span class="lesson-name">Memory Bugs and valgrind</span></a></li>
+      <li><a class="lesson-row" href="lesson18_page.html"><span class="lesson-num">18</span><span class="lesson-name">Structs Introduction</span></a></li>
+      <li><a class="lesson-row" href="lesson19_page.html"><span class="lesson-num">19</span><span class="lesson-name">Pointers to Structs and Dynamic Arrays</span></a></li>
+      <li><a class="lesson-row" href="lesson20_page.html"><span class="lesson-num">20</span><span class="lesson-name">Organizing Multi-file C Code</span></a></li>
+      <li><a class="lesson-row" href="lesson21_page.html"><span class="lesson-num">21</span><span class="lesson-name">File I/O</span></a></li>
+      <li><a class="lesson-row" href="lesson22_page.html"><span class="lesson-num">22</span><span class="lesson-name">Command-Line Arguments and the Outside Environment</span></a></li>
+      <li><a class="lesson-row" href="lesson23_page.html"><span class="lesson-num">23</span><span class="lesson-name">Software Design from Requirements</span></a></li>
+      <li><a class="lesson-row" href="lesson24_page.html"><span class="lesson-num">24</span><span class="lesson-name">Git in Depth I: Branching, Merging, Conflict Resolution</span></a></li>
+      <li><a class="lesson-row" href="lesson25_page.html"><span class="lesson-num">25</span><span class="lesson-name">Git in Depth II: Collaboration</span></a></li>
+      <li><a class="lesson-row" href="lesson26_page.html"><span class="lesson-num">26</span><span class="lesson-name">Test Planning and Unit Testing</span></a></li>
+      <li><a class="lesson-row" href="lesson27_page.html"><span class="lesson-num">27</span><span class="lesson-name">Ethics</span></a></li>
+      <li><a class="lesson-row" href="lesson29_page.html"><span class="lesson-num">29</span><span class="lesson-name">Linked Lists I</span></a></li>
+      <li><a class="lesson-row" href="lesson30_page.html"><span class="lesson-num">30</span><span class="lesson-name">Linked Lists II: Deletion</span></a></li>
+      <li><a class="lesson-row" href="lesson31_page.html"><span class="lesson-num">31</span><span class="lesson-name">Stacks and Queues Walkthrough</span></a></li>
+      <li><a class="lesson-row" href="lesson32_page.html"><span class="lesson-num">32</span><span class="lesson-name">Recursion on a Linked List</span></a></li>
+      <li><a class="lesson-row" href="lesson33_page.html"><span class="lesson-num">33</span><span class="lesson-name">Recursion vs Iteration: Weighing the Tradeoffs</span></a></li>
+      <li><a class="lesson-row" href="lesson34_page.html"><span class="lesson-num">34</span><span class="lesson-name">Bitwise Operators I</span></a></li>
+      <li><a class="lesson-row" href="lesson35_page.html"><span class="lesson-num">35</span><span class="lesson-name">Bitwise Operators II (Applied)</span></a></li>
+      <li><a class="lesson-row" href="lesson36_page.html"><span class="lesson-num">36</span><span class="lesson-name">Function Pointers</span></a></li>
+      <li><a class="lesson-row" href="lesson37_page.html"><span class="lesson-num">37</span><span class="lesson-name">Defensive Programming and Reading Existing C Code</span></a></li>
+      <li><a class="lesson-row" href="lesson38_page.html"><span class="lesson-num">38</span><span class="lesson-name">Memory Layout Deep Dive</span></a></li>
+    </ul>
+
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p>© 2026 Sarah J. Bolton · Teaching &amp; Research Portfolio</p>
+    <p>Colorado Springs, Colorado · <a href="/courses/">Courses</a> · <a href="/#contact">Contact</a></p>
+  </div>
+</footer>
+
+<script>
+  (function() {
+    const toggle = document.getElementById('themeToggle');
+    const root = document.documentElement;
+    const saved = localStorage.getItem('theme');
+    if (saved === 'dark') { root.setAttribute('data-theme', 'dark'); toggle.textContent = 'Light'; }
+    toggle.addEventListener('click', () => {
+      const current = root.getAttribute('data-theme');
+      if (current === 'dark') {
+        root.removeAttribute('data-theme');
+        localStorage.setItem('theme', 'light');
+        toggle.textContent = 'Dark';
+      } else {
+        root.setAttribute('data-theme', 'dark');
+        localStorage.setItem('theme', 'dark');
+        toggle.textContent = 'Light';
+      }
+    });
+  })();
+
+  (function() {
+    const btn = document.getElementById('menuBtn');
+    const nav = document.getElementById('primaryNav');
+    btn.addEventListener('click', () => nav.classList.toggle('open'));
+    nav.querySelectorAll('a').forEach(a => a.addEventListener('click', () => nav.classList.remove('open')));
+  })();
+</script>
+
+</body>
+</html>

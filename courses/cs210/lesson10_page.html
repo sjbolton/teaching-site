@@ -1,0 +1,3309 @@
+<!-- ============================================================
+     CS210 — Lesson 10
+     C Strings
+     Self-contained: all CSS inline. Native <details> for collapsing.
+     String + printf walkthrough widgets embedded inline in section 5.
+     Paste into Blackboard Ultra via Document → Add HTML block.
+     ============================================================ -->
+
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 980px; margin: 0 auto; line-height: 1.6;">
+
+  <!-- ===================== LIGHT HEADER ===================== -->
+  <div style="border-left: 5px solid #003087; padding: 8px 0 8px 18px; margin-bottom: 24px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 2px;">CS210 &middot; Block 2 &middot; Lesson 10</div>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 600; color: #00205B;">C Strings</h1>
+    <div style="font-size: 14px; color: #4A5568; margin-top: 4px;">Null-terminated character arrays &middot; string.h &middot; Format specifier control</div>
+  </div>
+
+  <!-- ===================== AT A GLANCE ===================== -->
+  <div style="background: #F5F7FA; border-left: 4px solid #B5B7BA; padding: 14px 18px; margin-bottom: 22px; font-size: 14px;">
+    <strong style="color: #00205B;">At a glance:</strong> A C string is just an array of characters with a zero byte at the end. That one design choice shapes everything you do with strings: how you measure them, copy them, compare them, and how easy it is to wreck them. Today you build a real mental model of what a string looks like in memory, learn the five most important functions in <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&lt;string.h&gt;</code>, and pick up the printf format controls that let you produce clean output.
+  </div>
+
+  <!-- ===================== TABLE OF CONTENTS ===================== -->
+  <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 20px; margin-bottom: 24px; border-radius: 3px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Contents</div>
+    <ol style="margin: 0; padding-left: 22px; font-size: 14px;">
+      <li style="margin-bottom: 4px;"><a href="#objectives" style="color: #003087; text-decoration: none;">Lesson Objectives</a></li>
+      <li style="margin-bottom: 4px;"><a href="#readings" style="color: #003087; text-decoration: none;">Assigned Readings</a></li>
+      <li style="margin-bottom: 4px;"><a href="#pre-class" style="color: #003087; text-decoration: none;">Pre-Class Work</a></li>
+      <li style="margin-bottom: 4px;"><a href="#materials" style="color: #003087; text-decoration: none;">Lesson Materials and Overview</a></li>
+      <li style="margin-bottom: 4px;"><a href="#in-class" style="color: #003087; text-decoration: none;">In-Class Work</a></li>
+      <li style="margin-bottom: 0;"><a href="#after-class" style="color: #003087; text-decoration: none;">After Class</a></li>
+    </ol>
+  </div>
+
+  <!-- ===================== 1. OBJECTIVES ===================== -->
+  <details id="objectives" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      1. Lesson Objectives
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 10px 0; font-style: italic;">By the end of this lesson, cadets will be able to:</p>
+      <ol style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Manipulate C strings as null-terminated character arrays. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+        <li style="margin-bottom: 6px;">Apply standard library string functions from <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&lt;string.h&gt;</code> to common string tasks. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+        <li style="margin-bottom: 0;">Format printed output using precision, width, and padding specifiers. <span style="color: #6B7280; font-size: 12px;">(Outcomes 2, 7)</span></li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 2. READINGS ===================== -->
+  <details id="readings" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      2. Assigned Readings
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 12px 0;">Complete before class. These set the vocabulary we will use.</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <thead>
+          <tr style="background: #E8EDF5; color: #00205B;">
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 130px;">Source</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9;">Sections</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 220px;">Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;"><a href="https://beej.us/guide/bgc/" style="color: #003087; text-decoration: underline;">Beej-C</a></td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Chapter 7 (Strings)</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">What a string actually is in C, NUL termination, copying gotchas</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;"><a href="https://beej.us/guide/bgclr/" style="color: #003087; text-decoration: underline;">Beej-Lib</a></td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&lt;string.h&gt;</code> reference (skim)</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Function signatures for <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">strlen</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">strcpy</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">strcmp</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">strcat</code>, and their <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">strn*</code> siblings</td>
+          </tr>
+          <tr>
+            <td style="padding: 9px 12px;">King, <em>C Programming: A Modern Approach</em></td>
+            <td style="padding: 9px 12px;">Chapter 13 (Strings)</td>
+            <td style="padding: 9px 12px; color: #4A5568;">Optional deeper dive with more examples</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div style="background: #EEF4FF; border-left: 4px solid #003087; padding: 12px 16px; margin-top: 14px; border-radius: 3px; font-size: 13.5px; color: #1A2B4A;">
+        <strong style="color: #00205B;">Heads-up on Beej Chapter 7:</strong> Beej leads with <code style="background: #FFFFFF; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">char *s = "Hello";</code> and calls strings &quot;pointers.&quot; We have not formally taught pointers yet (that lands in Lesson 12). For now: read the array form <code style="background: #FFFFFF; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">char s[] = "Hello";</code> as the working form. The <code style="background: #FFFFFF; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">char *</code> syntax will make full sense in two lessons. You can absolutely follow the chapter; just do not get stuck on the pointer language.
+      </div>
+    </div>
+  </details>
+
+  <!-- ===================== 3. PRE-CLASS WORK ===================== -->
+  <details id="pre-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      3. Pre-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 18px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #6B5300; font-size: 14px; margin-bottom: 4px;">Do this first</div>
+        <div style="font-size: 14px; color: #5A4B00;">Plan on 30 to 40 minutes for the reading and warmup. Most of the work happens during the in-class walkthroughs; come with the vocabulary ready.</div>
+      </div>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 0 0 10px 0;">Pre-Class Checklist</h3>
+
+      <!-- Step 1: Reading -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">1</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Read Beej-C Chapter 7</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">It is short. Pay particular attention to:</div>
+            <ul style="font-size: 13.5px; margin: 0 0 6px 0; padding-left: 20px;">
+              <li style="margin-bottom: 3px;">The NUL terminator (<code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">'\0'</code>) and why it matters</li>
+              <li style="margin-bottom: 3px;">The difference between a string literal and a <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">char[]</code> initialized from one</li>
+              <li style="margin-bottom: 3px;">Why <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">=</code> does not copy a string</li>
+              <li style="margin-bottom: 0;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">strlen</code> and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">strcpy</code></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Skim string.h reference -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">2</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Skim the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&lt;string.h&gt;</code> reference</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">In the Beej-Lib reference, look up the signatures of these five functions. You do not need to memorize them, but the in-class walkthrough will use all five:</div>
+            <ul style="font-size: 13.5px; margin: 0 0 6px 0; padding-left: 20px;">
+              <li style="margin-bottom: 3px;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">strlen</code></li>
+              <li style="margin-bottom: 3px;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">strcpy</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">strncpy</code></li>
+              <li style="margin-bottom: 3px;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">strcmp</code></li>
+              <li style="margin-bottom: 0;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">strcat</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">strncat</code></li>
+            </ul>
+            <div style="font-size: 13px; color: #4A5568; margin-top: 6px;">Reading function signatures fluently is itself a skill. It will pay off every lesson from here on.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Warmup -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 8px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">3</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Warmup: count the bytes, then predict</div>
+            <div style="font-size: 14px; margin-bottom: 8px;"><strong>Part A.</strong> For each of the following, write down how many bytes the array uses. Bring your answers to class.</div>
+            <div style="background: #1E2A3A; color: #E8EDF5; padding: 12px 16px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6;">
+              <span style="color: #569CD6;">char</span> a[] = <span style="color: #CE9178;">"hi"</span>;<br>
+              <span style="color: #569CD6;">char</span> b[] = <span style="color: #CE9178;">""</span>;<br>
+              <span style="color: #569CD6;">char</span> c[<span style="color: #B5CEA8;">10</span>] = <span style="color: #CE9178;">"abc"</span>;<br>
+              <span style="color: #569CD6;">char</span> d[] = {<span style="color: #CE9178;">'h'</span>, <span style="color: #CE9178;">'i'</span>};
+            </div>
+            <div style="font-size: 13px; color: #4A5568; margin-top: 8px;">Hint: every C string ends with a NUL byte. Three of the four above contain one.</div>
+
+            <div style="font-size: 14px; margin-top: 14px; margin-bottom: 8px;"><strong>Part B.</strong> Predict what each of the two printf calls below prints. Write your predictions down, then check yourself in the in-class playground.</div>
+            <div style="background: #1E2A3A; color: #E8EDF5; padding: 12px 16px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6;">
+              printf(<span style="color: #CE9178;">"|%5d|\n"</span>, <span style="color: #B5CEA8;">42</span>);<br>
+              printf(<span style="color: #CE9178;">"|%-5d|\n"</span>, <span style="color: #B5CEA8;">42</span>);
+            </div>
+            <details style="margin-top: 8px;">
+              <summary style="cursor: pointer; font-size: 13px; color: #003087; font-weight: 600;">Click for the answer</summary>
+              <div style="font-size: 13px; color: #4A5568; margin-top: 6px; font-family: Consolas, monospace; background: #F8FAFC; padding: 8px 12px; border-radius: 3px; border: 1px solid #D0D5DD;">
+                |&nbsp;&nbsp;&nbsp;42|<br>
+                |42&nbsp;&nbsp;&nbsp;|
+              </div>
+              <div style="font-size: 12.5px; color: #6B7280; margin-top: 4px; font-style: italic;">The pipes make the width visible. <code style="background: #F0F2F5; padding: 1px 4px;">%5d</code> pads on the left; <code style="background: #F0F2F5; padding: 1px 4px;">%-5d</code> pads on the right.</div>
+            </details>
+            <div style="font-size: 12.5px; color: #4A5568; margin-top: 10px; font-style: italic;">Why predict-then-check? Reading code and predicting output is the cheapest debugging tool you have. We'll use this habit throughout the course.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ===================== 4. LESSON MATERIALS AND OVERVIEW ===================== -->
+  <details id="materials" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      4. Lesson Materials and Overview
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 18px 0;">C does strings differently than every modern language you have used. Python hides the bytes from you; C makes them the point. This reference material walks through what a string actually is in memory, the five functions you will use constantly, and the printf controls that make output presentable.</p>
+
+      <!-- Subsection navigation -->
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 18px; margin-bottom: 22px; border-radius: 3px;">
+        <div style="font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">Jump to</div>
+        <div style="font-size: 13.5px;">
+          <a href="#slides" style="color: #003087; text-decoration: none; margin-right: 14px;">Slides</a>
+          <a href="#what-is-a-string" style="color: #003087; text-decoration: none; margin-right: 14px;">What is a string</a>
+          <a href="#nul-terminator" style="color: #003087; text-decoration: none; margin-right: 14px;">NUL terminator</a>
+          <a href="#declaring" style="color: #003087; text-decoration: none; margin-right: 14px;">Declaring strings</a>
+          <a href="#string-h" style="color: #003087; text-decoration: none; margin-right: 14px;">string.h functions</a>
+          <a href="#format-control" style="color: #003087; text-decoration: none;">Format control</a>
+        </div>
+      </div>
+
+      <!-- Slides -->
+      <h3 id="slides" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0; scroll-margin-top: 16px;">Slides</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">The Lesson 10 deck walks through the anatomy of a C string, the five core <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&lt;string.h&gt;</code> functions, the safer <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">strn*</code> family, and printf format control. Slides are the spine of lecture; the walkthroughs are where you practice.</p>
+
+      <!-- =========================================================
+           EDIT ME: Lesson 10 slide deck link
+           Replace href="#" below with the SharePoint share URL once the
+           deck is published. Leave target="_blank" and rel="noopener".
+           ========================================================= -->
+      <p style="margin: 0 0 18px 0;">
+        <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 10px 20px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 14px;">Open Lesson 10 slides &rarr;</a>
+      </p>
+
+      <!-- What is a string -->
+      <h3 id="what-is-a-string" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">What is a string, really?</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">In Python, a string was a built-in type with a known length and a rich set of methods. <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">len(s)</code> was constant time; <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">s + t</code> made a new string; <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">s == t</code> compared values.</p>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">C has none of that. A C string is a sequence of <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">char</code> values in contiguous memory, with a single zero byte marking the end. There is no length stored anywhere. There is no <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">+</code> operator for strings. There is no built-in equality test.</p>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">Everything you want to do with a string is implemented as a function that walks the memory one byte at a time until it sees a zero. Once you accept that, the rest of the lesson is just learning the names of those functions.</p>
+
+      <!-- NUL terminator -->
+      <h3 id="nul-terminator" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">The NUL terminator</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Every C string ends with a zero byte. Written in C, this byte is <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">'\0'</code>, a single character with the integer value 0. We pronounce it &quot;NUL&quot; (one L). It is not the digit <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">'0'</code>, which has ASCII value 48.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">When you write a string literal in double quotes, the compiler adds the NUL for you. The string <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">"hi"</code> looks like this in memory:</p>
+
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 16px; border-radius: 3px; font-family: Consolas, monospace; font-size: 14px; margin-bottom: 14px;">
+        <div style="display: grid; grid-template-columns: repeat(3, 60px); gap: 6px; text-align: center; font-size: 11px; color: #6B7280; margin-bottom: 4px;">
+          <div>[0]</div><div>[1]</div><div>[2]</div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(3, 60px); gap: 6px; text-align: center;">
+          <div style="border: 1px solid #00205B; padding: 8px 0; background: #ffffff;">'h'</div>
+          <div style="border: 1px solid #00205B; padding: 8px 0; background: #ffffff;">'i'</div>
+          <div style="border: 2px solid #C0392B; padding: 8px 0; background: #FDEDED; color: #8B2419;">'\0'</div>
+        </div>
+        <div style="margin-top: 8px; font-size: 12.5px; color: #4A5568;">Three bytes: two visible characters and one NUL terminator.</div>
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">That terminator is what makes <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">strlen</code> possible. It walks forward from the start, counting bytes, and stops when it sees a zero. <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">strlen("hi")</code> returns 2, not 3, because the NUL is the marker, not part of the visible content.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;"><strong style="color: #00205B;">Why this matters in practice:</strong> if you ever lose the NUL (by overwriting it with another byte, by copying a string into a buffer too small to hold it, or by manually filling characters without writing the terminator), every subsequent <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">strlen</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">printf("%s", ...)</code>, or comparison will read past the end of your data into whatever happens to be next in memory. That is the canonical C string bug.</p>
+
+      <!-- Declaring strings -->
+      <h3 id="declaring" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Declaring strings: <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 13px;">char[]</code> form</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">In this course, we declare strings as character arrays. There are three common ways:</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #6B7280;">// 1. Let the compiler size it for you</span><br>
+        <span style="color: #569CD6;">char</span> name[] = <span style="color: #CE9178;">"Bolton"</span>;&nbsp;&nbsp;<span style="color: #6B7280;">// 7 bytes: 6 chars + NUL</span><br><br>
+        <span style="color: #6B7280;">// 2. Specify a size with room to grow</span><br>
+        <span style="color: #569CD6;">char</span> username[<span style="color: #B5CEA8;">32</span>];&nbsp;&nbsp;&nbsp;<span style="color: #6B7280;">// 32 bytes; contents uninitialized</span><br>
+        strncat(username, <span style="color: #CE9178;">"jbolton"</span>, <span style="color: #B5CEA8;">31</span>);&nbsp;<span style="color: #6B7280;">// safe append</span><br><br>
+        <span style="color: #6B7280;">// 3. Specify a size with an initializer</span><br>
+        <span style="color: #569CD6;">char</span> badge[<span style="color: #B5CEA8;">8</span>] = <span style="color: #CE9178;">"N1234"</span>;&nbsp;<span style="color: #6B7280;">// 8 bytes, "N1234\0..." (rest is zero)</span>
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;"><strong style="color: #00205B;">Rule of thumb on sizing:</strong> when you declare a fixed-size buffer that will hold a string, ask &quot;what is the longest content I might put here?&quot; and add one for the NUL. For a username of up to 31 characters, declare <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">char username[32]</code>. Thirty-one visible bytes plus one for the NUL.</p>
+
+      <div style="background: #FDEDED; border-left: 4px solid #C0392B; padding: 12px 16px; border-radius: 3px; margin-bottom: 18px;">
+        <div style="font-weight: 600; color: #8B2419; font-size: 14px; margin-bottom: 4px;">A note about Beej's pointer form</div>
+        <div style="font-size: 13.5px; color: #5A1810;">Beej Chapter 7 also shows <code style="background: #ffffff; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">char *s = "Hello";</code>. That form points at read-only memory. Trying to modify it (<code style="background: #ffffff; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">s[0] = 'h';</code>) usually crashes the program. We are deliberately leaving the pointer-form discussion until Lesson 12. For now, use the array form for anything you intend to modify.</div>
+      </div>
+
+      <!-- string.h -->
+      <h3 id="string-h" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">The five functions you need from <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 13px;">&lt;string.h&gt;</code></h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Include <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">#include &lt;string.h&gt;</code> at the top of any file that calls these. Each one walks memory looking for a NUL.</p>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 14px;">
+        <thead>
+          <tr style="background: #00205B; color: #ffffff;">
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 200px;">Function</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600;">What it does</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px; vertical-align: top;">strlen(s)</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Returns the number of characters in <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">s</code> before the NUL. Does not include the NUL itself.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px; vertical-align: top;">strcpy(dest, src)</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Copies bytes of <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">src</code> into <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">dest</code>, including the NUL. <strong style="color: #8B2419;">You must ensure <code style="background: #ffffff; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">dest</code> is large enough.</strong></td>
+          </tr>
+          <tr>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px; vertical-align: top;">strcmp(a, b)</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Compares two strings lexicographically. Returns 0 if equal, negative if <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">a &lt; b</code>, positive if <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">a &gt; b</code>. <strong>Zero means equal. Do not flip the logic.</strong></td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px; vertical-align: top;">strcat(dest, src)</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Appends <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">src</code> onto the end of <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">dest</code>. Overwrites <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">dest</code>'s NUL with the first character of <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">src</code>, then continues. <strong style="color: #8B2419;">Again, ensure <code style="background: #ffffff; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">dest</code> has room.</strong></td>
+          </tr>
+          <tr>
+            <td style="padding: 9px 12px; font-family: Consolas, monospace; font-size: 13px; vertical-align: top;">strncpy(dest, src, n)<br>strncat(dest, src, n)</td>
+            <td style="padding: 9px 12px;">Bounded versions that copy or append at most <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">n</code> bytes. Safer when you do not trust the source's length. Caveat: <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">strncpy</code> does not guarantee a NUL if <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">n</code> equals the source length, so you may have to write one yourself.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><strong style="color: #00205B;">Worked example.</strong> Build a display string from parts using the safer bounded form:</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 18px;">
+        <span style="color: #569CD6;">char</span> display[<span style="color: #B5CEA8;">32</span>] = <span style="color: #CE9178;">""</span>;&nbsp;&nbsp;<span style="color: #6B7280;">// 32 bytes, all zero</span><br>
+        strncat(display, <span style="color: #CE9178;">"jbolton"</span>, <span style="color: #B5CEA8;">31</span>);&nbsp;&nbsp;<span style="color: #6B7280;">// display = "jbolton"</span><br>
+        strncat(display, <span style="color: #CE9178;">" ("</span>, <span style="color: #B5CEA8;">31</span> - strlen(display));&nbsp;<span style="color: #6B7280;">// display = "jbolton ("</span><br>
+        strncat(display, <span style="color: #CE9178;">"RUN)"</span>, <span style="color: #B5CEA8;">31</span> - strlen(display));<br>
+        printf(<span style="color: #CE9178;">"%s\n"</span>, display);<br><span style="color: #6B7280;">// prints: jbolton (RUN)</span>
+      </div>
+
+      <!-- DFCS C Programming Standard reference -->
+      <div style="background: #F5F7FA; border: 1px solid #D0D5DD; border-left: 4px solid #00205B; padding: 14px 18px; border-radius: 3px; margin-bottom: 18px;">
+        <p style="font-size: 14px; margin: 0;"><strong style="color: #00205B;">DFCS C Programming Standard, §8.1.</strong> This lesson introduces the first defensive-programming rule from the course style guide. <strong>§8.1</strong> directs you to avoid library functions that don't check buffer bounds (e.g., <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">gets()</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">strcpy()</code>) and to hardcode the format string in every <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">printf</code>-family call. Today's lab uses <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">strncat</code> (the bounded form) rather than <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">strcat</code> specifically because of this rule. The full standard lives in the course Resources section.</p>
+      </div>
+
+      <!-- Format control -->
+      <h3 id="format-control" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">printf format control: width, precision, and padding</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Up to now you have used basic specifiers like <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">%d</code> and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">%f</code>. Today we add control over <em>how</em> the value gets formatted: minimum width, decimal precision, and padding behavior. The full specifier looks like this:</p>
+
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 3px; font-family: Consolas, monospace; font-size: 14px; margin-bottom: 14px;">
+        <div style="text-align: center; font-size: 18px; color: #00205B; margin-bottom: 10px;">
+          %<span style="color: #C0392B;">[flags]</span><span style="color: #2E7D32;">[width]</span><span style="color: #6A1B9A;">[.precision]</span><span style="color: #00205B; font-weight: 700;">conversion</span>
+        </div>
+        <div style="font-size: 13px; color: #4A5568; line-height: 1.7;">
+          <span style="color: #C0392B; font-weight: 600;">flags</span> &mdash; optional. <code style="background: #ffffff; padding: 1px 4px;">-</code> left-aligns; <code style="background: #ffffff; padding: 1px 4px;">0</code> pads numbers with zeros instead of spaces; <code style="background: #ffffff; padding: 1px 4px;">+</code> forces a sign.<br>
+          <span style="color: #2E7D32; font-weight: 600;">width</span> &mdash; optional. Minimum number of characters to print. Pads with spaces if the value is shorter.<br>
+          <span style="color: #6A1B9A; font-weight: 600;">precision</span> &mdash; optional. For floats: digits after the decimal. For strings: maximum characters to print.<br>
+          <span style="color: #00205B; font-weight: 700;">conversion</span> &mdash; required. <code style="background: #ffffff; padding: 1px 4px;">d</code>, <code style="background: #ffffff; padding: 1px 4px;">f</code>, <code style="background: #ffffff; padding: 1px 4px;">s</code>, <code style="background: #ffffff; padding: 1px 4px;">c</code>, etc.
+        </div>
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Examples that illustrate each piece:</p>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 14px;">
+        <thead>
+          <tr style="background: #00205B; color: #ffffff;">
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 250px;">Format string and value</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 200px;">Output (dots = spaces)</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600;">What changed</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">printf("%d", 42);</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">42</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Baseline.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">printf("%5d", 42);</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">...42</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Width 5, right-aligned by default.</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">printf("%-5d", 42);</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">42...</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Left-aligned with <code style="background: #F0F2F5; padding: 1px 4px;">-</code> flag.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">printf("%05d", 42);</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">00042</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Zero-padded with <code style="background: #F0F2F5; padding: 1px 4px;">0</code> flag.</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">printf("%f", 3.14159);</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">3.141590</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Default 6 decimal places.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">printf("%.2f", 3.14159);</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">3.14</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Precision 2: rounded to 2 decimals.</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">printf("%8.2f", 3.14159);</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">....3.14</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Width 8, precision 2.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">printf("%10s", "VIPER");</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">.....VIPER</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Right-aligned in a 10-wide field.</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">printf("%-10s", "VIPER");</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">VIPER.....</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Left-aligned with <code style="background: #F0F2F5; padding: 1px 4px;">-</code>.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; font-family: Consolas, monospace; font-size: 13px;">printf("%.3s", "VIPER");</td>
+            <td style="padding: 8px 12px; font-family: Consolas, monospace; font-size: 13px;">VIP</td>
+            <td style="padding: 8px 12px;">Precision on a string truncates.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;"><strong style="color: #00205B;">Useful for:</strong> aligning columns of data, padding numeric IDs with leading zeros, controlling decimal places in reports, fitting strings into fixed-width fields. The printf walkthrough in Section 5 lets you experiment with each piece live.</p>
+
+    </div>
+  </details>
+
+  <!-- ===================== 5. IN-CLASS WORK ===================== -->
+  <details id="in-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      5. In-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 16px 0;">Three things to do in class. Use the checklist to track your progress.</p>
+
+      <ul style="list-style: none; padding: 0; margin: 0 0 24px 0; font-size: 14.5px;">
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Work through the string anatomy walkthrough below.</strong>
+          <span style="color: #4A5568;">Twelve guided tasks that visualize char arrays, the NUL terminator, and the five string.h functions byte by byte. About 25 minutes.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Work through the printf format playground.</strong>
+          <span style="color: #4A5568;">Ten guided tasks practicing width, precision, padding, and alignment. About 20 minutes.</span>
+        </li>
+        <li style="margin-bottom: 0; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Complete Lab 10: Fitness Tracker Daily Summary.</strong>
+          <span style="color: #4A5568;">Auto-graded through GitHub Classroom. Full instructions in the lab repo.</span>
+          <!-- =========================================================
+               EDIT ME: Lab 10 GitHub Classroom assignment link
+               Replace href="#" with the classroom.github.com/a/... invite
+               URL once the assignment is published.
+               ========================================================= -->
+          <div style="margin-top: 8px; margin-left: 28px;">
+            <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 6px 14px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 13px;">Accept Lab 10 on GitHub Classroom &rarr;</a>
+          </div>
+        </li>
+      </ul>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 18px 0 10px 0;">String Anatomy Walkthrough</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Twelve tasks across four sections. Type each C statement at the prompt. The terminal shows what the runtime did; the right pane shows each character of each array, with the NUL terminator highlighted.</p>
+
+<!-- ============================================================
+     CS210 Lesson 10 - String Anatomy Walkthrough Widget
+     Template-aligned style. Native HTML/CSS + scoped JS.
+     Paste as a block; runs anywhere the parent page allows <script>.
+     ============================================================ -->
+<style>
+.cs210-strwalk * { box-sizing: border-box; }
+.cs210-strwalk {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-strwalk h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-strwalk .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 22px;
+}
+.cs210-strwalk .progress-bar {
+  background: #E5E7EB;
+  border-radius: 3px;
+  height: 8px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.cs210-strwalk .progress-fill {
+  background: #003087;
+  height: 100%;
+  transition: width 0.3s ease;
+}
+.cs210-strwalk .progress-label {
+  font-size: 12px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-strwalk .section-header {
+  background: #E8EDF5;
+  color: #00205B;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.cs210-strwalk .task-card {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  border-radius: 3px;
+}
+.cs210-strwalk .task-card.complete {
+  background: #E6F4EA;
+  border-left-color: #2E7D32;
+}
+.cs210-strwalk .task-label {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B5300;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.cs210-strwalk .task-card.complete .task-label {
+  color: #1B5E20;
+}
+.cs210-strwalk .task-text {
+  font-size: 15px;
+  color: #1a1a1a;
+}
+.cs210-strwalk .task-hint {
+  font-size: 12.5px;
+  color: #6B7280;
+  margin-top: 6px;
+  font-style: italic;
+}
+
+/* Two-pane area: terminal left, memory right */
+.cs210-strwalk .panes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+@media (max-width: 820px) {
+  .cs210-strwalk .panes { grid-template-columns: 1fr; }
+}
+.cs210-strwalk .terminal {
+  background: #1E2A3A;
+  color: #E8EDF5;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13.5px;
+  line-height: 1.5;
+  border-radius: 4px;
+  padding: 14px 18px;
+  min-height: 380px;
+  max-height: 440px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.cs210-strwalk .terminal .prompt { color: #7FB3D5; }
+.cs210-strwalk .terminal .typed { color: #FFFFFF; }
+.cs210-strwalk .terminal .out { color: #B5BEC8; }
+.cs210-strwalk .terminal .note { color: #F0B92C; }
+.cs210-strwalk .terminal .err { color: #F47A7A; }
+.cs210-strwalk .terminal .ok { color: #7FD17F; }
+.cs210-strwalk .terminal .dim { color: #6B7280; }
+
+.cs210-strwalk .memory-pane {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  padding: 14px 16px;
+  min-height: 380px;
+  max-height: 440px;
+  overflow-y: auto;
+}
+.cs210-strwalk .memory-pane-header {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #E5E7EB;
+}
+.cs210-strwalk .memory-empty {
+  color: #6B7280;
+  font-style: italic;
+  font-size: 13px;
+  text-align: center;
+  padding: 80px 10px;
+}
+
+/* String array card */
+.cs210-strwalk .str-card {
+  background: #F8FAFC;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+.cs210-strwalk .str-decl {
+  font-family: Consolas, monospace;
+  font-size: 12.5px;
+  color: #00205B;
+  font-weight: 600;
+  margin-bottom: 6px;
+  word-break: break-all;
+}
+.cs210-strwalk .str-meta {
+  font-size: 11px;
+  color: #6B7280;
+  font-family: Consolas, monospace;
+  margin-bottom: 6px;
+}
+.cs210-strwalk .cells {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+.cs210-strwalk .cell {
+  border: 1px solid #C7CFD9;
+  background: #ffffff;
+  border-radius: 2px;
+  width: 38px;
+  text-align: center;
+  font-family: Consolas, monospace;
+  padding: 4px 2px;
+  position: relative;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+.cs210-strwalk .cell .idx {
+  display: block;
+  font-size: 9px;
+  color: #6B7280;
+  margin-bottom: 2px;
+  letter-spacing: 0.3px;
+}
+.cs210-strwalk .cell .glyph {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: #00205B;
+  min-height: 18px;
+}
+.cs210-strwalk .cell.nul {
+  background: #FDEDED;
+  border-color: #C0392B;
+}
+.cs210-strwalk .cell.nul .glyph {
+  color: #8B2419;
+  font-size: 12px;
+  letter-spacing: 0;
+}
+.cs210-strwalk .cell.zero {
+  background: #F0F2F5;
+  border-color: #D0D5DD;
+}
+.cs210-strwalk .cell.zero .glyph {
+  color: #9CA3AF;
+  font-size: 11px;
+}
+.cs210-strwalk .cell.uninit {
+  background: #FFF4D6;
+  border-color: #F0B92C;
+}
+.cs210-strwalk .cell.uninit .glyph {
+  color: #6B5300;
+  font-size: 11px;
+}
+.cs210-strwalk .cell.scan {
+  background: #FFF4D6;
+  border-color: #F0B92C;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 6px rgba(240, 185, 44, 0.45);
+}
+.cs210-strwalk .cell.write {
+  background: #E6F4EA;
+  border-color: #2E7D32;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 6px rgba(46, 125, 50, 0.45);
+}
+.cs210-strwalk .cell.diff {
+  background: #FDEDED;
+  border-color: #C0392B;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 6px rgba(192, 57, 43, 0.45);
+}
+.cs210-strwalk .cell.match {
+  background: #E6F4EA;
+  border-color: #2E7D32;
+}
+.cs210-strwalk .cell.overflow {
+  background: #FFE4E1;
+  border-color: #C0392B;
+  border-style: dashed;
+}
+.cs210-strwalk .str-print {
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: #1E2A3A;
+  color: #E8EDF5;
+  font-family: Consolas, monospace;
+  font-size: 12px;
+  border-radius: 3px;
+  word-break: break-all;
+}
+
+/* Result card for strlen / strcmp */
+.cs210-strwalk .result-card {
+  background: #ffffff;
+  border: 2px solid #003087;
+  border-radius: 4px;
+  padding: 12px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+.cs210-strwalk .result-expr {
+  font-family: Consolas, monospace;
+  font-size: 12.5px;
+  color: #6B7280;
+  margin-bottom: 6px;
+}
+.cs210-strwalk .result-value {
+  font-family: Consolas, monospace;
+  font-size: 26px;
+  color: #003087;
+  font-weight: 700;
+}
+.cs210-strwalk .result-value.ok { color: #2E7D32; }
+.cs210-strwalk .result-value.warn { color: #C0392B; }
+.cs210-strwalk .result-note {
+  font-size: 11.5px;
+  color: #4A5568;
+  margin-top: 6px;
+}
+
+.cs210-strwalk .input-row {
+  display: flex;
+  background: #1E2A3A;
+  border-radius: 4px;
+  padding: 8px 14px;
+  margin-bottom: 14px;
+  border: 1px solid #003087;
+}
+.cs210-strwalk .input-prompt {
+  color: #7FB3D5;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  margin-right: 8px;
+  align-self: center;
+  white-space: nowrap;
+}
+.cs210-strwalk .input-row input {
+  flex: 1;
+  background: transparent;
+  color: #FFFFFF;
+  border: none;
+  outline: none;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  padding: 4px 0;
+}
+.cs210-strwalk .controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.cs210-strwalk .btn {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  padding: 6px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #00205B;
+  font-family: inherit;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.cs210-strwalk .btn:hover { background: #F5F7FA; }
+@keyframes cs210-strwalk-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(240, 185, 44, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0); }
+}
+.cs210-strwalk .btn.pulse {
+  background: #FFF8E1;
+  border-color: #F0B92C;
+  color: #6B5300;
+  font-weight: 600;
+  animation: cs210-strwalk-pulse 1.5s infinite;
+}
+.cs210-strwalk .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #4A5568;
+  margin-top: 12px;
+}
+.cs210-strwalk .help-note strong { color: #00205B; }
+
+/* Name modal overlay */
+.cs210-strwalk .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.cs210-strwalk .name-modal {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-strwalk .name-modal h2 {
+  color: #00205B;
+  font-size: 20px;
+  margin: 0 0 10px 0;
+}
+.cs210-strwalk .name-modal p {
+  color: #4A5568;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+.cs210-strwalk .name-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-strwalk .name-modal input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-strwalk .name-modal-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-strwalk .name-modal-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-strwalk .name-modal-btn:not(:disabled):hover {
+  background: #00205B;
+}
+
+/* Completion screen */
+.cs210-strwalk .completion-screen {
+  background: #ffffff;
+  border: 2px solid #2E7D32;
+  border-radius: 6px;
+  padding: 24px 28px;
+  margin-top: 16px;
+}
+.cs210-strwalk .completion-screen .cs-heading {
+  color: #1B5E20;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 6px 0;
+}
+.cs210-strwalk .completion-screen .cs-name-line {
+  font-size: 15px;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+}
+.cs210-strwalk .completion-screen .cs-name-line strong {
+  color: #00205B;
+}
+.cs210-strwalk .completion-screen .cs-code-block {
+  background: #F0F4FA;
+  border: 1px solid #003087;
+  border-radius: 4px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.cs210-strwalk .completion-screen .cs-code-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #4A5568;
+  margin-bottom: 4px;
+}
+.cs210-strwalk .completion-screen .cs-code-value {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 28px;
+  font-weight: 700;
+  color: #00205B;
+  letter-spacing: 3px;
+}
+.cs210-strwalk .completion-screen .cs-copy-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-strwalk .completion-screen .cs-copy-btn:hover { background: #00205B; }
+.cs210-strwalk .completion-screen .cs-copy-btn.copied { background: #2E7D32; }
+.cs210-strwalk .completion-screen .cs-timestamp {
+  font-size: 13px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-strwalk .completion-screen .cs-reminder {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 14px;
+  color: #6B5300;
+  line-height: 1.5;
+}
+.cs210-strwalk .completion-screen .cs-reminder strong {
+  color: #4A3A00;
+}
+</style>
+
+<div class="cs210-strwalk">
+
+<div class="name-modal-backdrop" id="strwalk-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Lesson 10 reflection.</p>
+    <input type="text" id="strwalk-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="strwalk-cadet-name-btn" disabled>Start the walkthrough</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 10 &middot; String Anatomy Walkthrough</h1>
+<div class="subtitle">A guided tour through C strings: arrays of characters, the NUL terminator, and the five string.h functions. Type each C statement on the input line. The terminal echoes what happened; the right pane shows each character of each array.</div>
+
+<div class="progress-bar"><div class="progress-fill" id="strwalk-progress-fill" style="width: 0%;"></div></div>
+<div class="progress-label" id="strwalk-progress-label">Task 0 of 12</div>
+
+<div class="section-header" id="strwalk-section-header">Section 1: Anatomy of a string</div>
+
+<div class="task-card" id="strwalk-task-card">
+  <div class="task-label" id="strwalk-task-label">Current task</div>
+  <div class="task-text" id="strwalk-task-text">Loading...</div>
+  <div class="task-hint" id="strwalk-task-hint"></div>
+</div>
+
+<div class="panes">
+  <div class="terminal" id="strwalk-terminal"></div>
+  <div class="memory-pane">
+    <div class="memory-pane-header">String memory</div>
+    <div id="strwalk-memory-area">
+      <div class="memory-empty">No strings declared yet.<br>Type a declaration on the left.</div>
+    </div>
+  </div>
+</div>
+
+<div class="input-row">
+  <span class="input-prompt">strmem&gt;</span>
+  <input type="text" id="strwalk-cli-input" autocomplete="off" spellcheck="false" placeholder='try: char greeting[] = "hello";'>
+</div>
+
+<div class="controls">
+  <button class="btn" id="strwalk-hint-btn">Show hint</button>
+  <button class="btn" id="strwalk-reset-btn">Reset</button>
+  <button class="btn" id="strwalk-mode-btn">Switch to free mode</button>
+</div>
+
+<div class="help-note">
+  <strong>How this works:</strong> This is a teaching tool that simulates what happens to char arrays in memory. The task card tells you what to type next; only the expected command will advance the walkthrough so the memory state stays predictable. Mistype twice and the hint button will pulse. After the walkthrough completes, free mode unlocks automatically so you can experiment.
+</div>
+
+<div id="strwalk-completion-area"></div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-strwalk');
+  if (!root) return;
+
+  // ============================================================
+  // CS210 widget completion utilities
+  // Salt -> deterministic 6-char code via FNV-1a.
+  // Alphabet excludes 0, 1, O, I (uppercase only).
+  // ============================================================
+  const CS210_SALT = "lesson10_string_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  // Name-modal gating
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#strwalk-name-modal-backdrop');
+    const input = root.querySelector('#strwalk-cadet-name-input');
+    const btn = root.querySelector('#strwalk-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored) input.value = stored;
+    } catch (e) {}
+    function updateBtn() { btn.disabled = input.value.trim().length < 2; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', function() {
+      const name = input.value.trim();
+      if (name.length < 2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+      const cli = root.querySelector('#strwalk-cli-input');
+      if (cli) cli.focus();
+    });
+    setTimeout(function() { input.focus(); }, 50);
+  })();
+
+  function cs210RenderCompletion(area) {
+    if (!area) return;
+    if (root.querySelector('#cs210-strwalk-completion-overlay')) return;
+    const now = new Date();
+    const ts = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const safeName = (cs210CadetName || 'Cadet').replace(/[<>&"']/g, function(c) {
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+    area.innerHTML =
+      '<div class="completion-screen">' +
+        '<div class="cs-heading">Walkthrough complete</div>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value">' + CS210_CODE + '</div></div>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+      '</div>';
+    const overlay = document.createElement('div');
+    overlay.id = 'cs210-strwalk-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.style.background = 'rgba(27, 94, 32, 0.55)';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">Walkthrough complete</h2>' +
+        '<p>Take a screenshot of this box. You will need the code and a visual of this screen for the Lesson 10 reflection in Blackboard.</p>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value" id="strwalk-cs-code-value">' + CS210_CODE + '</div></div>' +
+          '<button class="cs-copy-btn" id="strwalk-cs-copy-btn" type="button">Copy code</button>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+        '<div class="cs-reminder" style="margin-bottom:14px;">' +
+          '<strong>Next step:</strong> Open the Lesson 10 reflection in Blackboard. Enter this code, answer the reflection prompt, and attach your screenshot.' +
+        '</div>' +
+        '<button class="name-modal-btn" id="strwalk-cs-overlay-close" type="button" style="background:#2E7D32;">Got it, close this</button>' +
+      '</div>';
+    root.appendChild(overlay);
+    const closeBtn = overlay.querySelector('#strwalk-cs-overlay-close');
+    if (closeBtn) closeBtn.addEventListener('click', function() { overlay.style.display = 'none'; });
+    const copyBtn = overlay.querySelector('#strwalk-cs-copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function() {
+        const text = CS210_CODE;
+        const ok = function() {
+          copyBtn.textContent = 'Copied';
+          copyBtn.classList.add('copied');
+          setTimeout(function() {
+            copyBtn.textContent = 'Copy code';
+            copyBtn.classList.remove('copied');
+          }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(ok, function() { fallbackCopy(text); ok(); });
+        } else { fallbackCopy(text); ok(); }
+      });
+    }
+  }
+  function fallbackCopy(text) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e) {}
+  }
+
+  // ============================================================
+  // Animation timing
+  // ============================================================
+  const STEP_MS = 130;       // delay per cell in scan/walk animations
+  const HIGHLIGHT_MS = 350;  // how long a write/diff cell stays highlighted before clearing
+
+  // ============================================================
+  // String state
+  // Each "string" is a char array. We store its declared capacity (N) and
+  // the byte values as an array of integers (0..255). Indices that are NUL
+  // hold the value 0.
+  // ============================================================
+  const strings = []; // {name, capacity, bytes:[], declaredAs}
+  let lastResult = null;
+  let mode = "walkthrough";
+
+  function findString(name) {
+    return strings.find(s => s.name === name);
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]);
+  }
+  function escapeRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+
+  function cellStateName(s, i) {
+    // Returns one of: 'nul', 'zero', 'uninit', 'char'
+    if (s.uninitIdx && s.uninitIdx[i]) return 'uninit';
+    const b = s.bytes[i];
+    if (b === 0) {
+      // Distinguish "the terminator that ends visible content" vs "padding zeros after"
+      // Find first zero in array; that is the NUL. All others are padding zeros.
+      let firstZero = -1;
+      for (let j = 0; j < s.bytes.length; j++) {
+        if ((!s.uninitIdx || !s.uninitIdx[j]) && s.bytes[j] === 0) { firstZero = j; break; }
+      }
+      return i === firstZero ? 'nul' : 'zero';
+    }
+    return 'char';
+  }
+  function cellGlyph(s, i) {
+    const state = cellStateName(s, i);
+    if (state === 'nul') return "'\\0'";
+    if (state === 'zero') return '0';
+    if (state === 'uninit') return '?';
+    const b = s.bytes[i];
+    if (b >= 32 && b < 127) {
+      const ch = String.fromCharCode(b);
+      // Visually escape any HTML-special character
+      return "'" + (ch === ' ' ? '&nbsp;' : escapeHtml(ch)) + "'";
+    }
+    return '\\x' + b.toString(16).padStart(2, '0');
+  }
+  function renderCells(s, extraClassPerIdx) {
+    extraClassPerIdx = extraClassPerIdx || {};
+    const cells = [];
+    for (let i = 0; i < s.capacity; i++) {
+      const state = cellStateName(s, i);
+      const extra = extraClassPerIdx[i] || '';
+      cells.push(
+        '<div class="cell ' + state + ' ' + extra + '" data-name="' + escapeHtml(s.name) + '" data-i="' + i + '">' +
+          '<span class="idx">[' + i + ']</span>' +
+          '<span class="glyph">' + cellGlyph(s, i) + '</span>' +
+        '</div>'
+      );
+    }
+    return cells.join('');
+  }
+  function visibleString(s) {
+    // Read up to (but not including) the first NUL or zero byte; if none, all bytes.
+    let out = '';
+    for (let i = 0; i < s.capacity; i++) {
+      if (s.uninitIdx && s.uninitIdx[i]) { out += '?'; continue; }
+      const b = s.bytes[i];
+      if (b === 0) break;
+      out += (b >= 32 && b < 127) ? String.fromCharCode(b) : ('\\x' + b.toString(16).padStart(2, '0'));
+    }
+    return out;
+  }
+  function renderStrCard(s, extraClassPerIdx) {
+    const lenVisible = visibleString(s).length;
+    return '<div class="str-card" data-name="' + escapeHtml(s.name) + '">' +
+           '<div class="str-decl">' + escapeHtml(s.declaredAs) + '</div>' +
+           '<div class="str-meta">capacity: ' + s.capacity + ' bytes &nbsp; visible: ' + lenVisible + '</div>' +
+           '<div class="cells">' + renderCells(s, extraClassPerIdx) + '</div>' +
+           '</div>';
+  }
+  function renderResultCard(r) {
+    let cls = '';
+    let note = '';
+    if (r.kind === 'strcmp') {
+      if (r.value === 0) { cls = 'ok'; note = 'equal'; }
+      else if (r.value < 0) { cls = 'warn'; note = 'a < b lexicographically'; }
+      else { cls = 'warn'; note = 'a > b lexicographically'; }
+    }
+    return '<div class="result-card">' +
+           '<div class="result-expr">' + escapeHtml(r.expr) + '</div>' +
+           '<div class="result-value ' + cls + '">' + r.value + '</div>' +
+           (note ? '<div class="result-note">' + note + '</div>' : '') +
+           '</div>';
+  }
+  function renderMemory(highlights) {
+    highlights = highlights || {};
+    const area = root.querySelector('#strwalk-memory-area');
+    if (strings.length === 0 && !lastResult) {
+      area.innerHTML = '<div class="memory-empty">No strings declared yet.<br>Type a declaration on the left.</div>';
+      return;
+    }
+    let html = '';
+    for (const s of strings) {
+      html += renderStrCard(s, highlights[s.name] || {});
+    }
+    if (lastResult) html += renderResultCard(lastResult);
+    area.innerHTML = html;
+  }
+
+  // ============================================================
+  // Terminal output
+  // ============================================================
+  const terminalEl = root.querySelector('#strwalk-terminal');
+  function termWrite(text, cls) {
+    const span = document.createElement('span');
+    if (cls) span.className = cls;
+    span.textContent = text;
+    terminalEl.appendChild(span);
+  }
+  function termLine(text, cls) {
+    termWrite(text, cls);
+    terminalEl.appendChild(document.createElement('br'));
+    terminalEl.scrollTop = terminalEl.scrollHeight;
+  }
+  function echoCommand(cmd) {
+    termWrite('strmem> ', 'prompt');
+    termLine(cmd, 'typed');
+  }
+
+  // ============================================================
+  // String literal parser ("...")
+  // Returns the literal text with escapes processed.
+  // ============================================================
+  function parseStringLiteral(raw) {
+    raw = raw.trim();
+    if (!raw.startsWith('"') || !raw.endsWith('"') || raw.length < 2) return null;
+    const inner = raw.slice(1, -1);
+    let out = '';
+    for (let i = 0; i < inner.length; i++) {
+      const c = inner[i];
+      if (c === '\\' && i + 1 < inner.length) {
+        const nxt = inner[i + 1];
+        if (nxt === 'n') out += '\n';
+        else if (nxt === 't') out += '\t';
+        else if (nxt === '0') out += '\0';
+        else if (nxt === '"') out += '"';
+        else if (nxt === '\\') out += '\\';
+        else out += nxt;
+        i++;
+      } else {
+        out += c;
+      }
+    }
+    return out;
+  }
+  function literalToBytes(lit) {
+    const bytes = [];
+    for (let i = 0; i < lit.length; i++) bytes.push(lit.charCodeAt(i) & 0xff);
+    return bytes;
+  }
+
+  // ============================================================
+  // Char literal parser ('x', '\0', etc.)
+  // ============================================================
+  function parseCharLiteral(raw) {
+    raw = raw.trim();
+    if (!raw.startsWith("'") || !raw.endsWith("'")) return null;
+    const inner = raw.slice(1, -1);
+    if (inner.length === 1) return inner.charCodeAt(0);
+    if (inner === '\\0') return 0;
+    if (inner === '\\n') return 10;
+    if (inner === '\\t') return 9;
+    if (inner === "\\'") return 39;
+    if (inner === '\\\\') return 92;
+    return null;
+  }
+
+  // ============================================================
+  // Command parsers — each returns null if it doesn't match its form
+  // ============================================================
+  function tryParseDecl(line) {
+    // char NAME [ N? ] = "literal" ;     -- initialized
+    // char NAME [] = "literal" ;          -- auto-sized
+    // char NAME [ N ] ;                   -- uninitialized fixed-size (we will fill zeros for teaching)
+    const t = line.trim().replace(/;\s*$/, '');
+    let m = t.match(/^char\s+([A-Za-z_][A-Za-z0-9_]*)\s*\[\s*(\d*)\s*\]\s*=\s*("(?:[^"\\]|\\.)*")\s*$/);
+    if (m) {
+      const name = m[1];
+      const capRaw = m[2];
+      const lit = parseStringLiteral(m[3]);
+      if (lit === null) return { error: "Could not parse the string literal." };
+      const litBytes = literalToBytes(lit);
+      const requiredCap = litBytes.length + 1; // for NUL
+      let cap;
+      if (capRaw === '') cap = requiredCap;
+      else {
+        cap = parseInt(capRaw, 10);
+        if (!isFinite(cap) || cap <= 0) return { error: "Capacity must be a positive integer." };
+        if (cap < requiredCap) return { error: "Capacity " + cap + " is too small for \"" + lit + "\" (need at least " + requiredCap + " for content + NUL)." };
+      }
+      // Construct byte array of size cap. First litBytes.length are the literal, then a NUL, then zero padding.
+      const bytes = new Array(cap).fill(0);
+      for (let i = 0; i < litBytes.length; i++) bytes[i] = litBytes[i];
+      // bytes[litBytes.length] is already 0 (the NUL)
+      return { kind: 'decl', name, capacity: cap, bytes, declaredAs: (capRaw === '' ? 'char ' + name + '[] = ' + JSON.stringify(lit) + ';' : 'char ' + name + '[' + cap + '] = ' + JSON.stringify(lit) + ';') };
+    }
+    m = t.match(/^char\s+([A-Za-z_][A-Za-z0-9_]*)\s*\[\s*(\d+)\s*\]\s*$/);
+    if (m) {
+      const name = m[1];
+      const cap = parseInt(m[2], 10);
+      if (!isFinite(cap) || cap <= 0) return { error: "Capacity must be a positive integer." };
+      // For teaching: render uninitialized cells as '?' but treat them as zero for any read
+      const bytes = new Array(cap).fill(0);
+      const uninitIdx = {};
+      for (let i = 0; i < cap; i++) uninitIdx[i] = true;
+      return { kind: 'decl', name, capacity: cap, bytes, uninitIdx, declaredAs: 'char ' + name + '[' + cap + '];' };
+    }
+    return null;
+  }
+
+  function tryParseStrlen(line) {
+    const t = line.trim().replace(/;\s*$/, '');
+    const m = t.match(/^strlen\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*\)\s*$/);
+    if (!m) return null;
+    return { name: m[1] };
+  }
+  function tryParseStrcpy(line) {
+    const t = line.trim().replace(/;\s*$/, '');
+    const m = t.match(/^strcpy\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*,\s*(.+)\s*\)\s*$/);
+    if (!m) return null;
+    return { dest: m[1], src: m[2].trim() };
+  }
+  function tryParseStrncpy(line) {
+    const t = line.trim().replace(/;\s*$/, '');
+    const m = t.match(/^strncpy\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*,\s*(.+?)\s*,\s*(\d+)\s*\)\s*$/);
+    if (!m) return null;
+    return { dest: m[1], src: m[2].trim(), n: parseInt(m[3], 10) };
+  }
+  function tryParseStrcat(line) {
+    const t = line.trim().replace(/;\s*$/, '');
+    const m = t.match(/^strcat\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*,\s*(.+)\s*\)\s*$/);
+    if (!m) return null;
+    return { dest: m[1], src: m[2].trim() };
+  }
+  function tryParseStrncat(line) {
+    const t = line.trim().replace(/;\s*$/, '');
+    const m = t.match(/^strncat\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*,\s*(.+?)\s*,\s*(\d+)\s*\)\s*$/);
+    if (!m) return null;
+    return { dest: m[1], src: m[2].trim(), n: parseInt(m[3], 10) };
+  }
+  function tryParseStrcmp(line) {
+    const t = line.trim().replace(/;\s*$/, '');
+    const m = t.match(/^strcmp\s*\(\s*(.+?)\s*,\s*(.+)\s*\)\s*$/);
+    if (!m) return null;
+    return { a: m[1].trim(), b: m[2].trim() };
+  }
+  function tryParseIndexWrite(line) {
+    // NAME[i] = 'c';   or   NAME[i] = <int>;
+    const t = line.trim().replace(/;\s*$/, '');
+    const m = t.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*\[\s*(\d+)\s*\]\s*=\s*(.+)$/);
+    if (!m) return null;
+    return { name: m[1], i: parseInt(m[2], 10), valueRaw: m[3].trim() };
+  }
+  function tryParseIndexRead(line) {
+    // NAME[i]   — bare indexed read as an expression
+    const t = line.trim().replace(/;\s*$/, '');
+    const m = t.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*\[\s*(\d+)\s*\]\s*$/);
+    if (!m) return null;
+    return { name: m[1], i: parseInt(m[2], 10) };
+  }
+  function tryParsePrintf(line) {
+    // printf("%s\n", NAME);   or printf("%s", NAME);
+    const t = line.trim().replace(/;\s*$/, '');
+    const m = t.match(/^printf\s*\(\s*("%s(?:\\n)?")\s*,\s*([A-Za-z_][A-Za-z0-9_]*)\s*\)\s*$/);
+    if (!m) return null;
+    return { fmt: m[1], name: m[2] };
+  }
+
+  // Resolve a "source" argument: either a string name or a string literal.
+  // Returns { bytes, nullTerminatedAt } where nullTerminatedAt is the byte index
+  // of the first 0, or -1 if none. For a literal, we synthesize bytes + a NUL.
+  function resolveSource(srcRaw) {
+    if (srcRaw.startsWith('"')) {
+      const lit = parseStringLiteral(srcRaw);
+      if (lit === null) return { error: "Could not parse the string literal in source." };
+      const bytes = literalToBytes(lit);
+      bytes.push(0);
+      return { bytes, nullAt: bytes.length - 1, descriptor: JSON.stringify(lit) };
+    }
+    const s = findString(srcRaw);
+    if (!s) return { error: "No string named '" + srcRaw + "'." };
+    let nullAt = -1;
+    for (let i = 0; i < s.bytes.length; i++) {
+      if ((!s.uninitIdx || !s.uninitIdx[i]) && s.bytes[i] === 0) { nullAt = i; break; }
+    }
+    return { bytes: s.bytes.slice(), nullAt, descriptor: srcRaw, fromString: s };
+  }
+
+  // ============================================================
+  // Animated walks
+  // Each animation returns a Promise that resolves when complete.
+  // ============================================================
+  function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  async function animateScan(name, indices, opts) {
+    // Sequentially highlight each index in 'indices' on string 'name' with the given class
+    opts = opts || {};
+    const cls = opts.cls || 'scan';
+    const stepMs = opts.stepMs || STEP_MS;
+    for (const i of indices) {
+      const cell = root.querySelector('.cell[data-name="' + name + '"][data-i="' + i + '"]');
+      if (cell) {
+        cell.classList.add(cls);
+        await delay(stepMs);
+        if (!opts.keep) cell.classList.remove(cls);
+      } else {
+        await delay(stepMs);
+      }
+    }
+  }
+  async function animateWrite(s, i, byteVal, opts) {
+    // Set a single byte and flash the cell green
+    opts = opts || {};
+    if (s.uninitIdx && s.uninitIdx[i]) delete s.uninitIdx[i];
+    s.bytes[i] = byteVal & 0xff;
+    renderMemory();
+    const cell = root.querySelector('.cell[data-name="' + s.name + '"][data-i="' + i + '"]');
+    if (cell) {
+      cell.classList.add('write');
+      await delay(HIGHLIGHT_MS);
+      cell.classList.remove('write');
+    } else {
+      await delay(HIGHLIGHT_MS);
+    }
+  }
+
+  // ============================================================
+  // Evaluators
+  // ============================================================
+  async function evalDecl(parsed) {
+    if (parsed.error) throw new Error(parsed.error);
+    const existingIdx = strings.findIndex(s => s.name === parsed.name);
+    const s = {
+      name: parsed.name,
+      capacity: parsed.capacity,
+      bytes: parsed.bytes.slice(),
+      uninitIdx: parsed.uninitIdx ? Object.assign({}, parsed.uninitIdx) : null,
+      declaredAs: parsed.declaredAs,
+    };
+    if (existingIdx === -1) strings.push(s);
+    else strings[existingIdx] = s;
+    lastResult = null;
+    renderMemory();
+    termLine('  declared ' + parsed.name + '[' + parsed.capacity + ']', 'out');
+    return { kind: 'decl', name: parsed.name };
+  }
+
+  async function evalStrlen(parsed) {
+    const s = findString(parsed.name);
+    if (!s) throw new Error("No string named '" + parsed.name + "'.");
+    let count = 0;
+    const scanned = [];
+    for (let i = 0; i < s.bytes.length; i++) {
+      scanned.push(i);
+      if ((!s.uninitIdx || !s.uninitIdx[i]) && s.bytes[i] === 0) break;
+      count++;
+    }
+    await animateScan(s.name, scanned, { cls: 'scan', stepMs: STEP_MS });
+    lastResult = { kind: 'strlen', expr: 'strlen(' + s.name + ')', value: count };
+    renderMemory();
+    termLine('  ' + count, 'out');
+    return lastResult;
+  }
+
+  async function evalStrcpy(parsed, opts) {
+    opts = opts || {};
+    const dest = findString(parsed.dest);
+    if (!dest) throw new Error("No string named '" + parsed.dest + "'.");
+    const src = resolveSource(parsed.src);
+    if (src.error) throw new Error(src.error);
+    // Walk source until we hit (and include) the first NUL, copying each byte.
+    let overflowed = false;
+    let writes = 0;
+    for (let i = 0; i < src.bytes.length; i++) {
+      if (i >= dest.capacity) { overflowed = true; break; }
+      await animateWrite(dest, i, src.bytes[i]);
+      writes++;
+      if (src.bytes[i] === 0) break;
+    }
+    // If we exited the source loop without writing a NUL (src had no NUL — shouldn't happen
+    // for valid strings but be defensive)
+    lastResult = null;
+    renderMemory();
+    if (overflowed) {
+      termLine('  WARNING: source longer than destination capacity (' + dest.capacity + ').', 'err');
+      termLine('  In real C, strcpy would write past the buffer. We stop writing here.', 'err');
+    } else {
+      termLine('  copied ' + writes + ' bytes (including NUL) into ' + dest.name, 'out');
+    }
+    return { kind: 'strcpy', overflow: overflowed };
+  }
+
+  async function evalStrncpy(parsed) {
+    const dest = findString(parsed.dest);
+    if (!dest) throw new Error("No string named '" + parsed.dest + "'.");
+    const src = resolveSource(parsed.src);
+    if (src.error) throw new Error(src.error);
+    const n = parsed.n;
+    if (n < 0) throw new Error("strncpy n must be >= 0.");
+    let wroteNul = false;
+    for (let i = 0; i < n; i++) {
+      if (i >= dest.capacity) { 
+        termLine('  WARNING: strncpy would write past destination capacity (' + dest.capacity + ').', 'err');
+        break;
+      }
+      const byteVal = (i < src.bytes.length) ? src.bytes[i] : 0;
+      // After we exhaust source, strncpy pads with zeros up to n. The first such zero is the NUL.
+      await animateWrite(dest, i, byteVal);
+      if (byteVal === 0) wroteNul = true;
+    }
+    lastResult = null;
+    renderMemory();
+    if (!wroteNul) {
+      termLine('  copied ' + n + ' bytes; NO NUL was written. The destination may not be a valid C string!', 'err');
+    } else {
+      termLine('  copied up to ' + n + ' bytes into ' + dest.name + ' (NUL included)', 'out');
+    }
+    return { kind: 'strncpy', wroteNul };
+  }
+
+  async function evalStrcat(parsed) {
+    const dest = findString(parsed.dest);
+    if (!dest) throw new Error("No string named '" + parsed.dest + "'.");
+    const src = resolveSource(parsed.src);
+    if (src.error) throw new Error(src.error);
+    // Find dest's NUL position
+    let destEnd = -1;
+    for (let i = 0; i < dest.bytes.length; i++) {
+      if ((!dest.uninitIdx || !dest.uninitIdx[i]) && dest.bytes[i] === 0) { destEnd = i; break; }
+    }
+    if (destEnd === -1) throw new Error("strcat: destination '" + dest.name + "' has no NUL terminator.");
+    // Scan dest to find the NUL, then copy src bytes (including its NUL) starting there.
+    const scanIdx = [];
+    for (let i = 0; i <= destEnd; i++) scanIdx.push(i);
+    await animateScan(dest.name, scanIdx, { cls: 'scan', stepMs: 80 });
+    let overflowed = false;
+    for (let j = 0; j < src.bytes.length; j++) {
+      const i = destEnd + j;
+      if (i >= dest.capacity) { overflowed = true; break; }
+      await animateWrite(dest, i, src.bytes[j]);
+      if (src.bytes[j] === 0) break;
+    }
+    lastResult = null;
+    renderMemory();
+    if (overflowed) {
+      termLine('  WARNING: concatenation would write past destination capacity (' + dest.capacity + ').', 'err');
+    } else {
+      termLine('  appended onto ' + dest.name, 'out');
+    }
+    return { kind: 'strcat', overflow: overflowed };
+  }
+
+  async function evalStrncat(parsed) {
+    const dest = findString(parsed.dest);
+    if (!dest) throw new Error("No string named '" + parsed.dest + "'.");
+    const src = resolveSource(parsed.src);
+    if (src.error) throw new Error(src.error);
+    const n = parsed.n;
+    let destEnd = -1;
+    for (let i = 0; i < dest.bytes.length; i++) {
+      if ((!dest.uninitIdx || !dest.uninitIdx[i]) && dest.bytes[i] === 0) { destEnd = i; break; }
+    }
+    if (destEnd === -1) throw new Error("strncat: destination '" + dest.name + "' has no NUL terminator.");
+    const scanIdx = [];
+    for (let i = 0; i <= destEnd; i++) scanIdx.push(i);
+    await animateScan(dest.name, scanIdx, { cls: 'scan', stepMs: 80 });
+    let copied = 0;
+    let overflowed = false;
+    for (let j = 0; j < n; j++) {
+      if (j >= src.bytes.length || src.bytes[j] === 0) break;
+      const i = destEnd + j;
+      if (i >= dest.capacity) { overflowed = true; break; }
+      await animateWrite(dest, i, src.bytes[j]);
+      copied++;
+    }
+    // strncat always writes a terminating NUL after at most n source bytes
+    if (!overflowed) {
+      const nulIdx = destEnd + copied;
+      if (nulIdx < dest.capacity) {
+        await animateWrite(dest, nulIdx, 0);
+      } else {
+        overflowed = true;
+      }
+    }
+    lastResult = null;
+    renderMemory();
+    if (overflowed) termLine('  WARNING: strncat would write past destination capacity.', 'err');
+    else termLine('  appended up to ' + n + ' bytes (plus terminating NUL) onto ' + dest.name, 'out');
+    return { kind: 'strncat' };
+  }
+
+  async function evalStrcmp(parsed) {
+    const A = resolveSource(parsed.a);
+    if (A.error) throw new Error(A.error);
+    const B = resolveSource(parsed.b);
+    if (B.error) throw new Error(B.error);
+    // If both sides resolve to actual stored strings, animate the walk on them.
+    let cmp = 0;
+    let diffIdx = -1;
+    const max = Math.max(A.bytes.length, B.bytes.length);
+    for (let i = 0; i < max; i++) {
+      const ai = i < A.bytes.length ? A.bytes[i] : 0;
+      const bi = i < B.bytes.length ? B.bytes[i] : 0;
+      // animate scan on both (if real strings)
+      if (A.fromString) {
+        const cell = root.querySelector('.cell[data-name="' + A.fromString.name + '"][data-i="' + i + '"]');
+        if (cell) cell.classList.add('scan');
+      }
+      if (B.fromString) {
+        const cell = root.querySelector('.cell[data-name="' + B.fromString.name + '"][data-i="' + i + '"]');
+        if (cell) cell.classList.add('scan');
+      }
+      await delay(STEP_MS);
+      if (ai !== bi) {
+        cmp = ai < bi ? -1 : 1;
+        diffIdx = i;
+        // flash diff
+        if (A.fromString) {
+          const cell = root.querySelector('.cell[data-name="' + A.fromString.name + '"][data-i="' + i + '"]');
+          if (cell) { cell.classList.remove('scan'); cell.classList.add('diff'); }
+        }
+        if (B.fromString) {
+          const cell = root.querySelector('.cell[data-name="' + B.fromString.name + '"][data-i="' + i + '"]');
+          if (cell) { cell.classList.remove('scan'); cell.classList.add('diff'); }
+        }
+        await delay(HIGHLIGHT_MS * 2);
+        break;
+      }
+      if (A.fromString) {
+        const cell = root.querySelector('.cell[data-name="' + A.fromString.name + '"][data-i="' + i + '"]');
+        if (cell) { cell.classList.remove('scan'); cell.classList.add('match'); }
+      }
+      if (B.fromString) {
+        const cell = root.querySelector('.cell[data-name="' + B.fromString.name + '"][data-i="' + i + '"]');
+        if (cell) { cell.classList.remove('scan'); cell.classList.add('match'); }
+      }
+      if (ai === 0) break; // both equal and both NUL: strings are equal
+    }
+    // Clear residual highlights after a beat
+    await delay(HIGHLIGHT_MS);
+    if (A.fromString) {
+      root.querySelectorAll('.cell[data-name="' + A.fromString.name + '"]').forEach(c => { c.classList.remove('scan','diff','match'); });
+    }
+    if (B.fromString) {
+      root.querySelectorAll('.cell[data-name="' + B.fromString.name + '"]').forEach(c => { c.classList.remove('scan','diff','match'); });
+    }
+    lastResult = { kind: 'strcmp', expr: 'strcmp(' + A.descriptor + ', ' + B.descriptor + ')', value: cmp };
+    renderMemory();
+    termLine('  ' + cmp + (cmp === 0 ? '  (equal)' : (cmp < 0 ? '  (a < b)' : '  (a > b)')), 'out');
+    return lastResult;
+  }
+
+  async function evalIndexWrite(parsed) {
+    const s = findString(parsed.name);
+    if (!s) throw new Error("No string named '" + parsed.name + "'.");
+    if (parsed.i < 0 || parsed.i >= s.capacity) throw new Error("Index " + parsed.i + " is out of range for " + parsed.name + " (capacity " + s.capacity + ").");
+    let byteVal;
+    const cl = parseCharLiteral(parsed.valueRaw);
+    if (cl !== null) byteVal = cl;
+    else if (/^-?\d+$/.test(parsed.valueRaw)) byteVal = parseInt(parsed.valueRaw, 10) & 0xff;
+    else throw new Error("Right side must be a char literal like 'x' or an integer.");
+    await animateWrite(s, parsed.i, byteVal);
+    lastResult = null;
+    renderMemory();
+    termLine('  ' + s.name + '[' + parsed.i + '] = ' + (byteVal === 0 ? "'\\0'" : (byteVal >= 32 && byteVal < 127 ? "'" + String.fromCharCode(byteVal) + "'" : byteVal)), 'out');
+    return { kind: 'indexWrite' };
+  }
+
+  async function evalIndexRead(parsed) {
+    const s = findString(parsed.name);
+    if (!s) throw new Error("No string named '" + parsed.name + "'.");
+    if (parsed.i < 0 || parsed.i >= s.capacity) throw new Error("Index " + parsed.i + " is out of range for " + parsed.name + " (capacity " + s.capacity + ").");
+    if (s.uninitIdx && s.uninitIdx[parsed.i]) {
+      termLine('  ' + s.name + '[' + parsed.i + '] is uninitialized', 'err');
+      return { kind: 'indexRead' };
+    }
+    const b = s.bytes[parsed.i];
+    const display = (b === 0) ? "'\\0' (0)" : (b >= 32 && b < 127 ? "'" + String.fromCharCode(b) + "' (" + b + ")" : String(b));
+    // Briefly flash that cell
+    const cell = root.querySelector('.cell[data-name="' + s.name + '"][data-i="' + parsed.i + '"]');
+    if (cell) { cell.classList.add('scan'); await delay(HIGHLIGHT_MS); cell.classList.remove('scan'); }
+    termLine('  ' + display, 'out');
+    return { kind: 'indexRead' };
+  }
+
+  async function evalPrintf(parsed) {
+    const s = findString(parsed.name);
+    if (!s) throw new Error("No string named '" + parsed.name + "'.");
+    const text = visibleString(s);
+    const newline = parsed.fmt.includes('\\n');
+    termLine('  ' + text + (newline ? '' : ''), 'out');
+    return { kind: 'printf' };
+  }
+
+  // ============================================================
+  // Dispatcher — returns a Promise that resolves to the result kind, or
+  // throws on parse/eval errors.
+  // ============================================================
+  async function runCommand(line) {
+    const t = line.trim();
+    if (!t) return null;
+    const lower = t.toLowerCase().replace(/;?\s*$/, '');
+    if (lower === 'clear' || lower === 'reset') {
+      strings.length = 0;
+      lastResult = null;
+      renderMemory();
+      return { kind: 'cleared' };
+    }
+    if (lower === 'list') return { kind: 'list' };
+    if (lower === 'help' || lower === '?') return { kind: 'help' };
+
+    let p;
+    if ((p = tryParseStrlen(t)))   return await evalStrlen(p);
+    if ((p = tryParseStrncpy(t)))  return await evalStrncpy(p);
+    if ((p = tryParseStrcpy(t)))   return await evalStrcpy(p);
+    if ((p = tryParseStrncat(t)))  return await evalStrncat(p);
+    if ((p = tryParseStrcat(t)))   return await evalStrcat(p);
+    if ((p = tryParseStrcmp(t)))   return await evalStrcmp(p);
+    if ((p = tryParsePrintf(t)))   return await evalPrintf(p);
+    if ((p = tryParseIndexWrite(t))) return await evalIndexWrite(p);
+    if ((p = tryParseIndexRead(t)))  return await evalIndexRead(p);
+    if ((p = tryParseDecl(t)))     return await evalDecl(p);
+
+    if (/^(ls|cd|pwd|cat|echo|mkdir|rm|mv|cp)\b/.test(t)) {
+      throw new Error("This is not a shell. Type C statements like: char s[] = \"hi\";");
+    }
+    throw new Error("Couldn't parse '" + t + "'. Try a declaration, strlen, strcpy, strcmp, strcat, indexed write, or printf.");
+  }
+
+  // ============================================================
+  // Tasks
+  // ============================================================
+  function diagnoseGeneric() { return null; }
+
+  const tasks = [
+    // --- Section 1: Anatomy of a string ---
+    {
+      section: 'Section 1: Anatomy of a string',
+      label: 'Task 1 of 12',
+      text: 'Declare a char array named greeting initialized from the string literal "hello". Use the auto-sized form: char greeting[] = "hello";',
+      hint: 'char greeting[] = "hello";',
+      match: (cmd) => /^\s*char\s+greeting\s*\[\s*\]\s*=\s*"hello"\s*;\s*$/.test(cmd),
+      note: 'Six bytes: five for the letters, one for the NUL terminator. The compiler sized the array for you.'
+    },
+    {
+      label: 'Task 2 of 12',
+      text: 'Find out how many visible characters greeting contains. Use strlen.',
+      hint: 'strlen(greeting);',
+      match: (cmd) => /^\s*strlen\s*\(\s*greeting\s*\)\s*;?\s*$/.test(cmd),
+      note: 'strlen returned 5. It walked from index 0, counting each byte, and stopped when it hit the NUL at index 5. The NUL itself is not counted.'
+    },
+    {
+      label: 'Task 3 of 12',
+      text: 'Look at the first character directly. Read greeting[0].',
+      hint: 'greeting[0]',
+      match: (cmd) => /^\s*greeting\s*\[\s*0\s*\]\s*;?\s*$/.test(cmd),
+      note: "Index 0 holds 'h' (ASCII 104). A char array is just an array; you can read any element with bracket notation."
+    },
+    // --- Section 2: Copying into a buffer ---
+    {
+      section: 'Section 2: Copying into a buffer',
+      label: 'Task 4 of 12',
+      text: 'Declare an empty buffer to copy into: char dest[16] = "";',
+      hint: 'char dest[16] = "";',
+      match: (cmd) => /^\s*char\s+dest\s*\[\s*16\s*\]\s*=\s*""\s*;\s*$/.test(cmd),
+      note: 'A 16-byte buffer, initialized to all zeros. The very first byte is the NUL, so visible length is 0.'
+    },
+    {
+      label: 'Task 5 of 12',
+      text: 'Copy the string literal "VIPER" into dest. Use strcpy.',
+      hint: 'strcpy(dest, "VIPER");',
+      match: (cmd) => /^\s*strcpy\s*\(\s*dest\s*,\s*"VIPER"\s*\)\s*;?\s*$/.test(cmd),
+      note: 'strcpy walked the source one byte at a time, including the NUL. Indices 0-5 of dest now hold V, I, P, E, R, \\0. The bytes after that are still the original zeros.'
+    },
+    {
+      label: 'Task 6 of 12',
+      text: 'Change the first character of dest to a lowercase v. Write dest[0] = \'v\';',
+      hint: "dest[0] = 'v';",
+      match: (cmd) => /^\s*dest\s*\[\s*0\s*\]\s*=\s*'v'\s*;?\s*$/.test(cmd),
+      note: 'One byte changed. The visible string is now "vIPER". Mutation is fine when the array is your own buffer; it would crash on a string literal like char *s = "VIPER".'
+    },
+    // --- Section 3: Comparing and concatenating ---
+    {
+      section: 'Section 3: Comparing and concatenating',
+      label: 'Task 7 of 12',
+      text: 'Declare two more strings to compare: char a[] = "alpha";',
+      hint: 'char a[] = "alpha";',
+      match: (cmd) => /^\s*char\s+a\s*\[\s*\]\s*=\s*"alpha"\s*;\s*$/.test(cmd),
+      note: 'a is a six-byte array holding "alpha" + NUL.'
+    },
+    {
+      label: 'Task 8 of 12',
+      text: 'Declare a second string with a slightly different value: char b[] = "alphz";',
+      hint: 'char b[] = "alphz";',
+      match: (cmd) => /^\s*char\s+b\s*\[\s*\]\s*=\s*"alphz"\s*;\s*$/.test(cmd),
+      note: 'a and b agree for four characters; they differ at index 4 ("a" vs "z").'
+    },
+    {
+      label: 'Task 9 of 12',
+      text: 'Compare a and b with strcmp. Watch the walk: it should stop at the first differing byte.',
+      hint: 'strcmp(a, b);',
+      match: (cmd) => /^\s*strcmp\s*\(\s*a\s*,\s*b\s*\)\s*;?\s*$/.test(cmd),
+      note: "strcmp returned a negative number because 'a' (97) is less than 'z' (122) at index 4. Zero means equal; non-zero is the sign of the first differing pair. Do not confuse this with Python's == which returned True/False."
+    },
+    // --- Section 4: Safety and the NUL ---
+    {
+      section: 'Section 4: Safety and the NUL terminator',
+      label: 'Task 10 of 12',
+      text: 'Append " 01" onto dest so it becomes "vIPER 01". Use strcat.',
+      hint: 'strcat(dest, " 01");',
+      match: (cmd) => /^\s*strcat\s*\(\s*dest\s*,\s*"\s01"\s*\)\s*;?\s*$/.test(cmd),
+      note: 'strcat walked dest looking for its NUL, then wrote the new bytes starting at that index. The old NUL was overwritten by the space; a new NUL was placed at the end. dest now reads "vIPER 01".'
+    },
+    {
+      label: 'Task 11 of 12',
+      text: 'Try a bounded copy that may NOT leave a NUL: declare a 5-byte buffer with char tiny[5] = "";  then strncpy(tiny, "VIPER", 5);',
+      hint: 'First: char tiny[5] = "";  Then: strncpy(tiny, "VIPER", 5);',
+      // Two-step task: accept either step, and require both eventually
+      match: (cmd) => /^\s*char\s+tiny\s*\[\s*5\s*\]\s*=\s*""\s*;\s*$/.test(cmd)
+                  || /^\s*strncpy\s*\(\s*tiny\s*,\s*"VIPER"\s*,\s*5\s*\)\s*;?\s*$/.test(cmd),
+      multiStep: 2,
+      // For the multi-step case we track completion in the controller below.
+      note: 'strncpy copied exactly five bytes: V, I, P, E, R. It did NOT add a NUL. tiny holds five visible characters but no terminator. If you printed it with printf("%s", tiny), printf would walk into adjacent memory. This is the canonical strncpy gotcha.'
+    },
+    {
+      label: 'Task 12 of 12',
+      text: 'Clean up. Type clear to remove all strings.',
+      hint: 'clear',
+      match: (cmd) => /^\s*(clear|reset)\s*;?\s*$/i.test(cmd),
+      note: 'All strings removed. Free mode unlocks now so you can experiment.'
+    },
+  ];
+
+  // ============================================================
+  // Walkthrough controller
+  // ============================================================
+  let currentTaskIndex = 0;
+  let consecutiveFails = 0;
+  let multiStepProgress = 0; // for task 11 (the strncpy two-step)
+  let isAnimating = false;
+
+  function expectedFirstStep(task) {
+    // For the multi-step task 11, we want first step to be the declaration, then the strncpy
+    if (task.multiStep) {
+      if (multiStepProgress === 0) return /^\s*char\s+tiny\s*\[\s*5\s*\]\s*=\s*""\s*;\s*$/;
+      return /^\s*strncpy\s*\(\s*tiny\s*,\s*"VIPER"\s*,\s*5\s*\)\s*;?\s*$/;
+    }
+    return null;
+  }
+
+  async function checkTask(rawCmd) {
+    if (mode === 'free' || currentTaskIndex >= tasks.length) return null;
+    if (isAnimating) return false;
+    const t = tasks[currentTaskIndex];
+    const re = expectedFirstStep(t);
+    let matched;
+    if (re) matched = re.test(rawCmd);
+    else matched = t.match(rawCmd);
+    if (matched) {
+      isAnimating = true;
+      try {
+        await process(rawCmd);
+      } catch (e) {
+        termLine('  error: ' + e.message, 'err');
+      } finally {
+        isAnimating = false;
+      }
+      if (t.multiStep) {
+        multiStepProgress++;
+        if (multiStepProgress < t.multiStep) {
+          // stay on same task, do not advance
+          return true;
+        }
+        multiStepProgress = 0;
+      }
+      if (t.note) {
+        termLine('', 'out');
+        termLine('  ' + t.note, 'note');
+      }
+      currentTaskIndex++;
+      consecutiveFails = 0;
+      hideHintPulse();
+      renderTask();
+      if (currentTaskIndex >= tasks.length) {
+        setMode('free');
+        termLine('', 'out');
+        termLine('  Walkthrough complete. Free mode unlocked.', 'note');
+      }
+      return true;
+    } else {
+      echoCommand(rawCmd);
+      termLine("  Not what this task is asking for. Look at the task card above, or click 'Show hint'.", 'err');
+      consecutiveFails++;
+      if (consecutiveFails >= 2) showHintPulse();
+      return false;
+    }
+  }
+
+  function renderTask() {
+    const fill = root.querySelector('#strwalk-progress-fill');
+    const label = root.querySelector('#strwalk-progress-label');
+    const card = root.querySelector('#strwalk-task-card');
+    const labelEl = root.querySelector('#strwalk-task-label');
+    const textEl = root.querySelector('#strwalk-task-text');
+    const hintEl = root.querySelector('#strwalk-task-hint');
+    const sectionEl = root.querySelector('#strwalk-section-header');
+    const completionArea = root.querySelector('#strwalk-completion-area');
+    const pct = (currentTaskIndex / tasks.length) * 100;
+    fill.style.width = pct + '%';
+    label.textContent = 'Task ' + Math.min(currentTaskIndex + 1, tasks.length) + ' of ' + tasks.length;
+    if (currentTaskIndex >= tasks.length) {
+      card.className = 'task-card complete';
+      labelEl.textContent = 'Complete';
+      textEl.textContent = "You worked through every key concept of Lesson 10's string anatomy: arrays of chars, the NUL terminator, the five string.h functions, and what makes strncpy treacherous. You are ready for the printf playground and the lab.";
+      hintEl.textContent = '';
+      fill.style.width = '100%';
+      label.textContent = 'All tasks complete';
+      sectionEl.textContent = 'All done';
+      completionArea.innerHTML = '';
+      cs210RenderCompletion(completionArea);
+      return;
+    }
+    completionArea.innerHTML = '';
+    card.className = 'task-card';
+    const t = tasks[currentTaskIndex];
+    if (t.section) sectionEl.textContent = t.section;
+    labelEl.textContent = t.label;
+    textEl.textContent = t.text;
+    hintEl.textContent = '';
+  }
+  function showHint() {
+    if (currentTaskIndex >= tasks.length) return;
+    const t = tasks[currentTaskIndex];
+    root.querySelector('#strwalk-task-hint').textContent = 'Hint: ' + (t.hint || '');
+    hideHintPulse();
+  }
+  function showHintPulse() { root.querySelector('#strwalk-hint-btn').classList.add('pulse'); }
+  function hideHintPulse() { root.querySelector('#strwalk-hint-btn').classList.remove('pulse'); }
+
+  function reset() {
+    strings.length = 0;
+    lastResult = null;
+    currentTaskIndex = 0;
+    consecutiveFails = 0;
+    multiStepProgress = 0;
+    hideHintPulse();
+    setMode('walkthrough');
+    terminalEl.innerHTML = '';
+    termLine('Welcome to the string anatomy walkthrough.', 'dim');
+    termLine('Follow the task card. Type C statements at the prompt.', 'dim');
+    termLine('', 'out');
+    renderMemory();
+    renderTask();
+  }
+
+  async function process(line) {
+    echoCommand(line);
+    try {
+      const r = await runCommand(line);
+      if (!r) return;
+      if (r.kind === 'cleared') termLine('  memory cleared', 'out');
+      else if (r.kind === 'list') {
+        if (strings.length === 0) termLine('  no strings', 'out');
+        else for (const s of strings) termLine('    ' + s.declaredAs, 'out');
+      } else if (r.kind === 'help') {
+        termLine('  declarations: char s[] = "hello";   char buf[16];   char buf[16] = "";', 'out');
+        termLine('  string.h:     strlen(s)  strcpy(d,s)  strncpy(d,s,n)  strcmp(a,b)  strcat(d,s)  strncat(d,s,n)', 'out');
+        termLine('  index:        s[0]    s[0] = \'x\';', 'out');
+        termLine('  output:       printf("%s\\n", s);', 'out');
+        termLine('  meta:         clear  list  help', 'out');
+      }
+    } catch (e) {
+      termLine('  error: ' + e.message, 'err');
+    }
+  }
+
+  function setMode(newMode) {
+    mode = newMode;
+    const btn = root.querySelector('#strwalk-mode-btn');
+    const input = root.querySelector('#strwalk-cli-input');
+    if (mode === 'free') {
+      btn.textContent = 'Return to walkthrough';
+      btn.style.background = '#E6F4EA';
+      btn.style.borderColor = '#2E7D32';
+      btn.style.color = '#1B5E20';
+      input.placeholder = 'free mode: try anything with strings';
+    } else {
+      btn.textContent = 'Switch to free mode';
+      btn.style.background = '';
+      btn.style.borderColor = '';
+      btn.style.color = '';
+      input.placeholder = 'follow the task above';
+    }
+  }
+
+  // ============================================================
+  // Input wiring
+  // ============================================================
+  const inputEl = root.querySelector('#strwalk-cli-input');
+  inputEl.addEventListener('keydown', async (e) => {
+    if (e.key !== 'Enter') return;
+    const v = inputEl.value;
+    inputEl.value = '';
+    if (!v.trim()) return;
+    if (mode === 'walkthrough') {
+      await checkTask(v);
+    } else {
+      if (isAnimating) return;
+      isAnimating = true;
+      try { await process(v); } finally { isAnimating = false; }
+    }
+  });
+  root.querySelector('#strwalk-hint-btn').addEventListener('click', showHint);
+  root.querySelector('#strwalk-reset-btn').addEventListener('click', reset);
+  root.querySelector('#strwalk-mode-btn').addEventListener('click', () => {
+    if (mode === 'walkthrough') {
+      setMode('free');
+      termLine('', 'out');
+      termLine('  Free mode. Type any string declaration or string.h call.', 'note');
+    } else {
+      setMode('walkthrough');
+      termLine('', 'out');
+      termLine('  Walkthrough mode. Follow the task card.', 'note');
+    }
+  });
+
+  // Boot
+  reset();
+})();
+
+</script>
+
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 32px 0 10px 0;">printf Format Playground</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Ten tasks across four sections. Type printf calls and watch the output appear with a column ruler so you can count positions exactly.</p>
+
+<!-- ============================================================
+     CS210 Lesson 10 - printf Format Playground Widget
+     Template-aligned style. Native HTML/CSS + scoped JS.
+     Paste as a block; runs anywhere the parent page allows <script>.
+     ============================================================ -->
+<style>
+.cs210-pfwalk * { box-sizing: border-box; }
+.cs210-pfwalk {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-pfwalk h1 { color: #00205B; font-size: 24px; margin: 0 0 6px 0; }
+.cs210-pfwalk .subtitle { color: #4A5568; font-size: 14px; margin-bottom: 22px; }
+.cs210-pfwalk .progress-bar { background: #E5E7EB; border-radius: 3px; height: 8px; overflow: hidden; margin-bottom: 6px; }
+.cs210-pfwalk .progress-fill { background: #003087; height: 100%; transition: width 0.3s ease; }
+.cs210-pfwalk .progress-label { font-size: 12px; color: #6B7280; margin-bottom: 18px; }
+.cs210-pfwalk .section-header {
+  background: #E8EDF5; color: #00205B;
+  padding: 8px 14px; border-radius: 3px;
+  font-size: 13px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.cs210-pfwalk .task-card {
+  background: #FFF8E1; border-left: 4px solid #F0B92C;
+  padding: 14px 18px; margin-bottom: 14px; border-radius: 3px;
+}
+.cs210-pfwalk .task-card.complete { background: #E6F4EA; border-left-color: #2E7D32; }
+.cs210-pfwalk .task-label {
+  font-size: 12px; letter-spacing: 1.5px; color: #6B5300;
+  text-transform: uppercase; font-weight: 600; margin-bottom: 4px;
+}
+.cs210-pfwalk .task-card.complete .task-label { color: #1B5E20; }
+.cs210-pfwalk .task-text { font-size: 15px; color: #1a1a1a; }
+.cs210-pfwalk .task-hint { font-size: 12.5px; color: #6B7280; margin-top: 6px; font-style: italic; }
+.cs210-pfwalk .task-target {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  border-radius: 3px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  color: #1a1a1a;
+  white-space: pre;
+}
+.cs210-pfwalk .task-target-label {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 6px;
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+/* Two-pane area: terminal left, output right */
+.cs210-pfwalk .panes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+@media (max-width: 820px) {
+  .cs210-pfwalk .panes { grid-template-columns: 1fr; }
+}
+.cs210-pfwalk .terminal {
+  background: #1E2A3A; color: #E8EDF5;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13.5px; line-height: 1.5;
+  border-radius: 4px; padding: 14px 18px;
+  min-height: 380px; max-height: 440px;
+  overflow-y: auto;
+  white-space: pre-wrap; word-break: break-word;
+}
+.cs210-pfwalk .terminal .prompt { color: #7FB3D5; }
+.cs210-pfwalk .terminal .typed { color: #FFFFFF; }
+.cs210-pfwalk .terminal .out { color: #B5BEC8; }
+.cs210-pfwalk .terminal .note { color: #F0B92C; }
+.cs210-pfwalk .terminal .err { color: #F47A7A; }
+.cs210-pfwalk .terminal .ok { color: #7FD17F; }
+.cs210-pfwalk .terminal .dim { color: #6B7280; }
+
+.cs210-pfwalk .output-pane {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  padding: 14px 16px;
+  min-height: 380px;
+  max-height: 440px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.cs210-pfwalk .output-pane-header {
+  font-size: 11px; letter-spacing: 1.5px; color: #6B7280;
+  text-transform: uppercase; font-weight: 600;
+  margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #E5E7EB;
+}
+.cs210-pfwalk .ruler {
+  font-family: Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.3;
+  color: #6B7280;
+  background: #F0F4FA;
+  padding: 6px 10px;
+  border-radius: 3px;
+  margin-bottom: 8px;
+  white-space: pre;
+  overflow-x: auto;
+}
+.cs210-pfwalk .ruler .tens { color: #003087; font-weight: 600; }
+.cs210-pfwalk .output-buffer {
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #1a1a1a;
+  background: #FAFBFC;
+  padding: 10px 12px;
+  border-radius: 3px;
+  border: 1px solid #E5E7EB;
+  white-space: pre;
+  overflow-x: auto;
+  flex-grow: 1;
+  min-height: 220px;
+}
+.cs210-pfwalk .output-line { display: block; }
+.cs210-pfwalk .output-line.fresh {
+  background: #FFF4D6;
+  animation: cs210-pfwalk-fade 1.2s ease-out forwards;
+}
+@keyframes cs210-pfwalk-fade {
+  0%   { background: #FFF4D6; }
+  100% { background: transparent; }
+}
+.cs210-pfwalk .output-line .pad {
+  color: #C7CFD9;
+  letter-spacing: 0;
+}
+.cs210-pfwalk .output-empty {
+  color: #9CA3AF; font-style: italic; font-size: 13px;
+  text-align: center; padding: 60px 10px;
+}
+
+.cs210-pfwalk .input-row {
+  display: flex; background: #1E2A3A; border-radius: 4px;
+  padding: 8px 14px; margin-bottom: 14px; border: 1px solid #003087;
+}
+.cs210-pfwalk .input-prompt {
+  color: #7FB3D5; font-family: Consolas, monospace; font-size: 14px;
+  margin-right: 8px; align-self: center; white-space: nowrap;
+}
+.cs210-pfwalk .input-row input {
+  flex: 1; background: transparent; color: #FFFFFF; border: none; outline: none;
+  font-family: Consolas, monospace; font-size: 14px; padding: 4px 0;
+}
+.cs210-pfwalk .controls { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+.cs210-pfwalk .btn {
+  background: #ffffff; border: 1px solid #C7CFD9;
+  padding: 6px 14px; border-radius: 3px;
+  font-size: 13px; cursor: pointer; color: #00205B;
+  font-family: inherit;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.cs210-pfwalk .btn:hover { background: #F5F7FA; }
+@keyframes cs210-pfwalk-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(240, 185, 44, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0); }
+}
+.cs210-pfwalk .btn.pulse {
+  background: #FFF8E1; border-color: #F0B92C;
+  color: #6B5300; font-weight: 600;
+  animation: cs210-pfwalk-pulse 1.5s infinite;
+}
+.cs210-pfwalk .help-note {
+  background: #F5F7FA; border: 1px solid #D0D5DD;
+  padding: 12px 16px; border-radius: 3px;
+  font-size: 13px; color: #4A5568; margin-top: 12px;
+}
+.cs210-pfwalk .help-note strong { color: #00205B; }
+
+/* Name modal overlay */
+.cs210-pfwalk .name-modal-backdrop {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999;
+}
+.cs210-pfwalk .name-modal {
+  background: #ffffff; border-radius: 6px;
+  padding: 28px 32px; max-width: 440px; width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-pfwalk .name-modal h2 { color: #00205B; font-size: 20px; margin: 0 0 10px 0; }
+.cs210-pfwalk .name-modal p { color: #4A5568; font-size: 14px; line-height: 1.5; margin: 0 0 16px 0; }
+.cs210-pfwalk .name-modal input {
+  width: 100%; padding: 10px 12px; font-size: 15px;
+  border: 1px solid #CBD5E0; border-radius: 4px; margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-pfwalk .name-modal input:focus {
+  outline: none; border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-pfwalk .name-modal-btn {
+  background: #003087; color: #ffffff; border: none;
+  padding: 10px 20px; border-radius: 4px;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  font-family: inherit;
+}
+.cs210-pfwalk .name-modal-btn:disabled { background: #A0AEC0; cursor: not-allowed; }
+.cs210-pfwalk .name-modal-btn:not(:disabled):hover { background: #00205B; }
+
+/* Completion screen (same pattern as L2 / string widget) */
+.cs210-pfwalk .completion-screen {
+  background: #ffffff; border: 2px solid #2E7D32;
+  border-radius: 6px; padding: 24px 28px; margin-top: 16px;
+}
+.cs210-pfwalk .completion-screen .cs-heading {
+  color: #1B5E20; font-size: 20px; font-weight: 600; margin: 0 0 6px 0;
+}
+.cs210-pfwalk .completion-screen .cs-name-line { font-size: 15px; color: #1a1a1a; margin-bottom: 16px; }
+.cs210-pfwalk .completion-screen .cs-name-line strong { color: #00205B; }
+.cs210-pfwalk .completion-screen .cs-code-block {
+  background: #F0F4FA; border: 1px solid #003087;
+  border-radius: 4px; padding: 16px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; margin-bottom: 14px;
+}
+.cs210-pfwalk .completion-screen .cs-code-label {
+  font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px;
+  color: #4A5568; margin-bottom: 4px;
+}
+.cs210-pfwalk .completion-screen .cs-code-value {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 28px; font-weight: 700; color: #00205B; letter-spacing: 3px;
+}
+.cs210-pfwalk .completion-screen .cs-copy-btn {
+  background: #003087; color: #ffffff; border: none;
+  padding: 8px 14px; border-radius: 3px;
+  font-size: 13px; cursor: pointer; font-family: inherit;
+}
+.cs210-pfwalk .completion-screen .cs-copy-btn:hover { background: #00205B; }
+.cs210-pfwalk .completion-screen .cs-copy-btn.copied { background: #2E7D32; }
+.cs210-pfwalk .completion-screen .cs-timestamp { font-size: 13px; color: #6B7280; margin-bottom: 18px; }
+.cs210-pfwalk .completion-screen .cs-reminder {
+  background: #FFF8E1; border-left: 4px solid #F0B92C;
+  padding: 12px 16px; border-radius: 3px;
+  font-size: 14px; color: #6B5300; line-height: 1.5;
+}
+.cs210-pfwalk .completion-screen .cs-reminder strong { color: #4A3A00; }
+</style>
+
+<div class="cs210-pfwalk">
+
+<div class="name-modal-backdrop" id="pfwalk-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Lesson 10 reflection.</p>
+    <input type="text" id="pfwalk-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="pfwalk-cadet-name-btn" disabled>Start the walkthrough</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 10 &middot; printf Format Playground</h1>
+<div class="subtitle">A guided tour through printf format control: width, precision, padding, and alignment. Each task shows you the exact output you must produce. Type a printf call that matches.</div>
+
+<div class="progress-bar"><div class="progress-fill" id="pfwalk-progress-fill" style="width: 0%;"></div></div>
+<div class="progress-label" id="pfwalk-progress-label">Task 0 of 10</div>
+
+<div class="section-header" id="pfwalk-section-header">Section 1: Width and alignment</div>
+
+<div class="task-card" id="pfwalk-task-card">
+  <div class="task-label" id="pfwalk-task-label">Current task</div>
+  <div class="task-text" id="pfwalk-task-text">Loading...</div>
+  <div class="task-hint" id="pfwalk-task-hint"></div>
+  <div class="task-target" id="pfwalk-task-target" style="display:none;">
+    <span class="task-target-label">Target output (dots are spaces)</span>
+    <span id="pfwalk-task-target-text"></span>
+  </div>
+</div>
+
+<div class="panes">
+  <div class="terminal" id="pfwalk-terminal"></div>
+  <div class="output-pane">
+    <div class="output-pane-header">Stdout</div>
+    <div class="ruler" id="pfwalk-ruler"></div>
+    <div class="output-buffer" id="pfwalk-output">
+      <div class="output-empty">Nothing printed yet.<br>Type a printf call on the left.</div>
+    </div>
+  </div>
+</div>
+
+<div class="input-row">
+  <span class="input-prompt">pfmt&gt;</span>
+  <input type="text" id="pfwalk-cli-input" autocomplete="off" spellcheck="false" placeholder='try: printf("Hello, %s!\n", "world");'>
+</div>
+
+<div class="controls">
+  <button class="btn" id="pfwalk-hint-btn">Show hint</button>
+  <button class="btn" id="pfwalk-reset-btn">Reset</button>
+  <button class="btn" id="pfwalk-mode-btn">Switch to free mode</button>
+  <button class="btn" id="pfwalk-clear-out-btn">Clear stdout</button>
+</div>
+
+<div class="help-note">
+  <strong>How this works:</strong> The right pane shows what printf would print, with a column ruler so you can count positions exactly. Padding spaces are rendered as faint dots so you can see them. Match the target output exactly, including the line of dots. Mistype twice and the hint button will pulse. After the walkthrough completes, free mode unlocks so you can experiment with any format.
+</div>
+
+<div id="pfwalk-completion-area"></div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-pfwalk');
+  if (!root) return;
+
+  // ============================================================
+  // CS210 widget completion utilities (shared pattern)
+  // ============================================================
+  const CS210_SALT = "lesson10_printf_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#pfwalk-name-modal-backdrop');
+    const input = root.querySelector('#pfwalk-cadet-name-input');
+    const btn = root.querySelector('#pfwalk-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored) input.value = stored;
+    } catch (e) {}
+    function updateBtn() { btn.disabled = input.value.trim().length < 2; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', function() {
+      const name = input.value.trim();
+      if (name.length < 2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+      const cli = root.querySelector('#pfwalk-cli-input');
+      if (cli) cli.focus();
+    });
+    setTimeout(function() { input.focus(); }, 50);
+  })();
+
+  function cs210RenderCompletion(area) {
+    if (!area) return;
+    if (root.querySelector('#cs210-pfwalk-completion-overlay')) return;
+    const now = new Date();
+    const ts = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const safeName = (cs210CadetName || 'Cadet').replace(/[<>&"']/g, function(c) {
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+    area.innerHTML =
+      '<div class="completion-screen">' +
+        '<div class="cs-heading">Walkthrough complete</div>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value">' + CS210_CODE + '</div></div>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+      '</div>';
+    const overlay = document.createElement('div');
+    overlay.id = 'cs210-pfwalk-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.style.background = 'rgba(27, 94, 32, 0.55)';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">Walkthrough complete</h2>' +
+        '<p>Take a screenshot of this box. You will need the code and a visual of this screen for the Lesson 10 reflection in Blackboard.</p>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value" id="pfwalk-cs-code-value">' + CS210_CODE + '</div></div>' +
+          '<button class="cs-copy-btn" id="pfwalk-cs-copy-btn" type="button">Copy code</button>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+        '<div class="cs-reminder" style="margin-bottom:14px;">' +
+          '<strong>Next step:</strong> Open the Lesson 10 reflection in Blackboard. Enter this code, answer the reflection prompt, and attach your screenshot.' +
+        '</div>' +
+        '<button class="name-modal-btn" id="pfwalk-cs-overlay-close" type="button" style="background:#2E7D32;">Got it, close this</button>' +
+      '</div>';
+    root.appendChild(overlay);
+    const closeBtn = overlay.querySelector('#pfwalk-cs-overlay-close');
+    if (closeBtn) closeBtn.addEventListener('click', function() { overlay.style.display = 'none'; });
+    const copyBtn = overlay.querySelector('#pfwalk-cs-copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function() {
+        const text = CS210_CODE;
+        const ok = function() {
+          copyBtn.textContent = 'Copied';
+          copyBtn.classList.add('copied');
+          setTimeout(function() {
+            copyBtn.textContent = 'Copy code';
+            copyBtn.classList.remove('copied');
+          }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(ok, function() { fallbackCopy(text); ok(); });
+        } else { fallbackCopy(text); ok(); }
+      });
+    }
+  }
+  function fallbackCopy(text) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e) {}
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]);
+  }
+
+  // ============================================================
+  // State
+  // ============================================================
+  const variables = {}; // { name: {type, value} }
+  // outputLines: array of { chars: string, isPad: boolean[] }
+  // We model the output as line-by-line; \n closes a line and starts a new one.
+  let outputLines = [];
+  let currentLine = { chars: '', isPad: [] };
+  let mode = 'walkthrough';
+
+  // ============================================================
+  // Format string parser
+  // Returns an array of tokens: {kind:'lit', text} or {kind:'spec', flags, width, precision, conversion, raw}
+  // ============================================================
+  function parseFormatString(fmt) {
+    const tokens = [];
+    let i = 0;
+    while (i < fmt.length) {
+      const ch = fmt[i];
+      if (ch === '%') {
+        if (i + 1 < fmt.length && fmt[i + 1] === '%') {
+          tokens.push({ kind: 'lit', text: '%' });
+          i += 2;
+          continue;
+        }
+        // Parse a format spec: % [flags] [width] [.precision] conversion
+        let j = i + 1;
+        let flags = '';
+        while (j < fmt.length && '-+0 #'.indexOf(fmt[j]) !== -1) { flags += fmt[j]; j++; }
+        let width = '';
+        while (j < fmt.length && fmt[j] >= '0' && fmt[j] <= '9') { width += fmt[j]; j++; }
+        let precision = null;
+        if (fmt[j] === '.') {
+          precision = '';
+          j++;
+          while (j < fmt.length && fmt[j] >= '0' && fmt[j] <= '9') { precision += fmt[j]; j++; }
+          if (precision === '') precision = '0';
+        }
+        if (j >= fmt.length) throw new Error("format string ends mid-specifier");
+        const conv = fmt[j];
+        if ('dfsc'.indexOf(conv) === -1) throw new Error("unsupported conversion '%" + conv + "'. Supported: %d, %f, %s, %c, %%");
+        tokens.push({
+          kind: 'spec',
+          flags,
+          width: width === '' ? null : parseInt(width, 10),
+          precision: precision === null ? null : parseInt(precision, 10),
+          conversion: conv,
+          raw: fmt.substring(i, j + 1),
+        });
+        i = j + 1;
+      } else {
+        tokens.push({ kind: 'lit', text: ch });
+        i++;
+      }
+    }
+    return tokens;
+  }
+
+  // Convert a list of one-character literal tokens into a single combined run, for cleaner debug output.
+  // (Not strictly necessary for correctness.)
+  function compactTokens(tokens) {
+    const out = [];
+    for (const t of tokens) {
+      if (t.kind === 'lit' && out.length && out[out.length - 1].kind === 'lit') {
+        out[out.length - 1].text += t.text;
+      } else {
+        out.push(Object.assign({}, t));
+      }
+    }
+    return out;
+  }
+
+  // Process backslash escapes in a string literal: \n -> newline, \t -> tab, \\ -> \, \" -> "
+  function unescapeLiteral(s) {
+    let out = '';
+    for (let i = 0; i < s.length; i++) {
+      if (s[i] === '\\' && i + 1 < s.length) {
+        const nxt = s[i + 1];
+        if (nxt === 'n') out += '\n';
+        else if (nxt === 't') out += '\t';
+        else if (nxt === '\\') out += '\\';
+        else if (nxt === '"') out += '"';
+        else if (nxt === "'") out += "'";
+        else if (nxt === '0') out += '\0';
+        else out += nxt;
+        i++;
+      } else {
+        out += s[i];
+      }
+    }
+    return out;
+  }
+
+  // ============================================================
+  // printf-call parser
+  // Accept: printf("FORMAT", ARGS) where ARGS is a comma-separated list of:
+  //   "string literals", 'c' char literals, decimal integers (possibly negative),
+  //   float literals (with .), or bare identifiers (resolved to a declared variable).
+  // ============================================================
+  function tryParsePrintf(line) {
+    const t = line.trim().replace(/;\s*$/, '');
+    const m = t.match(/^printf\s*\(\s*(.+)\s*\)\s*$/);
+    if (!m) return null;
+    const inside = m[1];
+    // The format string must be the first argument and a double-quoted literal.
+    // We hand-walk it because regexes can't reliably handle escaped quotes.
+    if (inside[0] !== '"') return { error: 'First argument to printf must be a string literal in double quotes.' };
+    let i = 1;
+    let fmt = '';
+    while (i < inside.length) {
+      if (inside[i] === '\\' && i + 1 < inside.length) {
+        fmt += inside[i] + inside[i + 1];
+        i += 2;
+      } else if (inside[i] === '"') {
+        i++;
+        break;
+      } else {
+        fmt += inside[i];
+        i++;
+      }
+    }
+    if (i > inside.length) return { error: 'Unterminated format string.' };
+    const fmtProcessed = unescapeLiteral(fmt);
+    const rest = inside.substring(i).trim();
+    const args = [];
+    if (rest === '') {
+      // No args
+    } else {
+      if (rest[0] !== ',') return { error: 'Expected , between format string and arguments.' };
+      // Split the rest by top-level commas (respecting quotes)
+      let j = 1;
+      let cur = '';
+      let inStr = null;
+      while (j < rest.length) {
+        const c = rest[j];
+        if (inStr) {
+          cur += c;
+          if (c === '\\' && j + 1 < rest.length) { cur += rest[j + 1]; j += 2; continue; }
+          if (c === inStr) inStr = null;
+          j++;
+        } else if (c === '"' || c === "'") {
+          inStr = c;
+          cur += c;
+          j++;
+        } else if (c === ',') {
+          args.push(cur.trim());
+          cur = '';
+          j++;
+        } else {
+          cur += c;
+          j++;
+        }
+      }
+      if (cur.trim() !== '') args.push(cur.trim());
+    }
+    return { kind: 'printf', format: fmtProcessed, argSources: args };
+  }
+
+  function tryParseDecl(line) {
+    const t = line.trim().replace(/;\s*$/, '');
+    // int NAME = N;
+    let m = t.match(/^int\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(-?\d+)\s*$/);
+    if (m) return { kind: 'decl', type: 'int', name: m[1], value: parseInt(m[2], 10) };
+    // float NAME = N.N;
+    m = t.match(/^float\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(-?\d+(?:\.\d+)?f?)\s*$/);
+    if (m) return { kind: 'decl', type: 'float', name: m[1], value: parseFloat(m[2]) };
+    // double NAME = N.N;
+    m = t.match(/^double\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(-?\d+(?:\.\d+)?)\s*$/);
+    if (m) return { kind: 'decl', type: 'double', name: m[1], value: parseFloat(m[2]) };
+    // char NAME = 'c';
+    m = t.match(/^char\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*'(.)'\s*$/);
+    if (m) return { kind: 'decl', type: 'char', name: m[1], value: m[2].charCodeAt(0) };
+    // char NAME[] = "literal";  (string buffer)
+    m = t.match(/^char\s+([A-Za-z_][A-Za-z0-9_]*)\s*\[\s*\d*\s*\]\s*=\s*("(?:[^"\\]|\\.)*")\s*$/);
+    if (m) {
+      const lit = unescapeLiteral(m[2].slice(1, -1));
+      return { kind: 'decl', type: 'string', name: m[1], value: lit };
+    }
+    return null;
+  }
+
+  // Resolve one argument source to a typed value:
+  //   {kind: 'int'|'float'|'string'|'char', value}
+  function resolveArg(src) {
+    src = src.trim();
+    if (src.startsWith('"')) {
+      // Find matching closing quote
+      let inner = src.slice(1, -1);
+      if (!src.endsWith('"')) throw new Error("malformed string argument: " + src);
+      return { kind: 'string', value: unescapeLiteral(inner) };
+    }
+    if (src.startsWith("'")) {
+      if (!src.endsWith("'") || src.length < 3) throw new Error("malformed char argument: " + src);
+      const inner = src.slice(1, -1);
+      if (inner.length === 1) return { kind: 'char', value: inner.charCodeAt(0) };
+      if (inner === '\\n') return { kind: 'char', value: 10 };
+      if (inner === '\\t') return { kind: 'char', value: 9 };
+      if (inner === '\\0') return { kind: 'char', value: 0 };
+      if (inner === "\\'") return { kind: 'char', value: 39 };
+      if (inner === '\\\\') return { kind: 'char', value: 92 };
+      throw new Error("unrecognized char literal: " + src);
+    }
+    if (/^-?\d+\.\d+f?$/.test(src)) return { kind: 'float', value: parseFloat(src) };
+    if (/^-?\d+$/.test(src)) return { kind: 'int', value: parseInt(src, 10) };
+    if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(src)) {
+      const v = variables[src];
+      if (!v) throw new Error("no variable named '" + src + "'");
+      if (v.type === 'int' || v.type === 'char') return { kind: v.type, value: v.value };
+      if (v.type === 'float' || v.type === 'double') return { kind: 'float', value: v.value };
+      if (v.type === 'string') return { kind: 'string', value: v.value };
+    }
+    throw new Error("could not parse argument: " + src);
+  }
+
+  // ============================================================
+  // Format one specifier with the given value.
+  // Returns { text: string, isPad: boolean[] }  (parallel arrays — for the pad-rendering)
+  // ============================================================
+  function formatSpec(spec, val) {
+    const flagLeft = spec.flags.indexOf('-') !== -1;
+    const flagZero = spec.flags.indexOf('0') !== -1 && !flagLeft; // - overrides 0
+    const flagPlus = spec.flags.indexOf('+') !== -1;
+    const flagSpace = spec.flags.indexOf(' ') !== -1 && !flagPlus;
+    const width = spec.width;
+    const prec = spec.precision;
+
+    let body;
+    let isNumeric = false;
+
+    if (spec.conversion === 'd') {
+      if (val.kind !== 'int' && val.kind !== 'char') {
+        throw new Error("argument for %d must be an int (got " + val.kind + ")");
+      }
+      const n = val.kind === 'char' ? val.value : val.value;
+      const absStr = Math.abs(n).toString();
+      let sign = '';
+      if (n < 0) sign = '-';
+      else if (flagPlus) sign = '+';
+      else if (flagSpace) sign = ' ';
+      // Precision for %d sets a minimum number of digits, padded with leading zeros (no width interaction)
+      let digits = absStr;
+      if (prec !== null && prec > digits.length) digits = '0'.repeat(prec - digits.length) + digits;
+      body = sign + digits;
+      isNumeric = true;
+    } else if (spec.conversion === 'f') {
+      if (val.kind !== 'int' && val.kind !== 'float' && val.kind !== 'char') {
+        throw new Error("argument for %f must be a float (got " + val.kind + ")");
+      }
+      const f = val.kind === 'float' ? val.value : Number(val.value);
+      const p = prec === null ? 6 : prec;
+      const abs = Math.abs(f).toFixed(p);
+      let sign = '';
+      if (f < 0) sign = '-';
+      else if (flagPlus) sign = '+';
+      else if (flagSpace) sign = ' ';
+      body = sign + abs;
+      isNumeric = true;
+    } else if (spec.conversion === 's') {
+      if (val.kind !== 'string') throw new Error("argument for %s must be a string (got " + val.kind + ")");
+      let s = val.value;
+      if (prec !== null) s = s.substring(0, prec);
+      body = s;
+      isNumeric = false;
+    } else if (spec.conversion === 'c') {
+      if (val.kind !== 'char' && val.kind !== 'int') throw new Error("argument for %c must be a char or int (got " + val.kind + ")");
+      const code = val.value;
+      body = String.fromCharCode(code & 0xff);
+      isNumeric = false;
+    } else {
+      throw new Error("unsupported conversion %" + spec.conversion);
+    }
+
+    // Apply width padding
+    let padLeft = 0, padRight = 0;
+    if (width !== null && body.length < width) {
+      const diff = width - body.length;
+      if (flagLeft) padRight = diff;
+      else padLeft = diff;
+    }
+    const padChar = (flagZero && isNumeric && !flagLeft) ? '0' : ' ';
+    // If zero-padding a negative or signed number, the sign should appear before the zeros.
+    let resultText = '';
+    let resultPad = [];
+    if (padChar === '0' && body.length > 0 && (body[0] === '-' || body[0] === '+' || body[0] === ' ')) {
+      const sign = body[0];
+      const rest = body.substring(1);
+      resultText = sign + '0'.repeat(padLeft) + rest + ' '.repeat(padRight);
+      for (let i = 0; i < 1; i++) resultPad.push(false);
+      for (let i = 0; i < padLeft; i++) resultPad.push(true);   // these zeros are padding
+      for (let i = 0; i < rest.length; i++) resultPad.push(false);
+      for (let i = 0; i < padRight; i++) resultPad.push(true);
+    } else {
+      resultText = padChar.repeat(padLeft) + body + ' '.repeat(padRight);
+      for (let i = 0; i < padLeft; i++) resultPad.push(true);
+      for (let i = 0; i < body.length; i++) resultPad.push(false);
+      for (let i = 0; i < padRight; i++) resultPad.push(true);
+    }
+    return { text: resultText, isPad: resultPad };
+  }
+
+  // ============================================================
+  // Execute a printf: returns { lines: [closed lines added], appendedToCurrent: string, isPad: boolean[] }
+  // and mutates outputLines + currentLine.
+  // ============================================================
+  function execPrintf(parsed) {
+    if (parsed.error) throw new Error(parsed.error);
+    const tokens = parseFormatString(parsed.format);
+    // Count specs to require argument count
+    const specCount = tokens.filter(t => t.kind === 'spec').length;
+    if (specCount !== parsed.argSources.length) {
+      throw new Error("format string has " + specCount + " specifier(s) but you passed " + parsed.argSources.length + " argument(s)");
+    }
+    const argVals = parsed.argSources.map(resolveArg);
+    let aIdx = 0;
+    // For each token, append text (and pad markers) to currentLine, splitting on \n.
+    const freshIndices = []; // outputLines indices that were closed in this call (to highlight)
+    let appendedToCurrent = '';
+    function pushChar(c, isPad) {
+      if (c === '\n') {
+        outputLines.push(currentLine);
+        freshIndices.push(outputLines.length - 1);
+        currentLine = { chars: '', isPad: [] };
+        appendedToCurrent = '';
+      } else {
+        currentLine.chars += c;
+        currentLine.isPad.push(!!isPad);
+        appendedToCurrent += c;
+      }
+    }
+    for (const tok of tokens) {
+      if (tok.kind === 'lit') {
+        for (const ch of tok.text) pushChar(ch, false);
+      } else {
+        const piece = formatSpec(tok, argVals[aIdx++]);
+        for (let i = 0; i < piece.text.length; i++) pushChar(piece.text[i], piece.isPad[i]);
+      }
+    }
+    return { freshIndices };
+  }
+
+  // ============================================================
+  // Output rendering
+  // ============================================================
+  function renderLineHtml(line) {
+    let out = '';
+    for (let i = 0; i < line.chars.length; i++) {
+      const c = line.chars[i];
+      if (line.isPad[i] && c === ' ') {
+        out += '<span class="pad">&middot;</span>';
+      } else if (line.isPad[i] && c === '0') {
+        out += '<span class="pad">0</span>';
+      } else {
+        // Escape HTML and render explicit space; tab as four padding dots.
+        if (c === '\t') {
+          out += '<span class="pad">' + '&middot;'.repeat(4) + '</span>';
+        } else {
+          out += escapeHtml(c);
+        }
+      }
+    }
+    return out;
+  }
+  function renderOutput(freshIndices) {
+    freshIndices = freshIndices || [];
+    const buf = root.querySelector('#pfwalk-output');
+    if (outputLines.length === 0 && currentLine.chars === '') {
+      buf.innerHTML = '<div class="output-empty">Nothing printed yet.<br>Type a printf call on the left.</div>';
+      return;
+    }
+    let html = '';
+    for (let i = 0; i < outputLines.length; i++) {
+      const cls = freshIndices.indexOf(i) !== -1 ? 'output-line fresh' : 'output-line';
+      html += '<span class="' + cls + '">' + renderLineHtml(outputLines[i]) + '\n</span>';
+    }
+    if (currentLine.chars !== '') {
+      // Display the in-progress line without a trailing newline
+      html += '<span class="output-line' + (freshIndices.indexOf(-1) !== -1 ? ' fresh' : '') + '">' + renderLineHtml(currentLine) + '</span>';
+    }
+    buf.innerHTML = html;
+    // Scroll to bottom so latest output is visible
+    buf.scrollTop = buf.scrollHeight;
+  }
+  function renderRuler() {
+    // Ruler showing column positions 0..49.
+    // Row 1: the tens digit at each multiple of 10 (highlighted).
+    // Row 2: ones digit at each multiple of 5 (for finer counting).
+    const len = 50;
+    let row1 = '';
+    for (let i = 0; i < len; i++) {
+      if (i > 0 && i % 10 === 0) row1 += '<span class="tens">' + Math.floor(i / 10) + '</span>';
+      else row1 += ' ';
+    }
+    let row2 = '';
+    for (let i = 0; i < len; i++) {
+      if (i % 5 === 0) row2 += (i % 10).toString();
+      else row2 += ' ';
+    }
+    root.querySelector('#pfwalk-ruler').innerHTML = row1 + '\n' + row2;
+  }
+
+  // ============================================================
+  // Terminal output
+  // ============================================================
+  const terminalEl = root.querySelector('#pfwalk-terminal');
+  function termWrite(text, cls) {
+    const span = document.createElement('span');
+    if (cls) span.className = cls;
+    span.textContent = text;
+    terminalEl.appendChild(span);
+  }
+  function termLine(text, cls) {
+    termWrite(text, cls);
+    terminalEl.appendChild(document.createElement('br'));
+    terminalEl.scrollTop = terminalEl.scrollHeight;
+  }
+  function echoCommand(cmd) {
+    termWrite('pfmt> ', 'prompt');
+    termLine(cmd, 'typed');
+  }
+
+  // ============================================================
+  // Dispatcher
+  // ============================================================
+  function runCommand(line) {
+    const t = line.trim();
+    if (!t) return null;
+    const lower = t.toLowerCase().replace(/;\s*$/, '');
+    if (lower === 'clear' || lower === 'reset') {
+      for (const k of Object.keys(variables)) delete variables[k];
+      outputLines = [];
+      currentLine = { chars: '', isPad: [] };
+      renderOutput();
+      return { kind: 'cleared' };
+    }
+    if (lower === 'help' || lower === '?') return { kind: 'help' };
+
+    const p = tryParsePrintf(t);
+    if (p) {
+      if (p.error) throw new Error(p.error);
+      const r = execPrintf(p);
+      renderOutput(r.freshIndices);
+      return { kind: 'printf' };
+    }
+    const d = tryParseDecl(t);
+    if (d) {
+      variables[d.name] = { type: d.type, value: d.value };
+      termLine('  declared ' + d.type + ' ' + d.name, 'out');
+      return { kind: 'decl' };
+    }
+    if (/^(ls|cd|pwd|cat|echo|mkdir|rm|mv|cp)\b/.test(t)) {
+      throw new Error("This is not a shell. Type C statements like: printf(\"%d\\n\", 42);");
+    }
+    throw new Error("Couldn't parse '" + t + "'. Type a printf call or a simple declaration.");
+  }
+
+  // ============================================================
+  // Tasks
+  // Each task has: section?, label, text, hint, target (rendered output string for the task panel),
+  // match(cmd): boolean — true if cmd matches; we also verify the printed output equals expected.
+  // ============================================================
+  // Helper to test a printf command produced the expected output exactly.
+  function dryRun(cmd) {
+    // Parse and execute against a fresh isolated output buffer so we can check the result
+    // without mutating state. Returns the produced text (joined lines with newlines).
+    const p = tryParsePrintf(cmd);
+    if (!p || p.error) return null;
+    const saved = { lines: outputLines, cur: currentLine };
+    outputLines = [];
+    currentLine = { chars: '', isPad: [] };
+    try {
+      execPrintf(p);
+    } catch (e) {
+      outputLines = saved.lines; currentLine = saved.cur;
+      return null;
+    }
+    // Reconstruct the text
+    let text = outputLines.map(l => l.chars).join('\n');
+    if (outputLines.length > 0) text += '\n';
+    text += currentLine.chars;
+    outputLines = saved.lines; currentLine = saved.cur;
+    return text;
+  }
+
+  // Render a target string for display in the task card, replacing spaces with middle-dots.
+  function dotify(s) {
+    return s.split('').map(ch => ch === ' ' ? '\u00B7' : (ch === '\n' ? '\u21B5\n' : ch)).join('');
+  }
+
+  const tasks = [
+    // --- Section 1: Width and alignment ---
+    {
+      section: 'Section 1: Width and alignment',
+      label: 'Task 1 of 10',
+      text: 'Print the number 42 followed by a newline. Use the basic %d specifier.',
+      hint: 'printf("%d\\n", 42);',
+      target: '42\n',
+      match: (cmd) => dryRun(cmd) === '42\n',
+      note: 'Baseline %d. The integer is printed using the minimum digits needed.'
+    },
+    {
+      label: 'Task 2 of 10',
+      text: 'Print 42 in a 5-character wide field followed by a newline. Right-aligned by default; the missing space is filled with spaces on the left.',
+      hint: 'printf("%5d\\n", 42);',
+      target: '   42\n',
+      match: (cmd) => dryRun(cmd) === '   42\n',
+      note: 'Width 5 means the field is at least 5 characters. Since 42 is 2 characters, 3 spaces pad on the left. The output is exactly 5 visible characters plus the newline.'
+    },
+    {
+      label: 'Task 3 of 10',
+      text: 'Now print 42 left-aligned in the same 5-character field, followed by a newline. Use the - flag.',
+      hint: 'printf("%-5d\\n", 42);',
+      target: '42   \n',
+      match: (cmd) => dryRun(cmd) === '42   \n',
+      note: 'The - flag moves the padding to the right. The 42 now starts at column 0 and 3 spaces follow.'
+    },
+    // --- Section 2: Zero padding and signs ---
+    {
+      section: 'Section 2: Zero padding and signs',
+      label: 'Task 4 of 10',
+      text: 'Print 42 in a 5-character wide field, padded with zeros instead of spaces. Use the 0 flag.',
+      hint: 'printf("%05d\\n", 42);',
+      target: '00042\n',
+      match: (cmd) => dryRun(cmd) === '00042\n',
+      note: 'The 0 flag changes the padding character from space to zero. Useful for fixed-width numeric IDs.'
+    },
+    {
+      label: 'Task 5 of 10',
+      text: 'Print 42 with an explicit sign in front, then a newline. Use the + flag.',
+      hint: 'printf("%+d\\n", 42);',
+      target: '+42\n',
+      match: (cmd) => dryRun(cmd) === '+42\n',
+      note: 'The + flag forces a sign on positive numbers. Negative numbers always print their minus sign without needing this flag.'
+    },
+    // --- Section 3: Float precision ---
+    {
+      section: 'Section 3: Float precision',
+      label: 'Task 6 of 10',
+      text: 'Print the value 3.14159 rounded to 2 decimal places, then a newline. Use precision .2 with %f.',
+      hint: 'printf("%.2f\\n", 3.14159);',
+      target: '3.14\n',
+      match: (cmd) => dryRun(cmd) === '3.14\n',
+      note: 'The .2 precision controls digits after the decimal. The displayed value is rounded; the source value is unchanged.'
+    },
+    {
+      label: 'Task 7 of 10',
+      text: 'Print 3.14159 in an 8-character wide field with precision 2, then a newline. Combine width and precision.',
+      hint: 'printf("%8.2f\\n", 3.14159);',
+      target: '    3.14\n',
+      match: (cmd) => dryRun(cmd) === '    3.14\n',
+      note: 'Width 8 sets the total field width (including the decimal point). 3.14 is 4 characters; 4 leading spaces pad to 8 total.'
+    },
+    // --- Section 4: Strings and combined formats ---
+    {
+      section: 'Section 4: Strings and combined formats',
+      label: 'Task 8 of 10',
+      text: 'Print the string VIPER in a 10-character wide field, right-aligned, followed by a newline.',
+      hint: 'printf("%10s\\n", "VIPER");',
+      target: '     VIPER\n',
+      match: (cmd) => dryRun(cmd) === '     VIPER\n',
+      note: 'String width works the same way as integer width. VIPER is 5 characters; 5 spaces pad on the left.'
+    },
+    {
+      label: 'Task 9 of 10',
+      text: 'Print the string VIPER left-aligned in a 10-character wide field, followed by a newline. Use the - flag with %s.',
+      hint: 'printf("%-10s\\n", "VIPER");',
+      target: 'VIPER     \n',
+      match: (cmd) => dryRun(cmd) === 'VIPER     \n',
+      note: 'Same as before, with - to move the padding to the right. Useful when building columns of labels.'
+    },
+    {
+      label: 'Task 10 of 10',
+      text: 'Build a formatted roster line: a left-aligned 8-character callsign, a space, then a 5-character right-aligned float with 1 decimal place. Use this format string exactly: "%-8s %5.1f\\n" with the values "VIPER" and 3.5.',
+      hint: 'printf("%-8s %5.1f\\n", "VIPER", 3.5);',
+      target: 'VIPER      3.5\n',
+      match: (cmd) => dryRun(cmd) === 'VIPER      3.5\n',
+      note: 'Multi-arg format strings work as you would expect: each specifier consumes the next argument in left-to-right order. The space between specifiers prints literally. You can build cleanly aligned output from any combination of types.'
+    },
+  ];
+
+  // ============================================================
+  // Walkthrough controller
+  // ============================================================
+  let currentTaskIndex = 0;
+  let consecutiveFails = 0;
+
+  function checkTask(rawCmd) {
+    if (mode === 'free' || currentTaskIndex >= tasks.length) return null;
+    const t = tasks[currentTaskIndex];
+    if (t.match(rawCmd)) {
+      process(rawCmd);
+      if (t.note) {
+        termLine('', 'out');
+        termLine('  ' + t.note, 'note');
+      }
+      currentTaskIndex++;
+      consecutiveFails = 0;
+      hideHintPulse();
+      renderTask();
+      if (currentTaskIndex >= tasks.length) {
+        setMode('free');
+        termLine('', 'out');
+        termLine('  Walkthrough complete. Free mode unlocked.', 'note');
+      }
+      return true;
+    } else {
+      echoCommand(rawCmd);
+      // Try to give a more specific diagnostic by parsing and dry-running.
+      const dr = dryRun(rawCmd);
+      if (dr !== null && dr !== t.target) {
+        termLine('  Your printf ran, but produced different output than the task wants.', 'err');
+        termLine('  You produced: ' + JSON.stringify(dr), 'err');
+        termLine('  Task wants:   ' + JSON.stringify(t.target), 'err');
+      } else {
+        termLine("  Not what this task is asking for. Look at the target output and the hint.", 'err');
+      }
+      consecutiveFails++;
+      if (consecutiveFails >= 2) showHintPulse();
+      return false;
+    }
+  }
+
+  function renderTask() {
+    const fill = root.querySelector('#pfwalk-progress-fill');
+    const label = root.querySelector('#pfwalk-progress-label');
+    const card = root.querySelector('#pfwalk-task-card');
+    const labelEl = root.querySelector('#pfwalk-task-label');
+    const textEl = root.querySelector('#pfwalk-task-text');
+    const hintEl = root.querySelector('#pfwalk-task-hint');
+    const sectionEl = root.querySelector('#pfwalk-section-header');
+    const targetEl = root.querySelector('#pfwalk-task-target');
+    const targetTextEl = root.querySelector('#pfwalk-task-target-text');
+    const completionArea = root.querySelector('#pfwalk-completion-area');
+    const pct = (currentTaskIndex / tasks.length) * 100;
+    fill.style.width = pct + '%';
+    label.textContent = 'Task ' + Math.min(currentTaskIndex + 1, tasks.length) + ' of ' + tasks.length;
+    if (currentTaskIndex >= tasks.length) {
+      card.className = 'task-card complete';
+      labelEl.textContent = 'Complete';
+      textEl.textContent = "You worked through every key concept of Lesson 10's printf format control: width, alignment, zero padding, signs, float precision, and combined formats. You are ready for the lab.";
+      hintEl.textContent = '';
+      targetEl.style.display = 'none';
+      fill.style.width = '100%';
+      label.textContent = 'All tasks complete';
+      sectionEl.textContent = 'All done';
+      completionArea.innerHTML = '';
+      cs210RenderCompletion(completionArea);
+      return;
+    }
+    completionArea.innerHTML = '';
+    card.className = 'task-card';
+    const t = tasks[currentTaskIndex];
+    if (t.section) sectionEl.textContent = t.section;
+    labelEl.textContent = t.label;
+    textEl.textContent = t.text;
+    hintEl.textContent = '';
+    if (t.target) {
+      targetEl.style.display = '';
+      targetTextEl.textContent = dotify(t.target);
+    } else {
+      targetEl.style.display = 'none';
+    }
+  }
+  function showHint() {
+    if (currentTaskIndex >= tasks.length) return;
+    const t = tasks[currentTaskIndex];
+    root.querySelector('#pfwalk-task-hint').textContent = 'Hint: ' + (t.hint || '');
+    hideHintPulse();
+  }
+  function showHintPulse() { root.querySelector('#pfwalk-hint-btn').classList.add('pulse'); }
+  function hideHintPulse() { root.querySelector('#pfwalk-hint-btn').classList.remove('pulse'); }
+
+  function reset() {
+    for (const k of Object.keys(variables)) delete variables[k];
+    outputLines = [];
+    currentLine = { chars: '', isPad: [] };
+    currentTaskIndex = 0;
+    consecutiveFails = 0;
+    hideHintPulse();
+    setMode('walkthrough');
+    terminalEl.innerHTML = '';
+    termLine('Welcome to the printf playground.', 'dim');
+    termLine('Follow the task card. Type printf calls at the prompt; match the target output exactly.', 'dim');
+    termLine('', 'out');
+    renderRuler();
+    renderOutput();
+    renderTask();
+  }
+  function clearOutput() {
+    outputLines = [];
+    currentLine = { chars: '', isPad: [] };
+    renderOutput();
+    termLine('  stdout cleared', 'dim');
+  }
+
+  function process(line) {
+    echoCommand(line);
+    try {
+      const r = runCommand(line);
+      if (!r) return;
+      if (r.kind === 'cleared') termLine('  state cleared', 'out');
+      else if (r.kind === 'help') {
+        termLine('  printf("...", args);   supports %d %f %s %c %% and flags - 0 +, width, .precision', 'out');
+        termLine('  declarations:           int x = 42;   float pi = 3.14;   char c = \'A\';   char name[] = "VIPER";', 'out');
+        termLine('  meta:                   clear  help', 'out');
+      }
+    } catch (e) {
+      termLine('  error: ' + e.message, 'err');
+    }
+  }
+
+  function setMode(newMode) {
+    mode = newMode;
+    const btn = root.querySelector('#pfwalk-mode-btn');
+    const input = root.querySelector('#pfwalk-cli-input');
+    if (mode === 'free') {
+      btn.textContent = 'Return to walkthrough';
+      btn.style.background = '#E6F4EA';
+      btn.style.borderColor = '#2E7D32';
+      btn.style.color = '#1B5E20';
+      input.placeholder = 'free mode: try any printf format';
+    } else {
+      btn.textContent = 'Switch to free mode';
+      btn.style.background = '';
+      btn.style.borderColor = '';
+      btn.style.color = '';
+      input.placeholder = 'match the target output';
+    }
+  }
+
+  // ============================================================
+  // Input wiring
+  // ============================================================
+  const inputEl = root.querySelector('#pfwalk-cli-input');
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    const v = inputEl.value;
+    inputEl.value = '';
+    if (!v.trim()) return;
+    if (mode === 'walkthrough') checkTask(v);
+    else process(v);
+  });
+  root.querySelector('#pfwalk-hint-btn').addEventListener('click', showHint);
+  root.querySelector('#pfwalk-reset-btn').addEventListener('click', reset);
+  root.querySelector('#pfwalk-clear-out-btn').addEventListener('click', clearOutput);
+  root.querySelector('#pfwalk-mode-btn').addEventListener('click', () => {
+    if (mode === 'walkthrough') {
+      setMode('free');
+      termLine('', 'out');
+      termLine('  Free mode. Type any printf or simple declaration.', 'note');
+    } else {
+      setMode('walkthrough');
+      termLine('', 'out');
+      termLine('  Walkthrough mode. Follow the task card.', 'note');
+    }
+  });
+
+  // Boot
+  reset();
+})();
+
+</script>
+
+
+    </div>
+  </details>
+
+  <!-- ===================== 6. AFTER CLASS ===================== -->
+  <details id="after-class" style="margin-bottom: 24px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      6. After Class
+    </summary>
+    <div style="padding: 18px 22px;">
+      <ul style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Finish Lab 10 if you did not complete it in class. Submit through GitHub Classroom before Lesson 11.</li>
+        <li style="margin-bottom: 6px;">Complete the Lesson 10 reflection in Blackboard (widget codes + short essay).</li>
+        <li style="margin-bottom: 6px;">Read the supplementary notes for Lesson 11 (Recursion I, instructor-written).</li>
+        <li style="margin-bottom: 6px;">Replay either walkthrough in free mode. Try strings with embedded NULs, oversized strcpy targets, and strange format specifiers.</li>
+        <li style="margin-bottom: 0;"><strong>Heads up:</strong> Quiz 3 in the next class meeting covers Lesson 9 (arrays) only, per the rule that quizzes never assess day-of content. Today's content (strings, string.h, printf format control) carries forward to the GR2 midterm at Lesson 17.</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== HELP NOTE ===================== -->
+  <div style="background: #F5F7FA; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 3px; font-size: 13.5px; color: #4A5568;">
+    <strong style="color: #00205B;">Need help?</strong> Schedule EI with your instructor. Bring specific code or specific screenshots, and the exact error message or output you do not understand. Specific questions get unstuck quickly.
+  </div>
+
+</div>

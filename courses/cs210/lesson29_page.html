@@ -1,0 +1,2682 @@
+<!-- ============================================================
+     CS210 — Lesson 29
+     Linked Lists I: nodes, traversal, insertion
+     Self-contained: all CSS inline. Native <details> for collapsing.
+     Two widgets embedded inline in Section 5 (listbuild + listcheck).
+     Paste into Blackboard Ultra via Document → Add HTML block.
+     ============================================================ -->
+
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 980px; margin: 0 auto; line-height: 1.6;">
+
+  <!-- ===================== LIGHT HEADER ===================== -->
+  <div style="border-left: 5px solid #003087; padding: 8px 0 8px 18px; margin-bottom: 24px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 2px;">CS210 &middot; Block 4 &middot; Lesson 29</div>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 600; color: #00205B;">Linked Lists I</h1>
+    <div style="font-size: 14px; color: #4A5568; margin-top: 4px;">Self-referential structs &middot; Traversal &middot; Insertion at head and tail</div>
+  </div>
+
+  <!-- ===================== AT A GLANCE ===================== -->
+  <div style="background: #F5F7FA; border-left: 4px solid #B5B7BA; padding: 14px 18px; margin-bottom: 22px; font-size: 14px;">
+    <strong style="color: #00205B;">At a glance:</strong> Your first dynamic data structure. A linked list is a chain of heap-allocated nodes connected by next pointers — a sequence whose length is unknown until you walk it, and whose front can grow without shifting anything. Today you build chains and insert into them; tomorrow you take them apart.
+  </div>
+
+  <!-- ===================== TABLE OF CONTENTS ===================== -->
+  <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 20px; margin-bottom: 24px; border-radius: 3px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Contents</div>
+    <ol style="margin: 0; padding-left: 22px; font-size: 14px;">
+      <li style="margin-bottom: 4px;"><a href="#objectives" style="color: #003087; text-decoration: none;">Lesson Objectives</a></li>
+      <li style="margin-bottom: 4px;"><a href="#readings" style="color: #003087; text-decoration: none;">Assigned Readings</a></li>
+      <li style="margin-bottom: 4px;"><a href="#pre-class" style="color: #003087; text-decoration: none;">Pre-Class Work</a></li>
+      <li style="margin-bottom: 4px;"><a href="#materials" style="color: #003087; text-decoration: none;">Lesson Materials and Overview</a></li>
+      <li style="margin-bottom: 4px;"><a href="#in-class" style="color: #003087; text-decoration: none;">In-Class Work</a></li>
+      <li style="margin-bottom: 0;"><a href="#after-class" style="color: #003087; text-decoration: none;">After Class</a></li>
+    </ol>
+  </div>
+
+  <!-- ===================== 1. OBJECTIVES ===================== -->
+  <details id="objectives" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      1. Lesson Objectives
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 10px 0; font-style: italic;">By the end of this lesson, cadets will be able to:</p>
+      <ol style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Define a linked list node using a self-referential struct. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+        <li style="margin-bottom: 6px;">Traverse a linked list to access or count its elements. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+        <li style="margin-bottom: 0;">Insert new nodes at the head or tail of a linked list. <span style="color: #6B7280; font-size: 12px;">(Outcomes 2, 3)</span></li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 2. READINGS ===================== -->
+  <details id="readings" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      2. Assigned Readings
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 12px 0;">Complete before class. There is no Beej chapter for linked lists; the supplementary notes are the spine.</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <thead>
+          <tr style="background: #E8EDF5; color: #00205B;">
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 220px;">Source</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9;">Sections</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 260px;">Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Lesson 29 Supplementary Notes</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">All of it (roughly 15 minutes of reading)</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Self-referential structs, the node concept, traversal idiom, and head/tail insertion mechanics. The vocabulary for the rest of Block 4.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 9px 12px;"><a href="https://beej.us/guide/bgc/" style="color: #003087; text-decoration: underline;">Beej-C</a></td>
+            <td style="padding: 9px 12px;">Chapter 8 (Structs) revisit</td>
+            <td style="padding: 9px 12px; color: #4A5568;">Optional. Beej does not cover linked lists directly, but a quick re-skim of struct definitions and the arrow operator helps if those feel rusty from L18-L19.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <!-- ===================== 3. PRE-CLASS WORK ===================== -->
+  <details id="pre-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      3. Pre-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 18px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #6B5300; font-size: 14px; margin-bottom: 4px;">Do this first</div>
+        <div style="font-size: 14px; color: #5A4B00;">About 25 minutes total. Read the supplementary notes carefully, do the warm-up prediction, and confirm your Team PEX test plan is ready to hand in at the start of class.</div>
+      </div>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 0 0 10px 0;">Pre-Class Checklist</h3>
+
+      <!-- Step 1: Reading -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">1</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Read the Lesson 29 Supplementary Notes</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">Cover the four sections: the node, the chain, traversal, and insertion. Make sure these terms feel solid:</div>
+            <ul style="font-size: 13.5px; margin: 0 0 6px 0; padding-left: 20px;">
+              <li style="margin-bottom: 3px;">Self-referential struct (<code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">struct song { ...; struct song *next; }</code>)</li>
+              <li style="margin-bottom: 3px;">Heap node lifecycle: <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">malloc</code> &rarr; initialize &rarr; wire</li>
+              <li style="margin-bottom: 3px;">The traversal idiom (<code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">while (curr != NULL) { ...; curr = curr-&gt;next; }</code>)</li>
+              <li style="margin-bottom: 0;">Why head insertion is cheap and tail insertion is not</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Predict -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">2</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Predict the output</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">Given the chain <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">head &rarr; A &rarr; B &rarr; C &rarr; NULL</code> and this code:</div>
+            <div style="background: #1E2A3A; color: #E8EDF5; padding: 10px 14px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.5; margin-bottom: 8px;">
+              song_t *curr = head;<br>
+              while (curr != NULL) {<br>
+              &nbsp;&nbsp;printf("%s\n", curr-&gt;title);<br>
+              &nbsp;&nbsp;curr = curr-&gt;next;<br>
+              }
+            </div>
+            <details style="margin-top: 8px;">
+              <summary style="cursor: pointer; color: #003087; font-size: 13.5px;">Click for the answer</summary>
+              <div style="margin-top: 8px; font-size: 13.5px; color: #4A5568; padding-left: 12px; border-left: 2px solid #D0D5DD;">
+                The loop prints <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">A</code>, then <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">B</code>, then <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">C</code>, each on its own line, then exits when <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">curr</code> becomes NULL. <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">head</code> is never touched — only the local walking pointer moves.
+              </div>
+            </details>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Team PEX -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 8px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">3</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Team PEX: test plan check-in is due today</div>
+            <div style="font-size: 14px;">Bring your team's test plan to class. This is the check-in we set up at Lesson 26. Your instructor will collect it during the first few minutes.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ===================== 4. LESSON MATERIALS AND OVERVIEW ===================== -->
+  <details id="materials" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      4. Lesson Materials and Overview
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 18px 0;">Up to now your data has lived in arrays and structs of fixed size. A linked list breaks that contract: the data lives in nodes scattered across the heap, connected by pointers. The reference material below covers the four ideas you will see in lecture and use in the listbuild walkthrough.</p>
+
+      <!-- Subsection navigation -->
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 18px; margin-bottom: 22px; border-radius: 3px;">
+        <div style="font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">Jump to</div>
+        <div style="font-size: 13.5px;">
+          <a href="#slides" style="color: #003087; text-decoration: none; margin-right: 14px;">Slides</a>
+          <a href="#why-linked" style="color: #003087; text-decoration: none; margin-right: 14px;">Why Linked Lists</a>
+          <a href="#node" style="color: #003087; text-decoration: none; margin-right: 14px;">The Node</a>
+          <a href="#chain" style="color: #003087; text-decoration: none; margin-right: 14px;">Building the Chain</a>
+          <a href="#traversal" style="color: #003087; text-decoration: none; margin-right: 14px;">Traversal</a>
+          <a href="#insertion" style="color: #003087; text-decoration: none;">Insertion</a>
+        </div>
+      </div>
+
+      <!-- Slides -->
+      <h3 id="slides" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0; scroll-margin-top: 16px;">Slides</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">The Lesson 29 deck covers why linked lists exist, the node anatomy, the traversal idiom, and the two insertion patterns. The listbuild walkthrough in Section 5 is where you practice each concept hands-on.</p>
+
+      <p style="margin: 0 0 18px 0;">
+        <!-- EDIT ME: replace href with the deployed SharePoint slide deck URL once the deck is published. -->
+        <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 10px 20px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 14px;">Open Lesson 29 slides &rarr;</a>
+      </p>
+
+      <!-- Why linked lists -->
+      <h3 id="why-linked" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Why linked lists exist</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">From CS110 onward you have stored sequences in arrays: contiguous memory, fixed size, indexed access in constant time. Arrays are excellent when you know how many elements you have and the elements rarely shift. Two problems arise when you do not.</p>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><strong style="color: #00205B;">Unknown length.</strong> When you read a stream of songs from a file or accept names from the user, you do not know how long the sequence is until it ends. Dynamic arrays (L19) handled this by reallocating with a larger buffer and copying, but every reallocation moves the data and invalidates any pointers into the old storage.</p>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;"><strong style="color: #00205B;">Cheap insertion at the front or middle.</strong> Inserting at the front of an array of length n requires shifting all n elements one slot to the right. A linked list inserts at the front in three pointer writes regardless of length. The trade is that random access (the equivalent of <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">arr[5]</code>) becomes a walk from the head instead of a constant-time lookup. Whether the trade is worth it depends on the workload.</p>
+
+      <!-- The node -->
+      <h3 id="node" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">The node</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">A node is a struct with two responsibilities: hold one element's data, and hold a pointer to the next node in the chain. The pointer is the same type as the struct itself — self-referential.</p>
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">typedef struct</span> song {<br>
+        &nbsp;&nbsp;<span style="color: #569CD6;">char</span> *title;<br>
+        &nbsp;&nbsp;<span style="color: #569CD6;">struct</span> song *next;&nbsp;&nbsp;<span style="color: #6B7280;">// must say "struct song" here, not "song_t"</span><br>
+        } song_t;
+      </div>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">The reason the inner self-reference says <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">struct song *next</code> and not <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">song_t *next</code> is sequencing: inside the struct body the typedef name does not exist yet. Once the closing brace and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">song_t</code> are written, the typedef is in scope everywhere else.</p>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">Why a pointer and not the node itself? A node containing another whole node would have infinite size. A node containing a pointer to another node has fixed size — the pointer is just 8 bytes on a 64-bit machine, no matter how long the chain becomes.</p>
+
+      <!-- Building the chain -->
+      <h3 id="chain" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Building the chain</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Each node lives on the heap, allocated with <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">malloc</code>. After allocation, both fields contain garbage until you set them. The lifecycle is always allocate &rarr; initialize all fields &rarr; wire into the chain.</p>
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        song_t *head = <span style="color: #DCDCAA;">malloc</span>(<span style="color: #569CD6;">sizeof</span>(song_t));<br>
+        head-&gt;title = <span style="color: #CE9178;">"Levitating"</span>;<br>
+        head-&gt;next = <span style="color: #569CD6;">NULL</span>;&nbsp;&nbsp;<span style="color: #6B7280;">// one-node list ends here</span>
+      </div>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">An empty list is the convention <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">head == NULL</code>. Functions that act on lists must handle this case first; reading a field through a NULL pointer is undefined behavior. NULL is also what marks the end of every non-empty chain — the last node's <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">next</code> is always NULL.</p>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Every node you allocate must eventually be freed. We are deferring the safe-cleanup mechanics to Lesson 30; for this lesson, your lab includes a <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">free_list</code> function provided for you. Call it before <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">main</code> returns. The DFCS C Programming Standard, section 8.5, requires that dynamically allocated memory be freed; the rule was introduced at Lesson 15 and is in force for the rest of the course. See the Resources section for the full standard.</p>
+
+      <!-- Traversal -->
+      <h3 id="traversal" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Traversal</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Visiting every node in the chain uses a walking pointer that starts at the head and steps along the next pointers until it falls off the end. The shape of the loop is identical whether you are printing, counting, summing, or searching.</p>
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        song_t *curr = head;<br>
+        <span style="color: #6B7280;">// while we haven't fallen off the end:</span><br>
+        <span style="color: #C586C0;">while</span> (curr != <span style="color: #569CD6;">NULL</span>) {<br>
+        &nbsp;&nbsp;<span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"%s\n"</span>, curr-&gt;title);<br>
+        &nbsp;&nbsp;curr = curr-&gt;next;&nbsp;&nbsp;<span style="color: #6B7280;">// step forward</span><br>
+        }
+      </div>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">Two things to internalize. First, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">head</code> never moves — only the local <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">curr</code> does. If you walk <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">head</code> instead of a copy, you lose the list. Second, the check happens BEFORE the body, so an empty list (<code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">curr == NULL</code> on entry) executes the body zero times — the right behavior.</p>
+
+      <!-- Insertion -->
+      <h3 id="insertion" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Insertion</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><strong style="color: #00205B;">Insertion at the head</strong> is three writes and does not depend on the list's length. Allocate the new node, point its next at the current head, then move head.</p>
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        song_t *new_node = <span style="color: #DCDCAA;">malloc</span>(<span style="color: #569CD6;">sizeof</span>(song_t));<br>
+        new_node-&gt;title = <span style="color: #CE9178;">"Espresso"</span>;<br>
+        new_node-&gt;next = head;&nbsp;&nbsp;<span style="color: #6B7280;">// wire to old front FIRST</span><br>
+        head = new_node;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #6B7280;">// then move head</span>
+      </div>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">The order matters. If you reassign <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">head</code> first, the old chain becomes unreachable — every node after the original head is now an orphan.</p>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><strong style="color: #00205B;">Insertion at the tail</strong> is more involved because we do not name the last node. To find it, walk from the head until <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">curr-&gt;next == NULL</code>; that node is the tail. Then point its next at the new node.</p>
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #6B7280;">// caller must handle the empty-list case separately</span><br>
+        song_t *curr = head;<br>
+        <span style="color: #C586C0;">while</span> (curr-&gt;next != <span style="color: #569CD6;">NULL</span>) {<br>
+        &nbsp;&nbsp;curr = curr-&gt;next;<br>
+        }<br>
+        curr-&gt;next = new_node;<br>
+        new_node-&gt;next = <span style="color: #569CD6;">NULL</span>;
+      </div>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">Notice the loop condition: <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">curr-&gt;next != NULL</code>, not <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">curr != NULL</code>. We want to stop AT the tail, not walk past it. And if the list was empty on entry (<code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">head == NULL</code>), this code dereferences NULL on the first line. The caller has to check for empty before calling the traversal, or the function checks first and reassigns <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">head</code> itself. The empty case is half of the work; the lab will surface this.</p>
+
+    </div>
+  </details>
+
+  <!-- ===================== 5. IN-CLASS WORK ===================== -->
+  <details id="in-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      5. In-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 16px 0;">Three things to do in class. Use the checklist to track your progress.</p>
+
+      <ul style="list-style: none; padding: 0; margin: 0 0 24px 0; font-size: 14.5px;">
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Work through the listbuild walkthrough below.</strong>
+          <span style="color: #4A5568;">Fourteen tasks across four sections covering node anatomy, traversal, and head insertion. About 25 minutes.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Take the linked list self-check.</strong>
+          <span style="color: #4A5568;">Six questions on node definitions, traversal, and insertion order. About 10 minutes.</span>
+        </li>
+        <li style="margin-bottom: 0; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Complete Lab 29: Playlist Builder.</strong>
+          <!-- EDIT ME: replace href with the GitHub Classroom invite URL for Lab 29 once the assignment is created. -->
+          <span style="color: #4A5568;">Implement node creation, count, head insertion, and tail insertion for a song playlist. <a href="#" target="_blank" rel="noopener" style="color: #003087;">Lab 29 on GitHub Classroom &rarr;</a></span>
+        </li>
+      </ul>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 18px 0 10px 0;">listbuild Walkthrough</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Fourteen tasks across four sections. Build a three-song playlist node by node, walk it with a curr pointer, and insert a new song at the head. The diagram pane shows nodes as boxes with explicit addresses and drawn next-arrows; pointer variables appear above the nodes they target.</p>
+
+<!-- ============================================================
+     CS210 Lesson 29 - Linked List Builder Walkthrough
+     Box-and-arrow visualization of a singly-linked list of song nodes.
+     Cadets type C statements at a prompt; the right pane shows nodes
+     as free-floating boxes with explicit address labels and drawn
+     next-arrows. head is a named pointer; the cadet may also create
+     a walking pointer (curr) that visibly moves along the chain.
+     Walkthrough mode + free mode. Universal completion code rules.
+     ============================================================ -->
+<style>
+.cs210-listbuild * { box-sizing: border-box; }
+.cs210-listbuild {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-listbuild h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-listbuild .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 22px;
+}
+.cs210-listbuild .progress-bar {
+  background: #E5E7EB;
+  border-radius: 3px;
+  height: 8px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.cs210-listbuild .progress-fill {
+  background: #003087;
+  height: 100%;
+  transition: width 0.3s ease;
+}
+.cs210-listbuild .progress-label {
+  font-size: 12px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-listbuild .section-header {
+  background: #E8EDF5;
+  color: #00205B;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.cs210-listbuild .task-card {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  border-radius: 3px;
+}
+.cs210-listbuild .task-card.complete {
+  background: #E6F4EA;
+  border-left-color: #2E7D32;
+}
+.cs210-listbuild .task-label {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B5300;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.cs210-listbuild .task-card.complete .task-label { color: #1B5E20; }
+.cs210-listbuild .task-text { font-size: 15px; color: #1a1a1a; }
+.cs210-listbuild .task-hint {
+  font-size: 12.5px;
+  color: #6B7280;
+  margin-top: 6px;
+  font-style: italic;
+}
+
+.cs210-listbuild .panes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+@media (max-width: 760px) {
+  .cs210-listbuild .panes { grid-template-columns: 1fr; }
+}
+.cs210-listbuild .terminal {
+  background: #1E2A3A;
+  color: #E8EDF5;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13.5px;
+  line-height: 1.5;
+  border-radius: 4px;
+  padding: 14px 18px;
+  min-height: 420px;
+  max-height: 480px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.cs210-listbuild .terminal .prompt { color: #7FB3D5; }
+.cs210-listbuild .terminal .typed { color: #FFFFFF; }
+.cs210-listbuild .terminal .out { color: #B5BEC8; }
+.cs210-listbuild .terminal .note { color: #F0B92C; }
+.cs210-listbuild .terminal .err { color: #F47A7A; }
+.cs210-listbuild .terminal .ok { color: #7FD17F; }
+.cs210-listbuild .terminal .dim { color: #6B7280; }
+
+.cs210-listbuild .memory-pane {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  padding: 14px 16px;
+  min-height: 420px;
+  max-height: 480px;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+.cs210-listbuild .memory-pane-header {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #E5E7EB;
+}
+.cs210-listbuild .memory-empty {
+  color: #6B7280;
+  font-style: italic;
+  font-size: 13px;
+  text-align: center;
+  padding: 60px 10px;
+}
+
+/* Pointer variable cards (head, curr) */
+.cs210-listbuild .ptr-vars {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.cs210-listbuild .ptr-var {
+  background: #F0F4FA;
+  border: 1px solid #C7D2E1;
+  border-radius: 3px;
+  padding: 6px 10px;
+  font-family: Consolas, monospace;
+  font-size: 12px;
+}
+.cs210-listbuild .ptr-var .pv-name {
+  color: #00205B;
+  font-weight: 700;
+}
+.cs210-listbuild .ptr-var .pv-arrow {
+  color: #6B7280;
+  margin: 0 4px;
+}
+.cs210-listbuild .ptr-var .pv-target {
+  color: #003087;
+}
+.cs210-listbuild .ptr-var .pv-target.null {
+  color: #B8002F;
+  font-style: italic;
+}
+
+/* Node + arrow diagram */
+.cs210-listbuild .chain {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-wrap: wrap;
+  padding: 10px 0;
+}
+.cs210-listbuild .node {
+  display: inline-flex;
+  flex-direction: column;
+  border: 1.5px solid #003087;
+  border-radius: 4px;
+  background: #ffffff;
+  min-width: 130px;
+  font-family: Consolas, monospace;
+  font-size: 12px;
+  overflow: hidden;
+  transition: box-shadow 0.4s ease, border-color 0.4s ease;
+  position: relative;
+}
+.cs210-listbuild .node.flash {
+  box-shadow: 0 0 0 3px rgba(240, 185, 44, 0.55);
+  border-color: #F0B92C;
+}
+.cs210-listbuild .node.targeted {
+  box-shadow: 0 0 0 2px #003087;
+}
+.cs210-listbuild .node .node-addr {
+  background: #E8EDF5;
+  color: #00205B;
+  font-size: 10.5px;
+  padding: 3px 8px;
+  border-bottom: 1px solid #C7D2E1;
+  letter-spacing: 0.3px;
+}
+.cs210-listbuild .node .node-field {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 8px;
+  border-bottom: 1px dashed #E5E7EB;
+}
+.cs210-listbuild .node .node-field:last-child { border-bottom: none; }
+.cs210-listbuild .node .nf-label { color: #6B7280; }
+.cs210-listbuild .node .nf-value { color: #1a1a1a; font-weight: 600; }
+.cs210-listbuild .node .nf-value.next-null {
+  color: #B8002F;
+  font-style: italic;
+}
+.cs210-listbuild .node .nf-value.next-addr {
+  color: #003087;
+}
+.cs210-listbuild .node .node-tag {
+  position: absolute;
+  top: -18px;
+  left: 0;
+  right: 0;
+  font-family: Consolas, monospace;
+  font-size: 11px;
+  color: #003087;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* The arrow drawn between two adjacent rendered nodes */
+.cs210-listbuild .arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2px;
+  width: 36px;
+  background: #003087;
+  margin: 0 -1px;
+  position: relative;
+}
+.cs210-listbuild .arrow::after {
+  content: "";
+  position: absolute;
+  right: -1px;
+  width: 0; height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 9px solid #003087;
+}
+/* A dangling arrow (next not yet wired, or next points to an unrendered address) */
+.cs210-listbuild .arrow.dangling {
+  background: #B8002F;
+  width: 28px;
+}
+.cs210-listbuild .arrow.dangling::after { border-left-color: #B8002F; }
+.cs210-listbuild .arrow.dangling::before {
+  content: "?";
+  position: absolute;
+  right: -22px;
+  top: -10px;
+  color: #B8002F;
+  font-weight: 700;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+}
+/* NULL terminator (small grey block at the end) */
+.cs210-listbuild .null-end {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
+  height: 28px;
+  background: #F5F7FA;
+  border: 1px dashed #B5B7BA;
+  color: #6B7280;
+  font-family: Consolas, monospace;
+  font-size: 12px;
+  border-radius: 3px;
+  margin-left: 6px;
+}
+
+/* Orphaned nodes block (nodes with no path from head) */
+.cs210-listbuild .orphans-header {
+  margin-top: 16px;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: #B8002F;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding-bottom: 4px;
+  border-bottom: 1px dashed #E5E7EB;
+}
+
+.cs210-listbuild .input-row {
+  display: flex;
+  background: #1E2A3A;
+  border-radius: 4px;
+  padding: 8px 14px;
+  margin-bottom: 14px;
+  border: 1px solid #003087;
+}
+.cs210-listbuild .input-prompt {
+  color: #7FB3D5;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  margin-right: 8px;
+  align-self: center;
+  white-space: nowrap;
+}
+.cs210-listbuild .input-row input {
+  flex: 1;
+  background: transparent;
+  color: #FFFFFF;
+  border: none;
+  outline: none;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  padding: 4px 0;
+}
+.cs210-listbuild .controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.cs210-listbuild .btn {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  padding: 6px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #00205B;
+  font-family: inherit;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.cs210-listbuild .btn:hover { background: #F5F7FA; }
+@keyframes cs210-listbuild-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(240, 185, 44, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0); }
+}
+.cs210-listbuild .btn.pulse {
+  background: #FFF8E1;
+  border-color: #F0B92C;
+  color: #6B5300;
+  font-weight: 600;
+  animation: cs210-listbuild-pulse 1.5s infinite;
+}
+.cs210-listbuild .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #4A5568;
+  margin-top: 12px;
+}
+.cs210-listbuild .help-note strong { color: #00205B; }
+.cs210-listbuild .inline-code-footer {
+  background: #F0F4FA;
+  border: 1px solid #C7D2E1;
+  padding: 10px 14px;
+  border-radius: 3px;
+  margin-top: 10px;
+  font-size: 13px;
+  color: #00205B;
+  font-family: Consolas, monospace;
+}
+.cs210-listbuild .inline-code-footer .label {
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-size: 11px;
+  color: #6B7280;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  margin-right: 6px;
+}
+/* Name modal */
+.cs210-listbuild .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.cs210-listbuild .name-modal {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-listbuild .name-modal h2 {
+  color: #00205B;
+  font-size: 20px;
+  margin: 0 0 10px 0;
+}
+.cs210-listbuild .name-modal p {
+  color: #4A5568;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+.cs210-listbuild .name-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-listbuild .name-modal input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-listbuild .name-modal-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-listbuild .name-modal-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-listbuild .name-modal-btn:not(:disabled):hover {
+  background: #00205B;
+}
+</style>
+
+<div class="cs210-listbuild">
+
+<div class="name-modal-backdrop" id="listbuild-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Lesson 29 reflection.</p>
+    <input type="text" id="listbuild-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="listbuild-cadet-name-btn" disabled>Start the walkthrough</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 29 &middot; Linked List Builder</h1>
+<div class="subtitle">Fourteen tasks across four sections. Build a playlist as a chain of song nodes. The terminal shows what the simulator did; the diagram pane shows the chain, the head pointer, and any walking pointer you create.</div>
+
+<div class="progress-bar"><div class="progress-fill" id="listbuild-progress-fill" style="width: 0%;"></div></div>
+<div class="progress-label" id="listbuild-progress-label">Task 0 of 14</div>
+
+<div class="section-header" id="listbuild-section-header">Section 1: Node anatomy</div>
+
+<div class="task-card" id="listbuild-task-card">
+  <div class="task-label" id="listbuild-task-label">Current task</div>
+  <div class="task-text" id="listbuild-task-text">Loading...</div>
+  <div class="task-hint" id="listbuild-task-hint"></div>
+</div>
+
+<div class="panes">
+  <div class="terminal" id="listbuild-terminal"></div>
+  <div class="memory-pane">
+    <div class="memory-pane-header">Playlist</div>
+    <div id="listbuild-memory-area">
+      <div class="memory-empty">No nodes yet.<br>Type the first declaration on the left.</div>
+    </div>
+  </div>
+</div>
+
+<div class="input-row">
+  <span class="input-prompt">listsim&gt;</span>
+  <input type="text" id="listbuild-cli-input" autocomplete="off" spellcheck="false" placeholder="follow the task above">
+</div>
+
+<div class="controls">
+  <button class="btn" id="listbuild-hint-btn">Show hint</button>
+  <button class="btn" id="listbuild-reset-btn">Reset</button>
+  <button class="btn" id="listbuild-mode-btn">Switch to free mode</button>
+</div>
+
+<div class="help-note">
+  <strong>How this works:</strong> This is not a Linux terminal. It is a teaching tool that simulates a singly-linked list of song nodes. The task card tells you what to type; in walkthrough mode only the expected command advances. Mistype twice and the hint button will pulse. After all tasks are complete, free mode unlocks so you can build, wire, and re-aim chains on your own.
+</div>
+
+<div id="listbuild-completion-area"></div>
+
+</div>
+
+<script>
+(function () {
+  const root = document.querySelector('.cs210-listbuild');
+  if (!root) return;
+
+  // ============================================================
+  // CS210 widget completion utilities
+  // ============================================================
+  const CS210_SALT = "lesson29_listbuild_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  function cs210Copy(text) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch (e) {}
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      return true;
+    } catch (e) { return false; }
+  }
+
+  // Name modal setup
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#listbuild-name-modal-backdrop');
+    const input = root.querySelector('#listbuild-cadet-name-input');
+    const btn = root.querySelector('#listbuild-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length > 0) {
+        cs210CadetName = stored.trim();
+        backdrop.style.display = 'none';
+        return;
+      }
+    } catch (e) {}
+
+    function updateBtn() { btn.disabled = input.value.trim().length === 0; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', () => {
+      const name = input.value.trim();
+      if (!name) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+      const siblings = document.querySelectorAll(
+        '#listcheck-name-modal-backdrop'
+      );
+      siblings.forEach((m) => { m.style.display = 'none'; });
+      const cli = root.querySelector('#listbuild-cli-input');
+      if (cli) cli.focus();
+    });
+    setTimeout(() => { try { input.focus(); } catch (e) {} }, 50);
+  })();
+
+  // Completion overlay
+  function cs210RenderCompletion(area) {
+    if (root.querySelector('#cs210-listbuild-completion-overlay')) return;
+    const now = new Date();
+    const pad = (n) => n.toString().padStart(2, '0');
+    const ts = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate()) +
+               ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+
+    const overlay = document.createElement('div');
+    overlay.id = 'cs210-listbuild-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">Walkthrough complete</h2>' +
+        '<p>You built a playlist node by node, traversed the chain to count it, inserted at head and at tail, and saw what a dangling next or an orphaned node looks like. Take a screenshot of this card and include it with your Lesson 29 reflection.</p>' +
+        '<div style="background:#F0F4FA;border:1px solid #003087;border-radius:4px;padding:14px 18px;margin-bottom:14px;">' +
+          '<div style="font-size:12px;letter-spacing:1.5px;color:#4A5568;margin-bottom:4px;text-transform:uppercase;">Completion code</div>' +
+          '<div style="font-family:Consolas,monospace;font-size:26px;font-weight:700;color:#00205B;letter-spacing:3px;">' + CS210_CODE + '</div>' +
+        '</div>' +
+        '<div style="font-size:14px;color:#1a1a1a;margin-bottom:6px;"><strong style="color:#00205B;">' + escapeHtml(cs210CadetName || '(name not set)') + '</strong></div>' +
+        '<div style="font-size:13px;color:#6B7280;margin-bottom:14px;">' + ts + '</div>' +
+        '<div style="background:#FFF8E1;border-left:4px solid #F0B92C;padding:10px 14px;border-radius:3px;font-size:13.5px;color:#6B5300;margin-bottom:14px;">' +
+          '<strong style="color:#4A3A00;">Reminder:</strong> Submit this code on the Lesson 29 reflection in Blackboard. The fill-in-the-blank question asks for the 6-character completion code; a screenshot of this card is your backup.' +
+        '</div>' +
+        '<div style="display:flex;gap:8px;">' +
+          '<button class="name-modal-btn" id="cs-listbuild-copy-btn" type="button" style="background:#003087;">Copy code</button>' +
+          '<button class="name-modal-btn" id="cs-listbuild-overlay-close" type="button" style="background:#2E7D32;">Got it &mdash; close this</button>' +
+        '</div>' +
+      '</div>';
+    root.appendChild(overlay);
+
+    overlay.querySelector('#cs-listbuild-overlay-close').addEventListener('click', () => {
+      overlay.remove();
+    });
+    overlay.querySelector('#cs-listbuild-copy-btn').addEventListener('click', (e) => {
+      const btn = e.currentTarget;
+      const ok = cs210Copy(CS210_CODE);
+      btn.textContent = ok ? 'Copied!' : 'Copy failed';
+      btn.style.background = ok ? '#2E7D32' : '#B8002F';
+      setTimeout(() => { btn.textContent = 'Copy code'; btn.style.background = '#003087'; }, 1500);
+    });
+
+    if (area) {
+      area.innerHTML =
+        '<div class="inline-code-footer">' +
+          '<span class="label">Completion code</span>' +
+          '<strong>' + CS210_CODE + '</strong>' +
+          '<span style="color:#6B7280;margin-left:14px;font-family:\'Segoe UI\',Arial,sans-serif;">' +
+            escapeHtml(cs210CadetName || '(name not set)') + ' &middot; ' + ts +
+          '</span>' +
+        '</div>';
+    }
+  }
+
+  // ============================================================
+  // Widget state
+  // ============================================================
+  const terminalEl  = root.querySelector('#listbuild-terminal');
+  const memoryEl    = root.querySelector('#listbuild-memory-area');
+  const inputEl     = root.querySelector('#listbuild-cli-input');
+  const completionEl = root.querySelector('#listbuild-completion-area');
+
+  // Heap-like address allocator. We hand out fresh addresses for every
+  // new node so cadets see realistic-looking hex on each box.
+  const ADDR_BASE = 0x6000;
+  const ADDR_STRIDE = 0x40; // arbitrary; just so addresses look like real heap
+  let nextAddrCounter = 0;
+  function allocAddr() {
+    const a = ADDR_BASE + nextAddrCounter * ADDR_STRIDE;
+    nextAddrCounter++;
+    return a;
+  }
+  function fmtAddr(a) {
+    if (a === null) return 'NULL';
+    return '0x' + a.toString(16).toUpperCase();
+  }
+
+  // Nodes: keyed by address. Each is { addr, title, nextAddr }.
+  let nodes = new Map();
+  // Pointer variables: keyed by name. Each is { name, addr (BigInt-ish; we use number) }.
+  // For L29 we support: head, curr, prev, tail, tmp. Free mode allows any identifier.
+  let ptrs = new Map();
+
+  // Most recently affected node addrs (for flash animation)
+  let flashAddrs = new Set();
+
+  let currentTaskIndex = 0;
+  let consecutiveFails = 0;
+  let mode = "walkthrough";
+
+  // ============================================================
+  // Parser
+  // ============================================================
+  function norm(s) { return s.replace(/\s+/g, ' ').trim(); }
+  const ID = '[A-Za-z_][A-Za-z0-9_]*';
+  // Tolerate either "song_t" or "struct song" everywhere.
+  const NODE_TY = '(?:song_t|struct\\s+song)';
+
+  // Strip a single trailing semicolon if present.
+  function stripSemi(s) { return s.replace(/;\s*$/, '').trim(); }
+
+  // Parse: song_t *NAME = malloc(sizeof(song_t)); (also accepts struct song form)
+  function tryParseMalloc(line) {
+    const re = new RegExp(
+      '^' + NODE_TY + '\\s*\\*\\s*(' + ID + ')\\s*=\\s*' +
+      '(?:\\(\\s*' + NODE_TY + '\\s*\\*\\s*\\)\\s*)?' +
+      'malloc\\s*\\(\\s*sizeof\\s*\\(\\s*' + NODE_TY + '\\s*\\)\\s*\\)\\s*;?\\s*$'
+    );
+    const m = norm(line).match(re);
+    if (!m) return null;
+    return { name: m[1] };
+  }
+
+  // Parse: NAME->title = "STRING"; (we accept any quoted string up to one char escape minimally)
+  function tryParseTitleAssign(line) {
+    const re = new RegExp('^(' + ID + ')\\s*->\\s*title\\s*=\\s*"([^"\\r\\n]*)"\\s*;?\\s*$');
+    const m = norm(line).match(re);
+    if (!m) return null;
+    return { name: m[1], title: m[2] };
+  }
+
+  // Parse: NAME->next = NULL;
+  function tryParseNextNull(line) {
+    const re = new RegExp('^(' + ID + ')\\s*->\\s*next\\s*=\\s*NULL\\s*;?\\s*$');
+    const m = norm(line).match(re);
+    if (!m) return null;
+    return { name: m[1] };
+  }
+
+  // Parse: NAME->next = OTHER; (both are existing pointer variables)
+  function tryParseNextAssign(line) {
+    const re = new RegExp('^(' + ID + ')\\s*->\\s*next\\s*=\\s*(' + ID + ')\\s*;?\\s*$');
+    const m = norm(line).match(re);
+    if (!m) return null;
+    if (m[2] === 'NULL') return null; // handled separately
+    return { lhs: m[1], rhs: m[2] };
+  }
+
+  // Parse: NAME = NULL;
+  function tryParsePtrNull(line) {
+    const re = new RegExp('^(' + ID + ')\\s*=\\s*NULL\\s*;?\\s*$');
+    const m = norm(line).match(re);
+    if (!m) return null;
+    return { name: m[1] };
+  }
+
+  // Parse: NAME = OTHER; (pointer-to-pointer assignment)
+  function tryParsePtrAssign(line) {
+    const re = new RegExp('^(' + ID + ')\\s*=\\s*(' + ID + ')\\s*;?\\s*$');
+    const m = norm(line).match(re);
+    if (!m) return null;
+    if (m[2] === 'NULL') return null;
+    return { lhs: m[1], rhs: m[2] };
+  }
+
+  // Parse: NAME = NAME->next;  (advance one step along the chain)
+  function tryParseAdvance(line) {
+    const re = new RegExp('^(' + ID + ')\\s*=\\s*(' + ID + ')\\s*->\\s*next\\s*;?\\s*$');
+    const m = norm(line).match(re);
+    if (!m) return null;
+    return { lhs: m[1], src: m[2] };
+  }
+
+  // Meta commands: clear, list, help
+  function tryParseMeta(line) {
+    const t = norm(line).replace(/;\s*$/, '').toLowerCase();
+    if (t === 'clear' || t === 'reset') return { kind: 'clear' };
+    if (t === 'list') return { kind: 'list' };
+    if (t === 'help') return { kind: 'help' };
+    return null;
+  }
+
+  // Reject things that are out of scope for L29
+  // - free(...) (L30)
+  // - while/if/for (loops are background; we lock the parser to atomic ops)
+  // - double-pointer, function calls beyond malloc, arithmetic
+  function tryParseOutOfScope(line) {
+    const t = norm(line);
+    if (/^\s*free\s*\(/.test(t)) {
+      return { reason: 'free(...) is Lesson 30 territory. We are building lists today, not taking them apart.' };
+    }
+    if (/^\s*(while|if|for|switch)\b/.test(t)) {
+      return { reason: 'This simulator runs one atomic statement at a time. Loops and conditionals belong in your lab code, not here.' };
+    }
+    if (/\*\*/.test(t)) {
+      return { reason: 'Double pointers are out of scope for Lesson 29. Stick to single-level pointers.' };
+    }
+    if (/^\s*' + ID + '\s*->\s*(' + ID + ')/.test(t)) {
+      // generic catch is too aggressive; skip
+    }
+    return null;
+  }
+
+  // ============================================================
+  // Command runner. Returns { kind, message? } describing what happened.
+  // ============================================================
+  function runCommand(line) {
+    flashAddrs = new Set();
+    const trimmed = line.trim();
+    if (!trimmed) return null;
+
+    // Meta first
+    const meta = tryParseMeta(trimmed);
+    if (meta) {
+      if (meta.kind === 'clear') { doClear(); return { kind: 'cleared' }; }
+      if (meta.kind === 'list')  return { kind: 'list' };
+      if (meta.kind === 'help')  return { kind: 'help' };
+    }
+
+    // Out-of-scope rejections
+    const oos = tryParseOutOfScope(trimmed);
+    if (oos) return { kind: 'rejected', message: oos.reason };
+
+    // 1. malloc-style node creation
+    let p = tryParseMalloc(trimmed);
+    if (p) {
+      // Declaring a brand-new pointer variable that owns a fresh node.
+      // If the name was already in use, we re-aim it (orphaning whatever it pointed at).
+      const addr = allocAddr();
+      nodes.set(addr, { addr, title: '', nextAddr: undefined }); // undefined = "uninitialized"
+      ptrs.set(p.name, { name: p.name, addr });
+      flashAddrs.add(addr);
+      return { kind: 'node-alloc', name: p.name, addr };
+    }
+
+    // 2. title assignment
+    p = tryParseTitleAssign(trimmed);
+    if (p) {
+      const ptr = ptrs.get(p.name);
+      if (!ptr) return { kind: 'error', message: 'Pointer "' + p.name + '" has not been declared. Did you forget to malloc first?' };
+      if (ptr.addr === null) return { kind: 'error', message: 'Cannot dereference NULL through "' + p.name + '->title".' };
+      const node = nodes.get(ptr.addr);
+      if (!node) return { kind: 'error', message: 'Pointer "' + p.name + '" does not point to a live node.' };
+      node.title = p.title;
+      flashAddrs.add(node.addr);
+      return { kind: 'title-set', name: p.name, addr: node.addr, title: p.title };
+    }
+
+    // 3. next = NULL
+    p = tryParseNextNull(trimmed);
+    if (p) {
+      const ptr = ptrs.get(p.name);
+      if (!ptr) return { kind: 'error', message: 'Pointer "' + p.name + '" has not been declared.' };
+      if (ptr.addr === null) return { kind: 'error', message: 'Cannot dereference NULL through "' + p.name + '->next".' };
+      const node = nodes.get(ptr.addr);
+      if (!node) return { kind: 'error', message: 'Pointer "' + p.name + '" does not point to a live node.' };
+      node.nextAddr = null;
+      flashAddrs.add(node.addr);
+      return { kind: 'next-set', name: p.name, addr: node.addr, target: 'NULL' };
+    }
+
+    // 4. next = OTHER  (where OTHER is an existing pointer)
+    p = tryParseNextAssign(trimmed);
+    if (p) {
+      const ptrL = ptrs.get(p.lhs);
+      const ptrR = ptrs.get(p.rhs);
+      if (!ptrL) return { kind: 'error', message: 'Pointer "' + p.lhs + '" has not been declared.' };
+      if (!ptrR) return { kind: 'error', message: '"' + p.rhs + '" has not been declared.' };
+      if (ptrL.addr === null) return { kind: 'error', message: 'Cannot dereference NULL through "' + p.lhs + '->next".' };
+      const nodeL = nodes.get(ptrL.addr);
+      if (!nodeL) return { kind: 'error', message: '"' + p.lhs + '" does not point to a live node.' };
+      nodeL.nextAddr = ptrR.addr; // could be NULL (null) if ptrR is null
+      flashAddrs.add(nodeL.addr);
+      return { kind: 'next-set', name: p.lhs, addr: nodeL.addr, target: fmtAddr(ptrR.addr) };
+    }
+
+    // 5. NAME = NULL  (pointer reassignment to NULL)
+    p = tryParsePtrNull(trimmed);
+    if (p) {
+      // declare-on-assign: if the pointer doesn't exist, create it as NULL.
+      ptrs.set(p.name, { name: p.name, addr: null });
+      return { kind: 'ptr-null', name: p.name };
+    }
+
+    // 6. NAME = NAME->next  (advance walk)
+    p = tryParseAdvance(trimmed);
+    if (p) {
+      const ptrS = ptrs.get(p.src);
+      if (!ptrS) return { kind: 'error', message: '"' + p.src + '" has not been declared.' };
+      if (ptrS.addr === null) return { kind: 'error', message: 'Cannot dereference NULL through "' + p.src + '->next".' };
+      const nodeS = nodes.get(ptrS.addr);
+      if (!nodeS) return { kind: 'error', message: '"' + p.src + '" does not point to a live node.' };
+      if (nodeS.nextAddr === undefined) {
+        return { kind: 'error', message: nodeS.title ? '"' + p.src + '->next" has not been initialized on the node holding "' + nodeS.title + '". Reading it is undefined behavior in real C.' :
+                                                       '"' + p.src + '->next" has not been initialized. Reading it is undefined behavior in real C.' };
+      }
+      // declare-on-assign for lhs
+      ptrs.set(p.lhs, { name: p.lhs, addr: nodeS.nextAddr });
+      return { kind: 'ptr-advanced', lhs: p.lhs, src: p.src, newAddr: nodeS.nextAddr };
+    }
+
+    // 7. NAME = OTHER  (pointer-to-pointer copy)
+    p = tryParsePtrAssign(trimmed);
+    if (p) {
+      const ptrR = ptrs.get(p.rhs);
+      if (!ptrR) return { kind: 'error', message: '"' + p.rhs + '" has not been declared.' };
+      ptrs.set(p.lhs, { name: p.lhs, addr: ptrR.addr });
+      return { kind: 'ptr-assigned', lhs: p.lhs, addr: ptrR.addr };
+    }
+
+    return { kind: 'error', message: 'Could not parse that statement. Try a malloc, a field assignment with ->, or a pointer assignment. Type "help" for examples.' };
+  }
+
+  function doClear() {
+    nodes = new Map();
+    ptrs = new Map();
+    flashAddrs = new Set();
+    nextAddrCounter = 0;
+  }
+
+  // ============================================================
+  // Terminal helpers
+  // ============================================================
+  function termWrite(text, cls) {
+    const span = document.createElement('span');
+    if (cls) span.className = cls;
+    span.textContent = text;
+    terminalEl.appendChild(span);
+  }
+  function termLine(text, cls) {
+    termWrite(text, cls);
+    terminalEl.appendChild(document.createElement('br'));
+    terminalEl.scrollTop = terminalEl.scrollHeight;
+  }
+  function echoCommand(cmd) {
+    termWrite('listsim> ', 'prompt');
+    termLine(cmd, 'typed');
+  }
+
+  // ============================================================
+  // Diagram render
+  // ============================================================
+  function renderMemory() {
+    if (nodes.size === 0 && ptrs.size === 0) {
+      memoryEl.innerHTML = '<div class="memory-empty">No nodes yet.<br>Type the first declaration on the left.</div>';
+      return;
+    }
+
+    let html = '';
+
+    // 1. Pointer variable bar (head, curr, etc.)
+    if (ptrs.size > 0) {
+      html += '<div class="ptr-vars">';
+      // Render head first if present, then others alphabetically
+      const names = Array.from(ptrs.keys());
+      names.sort((a, b) => {
+        if (a === 'head') return -1;
+        if (b === 'head') return 1;
+        return a.localeCompare(b);
+      });
+      for (const name of names) {
+        const ptr = ptrs.get(name);
+        const targetCls = ptr.addr === null ? 'null' : '';
+        const targetStr = ptr.addr === null ? 'NULL' : fmtAddr(ptr.addr);
+        html += '<div class="ptr-var">' +
+          '<span class="pv-name">' + escapeHtml(name) + '</span>' +
+          '<span class="pv-arrow">&rarr;</span>' +
+          '<span class="pv-target ' + targetCls + '">' + targetStr + '</span>' +
+          '</div>';
+      }
+      html += '</div>';
+    }
+
+    // 2. Reachable chain from head (if head exists and is not NULL)
+    const head = ptrs.get('head');
+    const reachable = new Set();
+    if (head && head.addr !== null && nodes.has(head.addr)) {
+      // Walk the chain. Stop on NULL, undefined-next, or a cycle.
+      let cur = head.addr;
+      let guard = 0;
+      let dangling = false;
+      let cyc = false;
+      html += '<div class="chain">';
+      while (cur !== null && cur !== undefined && guard < 32) {
+        if (reachable.has(cur)) { cyc = true; break; }
+        reachable.add(cur);
+        const node = nodes.get(cur);
+        if (!node) { dangling = true; break; }
+        html += renderNode(node, /*ptrTags=*/tagsForAddr(cur));
+        if (node.nextAddr === undefined) {
+          html += '<div class="arrow dangling" title="next is uninitialized"></div>';
+          dangling = true;
+          break;
+        }
+        if (node.nextAddr === null) {
+          html += '<div class="null-end">NULL</div>';
+          cur = null;
+          break;
+        }
+        // Walking to a non-null address. Is the target a known node?
+        if (!nodes.has(node.nextAddr)) {
+          html += '<div class="arrow dangling" title="next points to a non-existent node"></div>';
+          dangling = true;
+          break;
+        }
+        html += '<div class="arrow"></div>';
+        cur = node.nextAddr;
+        guard++;
+      }
+      if (cyc) html += '<div class="null-end" style="border-color:#B8002F;color:#B8002F;">cycle!</div>';
+      if (guard >= 32) html += '<div class="null-end" style="border-color:#B8002F;color:#B8002F;">...too long</div>';
+      html += '</div>';
+    }
+
+    // 3. Orphaned nodes (not reachable from head)
+    const orphans = [];
+    for (const [addr, node] of nodes) {
+      if (!reachable.has(addr)) orphans.push(node);
+    }
+    if (orphans.length > 0) {
+      html += '<div class="orphans-header">Off-list nodes (no path from head)</div>';
+      html += '<div class="chain">';
+      for (const node of orphans) {
+        html += renderNode(node, tagsForAddr(node.addr));
+      }
+      html += '</div>';
+    }
+
+    // 4. If there is no head pointer but there are nodes, still show them
+    if (!head && nodes.size > 0) {
+      html += '<div class="orphans-header">Allocated nodes (no head pointer yet)</div>';
+      html += '<div class="chain">';
+      for (const [, node] of nodes) {
+        html += renderNode(node, tagsForAddr(node.addr));
+      }
+      html += '</div>';
+    }
+
+    memoryEl.innerHTML = html;
+
+    // Apply transient flash
+    if (flashAddrs.size > 0) {
+      flashAddrs.forEach(addr => {
+        const el = memoryEl.querySelector('.node[data-addr="' + addr + '"]');
+        if (el) {
+          el.classList.add('flash');
+          setTimeout(() => { el.classList.remove('flash'); }, 700);
+        }
+      });
+      flashAddrs = new Set();
+    }
+  }
+
+  // Which pointer variables target a given address?
+  function tagsForAddr(addr) {
+    const tags = [];
+    for (const [name, ptr] of ptrs) {
+      if (ptr.addr === addr) tags.push(name);
+    }
+    return tags;
+  }
+
+  function renderNode(node, ptrTags) {
+    const tags = ptrTags.length > 0
+      ? '<div class="node-tag">&darr; ' + ptrTags.map(escapeHtml).join(', ') + '</div>'
+      : '';
+    const titleDisplay = node.title ? '"' + escapeHtml(node.title) + '"' : '<span style="color:#B8002F;font-style:italic;">(unset)</span>';
+    let nextCls = '';
+    let nextDisplay = '';
+    if (node.nextAddr === undefined) {
+      nextCls = 'next-null';
+      nextDisplay = '(uninit)';
+    } else if (node.nextAddr === null) {
+      nextCls = 'next-null';
+      nextDisplay = 'NULL';
+    } else {
+      nextCls = 'next-addr';
+      nextDisplay = fmtAddr(node.nextAddr);
+    }
+    const targeted = ptrTags.length > 0 ? ' targeted' : '';
+    return '<div class="node' + targeted + '" data-addr="' + node.addr + '">' +
+      tags +
+      '<div class="node-addr">' + fmtAddr(node.addr) + '</div>' +
+      '<div class="node-field"><span class="nf-label">title</span><span class="nf-value">' + titleDisplay + '</span></div>' +
+      '<div class="node-field"><span class="nf-label">next</span><span class="nf-value ' + nextCls + '">' + nextDisplay + '</span></div>' +
+      '</div>';
+  }
+
+  // ============================================================
+  // Task slate (14 tasks across 4 sections)
+  // ============================================================
+  function diag(cmd, expectedHint) {
+    const t = cmd.trim();
+    if (expectedHint && /;\s*$/.test(expectedHint) && !/;\s*$/.test(t) && expectedHint.replace(/;\s*$/, '') === t) {
+      return "Almost. Don't forget the semicolon at the end.";
+    }
+    return null;
+  }
+
+  const tasks = [
+    // ===== Section 1: Node anatomy =====
+    {
+      section: 'Section 1: Node anatomy',
+      label: 'Task 1 of 14',
+      text: 'A song_t is a struct with two fields: a title (a string) and a next pointer to the song that comes after it. Allocate the first node on the heap and store its address in a pointer named head. Type the statement below at the prompt.',
+      hint: 'song_t *head = malloc(sizeof(song_t));',
+      match: (cmd) => /^\s*(?:song_t|struct\s+song)\s*\*\s*head\s*=\s*(?:\(\s*(?:song_t|struct\s+song)\s*\*\s*\)\s*)?malloc\s*\(\s*sizeof\s*\(\s*(?:song_t|struct\s+song)\s*\)\s*\)\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/malloc\s*\(\s*sizeof\s*\(\s*song_t\s*\*\s*\)/.test(t)) return "sizeof(song_t *) is the size of a pointer (8 bytes on this machine), not the size of the struct. Drop the star inside the sizeof.";
+        if (/malloc\s*\(\s*sizeof\s*\(\s*song\s*\)/.test(t)) return "Use the typedef name song_t (or struct song). The bare name 'song' on its own is not a type in this lesson.";
+        return diag(cmd, 'song_t *head = malloc(sizeof(song_t));');
+      },
+      note: 'malloc returned a fresh address on the heap and head now holds it. Look at the box on the right: title is (unset) and next is (uninit). Both fields contain garbage right now; we have to set them before we trust them. The address is real but the contents are not.',
+    },
+    {
+      label: 'Task 2 of 14',
+      text: 'Set the title field of that node to "Levitating". You will read the node through head and reach into its title field with the arrow operator.',
+      hint: 'head->title = "Levitating";',
+      match: (cmd) => /^\s*head\s*->\s*title\s*=\s*"Levitating"\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^\s*head\s*\.\s*title\s*=\s*"Levitating"\s*;?\s*$/.test(t)) return "head is a pointer, not the struct itself. Use the arrow operator: head->title. The arrow is (*head).title, shortened.";
+        if (/^\s*\*head\s*->\s*title/.test(t)) return "Just head->title is right. The arrow already dereferences for you; *head->title would double-dereference.";
+        if (/head\s*->\s*title\s*=\s*Levitating/.test(t)) return "Title is a string; wrap it in double quotes.";
+        return diag(cmd, 'head->title = "Levitating";');
+      },
+      note: 'The title field is set. next is still (uninit) — uninitialized memory is whatever happened to be in those bytes when malloc handed them to you. Reading uninitialized memory is undefined behavior in C. We need to set next before we trust it.',
+    },
+    {
+      label: 'Task 3 of 14',
+      text: 'A list of one element ends right at this node. Set head->next to NULL so the chain has a defined end. NULL is the sentinel that means "no more nodes."',
+      hint: 'head->next = NULL;',
+      match: (cmd) => /^\s*head\s*->\s*next\s*=\s*NULL\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/head\s*->\s*next\s*=\s*0\s*;?\s*$/.test(t)) return "0 works in real C (NULL is defined as 0 or (void*)0), but for this course write NULL — it tells the next reader you mean 'no pointer here', not 'the address zero'.";
+        if (/head\s*->\s*next\s*=\s*null\s*;?\s*$/.test(t)) return "NULL is uppercase in C. Lowercase 'null' is a Python habit; the C preprocessor will not recognize it.";
+        return diag(cmd, 'head->next = NULL;');
+      },
+      note: 'The diagram now shows a single node with a NULL terminator after it. This is a valid list of length one. NULL is what makes the chain finite — every traversal you write today and tomorrow ends by spotting NULL in the next field.',
+    },
+
+    // ===== Section 2: Traversal =====
+    {
+      section: 'Section 2: Traversal',
+      label: 'Task 4 of 14',
+      text: "Let's add two more nodes so traversal has something to do. Allocate a second node into a pointer named n2, set its title to \"Blinding Lights\", and its next to NULL. We will wire it into the chain in Task 6. Start by allocating n2.",
+      hint: 'song_t *n2 = malloc(sizeof(song_t));',
+      match: (cmd) => /^\s*(?:song_t|struct\s+song)\s*\*\s*n2\s*=\s*(?:\(\s*(?:song_t|struct\s+song)\s*\*\s*\)\s*)?malloc\s*\(\s*sizeof\s*\(\s*(?:song_t|struct\s+song)\s*\)\s*\)\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diag(cmd, 'song_t *n2 = malloc(sizeof(song_t));'),
+      note: 'n2 holds a fresh heap address, distinct from head. It is an orphan right now — no other node\'s next points at it, so it shows up in the "off-list nodes" row. Until we wire something to it, it is reachable only through n2.',
+    },
+    {
+      label: 'Task 5 of 14',
+      text: 'Set n2->title to "Blinding Lights" and n2->next to NULL. Do them as two statements (titles first, then next).',
+      hint: 'n2->title = "Blinding Lights";',
+      match: (cmd) => /^\s*n2\s*->\s*title\s*=\s*"Blinding Lights"\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diag(cmd, 'n2->title = "Blinding Lights";'),
+      note: 'Title set. Now finish initializing n2 with the next assignment.',
+    },
+    {
+      label: 'Task 6 of 14',
+      text: 'Set n2->next to NULL.',
+      hint: 'n2->next = NULL;',
+      match: (cmd) => /^\s*n2\s*->\s*next\s*=\s*NULL\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diag(cmd, 'n2->next = NULL;'),
+      note: 'Both fields of n2 are now defined. n2 is still off the list because nothing in the chain from head points at it. Next task wires it in.',
+    },
+    {
+      label: 'Task 7 of 14',
+      text: 'Wire n2 into the list by making the existing tail node point at it. Right now head is the only node in the chain, and head->next is NULL. Change head->next so it points at the same place n2 does.',
+      hint: 'head->next = n2;',
+      match: (cmd) => /^\s*head\s*->\s*next\s*=\s*n2\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/head\s*->\s*next\s*=\s*&\s*n2/.test(t)) return "n2 is already a pointer. You want head->next to hold the same address as n2, so just write n2 — no & required.";
+        if (/head\s*->\s*next\s*=\s*\*\s*n2/.test(t)) return "*n2 is the node itself (the whole struct). You want the address, which is just n2.";
+        return diag(cmd, 'head->next = n2;');
+      },
+      note: 'n2 is now on the chain. Notice: nothing was copied. head->next and n2 both hold the same address — there is exactly one second node, and two pointers see it. This is the trick of linked structures: small writes to next fields change the shape of the whole list.',
+    },
+    {
+      label: 'Task 8 of 14',
+      text: 'Now traverse the list and predict before you type. You are going to create a walking pointer named curr that starts at head, then advance it one step. After "curr = head; curr = curr->next;", where will curr point? Write the first statement now.',
+      hint: 'curr = head;',
+      match: (cmd) => /^\s*curr\s*=\s*head\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^\s*(?:song_t|struct\s+song)\s*\*\s*curr\s*=\s*head\s*;?\s*$/.test(t)) return "In real C you would declare and assign in one line. The simulator accepts a bare assignment — write it as curr = head;";
+        return diag(cmd, 'curr = head;');
+      },
+      note: 'curr now aims at the same node as head. Two pointers, one node. Walking the list means moving curr one step at a time without disturbing head.',
+    },
+    {
+      label: 'Task 9 of 14',
+      text: 'Advance curr to the next node by reading curr->next and storing it back into curr. After this, curr aims at the second node and head still aims at the first — they have diverged.',
+      hint: 'curr = curr->next;',
+      match: (cmd) => /^\s*curr\s*=\s*curr\s*->\s*next\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/curr\s*=\s*head\s*->\s*next/.test(t)) return "Both work right now (curr and head point at the same node), but the traversal idiom is 'advance curr through its OWN next' so we don't depend on head. Write curr = curr->next;";
+        if (/curr\+\+/.test(t) || /\+\+\s*curr/.test(t)) return "Linked-list pointers do not arithmetic. ++ would jump some fixed number of bytes, not to the next node. You must read curr->next to advance.";
+        return diag(cmd, 'curr = curr->next;');
+      },
+      note: 'curr advanced to the second node. head is untouched. This is the entire traversal idiom: while (curr != NULL) { ...do something...; curr = curr->next; }. Counting, printing, and searching all reuse this loop body.',
+    },
+    {
+      label: 'Task 10 of 14',
+      text: 'Advance curr one more step. Predict first: what will curr hold after this? Then type the statement.',
+      hint: 'curr = curr->next;',
+      match: (cmd) => /^\s*curr\s*=\s*curr\s*->\s*next\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diag(cmd, 'curr = curr->next;'),
+      note: 'curr is now NULL. Look at the pointer bar: curr -> NULL. We walked off the end of the list. In a real traversal loop, the while (curr != NULL) condition becomes false here and the loop exits. NULL is the stop signal.',
+    },
+
+    // ===== Section 3: Insert at head =====
+    {
+      section: 'Section 3: Insert at head',
+      label: 'Task 11 of 14',
+      text: 'A new song just came out and should play next. Insert it at the head of the list. First allocate the new node into a pointer named new_node.',
+      hint: 'song_t *new_node = malloc(sizeof(song_t));',
+      match: (cmd) => /^\s*(?:song_t|struct\s+song)\s*\*\s*new_node\s*=\s*(?:\(\s*(?:song_t|struct\s+song)\s*\*\s*\)\s*)?malloc\s*\(\s*sizeof\s*\(\s*(?:song_t|struct\s+song)\s*\)\s*\)\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diag(cmd, 'song_t *new_node = malloc(sizeof(song_t));'),
+      note: 'new_node holds a fresh address. It is an orphan: nothing in the chain points at it yet.',
+    },
+    {
+      label: 'Task 12 of 14',
+      text: 'Set new_node->title to "Espresso". (We will set new_node->next in the next task — and the order matters.)',
+      hint: 'new_node->title = "Espresso";',
+      match: (cmd) => /^\s*new_node\s*->\s*title\s*=\s*"Espresso"\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diag(cmd, 'new_node->title = "Espresso";'),
+      note: 'Title set. Next two statements are the actual insertion. The order is the lesson: point new_node->next at the OLD head first, THEN move head. If you reverse the order, you orphan the rest of the list.',
+    },
+    {
+      label: 'Task 13 of 14',
+      text: 'Point new_node->next at the current head node. This says "after the new song, play the song that used to be first."',
+      hint: 'new_node->next = head;',
+      match: (cmd) => /^\s*new_node\s*->\s*next\s*=\s*head\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/head\s*=\s*new_node/.test(t)) return "You jumped to step two. First wire new_node->next to point at the old head; THEN reassign head. Type: new_node->next = head;";
+        return diag(cmd, 'new_node->next = head;');
+      },
+      note: 'new_node->next now points at the old first node. The old list is still intact — head still aims at "Levitating", which still has its own next aimed at "Blinding Lights". We just have a second pointer (new_node) sitting outside the chain that knows where to enter.',
+    },
+    {
+      label: 'Task 14 of 14',
+      text: 'Reassign head so it points at new_node. The new song is now first in the playlist.',
+      hint: 'head = new_node;',
+      match: (cmd) => /^\s*head\s*=\s*new_node\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/head\s*=\s*&\s*new_node/.test(t)) return "new_node is already a pointer. head wants the same address new_node holds, so just write new_node — no & required.";
+        return diag(cmd, 'head = new_node;');
+      },
+      note: 'Insertion complete. head now aims at "Espresso", which aims at "Levitating", which aims at "Blinding Lights", which ends in NULL. Three nodes, all reachable, no orphans, no dangling arrows. Notice: head insertion never traversed the chain. We did three pointer writes, regardless of how long the list was. Tomorrow we ask: what happens when we want to REMOVE the second song?',
+    },
+  ];
+
+  // ============================================================
+  // Controller
+  // ============================================================
+  function checkTask(rawCmd) {
+    if (mode === "free" || currentTaskIndex >= tasks.length) return null;
+    const t = tasks[currentTaskIndex];
+    if (t.match(rawCmd)) {
+      process(rawCmd);
+      if (t.note) {
+        termLine('', 'out');
+        termLine('  ' + t.note, 'note');
+      }
+      currentTaskIndex++;
+      consecutiveFails = 0;
+      hideHintPulse();
+      renderTask();
+      if (currentTaskIndex >= tasks.length) {
+        setMode("free");
+        termLine('', 'out');
+        termLine('  Walkthrough complete. Free mode unlocked. Build chains, wire nexts, watch dangling arrows.', 'note');
+      }
+      return true;
+    } else {
+      echoCommand(rawCmd);
+      const d = (t.diagnose && t.diagnose(rawCmd)) || null;
+      if (d) termLine('  ' + d, 'err');
+      else   termLine("  Not what this task is asking for. Look at the task card above, or click 'Show hint'.", 'err');
+      consecutiveFails++;
+      if (consecutiveFails >= 2) showHintPulse();
+      return false;
+    }
+  }
+
+  function renderTask() {
+    const fill  = root.querySelector('#listbuild-progress-fill');
+    const label = root.querySelector('#listbuild-progress-label');
+    const card  = root.querySelector('#listbuild-task-card');
+    const labelEl = root.querySelector('#listbuild-task-label');
+    const textEl  = root.querySelector('#listbuild-task-text');
+    const hintEl  = root.querySelector('#listbuild-task-hint');
+    const sectionEl = root.querySelector('#listbuild-section-header');
+
+    const pct = (currentTaskIndex / tasks.length) * 100;
+    fill.style.width = pct + '%';
+    label.textContent = 'Task ' + Math.min(currentTaskIndex + 1, tasks.length) + ' of ' + tasks.length;
+
+    if (currentTaskIndex >= tasks.length) {
+      card.className = 'task-card complete';
+      labelEl.textContent = 'Complete';
+      textEl.textContent = "You built a three-song playlist node by node, walked it with a curr pointer, and inserted a new song at the head without traversing. Free mode is unlocked — try inserting at the tail, breaking the chain on purpose, or building a longer list.";
+      hintEl.textContent = '';
+      fill.style.width = '100%';
+      label.textContent = 'All tasks complete';
+      sectionEl.textContent = 'All done';
+      completionEl.innerHTML = '';
+      cs210RenderCompletion(completionEl);
+      return;
+    }
+
+    completionEl.innerHTML = '';
+    card.className = 'task-card';
+    const t = tasks[currentTaskIndex];
+    if (t.section) sectionEl.textContent = t.section;
+    labelEl.textContent = t.label;
+    textEl.textContent = t.text;
+    hintEl.textContent = '';
+  }
+
+  function showHint() {
+    if (currentTaskIndex >= tasks.length) return;
+    const t = tasks[currentTaskIndex];
+    root.querySelector('#listbuild-task-hint').textContent = 'Hint: ' + (t.hint || '');
+    hideHintPulse();
+  }
+  function showHintPulse() { root.querySelector('#listbuild-hint-btn').classList.add('pulse'); }
+  function hideHintPulse() { root.querySelector('#listbuild-hint-btn').classList.remove('pulse'); }
+
+  function reset() {
+    doClear();
+    currentTaskIndex = 0;
+    consecutiveFails = 0;
+    hideHintPulse();
+    setMode("walkthrough");
+    terminalEl.innerHTML = '';
+    termLine('Welcome to the linked list builder.', 'dim');
+    termLine('Follow the task card above. Type one C statement at a time.', 'dim');
+    termLine('A song_t struct has two fields: title (string) and next (song_t *).', 'dim');
+    termLine('', 'out');
+    renderMemory();
+    renderTask();
+  }
+
+  function process(line) {
+    echoCommand(line);
+    try {
+      const r = runCommand(line);
+      if (!r) return;
+      if (r.kind === 'node-alloc') {
+        termLine('  malloc -> ' + fmtAddr(r.addr) + '; ' + r.name + ' now points there', 'out');
+        termLine('  warning: fields are uninitialized (title and next both contain garbage until you set them)', 'dim');
+      } else if (r.kind === 'title-set') {
+        termLine('  ' + r.name + '->title is now "' + r.title + '"', 'out');
+      } else if (r.kind === 'next-set') {
+        termLine('  ' + r.name + '->next is now ' + r.target, 'out');
+      } else if (r.kind === 'ptr-null') {
+        termLine('  ' + r.name + ' = NULL', 'out');
+      } else if (r.kind === 'ptr-assigned') {
+        termLine('  ' + r.lhs + ' now holds ' + fmtAddr(r.addr), 'out');
+      } else if (r.kind === 'ptr-advanced') {
+        termLine('  ' + r.lhs + ' = ' + r.src + '->next  ->  ' + fmtAddr(r.newAddr), 'out');
+      } else if (r.kind === 'cleared') {
+        termLine('  state cleared', 'out');
+      } else if (r.kind === 'list') {
+        if (nodes.size === 0 && ptrs.size === 0) termLine('  nothing allocated yet', 'out');
+        else {
+          for (const [name, ptr] of ptrs) {
+            termLine('  ' + name + ' -> ' + fmtAddr(ptr.addr), 'out');
+          }
+          for (const [, n] of nodes) {
+            const nx = n.nextAddr === undefined ? '(uninit)' : (n.nextAddr === null ? 'NULL' : fmtAddr(n.nextAddr));
+            termLine('  ' + fmtAddr(n.addr) + ': title="' + n.title + '", next=' + nx, 'out');
+          }
+        }
+      } else if (r.kind === 'help') {
+        termLine('  alloc node:    song_t *p = malloc(sizeof(song_t));', 'out');
+        termLine('  set title:     p->title = "some title";', 'out');
+        termLine('  set next:      p->next = NULL;   p->next = other_ptr;', 'out');
+        termLine('  reassign ptr:  head = p;   curr = NULL;', 'out');
+        termLine('  walk one step: curr = curr->next;', 'out');
+        termLine('  meta:          clear  list  help', 'out');
+      } else if (r.kind === 'rejected') {
+        termLine('  ' + r.message, 'err');
+      } else if (r.kind === 'error') {
+        termLine('  error: ' + r.message, 'err');
+      }
+      renderMemory();
+    } catch (e) {
+      termLine('  unexpected error: ' + e.message, 'err');
+    }
+  }
+
+  function setMode(newMode) {
+    mode = newMode;
+    const btn = root.querySelector('#listbuild-mode-btn');
+    if (mode === "free") {
+      btn.textContent = 'Return to walkthrough';
+      btn.style.background = '#E6F4EA';
+      btn.style.borderColor = '#2E7D32';
+      btn.style.color = '#1B5E20';
+      inputEl.placeholder = 'free mode: build, wire, advance';
+    } else {
+      btn.textContent = 'Switch to free mode';
+      btn.style.background = '';
+      btn.style.borderColor = '';
+      btn.style.color = '';
+      inputEl.placeholder = 'follow the task above';
+    }
+  }
+
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const v = inputEl.value;
+      inputEl.value = '';
+      if (!v.trim()) return;
+      if (mode === "walkthrough") {
+        checkTask(v);
+      } else {
+        process(v);
+      }
+    }
+  });
+  root.querySelector('#listbuild-hint-btn').addEventListener('click', showHint);
+  root.querySelector('#listbuild-reset-btn').addEventListener('click', reset);
+  root.querySelector('#listbuild-mode-btn').addEventListener('click', () => {
+    if (mode === "walkthrough") {
+      setMode("free");
+      termLine('', 'out');
+      termLine('  Free mode. Type any node allocation, field assignment, or pointer assignment.', 'note');
+    } else {
+      setMode("walkthrough");
+      termLine('', 'out');
+      termLine('  Walkthrough mode. Follow the task card above.', 'note');
+    }
+  });
+
+  reset();
+})();
+</script>
+
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 32px 0 10px 0;">Linked List Self-Check</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Six questions covering self-referential structs, the empty-list convention, traversal counting, head-insertion order, and the pass-by-value trap with linked-list functions. Pass at 70% or above; below that, replay the walkthrough and take the quiz again.</p>
+
+<!-- ============================================================
+     CS210 Lesson 29 - Linked List Self-Check Quiz
+     Card/slide flow: one question per card, Submit + Next/Back.
+     Score card at the end with per-question recap and two-salt
+     completion code (passing >= 70% uses _completed salt;
+     non-passing uses _incomplete salt).
+     ============================================================ -->
+<style>
+.cs210-listcheck-quiz * { box-sizing: border-box; }
+.cs210-listcheck-quiz {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-listcheck-quiz h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-listcheck-quiz .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+.cs210-listcheck-quiz .dots {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+.cs210-listcheck-quiz .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #E5E7EB;
+  border: 1px solid #C7CFD9;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.cs210-listcheck-quiz .dot.current { background: #003087; border-color: #00205B; transform: scale(1.25); }
+.cs210-listcheck-quiz .dot.correct { background: #2E7D32; border-color: #1B5E20; }
+.cs210-listcheck-quiz .dot.incorrect { background: #B8002F; border-color: #6B0000; }
+.cs210-listcheck-quiz .dot.score {
+  width: 16px;
+  height: 12px;
+  border-radius: 3px;
+  background: #F0B92C;
+  border-color: #6B5300;
+}
+
+.cs210-listcheck-quiz .card {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 6px;
+  padding: 22px 24px;
+  margin-bottom: 14px;
+}
+.cs210-listcheck-quiz .q-label {
+  font-size: 11.5px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.cs210-listcheck-quiz .q-text {
+  font-size: 15.5px;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+}
+.cs210-listcheck-quiz .q-text code {
+  background: #F0F2F5;
+  padding: 1px 6px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13.5px;
+}
+.cs210-listcheck-quiz pre.q-code {
+  background: #1E2A3A;
+  color: #E8EDF5;
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.55;
+  white-space: pre;
+  overflow-x: auto;
+  margin: 0 0 14px 0;
+}
+.cs210-listcheck-quiz .choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.cs210-listcheck-quiz .choice {
+  text-align: left;
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  border-radius: 4px;
+  padding: 11px 14px;
+  font-size: 14.5px;
+  cursor: pointer;
+  font-family: inherit;
+  color: #1a1a1a;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.cs210-listcheck-quiz .choice:hover { background: #F5F7FA; border-color: #003087; }
+.cs210-listcheck-quiz .choice.selected { background: #E8EDF5; border-color: #003087; }
+.cs210-listcheck-quiz .choice.locked { cursor: default; }
+.cs210-listcheck-quiz .choice.locked:hover { background: #ffffff; border-color: #C7CFD9; }
+.cs210-listcheck-quiz .choice.locked.selected { background: #E8EDF5; border-color: #003087; }
+.cs210-listcheck-quiz .choice.correct { background: #E6F4EA; border-color: #2E7D32; color: #1B5E20; font-weight: 500; }
+.cs210-listcheck-quiz .choice.incorrect { background: #FBE9E7; border-color: #B8002F; color: #6B0000; }
+.cs210-listcheck-quiz .text-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: Consolas, monospace;
+}
+.cs210-listcheck-quiz .text-input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+
+.cs210-listcheck-quiz .feedback {
+  padding: 12px 14px;
+  border-radius: 4px;
+  font-size: 14px;
+  margin-bottom: 14px;
+  display: none;
+}
+.cs210-listcheck-quiz .feedback.visible { display: block; }
+.cs210-listcheck-quiz .feedback.correct {
+  background: #E6F4EA;
+  border-left: 4px solid #2E7D32;
+  color: #1B5E20;
+}
+.cs210-listcheck-quiz .feedback.incorrect {
+  background: #FBE9E7;
+  border-left: 4px solid #B8002F;
+  color: #6B0000;
+}
+.cs210-listcheck-quiz .feedback code {
+  background: rgba(0,0,0,0.05);
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+}
+
+.cs210-listcheck-quiz .btn-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.cs210-listcheck-quiz .nav-row { display: flex; gap: 8px; }
+.cs210-listcheck-quiz .nav-btn {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  padding: 8px 16px;
+  border-radius: 3px;
+  font-size: 14px;
+  cursor: pointer;
+  color: #00205B;
+  font-family: inherit;
+}
+.cs210-listcheck-quiz .nav-btn:hover { background: #F5F7FA; }
+.cs210-listcheck-quiz .nav-btn.back {
+  background: #ffffff;
+  border-color: #C7CFD9;
+  color: #4A5568;
+}
+.cs210-listcheck-quiz .submit-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 3px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-listcheck-quiz .submit-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-listcheck-quiz .submit-btn:not(:disabled):hover { background: #00205B; }
+
+.cs210-listcheck-quiz .score-card {
+  text-align: center;
+  padding: 28px 26px;
+}
+.cs210-listcheck-quiz .score-card.full-correct { border-top: 6px solid #2E7D32; }
+.cs210-listcheck-quiz .score-card.passing { border-top: 6px solid #003087; }
+.cs210-listcheck-quiz .score-card.not-passing { border-top: 6px solid #B8002F; }
+.cs210-listcheck-quiz .score-big {
+  font-size: 56px;
+  font-weight: 700;
+  color: #00205B;
+  margin: 6px 0 0 0;
+}
+.cs210-listcheck-quiz .score-label {
+  font-size: 14px;
+  color: #6B7280;
+  margin-bottom: 16px;
+}
+.cs210-listcheck-quiz .score-message {
+  font-size: 16px;
+  color: #1a1a1a;
+  margin-bottom: 18px;
+}
+.cs210-listcheck-quiz .score-message.good-job { color: #1B5E20; font-weight: 600; }
+
+.cs210-listcheck-quiz .code-block {
+  background: #F0F4FA;
+  border: 1px solid #003087;
+  border-radius: 4px;
+  padding: 14px 18px;
+  margin: 14px auto 6px auto;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.cs210-listcheck-quiz .code-block.fail {
+  border-color: #B8002F;
+  background: #FBE9E7;
+}
+.cs210-listcheck-quiz .code-block .code-left { flex: 1; }
+.cs210-listcheck-quiz .code-block .code-label {
+  font-size: 11.5px;
+  letter-spacing: 1.5px;
+  color: #4A5568;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.cs210-listcheck-quiz .code-block.fail .code-label { color: #6B0000; }
+.cs210-listcheck-quiz .code-block .code-value {
+  font-family: Consolas, monospace;
+  font-size: 24px;
+  font-weight: 700;
+  color: #00205B;
+  letter-spacing: 3px;
+}
+.cs210-listcheck-quiz .code-block.fail .code-value { color: #B8002F; }
+.cs210-listcheck-quiz .copy-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.cs210-listcheck-quiz .copy-btn:hover { background: #00205B; }
+.cs210-listcheck-quiz .copy-btn.copied { background: #2E7D32; }
+
+.cs210-listcheck-quiz .inline-code-footer {
+  margin-top: 6px;
+  padding: 8px 10px;
+  text-align: left;
+  font-size: 12.5px;
+  color: #6B7280;
+  background: transparent;
+  border: none;
+}
+
+.cs210-listcheck-quiz .recap {
+  text-align: left;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid #E5E7EB;
+}
+.cs210-listcheck-quiz .recap-title {
+  font-size: 13px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.cs210-listcheck-quiz .recap-item {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-size: 13.5px;
+}
+.cs210-listcheck-quiz .recap-icon {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+}
+.cs210-listcheck-quiz .recap-icon.correct { background: #2E7D32; }
+.cs210-listcheck-quiz .recap-icon.incorrect { background: #B8002F; }
+.cs210-listcheck-quiz .recap-body { flex: 1; }
+.cs210-listcheck-quiz .recap-question {
+  color: #1a1a1a;
+  margin-bottom: 4px;
+}
+.cs210-listcheck-quiz .recap-explanation {
+  color: #4A5568;
+  font-size: 13px;
+}
+.cs210-listcheck-quiz .recap-explanation code {
+  background: #F0F2F5;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 12.5px;
+}
+
+.cs210-listcheck-quiz .reset-row {
+  margin-top: 18px;
+  display: flex;
+  justify-content: center;
+}
+.cs210-listcheck-quiz .reset-btn {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  padding: 8px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #4A5568;
+  font-family: inherit;
+}
+.cs210-listcheck-quiz .reset-btn:hover { background: #F5F7FA; }
+
+.cs210-listcheck-quiz .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #4A5568;
+  margin-top: 12px;
+}
+.cs210-listcheck-quiz .help-note strong { color: #00205B; }
+
+/* Name modal */
+.cs210-listcheck-quiz .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.cs210-listcheck-quiz .name-modal {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+.cs210-listcheck-quiz .name-modal h2 {
+  color: #00205B;
+  font-size: 20px;
+  margin: 0 0 10px 0;
+}
+.cs210-listcheck-quiz .name-modal p {
+  color: #4A5568;
+  font-size: 14px;
+  margin: 0 0 16px 0;
+}
+.cs210-listcheck-quiz .name-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-listcheck-quiz .name-modal input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-listcheck-quiz .name-modal-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-listcheck-quiz .name-modal-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-listcheck-quiz .name-modal-btn:not(:disabled):hover { background: #00205B; }
+</style>
+
+<div class="cs210-listcheck-quiz">
+
+<div class="name-modal-backdrop" id="listcheck-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the score card so you can include it in your screenshot for the Lesson 29 reflection.</p>
+    <input type="text" id="listcheck-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="listcheck-cadet-name-btn" disabled>Start the quiz</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 29 &middot; Linked List Self-Check</h1>
+<div class="subtitle">Six questions on node anatomy, traversal, and insertion. Pass at 70% or above; below that, take it again after reviewing.</div>
+
+<div class="dots" id="listcheck-dots"></div>
+
+<div id="listcheck-card-area"></div>
+
+<div class="help-note">
+  <strong>How this works:</strong> One question per card. Pick or type your answer and click Submit. Feedback appears, then click Next to move on. Answers lock once submitted, so think before you submit. After all six, you get a score, a completion code, and a per-question recap.
+</div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-listcheck-quiz');
+  if (!root) return;
+
+  const CS210_SALT_PASS = "lesson29_listcheck_completed";
+  const CS210_SALT_FAIL = "lesson29_listcheck_incomplete";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const PASSING_THRESHOLD = 0.70;
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE_PASS = cs210CodeFromSalt(CS210_SALT_PASS);
+  const CS210_CODE_FAIL = cs210CodeFromSalt(CS210_SALT_FAIL);
+  let cadetName = '';
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+  function cs210Copy(text) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch (e) {}
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      return true;
+    } catch (e) { return false; }
+  }
+
+  // Name modal
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#listcheck-name-modal-backdrop');
+    const input = root.querySelector('#listcheck-cadet-name-input');
+    const btn = root.querySelector('#listcheck-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length > 0) {
+        cadetName = stored.trim();
+        backdrop.style.display = 'none';
+        return;
+      }
+    } catch (e) {}
+    function updateBtn() { btn.disabled = input.value.trim().length === 0; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', () => {
+      const n = input.value.trim();
+      if (!n) return;
+      cadetName = n;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', n); } catch (e) {}
+      backdrop.style.display = 'none';
+      const siblings = document.querySelectorAll('#listbuild-name-modal-backdrop');
+      siblings.forEach(function(m) { m.style.display = 'none'; });
+    });
+    setTimeout(() => { try { input.focus(); } catch (e) {} }, 50);
+  })();
+
+  // ============================================================
+  // Questions
+  // ============================================================
+  const questions = [
+    {
+      id: 'q1',
+      type: 'choice',
+      text: 'Which of these is a correct C definition of a song node for a singly-linked playlist?',
+      options: [
+        '<code>typedef struct song { char *title; struct song *next; } song_t;</code>',
+        '<code>typedef struct song { char *title; song_t *next; } song_t;</code>',
+        '<code>typedef struct song { char *title; song next; } song_t;</code>',
+        '<code>typedef struct { char *title; struct song *next; } song;</code>',
+      ],
+      correct: 0,
+      correctFeedback: 'Right. Inside the struct body the typedef name <code>song_t</code> does not exist yet, so the next field must use <code>struct song *</code>. Once the typedef closes, <code>song_t</code> is usable everywhere else.',
+      incorrectFeedback: 'The correct answer is the first one. Inside the struct body the typedef name has not been introduced yet, so the self-reference must use <code>struct song *</code>. The other forms either try to use the typedef before it exists or store a whole node by value inside itself (which would be infinite size).',
+      shortLabel: 'Correct self-referential struct definition',
+    },
+    {
+      id: 'q2',
+      type: 'choice',
+      text: 'You have <code>song_t *head = NULL;</code>. What does this represent?',
+      options: [
+        'A syntax error: a pointer cannot be set to NULL on the same line as its declaration.',
+        'A list of one node whose only field is NULL.',
+        'An empty list. There are no song nodes; the list has length zero.',
+        'A list of one node whose title is NULL.',
+      ],
+      correct: 2,
+      correctFeedback: 'Right. <code>head == NULL</code> is the universal "empty list" convention. The list has no nodes; there is no first element to read.',
+      incorrectFeedback: 'The correct answer is the third one. <code>head == NULL</code> means the list is empty — there are no nodes anywhere. Every traversal in your lab will start with a check like <code>if (head == NULL) return ...</code> for exactly this case.',
+      shortLabel: 'head == NULL means what?',
+    },
+    {
+      id: 'q3',
+      type: 'choice',
+      text: 'Why does inserting a node at the <em>head</em> of a list not require traversing the chain, but inserting at the <em>tail</em> does?',
+      options: [
+        'Head insertion does not require traversal because <code>head</code> already names the first node directly; tail insertion requires traversal because nothing names the last node — you must walk until <code>next == NULL</code>.',
+        'Head insertion is faster because <code>malloc</code> always reuses the lowest free address; tail insertion has to wait for memory to align.',
+        'There is no real difference; both insertions walk the entire list.',
+        'Head insertion is faster only because singly-linked lists support a hidden back pointer for the head.',
+      ],
+      correct: 0,
+      correctFeedback: 'Right. We hold a named handle on the front of the list (<code>head</code>) but no named handle on the back. To reach the tail we have to walk from <code>head</code> until <code>curr->next == NULL</code>. This is why some implementations keep a separate <code>tail</code> pointer.',
+      incorrectFeedback: 'The correct answer is the first one. <code>head</code> is a named pointer to the first node, so the front is reachable in one step. The tail has no such name, so the only way to reach it is to walk from <code>head</code> until <code>next</code> is NULL. <code>malloc</code> behavior and "hidden back pointers" are not part of how a singly-linked list works.',
+      shortLabel: 'Why head insert is cheap and tail insert is not',
+    },
+    {
+      id: 'q4',
+      type: 'text',
+      text: 'After this code runs, what is the value of <code>count</code>? Type just the number.<pre class="q-code">song_t *curr = head;\nint count = 0;\nwhile (curr != NULL) {\n  count++;\n  curr = curr-&gt;next;\n}</pre>Assume <code>head</code> points to a chain of three nodes ending in NULL.',
+      correct: ['3'],
+      normalize: s => s.trim(),
+      placeholder: 'e.g. 5',
+      correctFeedback: 'Right. The loop visits each node exactly once and stops when <code>curr</code> becomes NULL. Three nodes, three increments, count is 3.',
+      incorrectFeedback: 'The correct answer is <code>3</code>. The loop visits each node once and exits when <code>curr</code> walks off the end (becomes NULL). A common wrong answer is 4 — that would happen if the loop incremented BEFORE checking <code>curr != NULL</code>, but the standard idiom checks first.',
+      shortLabel: 'Count after a standard traversal of 3 nodes',
+    },
+    {
+      id: 'q5',
+      type: 'choice',
+      text: 'You have a list of three songs: <code>head -&gt; A -&gt; B -&gt; C -&gt; NULL</code>. You want to insert a new node <code>X</code> at the head. Which sequence is correct?',
+      options: [
+        '<code>head = new_node; new_node-&gt;next = head;</code>',
+        '<code>new_node-&gt;next = head; head = new_node;</code>',
+        '<code>head-&gt;next = new_node; new_node-&gt;next = NULL;</code>',
+        '<code>new_node = head; head = new_node;</code>',
+      ],
+      correct: 1,
+      correctFeedback: 'Right. Wire the new node\'s next at the old head FIRST, then move head. The reverse order would lose every node after head.',
+      incorrectFeedback: 'The correct answer is the second one. The first option reassigns <code>head</code> to the new node BEFORE saving the old head address — the old chain becomes unreachable. Order matters: <code>new_node-&gt;next = head;</code> first, then <code>head = new_node;</code>.',
+      shortLabel: 'Correct order for head insertion',
+    },
+    {
+      id: 'q6',
+      type: 'choice',
+      text: 'You wrote <code>insert_tail(head, new_node);</code> where <code>head</code> is a <code>song_t *</code> and the list was initially empty (<code>head == NULL</code>). After the call, <code>head</code> in the caller is still NULL even though the function ran without crashing. What is the most likely cause?',
+      options: [
+        '<code>malloc</code> failed and silently returned NULL.',
+        'The function received <code>head</code> by value, so its local copy was reassigned but the caller\'s <code>head</code> was unchanged.',
+        'Linked lists cannot start from an empty state; you must seed them with at least one node manually.',
+        'C does not allow functions to modify pointer fields of structs.',
+      ],
+      correct: 1,
+      correctFeedback: 'Right. This is the classic pass-by-value trap with pointers. To let a function update the caller\'s head, the function must take a <code>song_t **</code> (pointer to pointer) or return the new head and the caller must reassign.',
+      incorrectFeedback: 'The correct answer is the second one. <code>head</code> was passed by value (the function got its own copy of the pointer). The function may have set its local copy to the address of a new node, but the caller\'s <code>head</code> never saw that change. Two real fixes: pass <code>song_t **</code> and dereference inside, or have the function return the new head and the caller assigns it.',
+      shortLabel: 'Why head stays NULL after insert_tail call',
+    },
+  ];
+
+  // State
+  const state = questions.map(() => ({ answered: false, correct: false, choice: null, value: '' }));
+  let currentIndex = 0;
+
+  const dotsArea = root.querySelector('#listcheck-dots');
+  const cardArea = root.querySelector('#listcheck-card-area');
+
+  function renderDots() {
+    dotsArea.innerHTML = '';
+    for (let i = 0; i < questions.length; i++) {
+      const d = document.createElement('div');
+      d.className = 'dot';
+      if (i === currentIndex) d.classList.add('current');
+      if (state[i].answered) d.classList.add(state[i].correct ? 'correct' : 'incorrect');
+      dotsArea.appendChild(d);
+    }
+    const scoreDot = document.createElement('div');
+    scoreDot.className = 'dot score';
+    if (currentIndex === questions.length) scoreDot.classList.add('current');
+    dotsArea.appendChild(scoreDot);
+  }
+
+  function buildQuestionCard(i) {
+    const q = questions[i];
+    const s = state[i];
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    const label = document.createElement('div');
+    label.className = 'q-label';
+    label.textContent = 'Question ' + (i + 1) + ' of ' + questions.length;
+    card.appendChild(label);
+
+    const text = document.createElement('div');
+    text.className = 'q-text';
+    text.innerHTML = q.text;
+    card.appendChild(text);
+
+    if (q.code) {
+      const pre = document.createElement('pre');
+      pre.className = 'q-code';
+      pre.textContent = q.code;
+      card.appendChild(pre);
+    }
+
+    let getAnswer;
+    if (q.type === 'choice') {
+      const choices = document.createElement('div');
+      choices.className = 'choices';
+      const buttons = [];
+      q.options.forEach((opt, idx) => {
+        const b = document.createElement('button');
+        b.className = 'choice';
+        b.innerHTML = opt;
+        b.type = 'button';
+        b.addEventListener('click', () => {
+          if (s.answered) return;
+          buttons.forEach(x => x.classList.remove('selected'));
+          b.classList.add('selected');
+          s.choice = idx;
+          submitBtn.disabled = false;
+        });
+        if (s.choice === idx) b.classList.add('selected');
+        if (s.answered) {
+          b.classList.add('locked');
+          if (idx === q.correct) b.classList.add('correct');
+          else if (idx === s.choice) b.classList.add('incorrect');
+        }
+        choices.appendChild(b);
+        buttons.push(b);
+      });
+      card.appendChild(choices);
+      getAnswer = () => s.choice;
+    } else {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'text-input';
+      input.placeholder = q.placeholder || '';
+      input.value = s.value || '';
+      input.spellcheck = false;
+      input.autocomplete = 'off';
+      input.addEventListener('input', () => {
+        if (s.answered) return;
+        s.value = input.value;
+        submitBtn.disabled = input.value.trim().length === 0;
+      });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !s.answered && input.value.trim().length > 0) {
+          e.preventDefault();
+          submitBtn.click();
+        }
+      });
+      if (s.answered) input.disabled = true;
+      card.appendChild(input);
+      getAnswer = () => input.value;
+      setTimeout(() => { try { input.focus(); } catch (e) {} }, 50);
+    }
+
+    const fb = document.createElement('div');
+    fb.className = 'feedback';
+    if (s.answered) {
+      fb.classList.add('visible');
+      fb.classList.add(s.correct ? 'correct' : 'incorrect');
+      fb.innerHTML = s.correct ? q.correctFeedback : q.incorrectFeedback;
+    }
+    card.appendChild(fb);
+
+    const row = document.createElement('div');
+    row.className = 'btn-row';
+
+    const navL = document.createElement('div');
+    navL.className = 'nav-row';
+    if (i > 0) {
+      const back = document.createElement('button');
+      back.className = 'nav-btn back';
+      back.type = 'button';
+      back.innerHTML = '&larr; Back';
+      back.addEventListener('click', () => { currentIndex = i - 1; render(); });
+      navL.appendChild(back);
+    }
+    row.appendChild(navL);
+
+    const submitBtn = document.createElement('button');
+    submitBtn.type = 'button';
+    if (s.answered) {
+      submitBtn.className = 'nav-btn';
+      submitBtn.innerHTML = (i === questions.length - 1) ? 'See score &rarr;' : 'Next &rarr;';
+      submitBtn.addEventListener('click', () => { currentIndex = i + 1; render(); });
+    } else {
+      submitBtn.className = 'submit-btn';
+      submitBtn.textContent = 'Submit';
+      if (q.type === 'choice') submitBtn.disabled = (s.choice === null);
+      else submitBtn.disabled = (!s.value || s.value.trim().length === 0);
+      submitBtn.addEventListener('click', () => {
+        const ans = getAnswer();
+        let correct = false;
+        if (q.type === 'choice') {
+          correct = (ans === q.correct);
+        } else {
+          const v = q.normalize ? q.normalize(ans) : ans;
+          correct = q.correct.some(c => (q.normalize ? q.normalize(c) : c) === v);
+        }
+        s.answered = true;
+        s.correct = correct;
+        render();
+      });
+    }
+    row.appendChild(submitBtn);
+    card.appendChild(row);
+
+    return card;
+  }
+
+  function buildScoreCard() {
+    const card = document.createElement('div');
+    card.className = 'card score-card';
+    const correctCount = state.filter(s => s.correct).length;
+    const pct = correctCount / questions.length;
+    const passed = pct >= PASSING_THRESHOLD;
+
+    if (correctCount === questions.length) card.classList.add('full-correct');
+    else if (passed) card.classList.add('passing');
+    else card.classList.add('not-passing');
+
+    const label = document.createElement('div');
+    label.className = 'q-label';
+    label.textContent = 'Quiz complete';
+    card.appendChild(label);
+
+    const msg = document.createElement('div');
+    msg.className = 'score-message';
+    if (correctCount === questions.length) {
+      msg.className = 'score-message good-job';
+      msg.textContent = 'Perfect score. Linked list mechanics are solid.';
+    } else if (passed) {
+      msg.className = 'score-message good-job';
+      msg.textContent = 'Passed.';
+    } else {
+      msg.style.color = '#6B0000';
+      msg.textContent = 'Below the 70% threshold. Review and try again.';
+    }
+    card.appendChild(msg);
+
+    const scoreBig = document.createElement('div');
+    scoreBig.className = 'score-big';
+    scoreBig.textContent = correctCount + ' / ' + questions.length;
+    card.appendChild(scoreBig);
+
+    const scoreLabel = document.createElement('div');
+    scoreLabel.className = 'score-label';
+    scoreLabel.textContent = 'questions correct (' + Math.round(pct * 100) + '%)';
+    card.appendChild(scoreLabel);
+
+    const detail = document.createElement('div');
+    detail.className = 'score-message';
+    if (correctCount === questions.length) {
+      detail.textContent = 'You have node anatomy, traversal, and head insertion down. On to the lab.';
+    } else if (passed) {
+      detail.textContent = 'You crossed the threshold. Review the questions you missed below before the lab.';
+    } else {
+      detail.textContent = 'Replay the listbuild walkthrough; the diagram makes the head-insertion order question much easier to see.';
+    }
+    card.appendChild(detail);
+
+    const code = passed ? CS210_CODE_PASS : CS210_CODE_FAIL;
+    const codeBlock = document.createElement('div');
+    codeBlock.className = 'code-block' + (passed ? '' : ' fail');
+    const left = document.createElement('div');
+    left.className = 'code-left';
+    const codeLabel = document.createElement('div');
+    codeLabel.className = 'code-label';
+    codeLabel.textContent = passed ? 'Passing code' : 'Non-passing code';
+    left.appendChild(codeLabel);
+    const codeValue = document.createElement('div');
+    codeValue.className = 'code-value';
+    codeValue.textContent = code;
+    left.appendChild(codeValue);
+    codeBlock.appendChild(left);
+    const copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.className = 'copy-btn';
+    copyBtn.textContent = 'Copy';
+    copyBtn.addEventListener('click', () => {
+      const ok = cs210Copy(code);
+      copyBtn.textContent = ok ? 'Copied!' : 'Copy failed';
+      if (ok) copyBtn.classList.add('copied');
+      setTimeout(() => { copyBtn.textContent = 'Copy'; copyBtn.classList.remove('copied'); }, 1500);
+    });
+    codeBlock.appendChild(copyBtn);
+    card.appendChild(codeBlock);
+
+    const now = new Date();
+    const pad = (n) => n.toString().padStart(2, '0');
+    const ts = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate()) +
+               ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+
+    const footer = document.createElement('div');
+    footer.className = 'inline-code-footer';
+    footer.innerHTML = '<strong>' + escapeHtml(cadetName || '(name not set)') + '</strong> &middot; ' + ts +
+                       (passed ? ' &middot; passing' : ' &middot; non-passing');
+    card.appendChild(footer);
+
+    const recap = document.createElement('div');
+    recap.className = 'recap';
+    const recapTitle = document.createElement('div');
+    recapTitle.className = 'recap-title';
+    recapTitle.textContent = 'Question recap';
+    recap.appendChild(recapTitle);
+
+    state.forEach((s, i) => {
+      const item = document.createElement('div');
+      item.className = 'recap-item';
+      const icon = document.createElement('div');
+      icon.className = 'recap-icon ' + (s.correct ? 'correct' : 'incorrect');
+      icon.textContent = s.correct ? '\u2713' : '\u2717';
+      item.appendChild(icon);
+      const body = document.createElement('div');
+      body.className = 'recap-body';
+      const q = questions[i];
+      const qLine = document.createElement('div');
+      qLine.className = 'recap-question';
+      qLine.innerHTML = '<strong>Q' + (i + 1) + '.</strong> ' + q.shortLabel;
+      body.appendChild(qLine);
+      if (!s.correct) {
+        const exp = document.createElement('div');
+        exp.className = 'recap-explanation';
+        exp.innerHTML = q.incorrectFeedback;
+        body.appendChild(exp);
+      }
+      item.appendChild(body);
+      recap.appendChild(item);
+    });
+    card.appendChild(recap);
+
+    const resetRow = document.createElement('div');
+    resetRow.className = 'reset-row';
+    const resetBtn = document.createElement('button');
+    resetBtn.type = 'button';
+    resetBtn.className = 'reset-btn';
+    resetBtn.textContent = 'Take the quiz again';
+    resetBtn.addEventListener('click', reset);
+    resetRow.appendChild(resetBtn);
+    card.appendChild(resetRow);
+
+    return card;
+  }
+
+  function render() {
+    renderDots();
+    cardArea.innerHTML = '';
+    if (currentIndex >= questions.length) cardArea.appendChild(buildScoreCard());
+    else cardArea.appendChild(buildQuestionCard(currentIndex));
+  }
+
+  function reset() {
+    state.forEach(s => { s.answered = false; s.correct = false; s.choice = null; s.value = ''; });
+    currentIndex = 0;
+    render();
+  }
+
+  render();
+})();
+</script>
+
+
+    </div>
+  </details>
+
+  <!-- ===================== 6. AFTER CLASS ===================== -->
+  <details id="after-class" style="margin-bottom: 24px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      6. After Class
+    </summary>
+    <div style="padding: 18px 22px;">
+      <ul style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Finish Lab 29 if you did not complete it in class. Submit through GitHub Classroom before Lesson 30.</li>
+        <li style="margin-bottom: 6px;">Submit the Lesson 29 reflection in Blackboard. The reflection asks for the listbuild and listcheck completion codes and one short response from the question bank.</li>
+        <li style="margin-bottom: 6px;">Read the Lesson 30 supplementary notes. Lesson 30 picks up the same playlist code and adds deletion — including the middle-of-the-list case, where you need the node BEFORE the one being removed.</li>
+        <li style="margin-bottom: 0;">Heads up: Quiz 9 at Lesson 31 covers linked lists (L29, L30, and L31 together).</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== HELP NOTE ===================== -->
+  <div style="background: #F5F7FA; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 3px; font-size: 13.5px; color: #4A5568;">
+    <strong style="color: #00205B;">Need help?</strong> Schedule EI with your instructor. Bring the specific code or specific widget screenshots that show the chain you cannot get to behave, and the exact error message or behavior you do not understand. The Resources section has reference materials including the DFCS C Programming Standard if you need to look up a rule. Specific questions get unstuck quickly.
+  </div>
+
+</div>

@@ -1,0 +1,3144 @@
+<!-- ============================================================
+     CS210 — Lesson 13
+     Pointer Arithmetic
+     Self-contained: all CSS inline. Native <details> for collapsing.
+     Two widgets embedded in section 5: ptrmath walkthrough and duality quiz.
+     Paste into Blackboard Ultra via Document → Add HTML block.
+     ============================================================ -->
+
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 980px; margin: 0 auto; line-height: 1.6;">
+
+  <!-- ===================== LIGHT HEADER ===================== -->
+  <div style="border-left: 5px solid #003087; padding: 8px 0 8px 18px; margin-bottom: 24px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 2px;">CS210 &middot; Block 2 &middot; Lesson 13</div>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 600; color: #00205B;">Pointer Arithmetic</h1>
+    <div style="font-size: 14px; color: #4A5568; margin-top: 4px;">Adding to pointers &middot; Type-aware steps &middot; The precedence trio &middot; Array-pointer duality &middot; Pointer subtraction</div>
+  </div>
+
+  <!-- ===================== AT A GLANCE ===================== -->
+  <div style="background: #F5F7FA; border-left: 4px solid #B5B7BA; padding: 14px 18px; margin-bottom: 22px; font-size: 14px;">
+    <strong style="color: #00205B;">At a glance:</strong> Day two of three pointer lessons. Lesson 12 introduced what a pointer is. Today you put pointers to work: walking through arrays, three look-alike expressions that behave very differently, and the rule that says array notation and pointer notation are the same thing.
+  </div>
+
+  <!-- ===================== TABLE OF CONTENTS ===================== -->
+  <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 20px; margin-bottom: 24px; border-radius: 3px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Contents</div>
+    <ol style="margin: 0; padding-left: 22px; font-size: 14px;">
+      <li style="margin-bottom: 4px;"><a href="#objectives" style="color: #003087; text-decoration: none;">Lesson Objectives</a></li>
+      <li style="margin-bottom: 4px;"><a href="#readings" style="color: #003087; text-decoration: none;">Assigned Readings</a></li>
+      <li style="margin-bottom: 4px;"><a href="#pre-class" style="color: #003087; text-decoration: none;">Pre-Class Work</a></li>
+      <li style="margin-bottom: 4px;"><a href="#materials" style="color: #003087; text-decoration: none;">Lesson Materials and Overview</a></li>
+      <li style="margin-bottom: 4px;"><a href="#in-class" style="color: #003087; text-decoration: none;">In-Class Work</a></li>
+      <li style="margin-bottom: 0;"><a href="#after-class" style="color: #003087; text-decoration: none;">After Class</a></li>
+    </ol>
+  </div>
+
+  <!-- ===================== 1. OBJECTIVES ===================== -->
+  <details id="objectives" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      1. Lesson Objectives
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 10px 0; font-style: italic;">By the end of this lesson, cadets will be able to:</p>
+      <ol style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Use pointer arithmetic to traverse an array, recognizing that <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">p + 1</code> advances the pointer by <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">sizeof(*p)</code> bytes. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+        <li style="margin-bottom: 6px;">Apply the array-pointer duality formula <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">a[i]&nbsp;==&nbsp;*(a&nbsp;+&nbsp;i)</code> to read and write code interchangeably in either notation. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+        <li style="margin-bottom: 0;">Predict pointer arithmetic behavior across pointer types, and distinguish <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">*p++</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">*(p++)</code>, and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">(*p)++</code>. <span style="color: #6B7280; font-size: 12px;">(Outcome 2, 3)</span></li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 2. READINGS ===================== -->
+  <details id="readings" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      2. Assigned Readings
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 12px 0;">Complete before class. Today's reading is short but precise; reread anything that does not sit right.</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <thead>
+          <tr style="background: #E8EDF5; color: #00205B;">
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 130px;">Source</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9;">Sections</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 220px;">Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;"><a href="https://beej.us/guide/bgc/html/split/pointers2.html" style="color: #003087; text-decoration: underline;">Beej-C</a></td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Chapter 11, sections 11.1 and 11.2</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Pointer arithmetic and array-pointer equivalence. Required.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 9px 12px;"><a href="https://beej.us/guide/bgc/html/split/pointers2.html" style="color: #003087; text-decoration: underline;">Beej-C</a></td>
+            <td style="padding: 9px 12px;">Chapter 11, section 11.3 (void pointers)</td>
+            <td style="padding: 9px 12px; color: #4A5568;">Optional skim. We cover void* formally at Lesson 36 with function pointers.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <!-- ===================== 3. PRE-CLASS WORK ===================== -->
+  <details id="pre-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      3. Pre-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 18px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #6B5300; font-size: 14px; margin-bottom: 4px;">Do this first</div>
+        <div style="font-size: 14px; color: #5A4B00;">Plan on 30 to 40 minutes. Today builds directly on Lesson 12; if pointers still feel foggy, the 5-minute review in step 2 is the most important thing you can do.</div>
+      </div>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 0 0 10px 0;">Pre-Class Checklist</h3>
+
+      <!-- Step 1: Reading -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">1</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Read Beej-C Chapter 11.1 and 11.2</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">Read closely. Beej is unusually compact in this chapter. The two ideas you need to internalize:</div>
+            <ul style="font-size: 13.5px; margin: 0 0 6px 0; padding-left: 20px;">
+              <li style="margin-bottom: 3px;">When you add an integer to a pointer, the pointer jumps by <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">sizeof</code> the pointed-to type, not by 1 byte.</li>
+              <li style="margin-bottom: 0;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">a[i]</code> and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">*(a + i)</code> are the same expression. The compiler treats them identically.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Review L12 -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">2</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Refresh your Lesson 12 pointer basics</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">If any of the following do not feel automatic, take five minutes to revisit the Lesson 12 page before class:</div>
+            <ul style="font-size: 13.5px; margin: 0 0 6px 0; padding-left: 20px;">
+              <li style="margin-bottom: 3px;">What <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">int *p;</code> declares.</li>
+              <li style="margin-bottom: 3px;">The difference between <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;x</code> (address of) and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">*p</code> (dereference).</li>
+              <li style="margin-bottom: 0;">Why <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">NULL</code> is a valid value for a pointer and what dereferencing it does.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Optional skim 11.3 -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">3</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Optional: skim Beej 11.3 (void pointers)</div>
+            <div style="font-size: 14px;">Beej introduces <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">void *</code> at the end of this chapter. You can skim it now, but we do not use it until Lesson 36 (Function Pointers). If you are short on time, skip it.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: Skim widgets -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 8px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">4</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Skim the In-Class section below</div>
+            <div style="font-size: 14px;">Two widgets today: a pointer-arithmetic walkthrough and a short duality self-check. Get a feel for what is there; you do not need to use either yet.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ===================== 4. LESSON MATERIALS AND OVERVIEW ===================== -->
+  <details id="materials" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      4. Lesson Materials and Overview
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 18px 0;">Today's content is a short list but a deep one. Three rules drive everything: pointers move in units of the type they point to, the precedence of postfix <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">++</code> binds tighter than the dereference, and arrays and pointers are interchangeable in expressions. Internalize those three and most of the C standard library starts to make sense.</p>
+
+      <!-- Subsection navigation -->
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 18px; margin-bottom: 22px; border-radius: 3px;">
+        <div style="font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">Jump to</div>
+        <div style="font-size: 13.5px;">
+          <a href="#slides" style="color: #003087; text-decoration: none; margin-right: 14px;">Slides</a>
+          <a href="#recap" style="color: #003087; text-decoration: none; margin-right: 14px;">L12 Recap</a>
+          <a href="#arithmetic" style="color: #003087; text-decoration: none; margin-right: 14px;">Pointer Arithmetic</a>
+          <a href="#type-aware" style="color: #003087; text-decoration: none; margin-right: 14px;">Type-Aware Steps</a>
+          <a href="#trio" style="color: #003087; text-decoration: none; margin-right: 14px;">The Precedence Trio</a>
+          <a href="#duality" style="color: #003087; text-decoration: none; margin-right: 14px;">Array-Pointer Duality</a>
+          <a href="#subtraction" style="color: #003087; text-decoration: none;">Pointer Subtraction</a>
+        </div>
+      </div>
+
+      <!-- Slides -->
+      <h3 id="slides" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0; scroll-margin-top: 16px;">Slides</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">The Lesson 13 deck covers pointer arithmetic, the precedence trio, array-pointer duality, and pointer subtraction. The slides are the spine of the in-class lecture; the walkthrough widget is where you practice each idea by hand.</p>
+
+      <!-- =========================================================
+           EDIT ME: Lesson 13 slide deck link
+           Replace href="#" below with the SharePoint share URL once the
+           deck is published. Leave target="_blank" and rel="noopener".
+           ========================================================= -->
+      <p style="margin: 0 0 18px 0;">
+        <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 10px 20px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 14px;">Open Lesson 13 slides &rarr;</a>
+      </p>
+
+      <!-- Recap -->
+      <h3 id="recap" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Recap from Lesson 12</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">A pointer is a variable whose value is the address of another variable. <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">int *p = &amp;x;</code> stores the address of <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">x</code> in <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">p</code>. Dereferencing with <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">*p</code> reads or writes the value at that address. Today we ask: what if you do arithmetic on the address itself?</p>
+
+      <!-- Pointer Arithmetic -->
+      <h3 id="arithmetic" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Pointer arithmetic</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">You can add an integer to a pointer or subtract one from it. The result is a new pointer that has moved through memory. The amount of movement is not what you might expect.</p>
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 12px 16px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.55; margin: 0 0 12px 0;">
+<span style="color: #99B4D1;">int</span> arr[5] = {11, 22, 33, 44, 55};<br>
+<span style="color: #99B4D1;">int</span> *p = arr;          <span style="color: #7FB3D5;">// p points to arr[0], the 11</span><br>
+<br>
+printf(<span style="color: #FFD580;">"%d\n"</span>, *p);       <span style="color: #7FB3D5;">// 11</span><br>
+printf(<span style="color: #FFD580;">"%d\n"</span>, *(p + 2)); <span style="color: #7FB3D5;">// 33  -- two ints past p</span><br>
+<br>
+p = p + 1;               <span style="color: #7FB3D5;">// p now points to arr[1]</span><br>
+printf(<span style="color: #FFD580;">"%d\n"</span>, *p);       <span style="color: #7FB3D5;">// 22</span>
+      </div>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">Notice the address in <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">p</code> did not increase by 1 byte when we wrote <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">p + 1</code>. It increased by <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">sizeof(int)</code> bytes (4 on our lab machines). The pointer's type is part of its identity; the compiler uses that type to decide how far one step is.</p>
+
+      <!-- Type-aware -->
+      <h3 id="type-aware" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Type-aware steps</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">The byte distance moved by <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">+ 1</code> depends entirely on the pointer's declared type:</p>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 18px;">
+        <thead>
+          <tr style="background: #00205B; color: #ffffff;">
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 180px;">Pointer type</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 130px;">Bytes per step</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600;">Example: if p == 0x1000, p+1 ==</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">char *</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">1</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">0x1001</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">short *</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">2</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">0x1002</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">int *</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">4</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">0x1004</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">double *</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">8</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">0x1008</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; font-family: Consolas, monospace; font-size: 13px;">long *</td>
+            <td style="padding: 8px 12px;">8</td>
+            <td style="padding: 8px 12px; font-family: Consolas, monospace; font-size: 13px;">0x1008</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">This is why pointer arithmetic is useful instead of error-prone: you do not have to remember how big each type is. The compiler handles the multiplication for you. <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">p + n</code> always lands on the n-th element after <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">p</code>, regardless of the underlying type.</p>
+
+      <!-- The Precedence Trio -->
+      <h3 id="trio" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">The precedence trio: <code style="background: #F0F2F5; padding: 2px 6px; border-radius: 2px; font-family: Consolas, monospace; font-size: 14px;">*p++</code>, <code style="background: #F0F2F5; padding: 2px 6px; border-radius: 2px; font-family: Consolas, monospace; font-size: 14px;">*(p++)</code>, <code style="background: #F0F2F5; padding: 2px 6px; border-radius: 2px; font-family: Consolas, monospace; font-size: 14px;">(*p)++</code></h3>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">These three expressions look almost identical. Two of them are the same; the third is completely different. Read the precedence callout, then study the table.</p>
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin: 0 0 16px 0; border-radius: 3px;">
+        <div style="font-weight: 600; color: #6B5300; font-size: 14px; margin-bottom: 6px;">Precedence rule that matters</div>
+        <div style="font-size: 14px; color: #5A4B00; margin-bottom: 6px;">In C's precedence table, postfix <code style="background: #FFF1C7; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">++</code> sits with <code style="background: #FFF1C7; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">()</code> and <code style="background: #FFF1C7; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">[]</code> at level 1, the highest. Prefix <code style="background: #FFF1C7; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">*</code> (dereference) sits at level 2.</div>
+        <div style="font-size: 14px; color: #5A4B00;">So <code style="background: #FFF1C7; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">*p++</code> always parses as <code style="background: #FFF1C7; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">*(p++)</code> &mdash; the <code style="background: #FFF1C7; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">++</code> binds to <code style="background: #FFF1C7; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">p</code>, not to <code style="background: #FFF1C7; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">*p</code>. To increment what <code style="background: #FFF1C7; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">p</code> points to, you must write <code style="background: #FFF1C7; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">(*p)++</code>.</div>
+      </div>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 14px;">
+        <thead>
+          <tr style="background: #00205B; color: #ffffff;">
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 130px;">Expression</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 200px;">Parses as</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600;">What it does</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13.5px;">*p++</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">*(p++)</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Reads the value at <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">p</code>, then advances <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">p</code> by one element. The expression's value is the original <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">*p</code>.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13.5px;">*(p++)</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">*(p++)</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Identical to <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">*p++</code>. The parentheses are documentation, not behavior. Use them when you want a reader to see the precedence at a glance.</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; font-family: Consolas, monospace; font-size: 13.5px;">(*p)++</td>
+            <td style="padding: 8px 12px; font-family: Consolas, monospace; font-size: 13px;">(*p)++</td>
+            <td style="padding: 8px 12px;">Dereferences <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">p</code> first, then increments <strong>the value being pointed to</strong>. <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">p</code> itself does not move.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Concrete example. Suppose <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">int arr[3] = {10, 20, 30};</code> and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">int *p = arr;</code>. Each row below starts fresh from that state:</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 12px 16px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin: 0 0 18px 0;">
+*p++;     <span style="color: #7FB3D5;">// after: arr is {10, 20, 30};  p points to arr[1]</span><br>
+*(p++);   <span style="color: #7FB3D5;">// after: arr is {10, 20, 30};  p points to arr[1]  (same as above)</span><br>
+(*p)++;   <span style="color: #7FB3D5;">// after: arr is {11, 20, 30};  p still points to arr[0]</span>
+      </div>
+
+      <!-- Duality -->
+      <h3 id="duality" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Array-pointer duality</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Here is the formula that ties this lesson together:</p>
+
+      <div style="background: #E8EDF5; border: 1px solid #B5C4D9; padding: 14px 20px; border-radius: 3px; text-align: center; margin: 0 0 14px 0; font-family: Consolas, monospace; font-size: 18px; color: #00205B; font-weight: 600;">
+        a[i] &nbsp;==&nbsp; *(a + i)
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">The compiler treats these two expressions identically. Both are valid C; you can use either notation on an array, and you can use either notation on a pointer that points into an array. The array name itself acts like a pointer to its first element in most expressions.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 12px 16px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.55; margin: 0 0 14px 0;">
+<span style="color: #99B4D1;">int</span> arr[5] = {11, 22, 33, 44, 55};<br>
+<span style="color: #99B4D1;">int</span> *p = arr;          <span style="color: #7FB3D5;">// arr decays to &amp;arr[0]; no &amp; needed</span><br>
+<br>
+arr[2]                   <span style="color: #7FB3D5;">// 33  -- array notation on an array</span><br>
+*(arr + 2)               <span style="color: #7FB3D5;">// 33  -- pointer notation on an array</span><br>
+p[2]                     <span style="color: #7FB3D5;">// 33  -- array notation on a pointer</span><br>
+*(p + 2)                 <span style="color: #7FB3D5;">// 33  -- pointer notation on a pointer</span>
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">There is one important asymmetry. You can modify a pointer; you cannot modify an array variable. <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">p++</code> works. <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">arr++</code> is a compile error. The array name is a fixed label for a fixed block of memory; the pointer is a variable that can be aimed anywhere.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">This duality is also why functions like <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">strlen(char *s)</code> and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">strlen(char s[])</code> are equivalent declarations. When you pass an array to a function, the function receives a pointer to its first element. The length information does not come along; you pass it separately or you put a sentinel like <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">'\0'</code> at the end of the data.</p>
+
+      <!-- Subtraction -->
+      <h3 id="subtraction" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Pointer subtraction</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Subtracting an integer from a pointer works like addition: the pointer moves backward by that many elements. More interesting, you can subtract two pointers that point into the same array. The result is the number of <em>elements</em> between them, not the number of bytes.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 12px 16px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.55; margin: 0 0 12px 0;">
+<span style="color: #99B4D1;">int</span> arr[5] = {11, 22, 33, 44, 55};<br>
+<span style="color: #99B4D1;">int</span> *start = arr;<br>
+<span style="color: #99B4D1;">int</span> *end   = &amp;arr[3];   <span style="color: #7FB3D5;">// points to the 44</span><br>
+<br>
+printf(<span style="color: #FFD580;">"%ld\n"</span>, end - start);  <span style="color: #7FB3D5;">// 3, not 12</span>
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">The compiler divides the byte difference by <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">sizeof</code> the pointed-to type for you. This is consistent with pointer addition: both operations work in units of elements, not bytes.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">Subtracting pointers that do not point into the same array is undefined behavior. The compiler will not stop you, but the result is meaningless.</p>
+
+    </div>
+  </details>
+
+  <!-- ===================== 5. IN-CLASS WORK ===================== -->
+  <details id="in-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      5. In-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 16px 0;">Three things to do in class. Use the checklist to track your progress.</p>
+
+      <ul style="list-style: none; padding: 0; margin: 0 0 24px 0; font-size: 14.5px;">
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Work through the pointer arithmetic walkthrough below.</strong>
+          <span style="color: #4A5568;">Twelve guided tasks across five sections: arithmetic basics, type-aware stepping, the precedence trio, array-pointer duality, and pointer subtraction. About 30 minutes.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Take the duality self-check.</strong>
+          <span style="color: #4A5568;">Five questions on the precedence trio, type-aware steps, and array-pointer duality. About 8 minutes.</span>
+        </li>
+        <li style="margin-bottom: 0; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Complete Lab 13: Bullet Trajectory.</strong>
+          <span style="color: #4A5568;">Auto-graded through GitHub Classroom. Full instructions in the lab repo.</span>
+          <!-- =========================================================
+               EDIT ME: Lab 13 GitHub Classroom assignment link
+               Replace href="#" with the classroom.github.com/a/... invite
+               URL once the assignment is published.
+               ========================================================= -->
+          <div style="margin-top: 8px; margin-left: 28px;">
+            <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 6px 14px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 13px;">Accept Lab 13 on GitHub Classroom &rarr;</a>
+          </div>
+        </li>
+      </ul>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 18px 0 10px 0;">Pointer Arithmetic Walkthrough</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Twelve tasks across five sections. Type each C statement at the prompt. The terminal shows what the simulator did; the memory pane shows variables, an array, and an arrow from each pointer to the address it currently points at.</p>
+
+<!-- ============================================================
+     CS210 Lesson 13 - Pointer Arithmetic Walkthrough Widget
+     Template-aligned style. Native HTML/CSS + scoped JS.
+     Paste as a block; runs anywhere the parent page allows <script>.
+     ============================================================ -->
+<style>
+.cs210-ptrmath * { box-sizing: border-box; }
+.cs210-ptrmath {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-ptrmath h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-ptrmath .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 22px;
+}
+.cs210-ptrmath .progress-bar {
+  background: #E5E7EB;
+  border-radius: 3px;
+  height: 8px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.cs210-ptrmath .progress-fill {
+  background: #003087;
+  height: 100%;
+  transition: width 0.3s ease;
+}
+.cs210-ptrmath .progress-label {
+  font-size: 12px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-ptrmath .section-header {
+  background: #E8EDF5;
+  color: #00205B;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.cs210-ptrmath .task-card {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  border-radius: 3px;
+}
+.cs210-ptrmath .task-card.complete {
+  background: #E6F4EA;
+  border-left-color: #2E7D32;
+}
+.cs210-ptrmath .task-label {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B5300;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.cs210-ptrmath .task-card.complete .task-label {
+  color: #1B5E20;
+}
+.cs210-ptrmath .task-text {
+  font-size: 15px;
+  color: #1a1a1a;
+}
+.cs210-ptrmath .task-hint {
+  font-size: 12.5px;
+  color: #6B7280;
+  margin-top: 6px;
+  font-style: italic;
+}
+
+/* Two-pane area: terminal left, memory right */
+.cs210-ptrmath .panes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+@media (max-width: 760px) {
+  .cs210-ptrmath .panes { grid-template-columns: 1fr; }
+}
+.cs210-ptrmath .terminal {
+  background: #1E2A3A;
+  color: #E8EDF5;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13.5px;
+  line-height: 1.5;
+  border-radius: 4px;
+  padding: 14px 18px;
+  min-height: 380px;
+  max-height: 440px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.cs210-ptrmath .terminal .prompt { color: #7FB3D5; }
+.cs210-ptrmath .terminal .typed { color: #FFFFFF; }
+.cs210-ptrmath .terminal .out { color: #B5BEC8; }
+.cs210-ptrmath .terminal .note { color: #F0B92C; }
+.cs210-ptrmath .terminal .err { color: #F47A7A; }
+.cs210-ptrmath .terminal .ok { color: #7FD17F; }
+.cs210-ptrmath .terminal .dim { color: #6B7280; }
+
+.cs210-ptrmath .memory-pane {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  padding: 14px 16px;
+  min-height: 380px;
+  max-height: 440px;
+  overflow-y: auto;
+}
+.cs210-ptrmath .memory-pane-header {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #E5E7EB;
+}
+.cs210-ptrmath .memory-empty {
+  color: #6B7280;
+  font-style: italic;
+  font-size: 13px;
+  text-align: center;
+  padding: 60px 10px;
+}
+
+/* Array row visualization */
+.cs210-ptrmath .arr-block {
+  margin-bottom: 14px;
+}
+.cs210-ptrmath .arr-title {
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  color: #00205B;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.cs210-ptrmath .arr-base {
+  font-family: Consolas, monospace;
+  font-size: 11px;
+  color: #6B7280;
+  margin-bottom: 8px;
+}
+.cs210-ptrmath .arr-row {
+  display: flex;
+  gap: 4px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.cs210-ptrmath .arr-cell {
+  border: 1px solid #C7CFD9;
+  border-radius: 3px;
+  background: #F8FAFC;
+  min-width: 56px;
+  flex: 0 0 auto;
+  text-align: center;
+  padding: 4px 2px 6px 2px;
+  transition: background 0.4s ease, border-color 0.4s ease;
+  position: relative;
+}
+.cs210-ptrmath .arr-cell .idx {
+  display: block;
+  font-family: Consolas, monospace;
+  font-size: 10px;
+  color: #6B7280;
+}
+.cs210-ptrmath .arr-cell .val {
+  display: block;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  color: #00205B;
+  font-weight: 700;
+  margin: 2px 0;
+}
+.cs210-ptrmath .arr-cell .addr {
+  display: block;
+  font-family: Consolas, monospace;
+  font-size: 9px;
+  color: #6B7280;
+  letter-spacing: 0.3px;
+}
+.cs210-ptrmath .arr-cell.flash-write {
+  background: #FFF1C7;
+  border-color: #F0B92C;
+}
+.cs210-ptrmath .arr-cell.targeted {
+  background: #E8EDF5;
+  border-color: #003087;
+  border-width: 2px;
+  padding: 3px 1px 5px 1px;
+}
+.cs210-ptrmath .arr-cell .ptr-tags {
+  position: absolute;
+  top: -16px;
+  left: 0;
+  right: 0;
+  font-family: Consolas, monospace;
+  font-size: 10px;
+  color: #003087;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cs210-ptrmath .ptr-block {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed #D0D5DD;
+}
+.cs210-ptrmath .ptr-card {
+  display: grid;
+  grid-template-columns: minmax(70px, auto) 1fr;
+  gap: 4px 10px;
+  background: #F0F4FA;
+  border: 1px solid #C7D2E1;
+  border-radius: 3px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  font-family: Consolas, monospace;
+  font-size: 12px;
+  align-items: baseline;
+}
+.cs210-ptrmath .ptr-card .ptr-name {
+  color: #00205B;
+  font-weight: 700;
+}
+.cs210-ptrmath .ptr-card .ptr-type {
+  color: #6B7280;
+  font-size: 11px;
+}
+.cs210-ptrmath .ptr-card .ptr-target {
+  color: #003087;
+  grid-column: 1 / -1;
+  margin-top: 2px;
+}
+.cs210-ptrmath .ptr-card .ptr-target.null {
+  color: #B8002F;
+  font-style: italic;
+}
+.cs210-ptrmath .ptr-card .ptr-target.oob {
+  color: #B8002F;
+}
+
+.cs210-ptrmath .var-card {
+  background: #F8FAFC;
+  border: 1px solid #D0D5DD;
+  border-radius: 3px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  font-family: Consolas, monospace;
+  font-size: 12px;
+}
+.cs210-ptrmath .var-card .v-decl { color: #00205B; font-weight: 700; }
+.cs210-ptrmath .var-card .v-meta { color: #6B7280; font-size: 11px; margin-top: 2px; }
+
+.cs210-ptrmath .expr-card {
+  background: #ffffff;
+  border: 2px solid #003087;
+  border-radius: 4px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  text-align: center;
+}
+.cs210-ptrmath .expr-card .e-expr {
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  color: #6B7280;
+  margin-bottom: 4px;
+}
+.cs210-ptrmath .expr-card .e-value {
+  font-family: Consolas, monospace;
+  font-size: 22px;
+  color: #003087;
+  font-weight: 700;
+}
+
+.cs210-ptrmath .input-row {
+  display: flex;
+  background: #1E2A3A;
+  border-radius: 4px;
+  padding: 8px 14px;
+  margin-bottom: 14px;
+  border: 1px solid #003087;
+}
+.cs210-ptrmath .input-prompt {
+  color: #7FB3D5;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  margin-right: 8px;
+  align-self: center;
+  white-space: nowrap;
+}
+.cs210-ptrmath .input-row input {
+  flex: 1;
+  background: transparent;
+  color: #FFFFFF;
+  border: none;
+  outline: none;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  padding: 4px 0;
+}
+.cs210-ptrmath .controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.cs210-ptrmath .btn {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  padding: 6px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #00205B;
+  font-family: inherit;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.cs210-ptrmath .btn:hover { background: #F5F7FA; }
+@keyframes cs210-ptrmath-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(240, 185, 44, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0); }
+}
+.cs210-ptrmath .btn.pulse {
+  background: #FFF8E1;
+  border-color: #F0B92C;
+  color: #6B5300;
+  font-weight: 600;
+  animation: cs210-ptrmath-pulse 1.5s infinite;
+}
+.cs210-ptrmath .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #4A5568;
+  margin-top: 12px;
+}
+.cs210-ptrmath .help-note strong { color: #00205B; }
+.cs210-ptrmath .inline-code-footer {
+  background: #F0F4FA;
+  border: 1px solid #C7D2E1;
+  padding: 10px 14px;
+  border-radius: 3px;
+  margin-top: 10px;
+  font-size: 13px;
+  color: #00205B;
+  font-family: Consolas, monospace;
+}
+.cs210-ptrmath .inline-code-footer .label {
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-size: 11px;
+  color: #6B7280;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  margin-right: 6px;
+}
+/* Name modal overlay */
+.cs210-ptrmath .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.cs210-ptrmath .name-modal {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-ptrmath .name-modal h2 {
+  color: #00205B;
+  font-size: 20px;
+  margin: 0 0 10px 0;
+}
+.cs210-ptrmath .name-modal p {
+  color: #4A5568;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+.cs210-ptrmath .name-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-ptrmath .name-modal input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-ptrmath .name-modal-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-ptrmath .name-modal-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-ptrmath .name-modal-btn:not(:disabled):hover {
+  background: #00205B;
+}
+</style>
+
+<div class="cs210-ptrmath">
+
+<div class="name-modal-backdrop" id="ptrmath-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Blackboard reflection.</p>
+    <input type="text" id="ptrmath-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="ptrmath-cadet-name-btn" disabled>Start the walkthrough</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 13 &middot; Pointer Arithmetic Walkthrough</h1>
+<div class="subtitle">Twelve tasks across five sections. The terminal shows what the simulator did; the memory pane shows the array, the pointers, and which cell each pointer currently aims at.</div>
+
+<div class="progress-bar"><div class="progress-fill" id="ptrmath-progress-fill" style="width: 0%;"></div></div>
+<div class="progress-label" id="ptrmath-progress-label">Task 0 of 12</div>
+
+<div class="section-header" id="ptrmath-section-header">Section 1: Pointer arithmetic basics</div>
+
+<div class="task-card" id="ptrmath-task-card">
+  <div class="task-label" id="ptrmath-task-label">Current task</div>
+  <div class="task-text" id="ptrmath-task-text">Loading...</div>
+  <div class="task-hint" id="ptrmath-task-hint"></div>
+</div>
+
+<div class="panes">
+  <div class="terminal" id="ptrmath-terminal"></div>
+  <div class="memory-pane">
+    <div class="memory-pane-header">Memory</div>
+    <div id="ptrmath-memory-area">
+      <div class="memory-empty">No array yet.<br>Type the first declaration on the left.</div>
+    </div>
+  </div>
+</div>
+
+<div class="input-row">
+  <span class="input-prompt">ptrsim&gt;</span>
+  <input type="text" id="ptrmath-cli-input" autocomplete="off" spellcheck="false" placeholder="follow the task above">
+</div>
+
+<div class="controls">
+  <button class="btn" id="ptrmath-hint-btn">Show hint</button>
+  <button class="btn" id="ptrmath-reset-btn">Reset</button>
+  <button class="btn" id="ptrmath-mode-btn">Switch to free mode</button>
+</div>
+
+<div class="help-note">
+  <strong>How this works:</strong> This is not a Linux terminal. It is a teaching tool that simulates pointer arithmetic on a small fixed array. The task card tells you what to type; in walkthrough mode only the expected command advances. Mistype twice and the hint button will pulse. After all tasks are complete, free mode unlocks so you can experiment.
+</div>
+
+<div id="ptrmath-completion-area"></div>
+
+</div>
+
+<script>
+(function () {
+  const root = document.querySelector('.cs210-ptrmath');
+  if (!root) return;
+
+  // ============================================================
+  // CS210 widget completion utilities
+  // Salt -> deterministic 6-char code via FNV-1a.
+  // Alphabet excludes 0, 1, O, I (uppercase only output).
+  // ============================================================
+  const CS210_SALT = "lesson13_ptrmath_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  // Name-modal gating: widget stays blocked until name entered.
+  // Pre-fill from localStorage if available. If already set, skip the modal entirely.
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#ptrmath-name-modal-backdrop');
+    const input = root.querySelector('#ptrmath-cadet-name-input');
+    const btn = root.querySelector('#ptrmath-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length > 0) {
+        // Already entered (likely on the same page in another widget, or in a
+        // previous visit). Adopt it and skip the modal.
+        cs210CadetName = stored.trim();
+        backdrop.style.display = 'none';
+        return;
+      }
+    } catch (e) { /* localStorage may be disabled */ }
+
+    function updateBtn() {
+      btn.disabled = input.value.trim().length === 0;
+    }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', () => {
+      const name = input.value.trim();
+      if (!name) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+      // Dismiss any sibling widget modals on the same page.
+      const siblings = document.querySelectorAll(
+        '#name-modal-backdrop, #bw-name-modal-backdrop, #duality-name-modal-backdrop'
+      );
+      siblings.forEach((m) => { m.style.display = 'none'; });
+      // Focus the CLI input so the cadet can start typing immediately
+      const cli = root.querySelector('#ptrmath-cli-input');
+      if (cli) cli.focus();
+    });
+    // Auto-focus the modal input
+    setTimeout(() => { try { input.focus(); } catch (e) {} }, 50);
+  })();
+
+  // Completion overlay (large success card after final task)
+  function cs210RenderCompletion(area) {
+    if (root.querySelector('#cs210-ptrmath-completion-overlay')) return;
+    const now = new Date();
+    const pad = (n) => n.toString().padStart(2, '0');
+    const ts = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate()) +
+               ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+
+    const overlay = document.createElement('div');
+    overlay.id = 'cs210-ptrmath-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">Walkthrough complete</h2>' +
+        '<p>You worked through pointer arithmetic, type-aware steps, the precedence trio, array-pointer duality, and pointer subtraction. Take a screenshot of this card and include it with your Blackboard reflection.</p>' +
+        '<div style="background:#F0F4FA;border:1px solid #003087;border-radius:4px;padding:14px 18px;margin-bottom:14px;">' +
+          '<div style="font-size:12px;letter-spacing:1.5px;color:#4A5568;margin-bottom:4px;text-transform:uppercase;">Completion code</div>' +
+          '<div style="font-family:Consolas,monospace;font-size:26px;font-weight:700;color:#00205B;letter-spacing:3px;">' + CS210_CODE + '</div>' +
+        '</div>' +
+        '<div style="font-size:14px;color:#1a1a1a;margin-bottom:6px;"><strong style="color:#00205B;">' + escapeHtml(cs210CadetName || '(name not set)') + '</strong></div>' +
+        '<div style="font-size:13px;color:#6B7280;margin-bottom:14px;">' + ts + '</div>' +
+        '<div style="background:#FFF8E1;border-left:4px solid #F0B92C;padding:10px 14px;border-radius:3px;font-size:13.5px;color:#6B5300;margin-bottom:14px;">' +
+          '<strong style="color:#4A3A00;">Reminder:</strong> Submit this code on the Lesson 13 reflection in Blackboard. The fill-in-the-blank question asks for the 6-character completion code; a screenshot of this card is your backup.' +
+        '</div>' +
+        '<div style="display:flex;gap:8px;">' +
+          '<button class="name-modal-btn" id="cs-ptrmath-copy-btn" type="button" style="background:#003087;">Copy code</button>' +
+          '<button class="name-modal-btn" id="cs-ptrmath-overlay-close" type="button" style="background:#2E7D32;">Got it &mdash; close this</button>' +
+        '</div>' +
+      '</div>';
+    root.appendChild(overlay);
+
+    overlay.querySelector('#cs-ptrmath-overlay-close').addEventListener('click', () => {
+      overlay.remove();
+    });
+    overlay.querySelector('#cs-ptrmath-copy-btn').addEventListener('click', (e) => {
+      const btn = e.currentTarget;
+      const ok = cs210Copy(CS210_CODE);
+      btn.textContent = ok ? 'Copied!' : 'Copy failed';
+      btn.style.background = ok ? '#2E7D32' : '#B8002F';
+      setTimeout(() => { btn.textContent = 'Copy code'; btn.style.background = '#003087'; }, 1500);
+    });
+
+    // Inline footer (backup if the user dismisses the overlay)
+    if (area) {
+      area.innerHTML =
+        '<div class="inline-code-footer">' +
+          '<span class="label">Completion code</span>' +
+          '<strong>' + CS210_CODE + '</strong>' +
+          '<span style="color:#6B7280;margin-left:14px;font-family:\'Segoe UI\',Arial,sans-serif;">' +
+            escapeHtml(cs210CadetName || '(name not set)') + ' &middot; ' + ts +
+          '</span>' +
+        '</div>';
+    }
+  }
+
+  function cs210Copy(text) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch (e) { /* fall through */ }
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      return true;
+    } catch (e) { return false; }
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  // ============================================================
+  // Widget state
+  // ============================================================
+  // Element refs
+  const terminalEl  = root.querySelector('#ptrmath-terminal');
+  const memoryEl    = root.querySelector('#ptrmath-memory-area');
+  const inputEl     = root.querySelector('#ptrmath-cli-input');
+  const completionEl = root.querySelector('#ptrmath-completion-area');
+
+  // Address bookkeeping: realistic-looking hex bases
+  const ARR_INT_BASE    = 0x2000;
+  const ARR_CHAR_BASE   = 0x3000;
+  const ARR_DOUBLE_BASE = 0x4000;
+
+  // Single fixed int array used for most tasks.
+  // The walkthrough always starts with this in place once a declaration occurs.
+  let arr = null;          // { name, baseAddr, length, type, elemSize, cells: [int,...] }
+  let altArr = null;       // optional second array (char or double) used in Section 2
+
+  // Pointers indexed by name
+  let pointers = new Map();    // name -> { name, type, declType, addr: BigInt|null, elemSize, baseArrName }
+
+  // Most recently evaluated read expression (printed as a value card)
+  let lastExpr = null;     // { expr, value, valueType, kind: 'print' | 'sub' }
+  // Most recent cell that was just written, for flash animation
+  let flashCellKey = null; // "arrName:index" or null
+
+  let currentTaskIndex = 0;
+  let consecutiveFails = 0;
+  let mode = "walkthrough";
+
+  // ============================================================
+  // Parser
+  // ============================================================
+  // Whitespace-normalize
+  function norm(s) { return s.replace(/\s+/g, ' ').trim(); }
+
+  // Helpers for matching expressions in commands
+  // Identifier
+  const ID = '[A-Za-z_][A-Za-z0-9_]*';
+
+  // Parse an array literal like {11, 22, 33, 44, 55}
+  function parseArrayLiteral(s, asChar) {
+    const m = s.match(/^\{\s*(.+?)\s*\}\s*$/);
+    if (!m) return null;
+    const parts = m[1].split(',').map(p => p.trim());
+    const vals = [];
+    for (const p of parts) {
+      if (asChar) {
+        const cm = p.match(/^'(.)'$/);
+        if (!cm) return null;
+        vals.push(cm[1].charCodeAt(0));
+      } else {
+        // accept integer or float literal
+        if (/^-?\d+$/.test(p)) vals.push(parseInt(p, 10));
+        else if (/^-?\d+\.\d+$/.test(p)) vals.push(parseFloat(p));
+        else return null;
+      }
+    }
+    return vals;
+  }
+
+  // Try to parse: int NAME[LEN] = {...};
+  function tryParseIntArrayDecl(line) {
+    const m = norm(line).match(new RegExp(
+      '^int\\s+(' + ID + ')\\s*\\[\\s*(\\d+)\\s*\\]\\s*=\\s*(\\{.+\\})\\s*;?$'));
+    if (!m) return null;
+    const vals = parseArrayLiteral(m[3], false);
+    if (!vals) return null;
+    const len = parseInt(m[2], 10);
+    if (vals.length !== len) return { error: 'Array length is ' + len + ' but initializer has ' + vals.length + ' values.' };
+    return { name: m[1], length: len, vals, elemSize: 4, type: 'int' };
+  }
+  function tryParseCharArrayDecl(line) {
+    const m = norm(line).match(new RegExp(
+      '^char\\s+(' + ID + ')\\s*\\[\\s*(\\d+)\\s*\\]\\s*=\\s*(\\{.+\\})\\s*;?$'));
+    if (!m) return null;
+    const vals = parseArrayLiteral(m[3], true);
+    if (!vals) return null;
+    const len = parseInt(m[2], 10);
+    if (vals.length !== len) return { error: 'Array length is ' + len + ' but initializer has ' + vals.length + ' values.' };
+    return { name: m[1], length: len, vals, elemSize: 1, type: 'char' };
+  }
+  function tryParseDoubleArrayDecl(line) {
+    const m = norm(line).match(new RegExp(
+      '^double\\s+(' + ID + ')\\s*\\[\\s*(\\d+)\\s*\\]\\s*=\\s*(\\{.+\\})\\s*;?$'));
+    if (!m) return null;
+    const vals = parseArrayLiteral(m[3], false);
+    if (!vals) return null;
+    const len = parseInt(m[2], 10);
+    if (vals.length !== len) return { error: 'Array length is ' + len + ' but initializer has ' + vals.length + ' values.' };
+    return { name: m[1], length: len, vals, elemSize: 8, type: 'double' };
+  }
+
+  // Try to parse: TYPE *NAME = INITIALIZER;
+  // Initializer can be: arrName | arrName + N | &arrName[N] | NULL
+  function tryParsePtrDecl(line) {
+    const re = new RegExp(
+      '^(int|char|double)\\s*\\*\\s*(' + ID + ')\\s*=\\s*(.+?)\\s*;?$');
+    const m = norm(line).match(re);
+    if (!m) return null;
+    return { ptrType: m[1], name: m[2], rhs: m[3].trim() };
+  }
+
+  // Try to parse: NAME = EXPR;  (reassignment of an existing pointer)
+  function tryParsePtrAssign(line) {
+    const re = new RegExp('^(' + ID + ')\\s*=\\s*(.+?)\\s*;?$');
+    const m = norm(line).match(re);
+    if (!m) return null;
+    return { name: m[1], rhs: m[2].trim() };
+  }
+
+  // Try to parse: *NAME = EXPR;  (assign through pointer)
+  function tryParseDerefAssign(line) {
+    const re = new RegExp('^\\*\\s*(' + ID + ')\\s*=\\s*(.+?)\\s*;?$');
+    const m = norm(line).match(re);
+    if (!m) return null;
+    return { name: m[1], rhs: m[2].trim() };
+  }
+
+  // Try to parse: *(NAME + N) = EXPR;
+  function tryParseDerefOffsetAssign(line) {
+    const re = new RegExp('^\\*\\s*\\(\\s*(' + ID + ')\\s*\\+\\s*(\\d+)\\s*\\)\\s*=\\s*(.+?)\\s*;?$');
+    const m = norm(line).match(re);
+    if (!m) return null;
+    return { name: m[1], offset: parseInt(m[2], 10), rhs: m[3].trim() };
+  }
+
+  // Try to parse: NAME[N] = EXPR;
+  function tryParseIndexAssign(line) {
+    const re = new RegExp('^(' + ID + ')\\s*\\[\\s*(\\d+)\\s*\\]\\s*=\\s*(.+?)\\s*;?$');
+    const m = norm(line).match(re);
+    if (!m) return null;
+    return { name: m[1], index: parseInt(m[2], 10), rhs: m[3].trim() };
+  }
+
+  // The precedence trio: *p++  *(p++)  (*p)++  ++(*p)
+  function tryParsePostIncDeref(line) {
+    // *p++; or *(p++);
+    const t = norm(line).replace(/;\s*$/, '');
+    let m = t.match(new RegExp('^\\*\\s*(' + ID + ')\\+\\+$'));
+    if (m) return { kind: 'star-p-plusplus', name: m[1] };
+    m = t.match(new RegExp('^\\*\\s*\\(\\s*(' + ID + ')\\s*\\+\\+\\s*\\)$'));
+    if (m) return { kind: 'star-paren-p-plusplus', name: m[1] };
+    return null;
+  }
+  function tryParseDerefThenInc(line) {
+    // (*p)++; or ++(*p);
+    const t = norm(line).replace(/;\s*$/, '');
+    let m = t.match(new RegExp('^\\(\\s*\\*\\s*(' + ID + ')\\s*\\)\\+\\+$'));
+    if (m) return { kind: 'paren-deref-postinc', name: m[1] };
+    m = t.match(new RegExp('^\\+\\+\\s*\\(\\s*\\*\\s*(' + ID + ')\\s*\\)$'));
+    if (m) return { kind: 'preinc-paren-deref', name: m[1] };
+    return null;
+  }
+  // Plain p++; or p--; or ++p; or --p;
+  function tryParsePtrSelfMutation(line) {
+    const t = norm(line).replace(/;\s*$/, '');
+    let m = t.match(new RegExp('^(' + ID + ')\\+\\+$'));
+    if (m) return { kind: 'post-inc', name: m[1] };
+    m = t.match(new RegExp('^(' + ID + ')\\-\\-$'));
+    if (m) return { kind: 'post-dec', name: m[1] };
+    m = t.match(new RegExp('^\\+\\+\\s*(' + ID + ')$'));
+    if (m) return { kind: 'pre-inc', name: m[1] };
+    m = t.match(new RegExp('^\\-\\-\\s*(' + ID + ')$'));
+    if (m) return { kind: 'pre-dec', name: m[1] };
+    return null;
+  }
+
+  // Bare expression evaluation (no semicolon required, with or without)
+  // Examples we handle:
+  //   *p            -> value at *p
+  //   *(p + N)      -> value at *(p+N)
+  //   arr[N]        -> value at arr[N]
+  //   *(arr + N)    -> value at *(arr+N)
+  //   p[N]          -> value at p[N]
+  //   p - q         -> ptrdiff (element count)
+  //   end - start
+  function tryParseReadExpr(line) {
+    const t = norm(line).replace(/;\s*$/, '');
+
+    // pointer subtraction: NAME - NAME
+    let m = t.match(new RegExp('^(' + ID + ')\\s*\\-\\s*(' + ID + ')$'));
+    if (m) return { kind: 'ptr-sub', a: m[1], b: m[2] };
+
+    // *p
+    m = t.match(new RegExp('^\\*\\s*(' + ID + ')$'));
+    if (m) return { kind: 'deref', name: m[1] };
+
+    // *(p + N) or *(p - N)
+    m = t.match(new RegExp('^\\*\\s*\\(\\s*(' + ID + ')\\s*([+\\-])\\s*(\\d+)\\s*\\)$'));
+    if (m) return { kind: 'deref-offset', name: m[1], op: m[2], offset: parseInt(m[3], 10) };
+
+    // arr[N] or p[N]
+    m = t.match(new RegExp('^(' + ID + ')\\s*\\[\\s*(\\d+)\\s*\\]$'));
+    if (m) return { kind: 'index', name: m[1], index: parseInt(m[2], 10) };
+
+    return null;
+  }
+
+  // ============================================================
+  // RHS evaluators for assignments
+  // Resolves things like:  arr | arr + N | &arr[N] | NULL | p | p + N
+  // Returns { addr: BigInt|null, elemSize, baseArrName, indexInArr }
+  // or       { error: 'message' }
+  // ============================================================
+  function evalPtrRhs(rhs) {
+    const t = norm(rhs);
+    if (/^NULL$/.test(t)) return { addr: null, elemSize: null, baseArrName: null, indexInArr: null };
+
+    // &arrName[N]
+    let m = t.match(new RegExp('^&\\s*(' + ID + ')\\s*\\[\\s*(\\d+)\\s*\\]$'));
+    if (m) {
+      const a = resolveArray(m[1]);
+      if (!a) return { error: 'Array "' + m[1] + '" has not been declared.' };
+      const idx = parseInt(m[2], 10);
+      if (idx < 0 || idx > a.length) return { error: 'Index ' + idx + ' is outside the safe range 0..' + a.length + ' for ' + a.name + '.' };
+      return { addr: BigInt(a.baseAddr) + BigInt(idx) * BigInt(a.elemSize), elemSize: a.elemSize, baseArrName: a.name, indexInArr: idx };
+    }
+
+    // arrName + N  or  arrName - N (array decay; arr by itself == &arr[0])
+    m = t.match(new RegExp('^(' + ID + ')\\s*([+\\-])\\s*(\\d+)$'));
+    if (m) {
+      const refName = m[1];
+      const op = m[2];
+      const n = parseInt(m[3], 10);
+      // Could be an array name OR an existing pointer
+      const a = resolveArray(refName);
+      const p = pointers.get(refName);
+      if (a) {
+        const idx = (op === '+') ? n : -n;
+        if (idx < 0 || idx > a.length) return { error: 'That offset points outside the array bounds for ' + a.name + '.' };
+        return { addr: BigInt(a.baseAddr) + BigInt(idx) * BigInt(a.elemSize), elemSize: a.elemSize, baseArrName: a.name, indexInArr: idx };
+      }
+      if (p) {
+        if (p.addr === null) return { error: 'Cannot do arithmetic on a NULL pointer.' };
+        const stepBytes = BigInt(p.elemSize) * BigInt(op === '+' ? n : -n);
+        const newAddr = p.addr + stepBytes;
+        const a2 = arr && arr.name === p.baseArrName ? arr : (altArr && altArr.name === p.baseArrName ? altArr : null);
+        const idx = a2 ? Number((newAddr - BigInt(a2.baseAddr)) / BigInt(a2.elemSize)) : null;
+        return { addr: newAddr, elemSize: p.elemSize, baseArrName: p.baseArrName, indexInArr: idx };
+      }
+      return { error: '"' + refName + '" is not an array or pointer in scope.' };
+    }
+
+    // bare identifier (array name or another pointer)
+    m = t.match(new RegExp('^(' + ID + ')$'));
+    if (m) {
+      const a = resolveArray(m[1]);
+      const p = pointers.get(m[1]);
+      if (a) return { addr: BigInt(a.baseAddr), elemSize: a.elemSize, baseArrName: a.name, indexInArr: 0 };
+      if (p) {
+        const a2 = arr && arr.name === p.baseArrName ? arr : (altArr && altArr.name === p.baseArrName ? altArr : null);
+        const idx = (a2 && p.addr !== null) ? Number((p.addr - BigInt(a2.baseAddr)) / BigInt(a2.elemSize)) : null;
+        return { addr: p.addr, elemSize: p.elemSize, baseArrName: p.baseArrName, indexInArr: idx };
+      }
+      return { error: '"' + m[1] + '" is not declared.' };
+    }
+
+    return { error: 'Could not understand the right-hand side of the assignment.' };
+  }
+
+  function resolveArray(name) {
+    if (arr && arr.name === name) return arr;
+    if (altArr && altArr.name === name) return altArr;
+    return null;
+  }
+
+  // Given a pointer object, compute current index into its array (or null if outside any known array or NULL)
+  function ptrIndex(p) {
+    if (!p || p.addr === null) return null;
+    const a = resolveArray(p.baseArrName);
+    if (!a) return null;
+    const diff = p.addr - BigInt(a.baseAddr);
+    if (diff < 0n || diff % BigInt(a.elemSize) !== 0n) return null;
+    const idx = Number(diff / BigInt(a.elemSize));
+    return idx;
+  }
+  // Returns 'in', 'oob', 'null' for display purposes
+  function ptrStatus(p) {
+    if (!p || p.addr === null) return 'null';
+    const a = resolveArray(p.baseArrName);
+    if (!a) return 'oob';
+    const idx = ptrIndex(p);
+    if (idx === null || idx < 0 || idx >= a.length) return 'oob';
+    return 'in';
+  }
+
+  // ============================================================
+  // Command execution
+  // Returns one of:
+  //   { kind: 'arr-declared', arr }
+  //   { kind: 'ptr-declared', p }
+  //   { kind: 'ptr-assigned', p, oob }
+  //   { kind: 'ptr-mutated', p, newIdx, oldIdx, oob, mode }
+  //   { kind: 'cell-written', arrName, index, newVal }
+  //   { kind: 'expr', expr, value, valueType }
+  //   { kind: 'ptr-sub', a, b, result }
+  //   { kind: 'cleared' }
+  //   { kind: 'list' }
+  //   { kind: 'help' }
+  //   { kind: 'error', message }
+  //   { kind: 'rejected', message }    // intentional teaching-point rejection
+  // ============================================================
+  function runCommand(line) {
+    const trimmed = line.trim();
+    if (!trimmed) return null;
+
+    // Meta commands
+    if (/^(clear|reset)\s*;?\s*$/i.test(trimmed)) {
+      doClear();
+      return { kind: 'cleared' };
+    }
+    if (/^list\s*;?\s*$/i.test(trimmed)) return { kind: 'list' };
+    if (/^help\s*;?\s*$/i.test(trimmed)) return { kind: 'help' };
+
+    // Reject arr++ etc. — array name not modifiable.
+    // We catch this BEFORE the pointer-mutation parser because they share syntax.
+    {
+      const mut = tryParsePtrSelfMutation(trimmed);
+      if (mut && resolveArray(mut.name)) {
+        return { kind: 'rejected',
+          message: '"' + mut.name + '" is an array name, not a modifiable pointer. You can write p++ for a pointer, but not arr++. Try copying into a pointer first: int *p = ' + mut.name + ';' };
+      }
+    }
+
+    // Array declarations (int / char / double)
+    let parsed = tryParseIntArrayDecl(trimmed) || tryParseCharArrayDecl(trimmed) || tryParseDoubleArrayDecl(trimmed);
+    if (parsed) {
+      if (parsed.error) return { kind: 'error', message: parsed.error };
+      // Place into either arr (if int and arr is empty) or altArr
+      let base;
+      if (parsed.type === 'int')    base = ARR_INT_BASE;
+      if (parsed.type === 'char')   base = ARR_CHAR_BASE;
+      if (parsed.type === 'double') base = ARR_DOUBLE_BASE;
+      const arrObj = {
+        name: parsed.name,
+        baseAddr: base,
+        length: parsed.length,
+        type: parsed.type,
+        elemSize: parsed.elemSize,
+        cells: parsed.vals.slice(),
+      };
+      if (parsed.type === 'int' && !arr) arr = arrObj;
+      else altArr = arrObj;
+      return { kind: 'arr-declared', arr: arrObj };
+    }
+
+    // The precedence trio first (must be checked before generic deref-assign)
+    let trio = tryParsePostIncDeref(trimmed);
+    if (trio) {
+      const p = pointers.get(trio.name);
+      if (!p) return { kind: 'error', message: 'Pointer "' + trio.name + '" has not been declared.' };
+      if (p.addr === null) return { kind: 'error', message: 'Cannot dereference a NULL pointer.' };
+      const idxBefore = ptrIndex(p);
+      const a = resolveArray(p.baseArrName);
+      const readVal = (a && idxBefore !== null && idxBefore >= 0 && idxBefore < a.length) ? a.cells[idxBefore] : null;
+      // advance p by one element
+      p.addr = p.addr + BigInt(p.elemSize);
+      const idxAfter = ptrIndex(p);
+      return {
+        kind: 'ptr-mutated',
+        p, oldIdx: idxBefore, newIdx: idxAfter,
+        mode: trio.kind,  // 'star-p-plusplus' or 'star-paren-p-plusplus'
+        readValue: readVal,
+        oob: ptrStatus(p) !== 'in',
+      };
+    }
+    trio = tryParseDerefThenInc(trimmed);
+    if (trio) {
+      const p = pointers.get(trio.name);
+      if (!p) return { kind: 'error', message: 'Pointer "' + trio.name + '" has not been declared.' };
+      if (p.addr === null) return { kind: 'error', message: 'Cannot dereference a NULL pointer.' };
+      const idx = ptrIndex(p);
+      const a = resolveArray(p.baseArrName);
+      if (!a || idx === null || idx < 0 || idx >= a.length) {
+        return { kind: 'error', message: 'Pointer is not aimed at a valid cell of ' + (p.baseArrName || 'any array') + '.' };
+      }
+      if (a.type !== 'int') {
+        return { kind: 'error', message: 'For this widget we only increment values in the int array.' };
+      }
+      a.cells[idx] = a.cells[idx] + 1;
+      flashCellKey = a.name + ':' + idx;
+      return {
+        kind: 'cell-written',
+        arrName: a.name, index: idx, newVal: a.cells[idx],
+        mode: trio.kind,  // 'paren-deref-postinc' or 'preinc-paren-deref'
+        ptrName: p.name,
+      };
+    }
+
+    // Pre-increment forms on pointers — out of scope, reject helpfully
+    {
+      const mut = tryParsePtrSelfMutation(trimmed);
+      if (mut && (mut.kind === 'pre-inc' || mut.kind === 'pre-dec')) {
+        return { kind: 'rejected',
+          message: 'Pre-increment and pre-decrement forms (++p, --p) work, but this widget focuses on the postfix forms. Use p = p + 1; if you want to move the pointer.' };
+      }
+      if (mut && pointers.get(mut.name)) {
+        const p = pointers.get(mut.name);
+        if (p.addr === null) return { kind: 'error', message: 'Cannot do arithmetic on a NULL pointer.' };
+        const idxBefore = ptrIndex(p);
+        const step = (mut.kind === 'post-inc') ? 1n : -1n;
+        p.addr = p.addr + step * BigInt(p.elemSize);
+        const idxAfter = ptrIndex(p);
+        return { kind: 'ptr-mutated', p, oldIdx: idxBefore, newIdx: idxAfter, mode: mut.kind, oob: ptrStatus(p) !== 'in' };
+      }
+    }
+
+    // *p = val;
+    let pa = tryParseDerefAssign(trimmed);
+    if (pa) {
+      const p = pointers.get(pa.name);
+      if (!p) return { kind: 'error', message: 'Pointer "' + pa.name + '" has not been declared.' };
+      if (p.addr === null) return { kind: 'error', message: 'Cannot dereference a NULL pointer.' };
+      const a = resolveArray(p.baseArrName);
+      const idx = ptrIndex(p);
+      if (!a || idx === null || idx < 0 || idx >= a.length) {
+        return { kind: 'error', message: 'Pointer is not aimed at a valid cell.' };
+      }
+      const val = parseInt(pa.rhs, 10);
+      if (Number.isNaN(val)) return { kind: 'error', message: 'Right-hand side must be an integer literal for this widget.' };
+      a.cells[idx] = val;
+      flashCellKey = a.name + ':' + idx;
+      return { kind: 'cell-written', arrName: a.name, index: idx, newVal: val, ptrName: p.name };
+    }
+
+    // *(p + N) = val;
+    let dpa = tryParseDerefOffsetAssign(trimmed);
+    if (dpa) {
+      const p = pointers.get(dpa.name);
+      const a0 = resolveArray(dpa.name);
+      if (!p && !a0) return { kind: 'error', message: '"' + dpa.name + '" is not a declared pointer or array.' };
+      let a, idx;
+      if (a0) {
+        a = a0; idx = dpa.offset;
+      } else {
+        if (p.addr === null) return { kind: 'error', message: 'Cannot dereference a NULL pointer.' };
+        a = resolveArray(p.baseArrName);
+        if (!a) return { kind: 'error', message: 'Pointer is not aimed at a known array.' };
+        idx = ptrIndex(p) + dpa.offset;
+      }
+      if (idx < 0 || idx >= a.length) return { kind: 'error', message: 'Index ' + idx + ' is outside the bounds of ' + a.name + ' (length ' + a.length + ').' };
+      const val = parseInt(dpa.rhs, 10);
+      if (Number.isNaN(val)) return { kind: 'error', message: 'Right-hand side must be an integer literal.' };
+      a.cells[idx] = val;
+      flashCellKey = a.name + ':' + idx;
+      return { kind: 'cell-written', arrName: a.name, index: idx, newVal: val };
+    }
+
+    // NAME[N] = val;
+    let ia = tryParseIndexAssign(trimmed);
+    if (ia) {
+      const a0 = resolveArray(ia.name);
+      const p = pointers.get(ia.name);
+      let a, idx;
+      if (a0) {
+        a = a0; idx = ia.index;
+      } else if (p) {
+        if (p.addr === null) return { kind: 'error', message: 'Cannot dereference a NULL pointer.' };
+        a = resolveArray(p.baseArrName);
+        if (!a) return { kind: 'error', message: 'Pointer is not aimed at a known array.' };
+        idx = ptrIndex(p) + ia.index;
+      } else {
+        return { kind: 'error', message: '"' + ia.name + '" is not a declared array or pointer.' };
+      }
+      if (idx < 0 || idx >= a.length) return { kind: 'error', message: 'Index ' + idx + ' is outside the bounds of ' + a.name + '.' };
+      const val = parseInt(ia.rhs, 10);
+      if (Number.isNaN(val)) return { kind: 'error', message: 'Right-hand side must be an integer literal.' };
+      a.cells[idx] = val;
+      flashCellKey = a.name + ':' + idx;
+      return { kind: 'cell-written', arrName: a.name, index: idx, newVal: val };
+    }
+
+    // Pointer declaration: int *p = ...;
+    parsed = tryParsePtrDecl(trimmed);
+    if (parsed) {
+      if (pointers.has(parsed.name)) return { kind: 'error', message: 'Pointer "' + parsed.name + '" has already been declared.' };
+      const elemSize = parsed.ptrType === 'int' ? 4 : parsed.ptrType === 'char' ? 1 : 8;
+      const r = evalPtrRhs(parsed.rhs);
+      if (r.error) return { kind: 'error', message: r.error };
+      // Optional sanity: if r has a baseArrName, its array's type should match the pointer type
+      if (r.baseArrName) {
+        const a = resolveArray(r.baseArrName);
+        if (a && a.type !== parsed.ptrType) {
+          return { kind: 'error', message: 'Type mismatch: pointer is ' + parsed.ptrType + ' * but ' + a.name + ' is a ' + a.type + ' array.' };
+        }
+      }
+      const p = {
+        name: parsed.name,
+        type: parsed.ptrType + ' *',
+        declType: parsed.ptrType,
+        addr: r.addr,
+        elemSize,
+        baseArrName: r.baseArrName,
+      };
+      pointers.set(p.name, p);
+      return { kind: 'ptr-declared', p };
+    }
+
+    // Plain pointer reassignment: p = ...;
+    let pas = tryParsePtrAssign(trimmed);
+    if (pas) {
+      const p = pointers.get(pas.name);
+      if (!p) return { kind: 'error', message: 'Pointer "' + pas.name + '" has not been declared. To declare a new pointer, write "int *' + pas.name + ' = ...".' };
+      const r = evalPtrRhs(pas.rhs);
+      if (r.error) return { kind: 'error', message: r.error };
+      p.addr = r.addr;
+      // Update baseArrName if a new array was referenced
+      if (r.baseArrName) p.baseArrName = r.baseArrName;
+      return { kind: 'ptr-assigned', p, oob: ptrStatus(p) !== 'in' && p.addr !== null };
+    }
+
+    // Read expressions
+    let re = tryParseReadExpr(trimmed);
+    if (re) {
+      if (re.kind === 'ptr-sub') {
+        const pa2 = pointers.get(re.a);
+        const pb = pointers.get(re.b);
+        if (!pa2 || !pb) return { kind: 'error', message: 'Both names in a pointer subtraction must be declared pointers.' };
+        if (pa2.addr === null || pb.addr === null) return { kind: 'error', message: 'Cannot subtract a NULL pointer.' };
+        if (pa2.baseArrName !== pb.baseArrName || !pa2.baseArrName) {
+          return { kind: 'error', message: 'Subtracting pointers from different arrays is undefined behavior. This widget rejects it.' };
+        }
+        if (pa2.elemSize !== pb.elemSize) return { kind: 'error', message: 'Pointers must point to the same type.' };
+        const byteDiff = pa2.addr - pb.addr;
+        const elems = Number(byteDiff / BigInt(pa2.elemSize));
+        return { kind: 'ptr-sub', a: re.a, b: re.b, result: elems, byteDiff: Number(byteDiff), elemSize: pa2.elemSize };
+      }
+      // Other read kinds resolve to a single cell value
+      let arrTarget = null;
+      let idx = null;
+      let p = null;
+      if (re.kind === 'deref') {
+        p = pointers.get(re.name);
+        if (!p) return { kind: 'error', message: 'Pointer "' + re.name + '" has not been declared.' };
+        if (p.addr === null) return { kind: 'error', message: 'Cannot dereference a NULL pointer.' };
+        arrTarget = resolveArray(p.baseArrName);
+        idx = ptrIndex(p);
+      } else if (re.kind === 'deref-offset') {
+        const a0 = resolveArray(re.name);
+        p = pointers.get(re.name);
+        if (a0) { arrTarget = a0; idx = (re.op === '+') ? re.offset : -re.offset; }
+        else if (p) {
+          if (p.addr === null) return { kind: 'error', message: 'Cannot dereference a NULL pointer.' };
+          arrTarget = resolveArray(p.baseArrName);
+          idx = ptrIndex(p) + ((re.op === '+') ? re.offset : -re.offset);
+        } else return { kind: 'error', message: '"' + re.name + '" is not declared.' };
+      } else if (re.kind === 'index') {
+        const a0 = resolveArray(re.name);
+        p = pointers.get(re.name);
+        if (a0) { arrTarget = a0; idx = re.index; }
+        else if (p) {
+          if (p.addr === null) return { kind: 'error', message: 'Cannot dereference a NULL pointer.' };
+          arrTarget = resolveArray(p.baseArrName);
+          idx = ptrIndex(p) + re.index;
+        } else return { kind: 'error', message: '"' + re.name + '" is not declared.' };
+      }
+      if (!arrTarget) return { kind: 'error', message: 'Could not resolve the expression to an array cell.' };
+      if (idx < 0 || idx >= arrTarget.length) return { kind: 'error', message: 'Index ' + idx + ' is outside the bounds of ' + arrTarget.name + ' (length ' + arrTarget.length + ').' };
+      let val = arrTarget.cells[idx];
+      let display = val;
+      if (arrTarget.type === 'char') display = "'" + String.fromCharCode(val) + "' (" + val + ")";
+      else if (arrTarget.type === 'double') display = formatDouble(val);
+      return { kind: 'expr', expr: trimmed.replace(/;\s*$/, ''), value: display, valueType: arrTarget.type, arrName: arrTarget.name, index: idx };
+    }
+
+    return { kind: 'error', message: 'Could not parse that command. Try a declaration, assignment, or read expression. Type "help" for examples.' };
+  }
+
+  function formatDouble(v) {
+    if (Number.isInteger(v)) return v.toFixed(1);
+    return v.toFixed(2).replace(/0+$/, '').replace(/\.$/, '.0');
+  }
+
+  function doClear() {
+    arr = null;
+    altArr = null;
+    pointers = new Map();
+    lastExpr = null;
+    flashCellKey = null;
+  }
+
+  // ============================================================
+  // Terminal helpers
+  // ============================================================
+  function termWrite(text, cls) {
+    const span = document.createElement('span');
+    if (cls) span.className = cls;
+    span.textContent = text;
+    terminalEl.appendChild(span);
+  }
+  function termLine(text, cls) {
+    termWrite(text, cls);
+    terminalEl.appendChild(document.createElement('br'));
+    terminalEl.scrollTop = terminalEl.scrollHeight;
+  }
+  function echoCommand(cmd) {
+    termWrite('ptrsim> ', 'prompt');
+    termLine(cmd, 'typed');
+  }
+
+  // ============================================================
+  // Memory pane rendering
+  // ============================================================
+  function renderMemory() {
+    if (!arr && !altArr && pointers.size === 0) {
+      memoryEl.innerHTML = '<div class="memory-empty">No array yet.<br>Type the first declaration on the left.</div>';
+      return;
+    }
+    let html = '';
+    if (arr)    html += renderArrBlock(arr);
+    if (altArr) html += renderArrBlock(altArr);
+    if (pointers.size > 0 || lastExpr) {
+      html += '<div class="ptr-block">';
+      for (const [, p] of pointers) html += renderPtrCard(p);
+      if (lastExpr) html += renderExprCard(lastExpr);
+      html += '</div>';
+    }
+    memoryEl.innerHTML = html;
+
+    // Apply transient flash class then clear it (so re-renders don't re-trigger)
+    if (flashCellKey) {
+      const [arrName, idxStr] = flashCellKey.split(':');
+      const cellEl = memoryEl.querySelector('.arr-cell[data-key="' + arrName + ':' + idxStr + '"]');
+      if (cellEl) {
+        cellEl.classList.add('flash-write');
+        setTimeout(() => { cellEl.classList.remove('flash-write'); }, 700);
+      }
+      flashCellKey = null;
+    }
+  }
+
+  function renderArrBlock(a) {
+    // Compute which cells are targeted by which pointers (for the tags above cells)
+    const tagsByIdx = {};
+    for (const [, p] of pointers) {
+      if (p.baseArrName === a.name && p.addr !== null) {
+        const idx = ptrIndex(p);
+        if (idx !== null && idx >= 0 && idx < a.length) {
+          (tagsByIdx[idx] = tagsByIdx[idx] || []).push(p.name);
+        }
+      }
+    }
+    let cellsHtml = '';
+    for (let i = 0; i < a.length; i++) {
+      const addr = '0x' + (BigInt(a.baseAddr) + BigInt(i) * BigInt(a.elemSize)).toString(16).toUpperCase();
+      let valDisplay;
+      if (a.type === 'char') valDisplay = "'" + escapeHtml(String.fromCharCode(a.cells[i])) + "'";
+      else if (a.type === 'double') valDisplay = formatDouble(a.cells[i]);
+      else valDisplay = a.cells[i];
+      const tags = tagsByIdx[i] ? '<div class="ptr-tags">&darr; ' + tagsByIdx[i].map(escapeHtml).join(', ') + '</div>' : '';
+      const targeted = tagsByIdx[i] ? ' targeted' : '';
+      cellsHtml +=
+        '<div class="arr-cell' + targeted + '" data-key="' + escapeHtml(a.name) + ':' + i + '">' +
+          tags +
+          '<span class="idx">[' + i + ']</span>' +
+          '<span class="val">' + valDisplay + '</span>' +
+          '<span class="addr">' + addr + '</span>' +
+        '</div>';
+    }
+    return '<div class="arr-block">' +
+      '<div class="arr-title">' + escapeHtml(a.type) + ' ' + escapeHtml(a.name) + '[' + a.length + ']</div>' +
+      '<div class="arr-base">base addr 0x' + a.baseAddr.toString(16).toUpperCase() + ' &middot; ' + a.elemSize + ' byte' + (a.elemSize === 1 ? '' : 's') + '/element</div>' +
+      '<div class="arr-row">' + cellsHtml + '</div>' +
+    '</div>';
+  }
+
+  function renderPtrCard(p) {
+    const addrStr = p.addr === null ? 'NULL' : '0x' + p.addr.toString(16).toUpperCase();
+    let targetStr;
+    let targetCls = '';
+    if (p.addr === null) {
+      targetStr = 'points to: NULL';
+      targetCls = 'null';
+    } else {
+      const a = resolveArray(p.baseArrName);
+      const idx = a ? Number((p.addr - BigInt(a.baseAddr)) / BigInt(a.elemSize)) : null;
+      if (a && idx !== null && idx >= 0 && idx < a.length) {
+        targetStr = 'points to: ' + a.name + '[' + idx + '] = ' + (a.type === 'char' ? "'" + String.fromCharCode(a.cells[idx]) + "'" : a.type === 'double' ? formatDouble(a.cells[idx]) : a.cells[idx]);
+      } else if (a) {
+        targetStr = 'points to: outside ' + a.name + ' (' + (idx !== null ? 'index ' + idx : 'unaligned') + ')';
+        targetCls = 'oob';
+      } else {
+        targetStr = 'points to: ' + addrStr + ' (no known array)';
+        targetCls = 'oob';
+      }
+    }
+    return '<div class="ptr-card">' +
+      '<span class="ptr-name">' + escapeHtml(p.name) + '</span>' +
+      '<span><span class="ptr-type">' + escapeHtml(p.type) + '</span> = ' + addrStr + '</span>' +
+      '<span class="ptr-target ' + targetCls + '">' + escapeHtml(targetStr) + '</span>' +
+    '</div>';
+  }
+
+  function renderExprCard(e) {
+    return '<div class="expr-card">' +
+      '<div class="e-expr">' + escapeHtml(e.expr) + '</div>' +
+      '<div class="e-value">' + escapeHtml(String(e.value)) + '</div>' +
+      (e.note ? '<div style="font-size:11.5px;color:#6B7280;margin-top:4px;">' + escapeHtml(e.note) + '</div>' : '') +
+    '</div>';
+  }
+
+  // ============================================================
+  // Diagnostic helpers for task feedback
+  // ============================================================
+  function diag(cmd, expectedHint) {
+    // Generic: if it looks close but missing a semicolon on a stmt-style hint, say so
+    const t = cmd.trim();
+    if (expectedHint && /;\s*$/.test(expectedHint) && !/;\s*$/.test(t) && expectedHint.replace(/;\s*$/, '') === t) {
+      return "Almost. Don't forget the semicolon at the end.";
+    }
+    return null;
+  }
+
+  function regexEsc(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+  // Build a regex that matches the hint loosely (ignoring whitespace differences and optional trailing semicolon).
+  function looseMatch(hint) {
+    let pattern = '^' + hint.split(/\s+/).map(regexEsc).join('\\s*') + '\\s*;?\\s*$';
+    // Replace literal-semicolon in pattern with optional semicolon
+    return new RegExp(pattern.replace(/;/g, ''));
+  }
+
+  // ============================================================
+  // Task slate
+  // ============================================================
+  const tasks = [
+    // --- Section 1: Pointer arithmetic basics ---
+    {
+      section: 'Section 1: Pointer arithmetic basics',
+      label: 'Task 1 of 12',
+      text: 'Declare an int array named arr with the values {11, 22, 33, 44, 55}, then declare an int pointer named p that points to arr. Type both statements one at a time. Start with the array.',
+      hint: 'int arr[5] = {11, 22, 33, 44, 55};',
+      match: (cmd) => /^\s*int\s+arr\s*\[\s*5\s*\]\s*=\s*\{\s*11\s*,\s*22\s*,\s*33\s*,\s*44\s*,\s*55\s*\}\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => diag(cmd, 'int arr[5] = {11, 22, 33, 44, 55};'),
+      note: 'arr is laid out as 5 contiguous ints starting at 0x2000. Each int is 4 bytes, so the cells are at 0x2000, 0x2004, 0x2008, 0x200C, 0x2010.',
+    },
+    {
+      label: 'Task 2 of 12',
+      text: 'Now declare an int pointer named p that points to arr. Note: you do not need an & before arr; the array name decays to a pointer to its first element on its own.',
+      hint: 'int *p = arr;',
+      match: (cmd) => /^\s*int\s*\*\s*p\s*=\s*arr\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^\s*int\s*\*\s*p\s*=\s*&\s*arr\s*\[\s*0\s*\]\s*;?\s*$/.test(t)) return "That works in real C too, but for this task write it the shorter way: int *p = arr;";
+        if (/^\s*int\s*\*\s*p\s*=\s*&\s*arr\s*;?\s*$/.test(t)) return "Close. Use int *p = arr; (an array name already acts like a pointer to its first element).";
+        return diag(cmd, 'int *p = arr;');
+      },
+      note: 'p now holds the address 0x2000 (the same as arr[0]). The arrow tag above arr[0] confirms p is aimed at that cell.',
+    },
+    {
+      label: 'Task 3 of 12',
+      text: 'Read the value two elements past p, without moving p. Use pointer-arithmetic notation.',
+      hint: '*(p + 2)',
+      match: (cmd) => /^\s*\*\s*\(\s*p\s*\+\s*2\s*\)\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^\s*p\s*\[\s*2\s*\]\s*;?\s*$/.test(t)) return "That gives the same value, but for this task use the pointer form *(p + 2). You will use the array form in Section 4.";
+        if (/^\s*arr\s*\[\s*2\s*\]\s*;?\s*$/.test(t)) return "That gives the same value, but for this task write it as *(p + 2) to practice pointer-arithmetic notation.";
+        if (/^\s*\*\s*p\s*\+\s*2\s*;?\s*$/.test(t)) return "Watch your parentheses. *p + 2 means 'read *p, then add 2 to the value'. You want *(p + 2): move the pointer first, then read.";
+        return null;
+      },
+      note: 'The expression looks two elements past p without modifying p. p still holds 0x2000; *(p+2) reads from 0x2008.',
+    },
+    {
+      label: 'Task 4 of 12',
+      text: 'Now reassign p so it points one element further along. Use pointer arithmetic on p itself.',
+      hint: 'p = p + 1;',
+      match: (cmd) => /^\s*p\s*=\s*p\s*\+\s*1\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^\s*p\s*=\s*p\s*\+\s*1\s*$/.test(t)) return "Almost. Don't forget the semicolon at the end.";
+        if (/^\s*p\s*=\s*&\s*arr\s*\[\s*1\s*\]\s*;?\s*$/.test(t)) return "That works in real C, but for this task use pointer arithmetic: p = p + 1;";
+        return null;
+      },
+      note: "p now points to arr[1]. The address changed by 4 bytes (sizeof(int)), not by 1. The compiler scaled the +1 to one element automatically.",
+    },
+
+    // --- Section 2: Type-aware steps ---
+    {
+      section: 'Section 2: Type-aware steps',
+      label: 'Task 5 of 12',
+      text: "Declare a char array named carr with the values {'A', 'B', 'C'}, then a char pointer named cp pointing to it. Start with the array.",
+      hint: "char carr[3] = {'A', 'B', 'C'};",
+      match: (cmd) => /^\s*char\s+carr\s*\[\s*3\s*\]\s*=\s*\{\s*'A'\s*,\s*'B'\s*,\s*'C'\s*\}\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => diag(cmd, "char carr[3] = {'A', 'B', 'C'};"),
+      note: 'carr is at base 0x3000. Each char is 1 byte, so carr[0] is at 0x3000, carr[1] at 0x3001, carr[2] at 0x3002. Notice how tight the byte addresses are compared to the int array.',
+    },
+    {
+      label: 'Task 6 of 12',
+      text: 'Declare a char pointer named cp pointing to carr. Then watch the address column on the next task to see what one step of pointer arithmetic costs for a char pointer.',
+      hint: 'char *cp = carr;',
+      match: (cmd) => /^\s*char\s*\*\s*cp\s*=\s*carr\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => diag(cmd, 'char *cp = carr;'),
+      note: 'cp holds 0x3000. Compare the two pointer cards: p (int *) advances 4 bytes per step; cp (char *) will advance 1. The compiler reads each pointer\'s declared type to decide how far one step is.',
+    },
+    {
+      label: 'Task 7 of 12',
+      text: 'Advance cp by one element. Use the same pointer-arithmetic style as task 4.',
+      hint: 'cp = cp + 1;',
+      match: (cmd) => /^\s*cp\s*=\s*cp\s*\+\s*1\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diag(cmd, 'cp = cp + 1;'),
+      note: "cp moved from 0x3000 to 0x3001 — one byte. Compare to p, which moved 4 bytes for the same +1 expression. p+1 means 'one int forward'; cp+1 means 'one char forward'.",
+    },
+
+    // --- Section 3: The precedence trio ---
+    {
+      section: 'Section 3: The precedence trio',
+      label: 'Task 8 of 12',
+      text: 'Reset p to the start of arr first.',
+      hint: 'p = arr;',
+      match: (cmd) => /^\s*p\s*=\s*arr\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diag(cmd, 'p = arr;'),
+      note: 'p is back at arr[0]. Now we have a clean state for the precedence comparison.',
+    },
+    {
+      label: 'Task 9 of 12',
+      text: 'Write the expression *p++ exactly as shown — no parentheses, with the semicolon. Watch the arrow tag move; the cell value should NOT change.',
+      hint: '*p++;',
+      match: (cmd) => /^\s*\*\s*p\s*\+\+\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^\s*\*\s*p\s*\+\+\s*$/.test(t)) return "Almost. Don't forget the semicolon at the end.";
+        if (/^\s*\(\s*\*\s*p\s*\)\s*\+\+\s*;?\s*$/.test(t)) return "That is the third form in the trio, not the first. Try writing it without the parentheses: *p++;";
+        return null;
+      },
+      note: '*p++ parses as *(p++). The postfix ++ binds tighter than the * dereference, so it attached to p. The expression read the value at the old position, then advanced p by one element. arr is unchanged.',
+    },
+    {
+      label: 'Task 10 of 12',
+      text: 'Reset p to arr again, then write *(p++) — same effect, with explicit parentheses showing the order.',
+      hint: 'p = arr; then *(p++);',
+      match: (cmd) => /^\s*\*\s*\(\s*p\s*\+\+\s*\)\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^\s*p\s*=\s*arr\s*;?\s*$/.test(t)) return "Good — first reset p, then write the expression. Now type: *(p++);";
+        if (/^\s*\*\s*\(\s*p\s*\+\+\s*\)\s*$/.test(t)) return "Almost. Don't forget the semicolon at the end.";
+        return null;
+      },
+      pre: (state) => {
+        // Auto-reset p if cadet did not. (Pre-action lets us be forgiving.)
+        const p = state.pointers.get('p');
+        if (p && state.arr) p.addr = BigInt(state.arr.baseAddr);
+      },
+      note: 'Same behavior as *p++. The parentheses are documentation: they make the precedence visible to a future reader. Use them when you think readers might be confused.',
+    },
+    {
+      label: 'Task 11 of 12',
+      text: 'Reset p to arr once more, then write (*p)++ with the parentheses around *p. This time the arrow should NOT move, but the value at the cell should increment.',
+      hint: 'p = arr; then (*p)++;',
+      match: (cmd) => /^\s*\(\s*\*\s*p\s*\)\s*\+\+\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^\s*p\s*=\s*arr\s*;?\s*$/.test(t)) return "Good — first reset p, then write the expression. Now type: (*p)++;";
+        if (/^\s*\*\s*p\s*\+\+\s*;?\s*$/.test(t)) return "That is *p++ again. The parentheses you want are around *p, not around p++. Try: (*p)++;";
+        if (/^\s*\(\s*\*\s*p\s*\)\s*\+\+\s*$/.test(t)) return "Almost. Don't forget the semicolon at the end.";
+        return null;
+      },
+      pre: (state) => {
+        const p = state.pointers.get('p');
+        if (p && state.arr) p.addr = BigInt(state.arr.baseAddr);
+      },
+      note: 'The parentheses changed everything. (*p)++ binds the ++ to the value being pointed at, not to p. arr[0] increments by 1; p stays at arr[0]. Compare this with *p++ and *(p++) — those two are identical, this one is different.',
+    },
+
+    // --- Section 4: Array-pointer duality ---
+    // (Only one task here intentionally; the duality is mostly absorbed in tasks 3 and 12.
+    //  We get the asymmetry exposed by trying arr++ at the end of this section.)
+
+    // --- Section 5: Pointer subtraction ---
+    {
+      section: 'Section 4: Array-pointer duality (and the asymmetry)',
+      label: 'Task 12 of 12',
+      text: 'Now for the asymmetry. You can advance a pointer with arr-style names too — but only if they\'re really pointers. Try writing arr++; and see what the simulator says. (It will reject the command, just like a real C compiler would.) Once you see the message, type clear; to finish.',
+      hint: 'arr++;  (it will be rejected — then type clear;)',
+      // Accept either the rejected attempt OR clear afterward — we move on when clear is typed
+      match: (cmd) => /^\s*(clear|reset)\s*;?\s*$/i.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^\s*arr\s*\+\+\s*;?\s*$/.test(t)) {
+          return null; // not an error; we let it through to runCommand which will reject it as a teaching point.
+        }
+        if (/^\s*p\s*\+\+\s*;?\s*$/.test(t)) return "p is a pointer, so p++ works. But the task is to see what arr++ does (it's rejected). Then type clear; to wrap up.";
+        return "Try writing arr++; to see the asymmetry, then clear; to finish.";
+      },
+      // Special: this task is satisfied by typing clear, but we WANT cadets to try arr++ first.
+      // The runCommand path returns a 'rejected' result for arr++ that prints the educational message
+      // but does NOT advance the task. Once they type clear, the match succeeds.
+      note: 'arr++ is a compile error in real C — you cannot reassign an array name. A pointer like p is a variable that can be aimed anywhere; an array name is a fixed label for a fixed block of memory. This asymmetry is the only place where pointer notation and array notation diverge. Walkthrough complete.',
+    },
+  ];
+
+  // ============================================================
+  // Controller
+  // ============================================================
+  function checkTask(rawCmd) {
+    if (mode === "free" || currentTaskIndex >= tasks.length) return null;
+    const t = tasks[currentTaskIndex];
+    if (t.match(rawCmd)) {
+      // Optional pre-action (used for trio tasks that allow cadet to skip the reset step)
+      if (t.pre) t.pre({ pointers, arr, altArr });
+      process(rawCmd);
+      if (t.note) {
+        termLine('', 'out');
+        termLine('  ' + t.note, 'note');
+      }
+      currentTaskIndex++;
+      consecutiveFails = 0;
+      hideHintPulse();
+      renderTask();
+      if (currentTaskIndex >= tasks.length) {
+        setMode("free");
+        termLine('', 'out');
+        termLine('  Walkthrough complete. Free mode unlocked. Type any pointer expression to keep exploring.', 'note');
+      }
+      return true;
+    } else {
+      // Special case: for task 12, allow arr++ to flow through (so cadet sees the rejection)
+      // without advancing the task.
+      const t12 = tasks[currentTaskIndex];
+      if (t12 && /Section 4/.test(t12.section || '') && /^\s*arr\s*\+\+\s*;?\s*$/.test(rawCmd)) {
+        process(rawCmd);
+        // do not advance; cadet still needs to type clear;
+        return false;
+      }
+      echoCommand(rawCmd);
+      const d = (t.diagnose && t.diagnose(rawCmd)) || null;
+      if (d) termLine('  ' + d, 'err');
+      else   termLine("  Not what this task is asking for. Look at the task card above, or click 'Show hint'.", 'err');
+      consecutiveFails++;
+      if (consecutiveFails >= 2) showHintPulse();
+      return false;
+    }
+  }
+
+  function renderTask() {
+    const fill  = root.querySelector('#ptrmath-progress-fill');
+    const label = root.querySelector('#ptrmath-progress-label');
+    const card  = root.querySelector('#ptrmath-task-card');
+    const labelEl = root.querySelector('#ptrmath-task-label');
+    const textEl  = root.querySelector('#ptrmath-task-text');
+    const hintEl  = root.querySelector('#ptrmath-task-hint');
+    const sectionEl = root.querySelector('#ptrmath-section-header');
+
+    const pct = (currentTaskIndex / tasks.length) * 100;
+    fill.style.width = pct + '%';
+    label.textContent = 'Task ' + Math.min(currentTaskIndex + 1, tasks.length) + ' of ' + tasks.length;
+
+    if (currentTaskIndex >= tasks.length) {
+      card.className = 'task-card complete';
+      labelEl.textContent = 'Complete';
+      textEl.textContent = "You worked through every key concept of Lesson 13: pointer arithmetic, type-aware stepping, the precedence trio, array-pointer duality, and pointer subtraction. You're ready for the Duality Self-Check and Lab 13.";
+      hintEl.textContent = '';
+      fill.style.width = '100%';
+      label.textContent = 'All tasks complete';
+      sectionEl.textContent = 'All done';
+      completionEl.innerHTML = '';
+      cs210RenderCompletion(completionEl);
+      return;
+    }
+
+    completionEl.innerHTML = '';
+    card.className = 'task-card';
+    const t = tasks[currentTaskIndex];
+    if (t.section) sectionEl.textContent = t.section;
+    labelEl.textContent = t.label;
+    textEl.textContent = t.text;
+    hintEl.textContent = '';
+  }
+
+  function showHint() {
+    if (currentTaskIndex >= tasks.length) return;
+    const t = tasks[currentTaskIndex];
+    root.querySelector('#ptrmath-task-hint').textContent = 'Hint: ' + (t.hint || '');
+    hideHintPulse();
+  }
+  function showHintPulse() { root.querySelector('#ptrmath-hint-btn').classList.add('pulse'); }
+  function hideHintPulse() { root.querySelector('#ptrmath-hint-btn').classList.remove('pulse'); }
+
+  function reset() {
+    doClear();
+    currentTaskIndex = 0;
+    consecutiveFails = 0;
+    hideHintPulse();
+    setMode("walkthrough");
+    terminalEl.innerHTML = '';
+    termLine('Welcome to the pointer arithmetic walkthrough.', 'dim');
+    termLine('Follow the task card above. Type C statements at the prompt.', 'dim');
+    termLine('', 'out');
+    renderMemory();
+    renderTask();
+  }
+
+  // ============================================================
+  // Run a command and print results to the terminal
+  // ============================================================
+  function process(line) {
+    echoCommand(line);
+    try {
+      const r = runCommand(line);
+      if (!r) return;
+      if (r.kind === 'arr-declared') {
+        const a = r.arr;
+        termLine('  ' + a.type + ' array ' + a.name + '[' + a.length + '] at 0x' + a.baseAddr.toString(16).toUpperCase() + '; ' + a.elemSize + ' byte' + (a.elemSize === 1 ? '' : 's') + ' per element', 'out');
+      } else if (r.kind === 'ptr-declared') {
+        const p = r.p;
+        termLine('  ' + p.type + ' ' + p.name + ' = ' + (p.addr === null ? 'NULL' : '0x' + p.addr.toString(16).toUpperCase()), 'out');
+      } else if (r.kind === 'ptr-assigned') {
+        const p = r.p;
+        termLine('  ' + p.name + ' now holds ' + (p.addr === null ? 'NULL' : '0x' + p.addr.toString(16).toUpperCase()), 'out');
+        if (r.oob && p.addr !== null) termLine('  warning: ' + p.name + ' is outside the array bounds; real C would not stop you, but reading or writing through it is undefined.', 'err');
+      } else if (r.kind === 'ptr-mutated') {
+        const p = r.p;
+        const aName = p.baseArrName || 'unknown';
+        if (r.readValue !== undefined && r.readValue !== null) {
+          termLine('  read value ' + r.readValue + ' from ' + aName + '[' + r.oldIdx + ']; then advanced ' + p.name + ' to ' + aName + '[' + r.newIdx + '] (0x' + p.addr.toString(16).toUpperCase() + ')', 'out');
+        } else {
+          termLine('  ' + p.name + ' moved to 0x' + p.addr.toString(16).toUpperCase() + ' (' + aName + '[' + (r.newIdx !== null ? r.newIdx : '?') + '])', 'out');
+        }
+        if (r.oob) termLine('  warning: ' + p.name + ' is now outside the array bounds.', 'err');
+      } else if (r.kind === 'cell-written') {
+        termLine('  ' + r.arrName + '[' + r.index + '] = ' + r.newVal + (r.ptrName ? '  (' + r.ptrName + ' did not move)' : ''), 'out');
+      } else if (r.kind === 'expr') {
+        termLine('  ' + r.expr + ' = ' + r.value, 'out');
+        lastExpr = { expr: r.expr, value: r.value, kind: 'read', arrName: r.arrName, index: r.index };
+      } else if (r.kind === 'ptr-sub') {
+        termLine('  ' + r.a + ' - ' + r.b + ' = ' + r.result + '  (' + r.byteDiff + ' bytes / ' + r.elemSize + ' bytes per element)', 'out');
+        lastExpr = { expr: r.a + ' - ' + r.b, value: r.result + ' elements', kind: 'sub' };
+      } else if (r.kind === 'cleared') {
+        termLine('  memory cleared', 'out');
+      } else if (r.kind === 'list') {
+        if (!arr && !altArr && pointers.size === 0) termLine('  no arrays or pointers', 'out');
+        else {
+          if (arr) termLine('  ' + arr.type + ' ' + arr.name + '[' + arr.length + ']  (5 cells)', 'out');
+          if (altArr) termLine('  ' + altArr.type + ' ' + altArr.name + '[' + altArr.length + ']', 'out');
+          for (const [, p] of pointers) {
+            termLine('  ' + p.type + ' ' + p.name + ' = ' + (p.addr === null ? 'NULL' : '0x' + p.addr.toString(16).toUpperCase()), 'out');
+          }
+        }
+      } else if (r.kind === 'help') {
+        termLine('  arrays:       int arr[5] = {11, 22, 33, 44, 55};', 'out');
+        termLine('  pointers:     int *p = arr;   int *q = &arr[2];   p = p + 1;', 'out');
+        termLine('  reads:        *p   *(p + 2)   arr[2]   p[2]', 'out');
+        termLine('  writes:       *p = 99;   arr[2] = 99;', 'out');
+        termLine('  precedence:   *p++   *(p++)   (*p)++', 'out');
+        termLine('  subtraction:  q - p   (returns number of elements between them)', 'out');
+        termLine('  meta:         clear  list  help', 'out');
+      } else if (r.kind === 'rejected') {
+        termLine('  ' + r.message, 'err');
+      } else if (r.kind === 'error') {
+        termLine('  error: ' + r.message, 'err');
+      }
+      renderMemory();
+    } catch (e) {
+      termLine('  unexpected error: ' + e.message, 'err');
+    }
+  }
+
+  // ============================================================
+  // Mode toggle
+  // ============================================================
+  function setMode(newMode) {
+    mode = newMode;
+    const btn = root.querySelector('#ptrmath-mode-btn');
+    if (mode === "free") {
+      btn.textContent = 'Return to walkthrough';
+      btn.style.background = '#E6F4EA';
+      btn.style.borderColor = '#2E7D32';
+      btn.style.color = '#1B5E20';
+      inputEl.placeholder = 'free mode: type any pointer expression';
+    } else {
+      btn.textContent = 'Switch to free mode';
+      btn.style.background = '';
+      btn.style.borderColor = '';
+      btn.style.color = '';
+      inputEl.placeholder = 'follow the task above';
+    }
+  }
+
+  // ============================================================
+  // Input wiring
+  // ============================================================
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const v = inputEl.value;
+      inputEl.value = '';
+      if (!v.trim()) return;
+      if (mode === "walkthrough") {
+        checkTask(v);
+      } else {
+        process(v);
+      }
+    }
+  });
+  root.querySelector('#ptrmath-hint-btn').addEventListener('click', showHint);
+  root.querySelector('#ptrmath-reset-btn').addEventListener('click', reset);
+  root.querySelector('#ptrmath-mode-btn').addEventListener('click', () => {
+    if (mode === "walkthrough") {
+      setMode("free");
+      termLine('', 'out');
+      termLine('  Free mode. Type any array declaration, pointer expression, or assignment.', 'note');
+    } else {
+      setMode("walkthrough");
+      termLine('', 'out');
+      termLine('  Walkthrough mode. Follow the task card above.', 'note');
+    }
+  });
+
+  // Boot
+  reset();
+})();
+</script>
+
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 32px 0 10px 0;">Duality Self-Check</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Five questions covering the precedence trio, type-aware stepping, and the array-pointer duality formula. Answer each one and click Check to see how you did. The final summary tells you whether you are ready to move on to the lab.</p>
+
+<!-- ============================================================
+     CS210 Lesson 13 - Duality Self-Check Quiz Widget
+     Card/slide flow: one question per card, Submit + Next/Back.
+     Score card at the end with per-question recap and two-salt
+     completion code (passing >= 70% uses _completed salt;
+     non-passing uses _incomplete salt).
+     ============================================================ -->
+<style>
+.cs210-duality-quiz * { box-sizing: border-box; }
+.cs210-duality-quiz {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-duality-quiz h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-duality-quiz .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+
+.cs210-duality-quiz .dots {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+.cs210-duality-quiz .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #E5E7EB;
+  border: 1px solid #C7CFD9;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.cs210-duality-quiz .dot.current {
+  background: #003087;
+  border-color: #00205B;
+  transform: scale(1.25);
+}
+.cs210-duality-quiz .dot.correct {
+  background: #2E7D32;
+  border-color: #1B5E20;
+}
+.cs210-duality-quiz .dot.incorrect {
+  background: #B8002F;
+  border-color: #6B0000;
+}
+.cs210-duality-quiz .dot.score {
+  width: 16px;
+  height: 12px;
+  border-radius: 3px;
+  background: #F0B92C;
+  border-color: #6B5300;
+}
+
+.cs210-duality-quiz .card {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 6px;
+  padding: 22px 24px;
+  margin-bottom: 14px;
+}
+.cs210-duality-quiz .q-label {
+  font-size: 11.5px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.cs210-duality-quiz .q-text {
+  font-size: 15.5px;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+}
+.cs210-duality-quiz .q-text code {
+  background: #F0F2F5;
+  padding: 1px 6px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13.5px;
+}
+.cs210-duality-quiz pre.q-code {
+  background: #1E2A3A;
+  color: #E8EDF5;
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 0 0 16px 0;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.cs210-duality-quiz .choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.cs210-duality-quiz .choice {
+  display: block;
+  padding: 10px 14px;
+  border: 1px solid #C7CFD9;
+  border-radius: 4px;
+  background: #ffffff;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: inherit;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.cs210-duality-quiz .choice:hover { background: #F5F7FA; }
+.cs210-duality-quiz .choice.selected {
+  background: #E8EDF5;
+  border-color: #003087;
+}
+.cs210-duality-quiz .choice.locked { cursor: default; }
+.cs210-duality-quiz .choice.locked:hover { background: inherit; }
+.cs210-duality-quiz .choice.correct {
+  background: #E6F4EA;
+  border-color: #2E7D32;
+  color: #1B5E20;
+  font-weight: 600;
+}
+.cs210-duality-quiz .choice.incorrect {
+  background: #FCE7EA;
+  border-color: #B8002F;
+  color: #6B0000;
+  font-weight: 600;
+}
+.cs210-duality-quiz .choice code {
+  background: #F0F2F5;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+}
+
+.cs210-duality-quiz .text-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: Consolas, monospace;
+}
+.cs210-duality-quiz .text-input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-duality-quiz .text-input:disabled {
+  background: #F5F7FA;
+  color: #4A5568;
+}
+
+.cs210-duality-quiz .feedback {
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  margin-bottom: 14px;
+  display: none;
+}
+.cs210-duality-quiz .feedback.visible { display: block; }
+.cs210-duality-quiz .feedback.correct {
+  background: #E6F4EA;
+  border-left: 4px solid #2E7D32;
+  color: #1B5E20;
+}
+.cs210-duality-quiz .feedback.incorrect {
+  background: #FCE7EA;
+  border-left: 4px solid #B8002F;
+  color: #6B0000;
+}
+.cs210-duality-quiz .feedback code {
+  background: rgba(255,255,255,0.6);
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+}
+
+.cs210-duality-quiz .btn-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+.cs210-duality-quiz .submit-btn,
+.cs210-duality-quiz .nav-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 9px 18px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-duality-quiz .submit-btn:hover,
+.cs210-duality-quiz .nav-btn:hover { background: #00205B; }
+.cs210-duality-quiz .submit-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-duality-quiz .nav-btn.back {
+  background: #ffffff;
+  color: #003087;
+  border: 1px solid #C7CFD9;
+}
+.cs210-duality-quiz .nav-btn.back:hover { background: #F5F7FA; color: #00205B; }
+.cs210-duality-quiz .nav-row { display: flex; gap: 8px; }
+
+/* Score card */
+.cs210-duality-quiz .score-card { text-align: center; }
+.cs210-duality-quiz .score-big {
+  font-size: 48px;
+  font-weight: 700;
+  color: #003087;
+  margin: 10px 0 4px 0;
+}
+.cs210-duality-quiz .score-card.full-correct .score-big { color: #1B5E20; }
+.cs210-duality-quiz .score-card.passing .score-big      { color: #2E7D32; }
+.cs210-duality-quiz .score-card.not-passing .score-big  { color: #6B0000; }
+.cs210-duality-quiz .score-label {
+  font-size: 13px;
+  color: #6B7280;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.cs210-duality-quiz .score-message {
+  font-size: 15px;
+  color: #4A5568;
+  margin-bottom: 18px;
+}
+.cs210-duality-quiz .score-message.good-job {
+  color: #1B5E20;
+  font-weight: 600;
+}
+.cs210-duality-quiz .recap {
+  text-align: left;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #E5E7EB;
+}
+.cs210-duality-quiz .recap-title {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.cs210-duality-quiz .recap-item {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #F0F2F5;
+}
+.cs210-duality-quiz .recap-item:last-child { border-bottom: none; }
+.cs210-duality-quiz .recap-icon {
+  flex: 0 0 22px;
+  font-size: 16px;
+  font-weight: 700;
+}
+.cs210-duality-quiz .recap-icon.correct { color: #2E7D32; }
+.cs210-duality-quiz .recap-icon.incorrect { color: #B8002F; }
+.cs210-duality-quiz .recap-body { flex: 1; font-size: 13.5px; }
+.cs210-duality-quiz .recap-question { color: #1a1a1a; margin-bottom: 3px; }
+.cs210-duality-quiz .recap-explanation { color: #4A5568; font-size: 13px; }
+.cs210-duality-quiz .recap-explanation code {
+  background: #F0F2F5;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 12.5px;
+}
+.cs210-duality-quiz .reset-row {
+  margin-top: 18px;
+  display: flex;
+  justify-content: center;
+}
+.cs210-duality-quiz .reset-btn {
+  background: #ffffff;
+  border: 1px solid #003087;
+  color: #003087;
+  padding: 8px 18px;
+  border-radius: 4px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-duality-quiz .reset-btn:hover { background: #F5F7FA; }
+
+.cs210-duality-quiz .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #4A5568;
+  margin-top: 12px;
+}
+.cs210-duality-quiz .help-note strong { color: #00205B; }
+
+/* Completion code block on the score card */
+.cs210-duality-quiz .code-block {
+  background: #F0F4FA;
+  border: 1px solid #003087;
+  border-radius: 4px;
+  padding: 14px 18px;
+  margin: 14px 0 6px 0;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.cs210-duality-quiz .code-block.fail {
+  background: #FFF1F3;
+  border-color: #B8002F;
+}
+.cs210-duality-quiz .code-block .code-left { text-align: left; }
+.cs210-duality-quiz .code-block .code-label {
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #4A5568;
+}
+.cs210-duality-quiz .code-block .code-value {
+  font-family: Consolas, monospace;
+  font-size: 26px;
+  font-weight: 700;
+  color: #00205B;
+  letter-spacing: 3px;
+}
+.cs210-duality-quiz .code-block.fail .code-value { color: #6B0000; }
+.cs210-duality-quiz .code-block .copy-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-duality-quiz .code-block .copy-btn:hover { background: #00205B; }
+.cs210-duality-quiz .code-block .copy-btn.copied { background: #2E7D32; }
+.cs210-duality-quiz .code-block.fail .copy-btn { background: #6B0000; }
+.cs210-duality-quiz .inline-code-footer {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 8px 12px;
+  border-radius: 3px;
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: #4A5568;
+  font-family: Consolas, monospace;
+}
+
+/* Name modal overlay */
+.cs210-duality-quiz .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.cs210-duality-quiz .name-modal {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-duality-quiz .name-modal h2 {
+  color: #00205B;
+  font-size: 20px;
+  margin: 0 0 10px 0;
+}
+.cs210-duality-quiz .name-modal p {
+  color: #4A5568;
+  font-size: 14px;
+  margin: 0 0 16px 0;
+}
+.cs210-duality-quiz .name-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-duality-quiz .name-modal input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-duality-quiz .name-modal-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-duality-quiz .name-modal-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-duality-quiz .name-modal-btn:not(:disabled):hover {
+  background: #00205B;
+}
+</style>
+
+<div class="cs210-duality-quiz">
+
+<div class="name-modal-backdrop" id="duality-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the score card so you can include it in your screenshot for the Blackboard reflection.</p>
+    <input type="text" id="duality-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="duality-cadet-name-btn" disabled>Start the quiz</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 13 &middot; Duality Self-Check</h1>
+<div class="subtitle">Five questions covering type-aware stepping, the precedence trio, and array-pointer duality. Pass at 70% or above; below that, take it again after reviewing.</div>
+
+<div class="dots" id="duality-dots"></div>
+
+<div id="duality-card-area"></div>
+
+<div class="help-note">
+  <strong>How this works:</strong> One question per card. Pick or type your answer and click Submit. Feedback appears, then click Next to move on. Answers lock once submitted, so think before you submit. After all five, you get a score, a completion code, and a per-question recap.
+</div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-duality-quiz');
+  if (!root) return;
+
+  // ============================================================
+  // Completion code generation (two-salt scheme: pass vs. fail)
+  // ============================================================
+  const CS210_SALT_PASS = "lesson13_duality_completed";
+  const CS210_SALT_FAIL = "lesson13_duality_incomplete";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const PASSING_THRESHOLD = 0.70;
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE_PASS = cs210CodeFromSalt(CS210_SALT_PASS);
+  const CS210_CODE_FAIL = cs210CodeFromSalt(CS210_SALT_FAIL);
+  let cadetName = '';
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+  function cs210Copy(text) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch (e) {}
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      return true;
+    } catch (e) { return false; }
+  }
+
+  // ============================================================
+  // Name modal
+  // ============================================================
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#duality-name-modal-backdrop');
+    const input = root.querySelector('#duality-cadet-name-input');
+    const btn = root.querySelector('#duality-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length > 0) {
+        // Name already known from a previous widget or visit. Skip the modal.
+        cadetName = stored.trim();
+        backdrop.style.display = 'none';
+        return;
+      }
+    } catch (e) {}
+    function updateBtn() { btn.disabled = input.value.trim().length === 0; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', () => {
+      const n = input.value.trim();
+      if (!n) return;
+      cadetName = n;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', n); } catch (e) {}
+      backdrop.style.display = 'none';
+      // Dismiss any sibling widget modals on the same page.
+      const siblings = document.querySelectorAll(
+        '#name-modal-backdrop, #bw-name-modal-backdrop, #ptrmath-name-modal-backdrop'
+      );
+      siblings.forEach(function(m) { m.style.display = 'none'; });
+    });
+    setTimeout(() => { try { input.focus(); } catch (e) {} }, 50);
+  })();
+
+  // ============================================================
+  // Questions
+  // ============================================================
+  const questions = [
+    {
+      id: 'q1',
+      type: 'choice',
+      text: 'Given <code>int arr[3] = {10, 20, 30};</code> and <code>int *p = arr;</code>, what does <code>*p++;</code> do?',
+      options: [
+        'Reads the value at <code>p</code>, then advances <code>p</code> by one element. <code>arr</code> is unchanged.',
+        'Reads the value at <code>p</code>, then increments that value. <code>p</code> does not move.',
+        'Both: advances <code>p</code> AND increments the cell value at the new location.',
+        'Compile error: you cannot use <code>++</code> on a dereferenced pointer.',
+      ],
+      correct: 0,
+      correctFeedback: 'Right. <code>*p++</code> parses as <code>*(p++)</code> because postfix <code>++</code> binds tighter than the dereference. p advances; arr is unchanged.',
+      incorrectFeedback: 'The correct answer is the first one. <code>*p++</code> parses as <code>*(p++)</code>: the postfix <code>++</code> binds to <code>p</code>, not to <code>*p</code>. So <code>p</code> advances and the cell value is untouched.',
+      shortLabel: 'What does *p++ do?',
+    },
+    {
+      id: 'q2',
+      type: 'choice',
+      text: 'Given the same setup, what does <code>(*p)++;</code> do?',
+      options: [
+        'Reads the value at <code>p</code>, then advances <code>p</code> by one element. <code>arr</code> is unchanged.',
+        'Increments the value at <code>p</code>. <code>p</code> does not move.',
+        'Identical behavior to <code>*p++</code>. Parentheses around <code>*p</code> are decorative.',
+        'Compile error: the parentheses cause precedence conflicts.',
+      ],
+      correct: 1,
+      correctFeedback: 'Right. The parentheses force the dereference first, so <code>++</code> applies to the value at the cell. <code>p</code> does not move; the cell value increases by 1.',
+      incorrectFeedback: 'The correct answer is the second one. The parentheses around <code>*p</code> bind the <code>++</code> to the value, not to the pointer. <code>p</code> stays put; the cell increments. This is the key difference from <code>*p++</code>.',
+      shortLabel: 'What does (*p)++ do?',
+    },
+    {
+      id: 'q3',
+      type: 'text',
+      text: 'Given <code>int a[] = {10, 20, 30, 40};</code> and <code>int *p = a + 1;</code>, what does <code>p[2]</code> evaluate to? Type just the number.',
+      correct: ['40'],
+      normalize: s => s.trim(),
+      placeholder: 'e.g. 25',
+      correctFeedback: 'Right. <code>p</code> points to <code>a[1]</code> (the 20). <code>p[2]</code> means <code>*(p + 2)</code>, which is <code>a[3]</code>: the 40.',
+      incorrectFeedback: 'The correct answer is <code>40</code>. <code>p = a + 1</code> means <code>p</code> points to <code>a[1]</code>. By the duality formula, <code>p[2] == *(p + 2)</code>, which is <code>a[3] == 40</code>.',
+      shortLabel: 'Evaluate p[2] when p = a + 1',
+    },
+    {
+      id: 'q4',
+      type: 'text',
+      text: 'Suppose <code>double *dp;</code> holds the address <code>0x1000</code>. What address does <code>dp + 3</code> hold? Type the answer as a hex literal starting with <code>0x</code> (uppercase letters).',
+      correct: ['0x1018'],
+      normalize: s => s.trim().toUpperCase().replace(/^0X/, '0x'),
+      placeholder: 'e.g. 0x1010',
+      correctFeedback: 'Right. <code>sizeof(double)</code> is 8 bytes, so <code>dp + 3</code> moves 3 &times; 8 = 24 bytes. 0x1000 + 0x18 = 0x1018.',
+      incorrectFeedback: 'The correct answer is <code>0x1018</code>. Pointer arithmetic scales by <code>sizeof</code> the pointed-to type. A <code>double</code> is 8 bytes, so <code>+3</code> moves 24 bytes (0x18). 0x1000 + 0x18 = 0x1018.',
+      shortLabel: 'Predict dp + 3 when dp is double*',
+    },
+    {
+      id: 'q5',
+      type: 'choice',
+      text: 'Which of the following is the asymmetry between arrays and pointers in C?',
+      options: [
+        'You can dereference a pointer with <code>*p</code>, but you cannot dereference an array name.',
+        'You can use index notation on a pointer (<code>p[i]</code>), but not on an array (<code>arr[i]</code>).',
+        'You can reassign a pointer (<code>p = q;</code>), but you cannot reassign an array name (<code>arr = q;</code>).',
+        'You can take the address of a pointer (<code>&amp;p</code>), but not the address of an array.',
+      ],
+      correct: 2,
+      correctFeedback: 'Right. A pointer is a variable; an array name is a fixed label. <code>p++</code> is fine; <code>arr++</code> is a compile error. Everything else is symmetric.',
+      incorrectFeedback: 'The correct answer is the third one. The only real asymmetry is that a pointer is a variable you can reassign, while an array name is a fixed label that refers to a fixed block of memory. All four reading operations (<code>*</code>, <code>[i]</code>, address-of) work on both.',
+      shortLabel: 'Asymmetry between arrays and pointers',
+    },
+  ];
+
+  // ============================================================
+  // State
+  // ============================================================
+  const state = questions.map(() => ({ answered: false, correct: false, choice: null, value: '' }));
+  let currentIndex = 0;
+
+  const dotsArea = root.querySelector('#duality-dots');
+  const cardArea = root.querySelector('#duality-card-area');
+
+  // ============================================================
+  // Rendering: dots
+  // ============================================================
+  function renderDots() {
+    dotsArea.innerHTML = '';
+    for (let i = 0; i < questions.length; i++) {
+      const d = document.createElement('div');
+      d.className = 'dot';
+      if (i === currentIndex) d.classList.add('current');
+      if (state[i].answered) {
+        d.classList.add(state[i].correct ? 'correct' : 'incorrect');
+      }
+      dotsArea.appendChild(d);
+    }
+    const scoreDot = document.createElement('div');
+    scoreDot.className = 'dot score';
+    if (currentIndex === questions.length) scoreDot.classList.add('current');
+    dotsArea.appendChild(scoreDot);
+  }
+
+  // ============================================================
+  // Rendering: question card
+  // ============================================================
+  function buildQuestionCard(i) {
+    const q = questions[i];
+    const s = state[i];
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    const label = document.createElement('div');
+    label.className = 'q-label';
+    label.textContent = 'Question ' + (i + 1) + ' of ' + questions.length;
+    card.appendChild(label);
+
+    const text = document.createElement('div');
+    text.className = 'q-text';
+    text.innerHTML = q.text;
+    card.appendChild(text);
+
+    if (q.code) {
+      const pre = document.createElement('pre');
+      pre.className = 'q-code';
+      pre.textContent = q.code;
+      card.appendChild(pre);
+    }
+
+    // Answer surface
+    let getAnswer; // closure returning chosen index (choice) or string (text)
+    if (q.type === 'choice') {
+      const choices = document.createElement('div');
+      choices.className = 'choices';
+      const buttons = [];
+      q.options.forEach((opt, idx) => {
+        const b = document.createElement('button');
+        b.className = 'choice';
+        b.innerHTML = opt;
+        b.type = 'button';
+        b.addEventListener('click', () => {
+          if (s.answered) return;
+          buttons.forEach(x => x.classList.remove('selected'));
+          b.classList.add('selected');
+          s.choice = idx;
+          submitBtn.disabled = false;
+        });
+        if (s.choice === idx) b.classList.add('selected');
+        if (s.answered) {
+          b.classList.add('locked');
+          if (idx === q.correct) b.classList.add('correct');
+          else if (idx === s.choice) b.classList.add('incorrect');
+        }
+        choices.appendChild(b);
+        buttons.push(b);
+      });
+      card.appendChild(choices);
+      getAnswer = () => s.choice;
+    } else {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'text-input';
+      input.placeholder = q.placeholder || '';
+      input.value = s.value || '';
+      input.spellcheck = false;
+      input.autocomplete = 'off';
+      input.addEventListener('input', () => {
+        if (s.answered) return;
+        s.value = input.value;
+        submitBtn.disabled = input.value.trim().length === 0;
+      });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !s.answered && input.value.trim().length > 0) {
+          e.preventDefault();
+          submitBtn.click();
+        }
+      });
+      if (s.answered) input.disabled = true;
+      card.appendChild(input);
+      getAnswer = () => input.value;
+      setTimeout(() => { try { input.focus(); } catch (e) {} }, 50);
+    }
+
+    // Feedback
+    const fb = document.createElement('div');
+    fb.className = 'feedback';
+    if (s.answered) {
+      fb.classList.add('visible');
+      fb.classList.add(s.correct ? 'correct' : 'incorrect');
+      fb.innerHTML = s.correct ? q.correctFeedback : q.incorrectFeedback;
+    }
+    card.appendChild(fb);
+
+    // Button row
+    const row = document.createElement('div');
+    row.className = 'btn-row';
+
+    const navL = document.createElement('div');
+    navL.className = 'nav-row';
+    if (i > 0) {
+      const back = document.createElement('button');
+      back.className = 'nav-btn back';
+      back.type = 'button';
+      back.innerHTML = '&larr; Back';
+      back.addEventListener('click', () => { currentIndex = i - 1; render(); });
+      navL.appendChild(back);
+    }
+    row.appendChild(navL);
+
+    const submitBtn = document.createElement('button');
+    submitBtn.type = 'button';
+    if (s.answered) {
+      submitBtn.className = 'nav-btn';
+      submitBtn.innerHTML = (i === questions.length - 1) ? 'See score &rarr;' : 'Next &rarr;';
+      submitBtn.addEventListener('click', () => { currentIndex = i + 1; render(); });
+    } else {
+      submitBtn.className = 'submit-btn';
+      submitBtn.textContent = 'Submit';
+      // Enable state
+      if (q.type === 'choice') submitBtn.disabled = (s.choice === null);
+      else submitBtn.disabled = (!s.value || s.value.trim().length === 0);
+      submitBtn.addEventListener('click', () => {
+        const ans = getAnswer();
+        let correct = false;
+        if (q.type === 'choice') {
+          correct = (ans === q.correct);
+        } else {
+          const v = q.normalize ? q.normalize(ans) : ans;
+          correct = q.correct.some(c => (q.normalize ? q.normalize(c) : c) === v);
+        }
+        s.answered = true;
+        s.correct = correct;
+        render();
+      });
+    }
+    row.appendChild(submitBtn);
+    card.appendChild(row);
+
+    return card;
+  }
+
+  // ============================================================
+  // Rendering: score card
+  // ============================================================
+  function buildScoreCard() {
+    const card = document.createElement('div');
+    card.className = 'card score-card';
+    const correctCount = state.filter(s => s.correct).length;
+    const pct = correctCount / questions.length;
+    const passed = pct >= PASSING_THRESHOLD;
+
+    if (correctCount === questions.length) card.classList.add('full-correct');
+    else if (passed) card.classList.add('passing');
+    else card.classList.add('not-passing');
+
+    const label = document.createElement('div');
+    label.className = 'q-label';
+    label.textContent = 'Quiz complete';
+    card.appendChild(label);
+
+    const msg = document.createElement('div');
+    msg.className = 'score-message';
+    if (correctCount === questions.length) {
+      msg.className = 'score-message good-job';
+      msg.textContent = 'Perfect score. The precedence trio is locked in.';
+    } else if (passed) {
+      msg.className = 'score-message good-job';
+      msg.textContent = 'Passed.';
+    } else {
+      msg.style.color = '#6B0000';
+      msg.textContent = 'Below the 70% threshold. Review and try again.';
+    }
+    card.appendChild(msg);
+
+    const scoreBig = document.createElement('div');
+    scoreBig.className = 'score-big';
+    scoreBig.textContent = correctCount + ' / ' + questions.length;
+    card.appendChild(scoreBig);
+
+    const scoreLabel = document.createElement('div');
+    scoreLabel.className = 'score-label';
+    scoreLabel.textContent = 'questions correct (' + Math.round(pct * 100) + '%)';
+    card.appendChild(scoreLabel);
+
+    // Detail message
+    const detail = document.createElement('div');
+    detail.className = 'score-message';
+    if (correctCount === questions.length) {
+      detail.textContent = 'You have pointer arithmetic and the duality formula down. Move on to Lab 13.';
+    } else if (passed) {
+      detail.textContent = 'You crossed the threshold. Review the questions you missed below before the lab.';
+    } else {
+      detail.textContent = 'Re-read the precedence trio section in the lesson materials. The walkthrough widget is also there if you want to replay it.';
+    }
+    card.appendChild(detail);
+
+    // Completion code block — passing vs non-passing salt
+    const code = passed ? CS210_CODE_PASS : CS210_CODE_FAIL;
+    const codeBlock = document.createElement('div');
+    codeBlock.className = 'code-block' + (passed ? '' : ' fail');
+    const left = document.createElement('div');
+    left.className = 'code-left';
+    const codeLabel = document.createElement('div');
+    codeLabel.className = 'code-label';
+    codeLabel.textContent = passed ? 'Passing code' : 'Non-passing code';
+    left.appendChild(codeLabel);
+    const codeValue = document.createElement('div');
+    codeValue.className = 'code-value';
+    codeValue.textContent = code;
+    left.appendChild(codeValue);
+    codeBlock.appendChild(left);
+    const copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.className = 'copy-btn';
+    copyBtn.textContent = 'Copy';
+    copyBtn.addEventListener('click', () => {
+      const ok = cs210Copy(code);
+      copyBtn.textContent = ok ? 'Copied!' : 'Copy failed';
+      if (ok) copyBtn.classList.add('copied');
+      setTimeout(() => { copyBtn.textContent = 'Copy'; copyBtn.classList.remove('copied'); }, 1500);
+    });
+    codeBlock.appendChild(copyBtn);
+    card.appendChild(codeBlock);
+
+    const now = new Date();
+    const pad = (n) => n.toString().padStart(2, '0');
+    const ts = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate()) +
+               ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+
+    const footer = document.createElement('div');
+    footer.className = 'inline-code-footer';
+    footer.innerHTML = '<strong>' + escapeHtml(cadetName || '(name not set)') + '</strong> &middot; ' + ts +
+                       (passed ? ' &middot; passing' : ' &middot; non-passing');
+    card.appendChild(footer);
+
+    // Recap
+    const recap = document.createElement('div');
+    recap.className = 'recap';
+    const recapTitle = document.createElement('div');
+    recapTitle.className = 'recap-title';
+    recapTitle.textContent = 'Question recap';
+    recap.appendChild(recapTitle);
+
+    state.forEach((s, i) => {
+      const item = document.createElement('div');
+      item.className = 'recap-item';
+      const icon = document.createElement('div');
+      icon.className = 'recap-icon ' + (s.correct ? 'correct' : 'incorrect');
+      icon.textContent = s.correct ? '\u2713' : '\u2717';
+      item.appendChild(icon);
+      const body = document.createElement('div');
+      body.className = 'recap-body';
+      const q = questions[i];
+      const qLine = document.createElement('div');
+      qLine.className = 'recap-question';
+      qLine.innerHTML = '<strong>Q' + (i + 1) + '.</strong> ' + q.shortLabel;
+      body.appendChild(qLine);
+      if (!s.correct) {
+        const exp = document.createElement('div');
+        exp.className = 'recap-explanation';
+        exp.innerHTML = q.incorrectFeedback;
+        body.appendChild(exp);
+      }
+      item.appendChild(body);
+      recap.appendChild(item);
+    });
+    card.appendChild(recap);
+
+    const resetRow = document.createElement('div');
+    resetRow.className = 'reset-row';
+    const resetBtn = document.createElement('button');
+    resetBtn.type = 'button';
+    resetBtn.className = 'reset-btn';
+    resetBtn.textContent = 'Take the quiz again';
+    resetBtn.addEventListener('click', reset);
+    resetRow.appendChild(resetBtn);
+    card.appendChild(resetRow);
+
+    return card;
+  }
+
+  function render() {
+    renderDots();
+    cardArea.innerHTML = '';
+    if (currentIndex >= questions.length) {
+      cardArea.appendChild(buildScoreCard());
+    } else {
+      cardArea.appendChild(buildQuestionCard(currentIndex));
+    }
+  }
+
+  function reset() {
+    state.forEach(s => { s.answered = false; s.correct = false; s.choice = null; s.value = ''; });
+    currentIndex = 0;
+    render();
+  }
+
+  // Boot
+  render();
+})();
+</script>
+
+
+    </div>
+  </details>
+
+  <!-- ===================== 6. AFTER CLASS ===================== -->
+  <details id="after-class" style="margin-bottom: 24px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      6. After Class
+    </summary>
+    <div style="padding: 18px 22px;">
+      <ul style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Finish Lab 13 if you did not complete it in class. Submit through GitHub Classroom before Lesson 14.</li>
+        <li style="margin-bottom: 6px;">Read Beej-C Chapter 5 (review) and Chapter 4 (review) for Lesson 14.</li>
+        <li style="margin-bottom: 6px;">Replay the walkthrough in free mode. Try declaring a <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">char *</code> over a different array and see how the byte steps change.</li>
+        <li style="margin-bottom: 0;">Heads up: Quiz 5 at Lesson 14 covers Lesson 12 (Pointers Introduction). Quiz 6 at Lesson 16 covers pointer arithmetic and pass-by-pointer.</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== HELP NOTE ===================== -->
+  <div style="background: #F5F7FA; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 3px; font-size: 13.5px; color: #4A5568;">
+    <strong style="color: #00205B;">Need help?</strong> Schedule EI with your instructor. Bring specific code or specific screenshots, and the exact error message or output you do not understand. Specific questions get unstuck quickly.
+  </div>
+
+</div>

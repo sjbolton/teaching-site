@@ -1,0 +1,3334 @@
+<!-- ============================================================
+     CS210 — Lesson 7
+     Make and the Build Process
+     Self-contained: all CSS inline. Native <details> for collapsing.
+     Two widgets embedded inline in section 5:
+       - Makefile walkthrough
+       - Error-matching self-check
+     Paste into Blackboard Ultra via Document → Add HTML block.
+     ============================================================ -->
+
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 980px; margin: 0 auto; line-height: 1.6;">
+
+  <!-- ===================== LIGHT HEADER ===================== -->
+  <div style="border-left: 5px solid #003087; padding: 8px 0 8px 18px; margin-bottom: 24px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 2px;">CS210 &middot; Block 1 &middot; Lesson 7</div>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 600; color: #00205B;">Make and the Build Process</h1>
+    <div style="font-size: 14px; color: #4A5568; margin-top: 4px;">Multi-file projects &middot; #include with quotes &middot; The four phases of compilation &middot; Makefiles &middot; Targets, dependencies, recipes &middot; Variables &middot; Incremental rebuilds</div>
+  </div>
+
+  <!-- ===================== AT A GLANCE ===================== -->
+  <div style="background: #F5F7FA; border-left: 4px solid #B5B7BA; padding: 14px 18px; margin-bottom: 22px; font-size: 14px;">
+    <strong style="color: #00205B;">At a glance:</strong> This is your first multi-file project. You learn how a C program built from several source files turns into one executable, why you would write a Makefile to automate the process, and how to write one. The hands-on practice happens through the Makefile walkthrough and the error-matching self-check in Section 5; the lab applies it to a small project you extend with a new function.
+  </div>
+
+  <!-- ===================== TABLE OF CONTENTS ===================== -->
+  <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 20px; margin-bottom: 24px; border-radius: 3px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Contents</div>
+    <ol style="margin: 0; padding-left: 22px; font-size: 14px;">
+      <li style="margin-bottom: 4px;"><a href="#objectives" style="color: #003087; text-decoration: none;">Lesson Objectives</a></li>
+      <li style="margin-bottom: 4px;"><a href="#readings" style="color: #003087; text-decoration: none;">Assigned Readings</a></li>
+      <li style="margin-bottom: 4px;"><a href="#pre-class" style="color: #003087; text-decoration: none;">Pre-Class Work</a></li>
+      <li style="margin-bottom: 4px;"><a href="#materials" style="color: #003087; text-decoration: none;">Lesson Materials and Overview</a></li>
+      <li style="margin-bottom: 4px;"><a href="#in-class" style="color: #003087; text-decoration: none;">In-Class Work</a></li>
+      <li style="margin-bottom: 0;"><a href="#after-class" style="color: #003087; text-decoration: none;">After Class</a></li>
+    </ol>
+  </div>
+
+  <!-- ===================== 1. OBJECTIVES ===================== -->
+  <details id="objectives" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      1. Lesson Objectives
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 10px 0; font-style: italic;">By the end of this lesson, cadets will be able to:</p>
+      <ol style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Describe the four phases of C compilation (preprocess, compile, assemble, link). <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+        <li style="margin-bottom: 6px;">Use <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">#include</code> with a project header file to access declarations from another translation unit. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+        <li style="margin-bottom: 6px;">Write a basic Makefile with targets, dependencies, and recipes. <span style="color: #6B7280; font-size: 12px;">(Outcome 7)</span></li>
+        <li style="margin-bottom: 6px;">Use Make variables to manage compiler flags and source files. <span style="color: #6B7280; font-size: 12px;">(Outcome 7)</span></li>
+        <li style="margin-bottom: 0;">Use <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">make</code> to build a multi-file C program from provided source files. <span style="color: #6B7280; font-size: 12px;">(Outcome 7)</span></li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 2. READINGS ===================== -->
+  <details id="readings" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      2. Assigned Readings
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 12px 0;">Complete before class. The MTBE sections introduce Makefile syntax; you will write one in the walkthrough.</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <thead>
+          <tr style="background: #E8EDF5; color: #00205B;">
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 130px;">Source</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9;">Sections</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 220px;">Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;"><a href="https://makefiletutorial.com/" style="color: #003087; text-decoration: underline;">MTBE</a></td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Getting Started through Variables</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">The syntax of targets, dependencies, recipes, and variables</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 9px 12px;"><a href="https://beej.us/guide/bgc/" style="color: #003087; text-decoration: underline;">Beej-C</a></td>
+            <td style="padding: 9px 12px;">Chapter 4 review (Functions, prototypes)</td>
+            <td style="padding: 9px 12px; color: #4A5568;">Optional. Refresh prototypes; they appear in this lesson's headers.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <!-- ===================== 3. PRE-CLASS WORK ===================== -->
+  <details id="pre-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      3. Pre-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 18px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #6B5300; font-size: 14px; margin-bottom: 4px;">Do this first</div>
+        <div style="font-size: 14px; color: #5A4B00;">Plan on 30 to 45 minutes. The reading is short; the bigger pre-class job is taking Quiz 2 in Blackboard, which covers Lessons 3 through 6 and is due before class today.</div>
+      </div>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 0 0 10px 0;">Pre-Class Checklist</h3>
+
+      <!-- Step 1: Reading -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">1</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Read the MTBE sections (Getting Started through Variables)</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">Focus on the vocabulary; you will write Makefile rules during class. Pay attention to:</div>
+            <ul style="font-size: 13.5px; margin: 0 0 6px 0; padding-left: 20px;">
+              <li style="margin-bottom: 3px;">Targets, prerequisites, and recipes (the three parts of a rule)</li>
+              <li style="margin-bottom: 3px;">Why recipe lines must begin with a literal TAB character</li>
+              <li style="margin-bottom: 3px;">How <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">make</code> uses file timestamps to decide what to rebuild</li>
+              <li style="margin-bottom: 0;">Variables like <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">CC</code> and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">CFLAGS</code></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Quiz 2 -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">2</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Take Quiz 2 in Blackboard</div>
+            <div style="font-size: 14px;">Covers Lessons 3 through 6: operators, standard libraries, conditionals, loops, and functions. Due before class. This is separate from the Lesson 7 reflection you will take after class.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Verify toolchain -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 8px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">3</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Verify your toolchain still works</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">Compile and run any small C file you already have. If gcc complains or your terminal does not behave, fix it before class. The lab today builds a project; toolchain issues will block you.</div>
+            <div style="font-size: 13px; color: #00205B; font-weight: 600; margin-bottom: 4px;">Run:</div>
+            <div style="background: #1E2A3A; color: #E8EDF5; padding: 10px 14px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.5;">
+              <span style="color: #7FB3D5;">$</span> which gcc &amp;&amp; gcc --version | head -1<br>
+              <span style="color: #7FB3D5;">$</span> which make &amp;&amp; make --version | head -1
+            </div>
+            <div style="font-size: 13.5px; color: #4A5568; margin-top: 8px;">If either is missing or shows an error, schedule EI before class.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ===================== 4. LESSON MATERIALS AND OVERVIEW ===================== -->
+  <details id="materials" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      4. Lesson Materials and Overview
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 18px 0;">This lesson sits on top of everything from Lessons 1 through 6, but the topic is new: how a real C project is built. The reference material below covers the concepts you will see in lecture and use in the Makefile walkthrough.</p>
+
+      <!-- Subsection navigation -->
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 18px; margin-bottom: 22px; border-radius: 3px;">
+        <div style="font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">Jump to</div>
+        <div style="font-size: 13.5px;">
+          <a href="#slides" style="color: #003087; text-decoration: none; margin-right: 14px;">Slides</a>
+          <a href="#multifile" style="color: #003087; text-decoration: none; margin-right: 14px;">Multi-file programs</a>
+          <a href="#phases" style="color: #003087; text-decoration: none; margin-right: 14px;">The four phases</a>
+          <a href="#makesyntax" style="color: #003087; text-decoration: none; margin-right: 14px;">Makefile syntax</a>
+          <a href="#variables" style="color: #003087; text-decoration: none; margin-right: 14px;">Variables</a>
+          <a href="#incremental" style="color: #003087; text-decoration: none; margin-right: 14px;">Incremental rebuilds</a>
+          <a href="#style" style="color: #003087; text-decoration: none;">Code style and tooling</a>
+        </div>
+      </div>
+
+      <!-- Slides -->
+      <h3 id="slides" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0; scroll-margin-top: 16px;">Slides</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">The Lesson 7 deck walks through multi-file programs, the four phases of compilation, Makefile syntax, variables, and the incremental rebuild story. The walkthrough in Section 5 is where you practice writing one.</p>
+
+      <!-- =========================================================
+           EDIT ME: Lesson 7 slide deck link
+           Replace href="#" below with the SharePoint share URL once the
+           deck is published. Leave target="_blank" and rel="noopener".
+           ========================================================= -->
+      <p style="margin: 0 0 18px 0;">
+        <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 10px 20px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 14px;">Open Lesson 7 slides &rarr;</a>
+      </p>
+
+      <!-- Multi-file -->
+      <h3 id="multifile" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Multi-file C programs</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Up to now you have written one <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">.c</code> file at a time. Real C projects are not one file. They split into many. The reasons are practical: a file with thousands of lines is hard to read; functions that belong together belong in their own file; teams of cadets (or engineers) cannot all edit the same file at once.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">When code is split across files, three pieces of vocabulary appear.</p>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 14px;">
+        <thead>
+          <tr style="background: #00205B; color: #ffffff;">
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 160px;">Piece</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600;">What it does</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">.c file (source)</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Contains function <em>definitions</em> &mdash; the actual code that runs.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">.h file (header)</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Contains function <em>declarations</em> (prototypes) so other files can call those functions.</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; font-family: Consolas, monospace; font-size: 13px;">.o file (object)</td>
+            <td style="padding: 8px 12px;">The compiled output of one <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">.c</code> file. Not yet a runnable program; the linker glues several of them together.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">A typical file pair looks like this. <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">greet.h</code> declares what <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">greet.c</code> provides:</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #6B7280;">// greet.h &mdash; the declaration</span><br>
+        <span style="color: #569CD6;">const char</span> *make_greeting(<span style="color: #569CD6;">const char</span> *name);
+      </div>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #6B7280;">// greet.c &mdash; the definition</span><br>
+        #include <span style="color: #CE9178;">"greet.h"</span><br>
+        <br>
+        <span style="color: #569CD6;">const char</span> *make_greeting(<span style="color: #569CD6;">const char</span> *name) {<br>
+        &nbsp;&nbsp;<span style="color: #C586C0;">return</span> <span style="color: #CE9178;">"Hello, friend!"</span>;<br>
+        }
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">When another file wants to call <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">make_greeting</code>, it includes the header:</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #6B7280;">// main.c</span><br>
+        #include <span style="color: #6B7280;">&lt;stdio.h&gt;</span>&nbsp;&nbsp;&nbsp;<span style="color: #6B7280;">// library header &mdash; angle brackets</span><br>
+        #include <span style="color: #CE9178;">"greet.h"</span>&nbsp;<span style="color: #6B7280;">// project header &mdash; quotes</span><br>
+        <br>
+        <span style="color: #569CD6;">int</span> main(<span style="color: #569CD6;">void</span>) {<br>
+        &nbsp;&nbsp;printf(<span style="color: #CE9178;">"%s\n"</span>, make_greeting(<span style="color: #CE9178;">"cadet"</span>));<br>
+        &nbsp;&nbsp;<span style="color: #C586C0;">return</span> <span style="color: #B5CEA8;">0</span>;<br>
+        }
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><strong style="color: #00205B;">The include-form rule.</strong> Quotes for project headers (search the source directory first), angle brackets for library headers (search system include paths). Mixing these up gives you <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">No such file or directory</code> errors.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">Lesson 20 will revisit multi-file design properly: include guards, what belongs in which file, the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">static</code> keyword for file scope. For now the goal is to <em>use</em> a multi-file project well enough to build it with Make.</p>
+
+      <!-- Four phases -->
+      <h3 id="phases" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">The four phases of C compilation</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">When you type <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">gcc hello.c -o hello</code>, gcc actually runs four steps under the hood. Knowing the names helps you read error messages.</p>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 14px;">
+        <thead>
+          <tr style="background: #00205B; color: #ffffff;">
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 140px;">Phase</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 150px;">Input &rarr; Output</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600;">What happens</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-weight: 600; color: #00205B;">Preprocess</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 12.5px;">.c &rarr; .i</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">#include</code> directives are replaced with the contents of header files. Macros expand.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-weight: 600; color: #00205B;">Compile</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 12.5px;">.i &rarr; .s</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">C source becomes assembly language for your CPU. Most compile <em>errors</em> happen here (syntax, type mismatches).</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-weight: 600; color: #00205B;">Assemble</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 12.5px;">.s &rarr; .o</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Assembly becomes machine code in an object file. Object files cannot run on their own; they are puzzle pieces.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; font-weight: 600; color: #00205B;">Link</td>
+            <td style="padding: 8px 12px; font-family: Consolas, monospace; font-size: 12.5px;">.o files &rarr; exe</td>
+            <td style="padding: 8px 12px;">One or more object files plus standard libraries get combined into an executable. <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">undefined reference</code> errors happen here.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><strong style="color: #00205B;">Why this matters for reading errors.</strong> If gcc says <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">expected ';' before</code> something, that is a compile error. If gcc says <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">undefined reference to 'foo'</code>, that is a linker error. They have different causes and different fixes. The error-matching self-check in Section 5 trains you to tell them apart.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">The <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">-c</code> flag tells gcc to stop after the assemble phase, producing a <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">.o</code> file. Without <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">-c</code>, gcc does the whole pipeline including linking, which is why a single <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">gcc hello.c</code> can produce a runnable program directly.</p>
+
+      <!-- Makefile syntax -->
+      <h3 id="makesyntax" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Makefile syntax</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">A Makefile is a file named exactly <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">Makefile</code> (capital M, no extension) that lives in your project directory. It contains <em>rules</em>. Each rule has three parts.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #DCDCAA;">target</span>: <span style="color: #9CDCFE;">prerequisite1 prerequisite2</span><br>
+        <span style="color: #B5BEC8;">&#x2192;TAB&#x2190;</span><span style="color: #7FD17F;">recipe to build the target</span>
+      </div>
+
+      <ul style="font-size: 14px; margin: 0 0 12px 0; padding-left: 22px;">
+        <li style="margin-bottom: 4px;"><strong style="color: #00205B;">Target</strong> &mdash; the file you want to build (e.g., <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">greet.o</code> or <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">program</code>).</li>
+        <li style="margin-bottom: 4px;"><strong style="color: #00205B;">Prerequisites</strong> (also called dependencies) &mdash; the files the target depends on. If any of these are newer than the target, the recipe runs.</li>
+        <li style="margin-bottom: 0;"><strong style="color: #00205B;">Recipe</strong> &mdash; the shell command(s) that build the target. <em>Recipe lines must start with a literal TAB character.</em> Spaces will not work. This is the most famous Makefile gotcha.</li>
+      </ul>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">A complete (tiny) Makefile that builds <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">program</code> from <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">hello.c</code>:</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        program: hello.c<br>
+        <span style="color: #B5BEC8;">&#x2192;</span>gcc -Wall -Werror hello.c -o program
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">Run <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">make</code> with no arguments and it builds the first target listed. Run <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">make clean</code> to invoke a target named <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">clean</code>, which conventionally removes generated files.</p>
+
+      <!-- Variables -->
+      <h3 id="variables" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Variables: CC and CFLAGS</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Two variables appear in almost every C Makefile. They are conventional, not built into Make itself, so you have to define them yourself.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        CC = gcc<br>
+        CFLAGS = -Wall -Werror<br>
+        <br>
+        program: hello.c<br>
+        <span style="color: #B5BEC8;">&#x2192;</span>$(CC) $(CFLAGS) hello.c -o program
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><strong style="color: #00205B;">CC</strong> is the C compiler to use. <strong style="color: #00205B;">CFLAGS</strong> is the list of flags to pass to it. To use the variable inside a recipe, write <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">$(CC)</code> or <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">$(CFLAGS)</code> (the dollar sign and parentheses are required).</p>
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 18px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #6B5300; font-size: 14px; margin-bottom: 4px;">Course standard</div>
+        <div style="font-size: 14px; color: #5A4B00;">In CS210, every <code style="background: rgba(255,255,255,0.7); padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">CFLAGS</code> must include <code style="background: rgba(255,255,255,0.7); padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">-Wall</code> and <code style="background: rgba(255,255,255,0.7); padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">-Werror</code>. <code style="background: rgba(255,255,255,0.7); padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">-Wall</code> turns on warnings; <code style="background: rgba(255,255,255,0.7); padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">-Werror</code> promotes warnings to errors so they cannot be ignored. The lab autograder checks for both.</div>
+      </div>
+
+      <!-- Incremental rebuilds -->
+      <h3 id="incremental" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Why Make exists: incremental rebuilds</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">A project with 6 source files needs at least 7 gcc commands to build from scratch (one compile per <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">.c</code>, one link). Doing that by hand every time you change one line is tedious and error-prone. Worse, most of the work is wasted: only the file you changed actually needs to recompile.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">make</code> uses file timestamps to figure out the minimum work. For each rule, if any prerequisite is newer than the target, the recipe runs. Otherwise it is skipped. Walk the rules in dependency order and you get the shortest possible rebuild.</p>
+
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 3px; margin-bottom: 14px;">
+        <div style="font-size: 13.5px; color: #00205B; font-weight: 600; margin-bottom: 6px;">From-scratch build of a 4-module project</div>
+        <div style="font-family: Consolas, monospace; font-size: 13px; color: #4A5568;">5 commands fire: 4 compiles + 1 link.</div>
+        <div style="font-size: 13.5px; color: #00205B; font-weight: 600; margin: 12px 0 6px 0;">Edit one <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">.c</code> file, run <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">make</code> again</div>
+        <div style="font-family: Consolas, monospace; font-size: 13px; color: #4A5568;">2 commands fire: 1 compile + 1 link.</div>
+        <div style="font-size: 13.5px; color: #00205B; font-weight: 600; margin: 12px 0 6px 0;">Edit a <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">.h</code> file used by 3 modules</div>
+        <div style="font-family: Consolas, monospace; font-size: 13px; color: #4A5568;">4 commands fire: 3 compiles (everyone that #included the header) + 1 link.</div>
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><strong style="color: #00205B;">Header dependencies matter.</strong> Make only knows about dependencies you list explicitly. If your rule says <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">main.o: main.c</code> but <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">main.c</code> #includes <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">mathy.h</code>, then changes to <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">mathy.h</code> will not trigger a rebuild of <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">main.o</code>. The result is a build that compiles fine but produces a broken executable, because <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">main.o</code> was generated from a stale view of <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">mathy.h</code>. List every header in every <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">.o</code> rule's prerequisites.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">All of this becomes concrete in the Makefile walkthrough in Section 5.</p>
+
+      <!-- Code style and tooling -->
+      <h3 id="style" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Code style and tooling</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">The DFCS C Programming Standard is the course style guide. You have been following it implicitly since Lesson 1 (comment header block, line length, naming, brace placement). Starting this lesson, the formatting rules from <strong style="color: #00205B;">Section 6 (Indentation, Delimiters, Whitespace)</strong> are enforced by tooling rather than by memory.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Two configuration files now ship with every CS210 lab template:</p>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 14px;">
+        <thead>
+          <tr style="background: #00205B; color: #ffffff;">
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 180px;">File</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600;">What it does</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">.clang-format</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Encodes the Section 6 rules: 4-space indentation, open brace on the same line as the statement, one space between operators and operands, 100-character line cap. Your editor reformats your code on save.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; font-family: Consolas, monospace; font-size: 13px;">.editorconfig</td>
+            <td style="padding: 8px 12px;">Universal editor settings: spaces (not tabs) in <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">.c</code> and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">.h</code> files, LF line endings, final newline at end of file. The Makefile gets tabs (Make needs them).</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Turn on <strong style="color: #00205B;">Format on Save</strong> in your editor and the formatter takes over. You will not lose points on Section 6 rules from this lesson forward.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">The <em>content</em> rules in the standard still apply: variable and function names (Section 5), no magic numbers or global variables or single-line ifs (Section 7), defensive programming (Section 8). No formatter can check those for you. See the Resources section for the full DFCS C Programming Standard.</p>
+
+    </div>
+  </details>
+
+  <!-- ===================== 5. IN-CLASS WORK ===================== -->
+  <details id="in-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      5. In-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 16px 0;">Three things to do in class. Use the checklist to track your progress.</p>
+
+      <ul style="list-style: none; padding: 0; margin: 0 0 24px 0; font-size: 14.5px;">
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Work through the Makefile walkthrough below.</strong>
+          <span style="color: #4A5568;">Ten guided tasks: build a 4-module project by hand, write a Makefile, refactor with variables, see incremental rebuilds. About 25 minutes.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Take the error-matching self-check.</strong>
+          <span style="color: #4A5568;">Five scenarios. For each, read the source and the error and pick the cause. Score 4 of 5 to earn the passing completion code. About 10 minutes.</span>
+        </li>
+        <li style="margin-bottom: 0; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Complete Lab 07: Make a Multi-File Project.</strong>
+          <span style="color: #4A5568;">Add one new function to a provided 4-module codebase, then write a Makefile that builds it. Auto-graded through GitHub Classroom.</span>
+          <!-- =========================================================
+               EDIT ME: Lab 07 GitHub Classroom assignment link
+               Replace href="#" with the classroom.github.com/a/... invite
+               URL once the assignment is published.
+               ========================================================= -->
+          <div style="margin-top: 8px; margin-left: 28px;">
+            <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 6px 14px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 13px;">Accept Lab 07 on GitHub Classroom &rarr;</a>
+          </div>
+        </li>
+      </ul>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 18px 0 10px 0;">Makefile Walkthrough</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Ten tasks across four sections. Start by compiling and linking a 4-module project by hand. Then write a Makefile that automates the build, refactor it with variables, and watch incremental rebuilds save work.</p>
+
+<!-- ============================================================
+     CS210 Lesson 7 - Makefile Walkthrough Widget
+     Template-aligned style. Native HTML/CSS + scoped JS.
+     Two-pane: simulated shell on the left, Makefile + dependency graph on right.
+     Paste as a block; runs anywhere the parent page allows <script>.
+     ============================================================ -->
+<style>
+.cs210-mkw * { box-sizing: border-box; }
+.cs210-mkw {
+  position: relative;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+}
+.cs210-mkw h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-mkw .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 22px;
+}
+.cs210-mkw .progress-bar {
+  background: #E5E7EB;
+  border-radius: 3px;
+  height: 8px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.cs210-mkw .progress-fill {
+  background: #003087;
+  height: 100%;
+  transition: width 0.3s ease;
+}
+.cs210-mkw .progress-label {
+  font-size: 12px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-mkw .section-header {
+  background: #E8EDF5;
+  color: #00205B;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.cs210-mkw .task-card {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  border-radius: 3px;
+}
+.cs210-mkw .task-card.complete {
+  background: #E6F4EA;
+  border-left-color: #2E7D32;
+}
+.cs210-mkw .task-label {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B5300;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.cs210-mkw .task-card.complete .task-label {
+  color: #1B5E20;
+}
+.cs210-mkw .task-text {
+  font-size: 15px;
+  color: #1a1a1a;
+}
+.cs210-mkw .task-text code {
+  background: #F0F2F5;
+  padding: 1px 6px;
+  border-radius: 2px;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13px;
+  color: #00205B;
+}
+.cs210-mkw .task-hint {
+  font-size: 12.5px;
+  color: #6B7280;
+  margin-top: 6px;
+  font-style: italic;
+  white-space: pre-wrap;
+}
+
+/* Two-pane area: shell left, Makefile/graph right */
+.cs210-mkw .panes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+@media (max-width: 760px) {
+  .cs210-mkw .panes { grid-template-columns: 1fr; }
+}
+.cs210-mkw .terminal {
+  background: #1E2A3A;
+  color: #E8EDF5;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  border-radius: 4px;
+  padding: 14px 18px;
+  min-height: 420px;
+  max-height: 480px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.cs210-mkw .terminal .prompt { color: #7FB3D5; }
+.cs210-mkw .terminal .typed { color: #FFFFFF; }
+.cs210-mkw .terminal .out { color: #B5BEC8; }
+.cs210-mkw .terminal .note { color: #F0B92C; }
+.cs210-mkw .terminal .err { color: #F47A7A; }
+.cs210-mkw .terminal .ok { color: #7FD17F; }
+.cs210-mkw .terminal .dim { color: #6B7280; }
+
+.cs210-mkw .right-pane {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  min-height: 420px;
+  max-height: 480px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.cs210-mkw .pane-tabs {
+  display: flex;
+  border-bottom: 1px solid #D0D5DD;
+  background: #F5F7FA;
+}
+.cs210-mkw .pane-tab {
+  flex: 1;
+  padding: 10px 12px;
+  font-size: 12px;
+  letter-spacing: 1.3px;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #6B7280;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  font-family: inherit;
+}
+.cs210-mkw .pane-tab.active {
+  color: #00205B;
+  border-bottom-color: #003087;
+  background: #ffffff;
+}
+.cs210-mkw .pane-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 16px;
+}
+
+/* Makefile view */
+.cs210-mkw .mkfile-empty {
+  color: #6B7280;
+  font-style: italic;
+  font-size: 13px;
+  text-align: center;
+  padding: 80px 10px;
+}
+.cs210-mkw .mkfile-content {
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #1a1a1a;
+}
+.cs210-mkw .mk-line {
+  display: flex;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.cs210-mkw .mk-lineno {
+  color: #B5BEC8;
+  width: 28px;
+  flex-shrink: 0;
+  text-align: right;
+  margin-right: 12px;
+  user-select: none;
+}
+.cs210-mkw .mk-text { flex: 1; min-width: 0; }
+.cs210-mkw .mk-target  { color: #00205B; font-weight: 600; }
+.cs210-mkw .mk-var     { color: #B86E00; font-weight: 600; }
+.cs210-mkw .mk-recipe  { color: #1B5E20; }
+.cs210-mkw .mk-comment { color: #6B7280; font-style: italic; }
+
+/* Dependency graph view */
+.cs210-mkw .graph-area {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr;
+  gap: 6px 12px;
+  align-items: center;
+  padding: 4px 0;
+}
+.cs210-mkw .graph-col-header {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #6B7280;
+  font-weight: 600;
+  text-align: center;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #E5E7EB;
+  margin-bottom: 2px;
+}
+.cs210-mkw .node {
+  background: #F8FAFC;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 11px;
+  color: #4A5568;
+  text-align: center;
+  margin-bottom: 3px;
+  position: relative;
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+.cs210-mkw .node.built {
+  background: #E6F4EA;
+  border-color: #2E7D32;
+  color: #1B5E20;
+}
+.cs210-mkw .node.stale {
+  background: #FFF8E1;
+  border-color: #F0B92C;
+  color: #6B5300;
+}
+.cs210-mkw .node.missing {
+  background: #ffffff;
+  border-style: dashed;
+  color: #B5BEC8;
+}
+@keyframes cs210-mkw-rebuild {
+  0%   { background: #FFE082; transform: scale(1.05); }
+  50%  { background: #FFE082; transform: scale(1.05); }
+  100% { background: #E6F4EA; transform: scale(1); }
+}
+.cs210-mkw .node.just-rebuilt {
+  animation: cs210-mkw-rebuild 1.2s ease;
+}
+.cs210-mkw .arrow {
+  text-align: center;
+  color: #B5BEC8;
+  font-size: 18px;
+  font-weight: 700;
+}
+.cs210-mkw .graph-legend {
+  display: flex;
+  gap: 14px;
+  margin-top: 12px;
+  font-size: 11px;
+  color: #6B7280;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.cs210-mkw .graph-legend .swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  margin-right: 4px;
+  vertical-align: middle;
+  border: 1px solid;
+}
+.cs210-mkw .graph-legend .sw-built   { background: #E6F4EA; border-color: #2E7D32; }
+.cs210-mkw .graph-legend .sw-stale   { background: #FFF8E1; border-color: #F0B92C; }
+.cs210-mkw .graph-legend .sw-missing { background: #ffffff; border-color: #B5BEC8; border-style: dashed; }
+
+.cs210-mkw .input-row {
+  display: flex;
+  background: #1E2A3A;
+  border-radius: 4px;
+  padding: 8px 14px;
+  margin-bottom: 8px;
+  border: 1px solid #003087;
+  align-items: flex-start;
+}
+.cs210-mkw .input-prompt {
+  color: #7FB3D5;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  margin-right: 8px;
+  padding-top: 4px;
+  white-space: nowrap;
+  user-select: none;
+}
+.cs210-mkw .input-row textarea {
+  flex: 1;
+  background: transparent;
+  color: #FFFFFF;
+  border: none;
+  outline: none;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  padding: 4px 0;
+  resize: none;
+  min-height: 22px;
+  line-height: 1.5;
+  white-space: pre;
+  overflow-x: auto;
+}
+.cs210-mkw .input-helper {
+  font-size: 11.5px;
+  color: #6B7280;
+  margin-bottom: 14px;
+  font-style: italic;
+}
+.cs210-mkw .controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.cs210-mkw .btn {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  padding: 6px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #00205B;
+  font-family: inherit;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.cs210-mkw .btn:hover { background: #F5F7FA; }
+.cs210-mkw .btn.primary {
+  background: #003087;
+  color: #ffffff;
+  border-color: #003087;
+}
+.cs210-mkw .btn.primary:hover { background: #00205B; }
+@keyframes cs210-mkw-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(240, 185, 44, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0); }
+}
+.cs210-mkw .btn.pulse {
+  background: #FFF8E1;
+  border-color: #F0B92C;
+  color: #6B5300;
+  font-weight: 600;
+  animation: cs210-mkw-pulse 1.5s infinite;
+}
+.cs210-mkw .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #4A5568;
+  margin-top: 12px;
+}
+.cs210-mkw .help-note strong { color: #00205B; }
+
+/* Name modal overlay — scoped to the widget container (position:absolute)
+   so it covers only this widget, not the viewport. Pairs with the
+   `position: relative` on .cs210-mkw above. */
+.cs210-mkw .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.cs210-mkw .name-modal {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-mkw .name-modal h2 {
+  color: #00205B;
+  font-size: 20px;
+  margin: 0 0 10px 0;
+}
+.cs210-mkw .name-modal p {
+  color: #4A5568;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+.cs210-mkw .name-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-mkw .name-modal input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-mkw .name-modal-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-mkw .name-modal-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-mkw .name-modal-btn:not(:disabled):hover {
+  background: #00205B;
+}
+/* Completion screen */
+.cs210-mkw .completion-screen {
+  background: #ffffff;
+  border: 2px solid #2E7D32;
+  border-radius: 6px;
+  padding: 24px 28px;
+  margin-top: 16px;
+}
+.cs210-mkw .completion-screen .cs-heading {
+  color: #1B5E20;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 6px 0;
+}
+.cs210-mkw .completion-screen .cs-subheading {
+  color: #4A5568;
+  font-size: 14px;
+  margin: 0 0 18px 0;
+}
+.cs210-mkw .completion-screen .cs-name-line {
+  font-size: 15px;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+}
+.cs210-mkw .completion-screen .cs-name-line strong {
+  color: #00205B;
+}
+.cs210-mkw .completion-screen .cs-code-block {
+  background: #F0F4FA;
+  border: 1px solid #003087;
+  border-radius: 4px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.cs210-mkw .completion-screen .cs-code-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #4A5568;
+  margin-bottom: 4px;
+}
+.cs210-mkw .completion-screen .cs-code-value {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 28px;
+  font-weight: 700;
+  color: #00205B;
+  letter-spacing: 3px;
+}
+.cs210-mkw .completion-screen .cs-copy-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-mkw .completion-screen .cs-copy-btn:hover {
+  background: #00205B;
+}
+.cs210-mkw .completion-screen .cs-copy-btn.copied {
+  background: #2E7D32;
+}
+.cs210-mkw .completion-screen .cs-timestamp {
+  font-size: 13px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-mkw .completion-screen .cs-reminder {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 14px;
+  color: #6B5300;
+  line-height: 1.5;
+}
+.cs210-mkw .completion-screen .cs-reminder strong {
+  color: #4A3A00;
+}
+</style>
+
+<div class="cs210-mkw">
+
+<div class="name-modal-backdrop" id="mkw-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Lesson 7 reflection.</p>
+    <input type="text" id="mkw-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="mkw-cadet-name-btn" disabled>Start the walkthrough</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 7 &middot; Makefile Walkthrough</h1>
+<div class="subtitle">Build a multi-file C project by hand, then let Make do the work. Type one shell command or Makefile rule per turn. The shell on the left shows what Make does; the right pane shows your Makefile and the dependency graph.</div>
+
+<div class="progress-bar"><div class="progress-fill" id="mkw-progress-fill" style="width: 0%;"></div></div>
+<div class="progress-label" id="mkw-progress-label">Task 0 of 10</div>
+
+<div class="section-header" id="mkw-section-header">Section 1: Manual compilation</div>
+
+<div class="task-card" id="mkw-task-card">
+  <div class="task-label" id="mkw-task-label">Current task</div>
+  <div class="task-text" id="mkw-task-text">Loading...</div>
+  <div class="task-hint" id="mkw-task-hint"></div>
+</div>
+
+<div class="panes">
+  <div class="terminal" id="mkw-terminal"></div>
+  <div class="right-pane">
+    <div class="pane-tabs">
+      <button class="pane-tab active" data-tab="mkfile" id="mkw-tab-mkfile">Makefile</button>
+      <button class="pane-tab" data-tab="graph" id="mkw-tab-graph">Dependencies</button>
+    </div>
+    <div class="pane-body" id="mkw-pane-body">
+      <div class="mkfile-empty" id="mkw-pane-empty">Your Makefile will appear here as you build it.</div>
+    </div>
+  </div>
+</div>
+
+<div class="input-row">
+  <span class="input-prompt">$</span>
+  <textarea id="mkw-cli-input" autocomplete="off" spellcheck="false" rows="1" placeholder="type the command from the task above"></textarea>
+</div>
+<div class="input-helper">Enter submits. Shift+Enter inserts a newline for multi-line Makefile rules (target line, then TAB and recipe).</div>
+
+<div class="controls">
+  <button class="btn" id="mkw-hint-btn">Show hint</button>
+  <button class="btn" id="mkw-reset-btn">Reset</button>
+  <button class="btn" id="mkw-mode-btn">Switch to free mode</button>
+</div>
+
+<div class="help-note">
+  <strong>How this works:</strong> The shell is simulated. It understands a small set of commands (gcc, make, touch, ls, cat, rm, ./program) and your Makefile rules. Only the expected input advances the walkthrough so the project state stays predictable. Mistype twice and the hint button will pulse. After the walkthrough completes, free mode unlocks so you can experiment.
+</div>
+
+<div id="mkw-completion-area"></div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-mkw');
+  if (!root) return;
+
+  // ============================================================
+  // CS210 widget completion utilities (shared pattern from L2 cmem)
+  // ============================================================
+  const CS210_SALT = "lesson07_makefile_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  // Name-entry modal. Scoped to the widget container (CSS uses
+  // position:absolute on the backdrop, position:relative on the widget root).
+  // Each widget owns its own modal; clicking Start dismisses only this widget's
+  // modal. Sibling widgets coordinate via the localStorage pre-fill, so the
+  // second modal a cadet sees on the page already has their name filled in.
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#mkw-name-modal-backdrop');
+    const input = root.querySelector('#mkw-cadet-name-input');
+    const btn = root.querySelector('#mkw-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored) input.value = stored;
+    } catch (e) { /* localStorage may be disabled */ }
+
+    function updateBtn() { btn.disabled = input.value.trim().length < 2; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+
+    btn.addEventListener('click', function() {
+      const name = input.value.trim();
+      if (name.length < 2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      window.dispatchEvent(new CustomEvent('cs210CadetNameSet', { detail: name }));
+      backdrop.style.display = 'none';
+      const cli = root.querySelector('#mkw-cli-input');
+      if (cli) cli.focus();
+    });
+
+    setTimeout(function() { input.focus(); }, 50);
+  })();
+
+  function cs210RenderCompletion(area) {
+    if (!area) return;
+    if (root.querySelector('#cs210-mkw-completion-overlay')) return;
+    const now = new Date();
+    const ts = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const safeName = (cs210CadetName || 'Cadet').replace(/[<>&"']/g, function(c) {
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+    area.innerHTML =
+      '<div class="completion-screen">' +
+        '<div class="cs-heading">Walkthrough complete</div>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value">' + CS210_CODE + '</div></div>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+      '</div>';
+    const overlay = document.createElement('div');
+    overlay.id = 'cs210-mkw-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.style.background = 'rgba(27, 94, 32, 0.55)';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">Walkthrough complete</h2>' +
+        '<p>Take a screenshot of this box. You will need the code and a visual of this screen for the Lesson 7 reflection.</p>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value" id="cs-mkw-code-value">' + CS210_CODE + '</div></div>' +
+          '<button class="cs-copy-btn" id="cs-mkw-copy-btn" type="button">Copy code</button>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+        '<div class="cs-reminder" style="margin-bottom:14px;">' +
+          '<strong>Next step:</strong> Open the Lesson 7 reflection in Blackboard. Enter this code, answer the reflection prompt, and attach your screenshot.' +
+        '</div>' +
+        '<button class="name-modal-btn" id="cs-mkw-overlay-close" type="button" style="background:#2E7D32;">Got it &mdash; close this</button>' +
+      '</div>';
+    root.appendChild(overlay);
+    const closeBtn = overlay.querySelector('#cs-mkw-overlay-close');
+    if (closeBtn) closeBtn.addEventListener('click', function() { overlay.style.display = 'none'; });
+    const copyBtn = overlay.querySelector('#cs-mkw-copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function() {
+        const text = CS210_CODE;
+        const ok = function() {
+          copyBtn.textContent = 'Copied';
+          copyBtn.classList.add('copied');
+          setTimeout(function() {
+            copyBtn.textContent = 'Copy code';
+            copyBtn.classList.remove('copied');
+          }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(ok, function() {
+            cs210FallbackCopy(text); ok();
+          });
+        } else {
+          cs210FallbackCopy(text); ok();
+        }
+      });
+    }
+  }
+  function cs210FallbackCopy(text) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e) { /* nothing else to do */ }
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" })[c]);
+  }
+  function escapeRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+  // ============================================================
+  // Simulated file system
+  // ============================================================
+  // Each entry: { content (string), mtime (logical timestamp) }
+  // We use a logical clock that increments on each modification.
+  let clock = 0;
+  function tick() { return ++clock; }
+  const fs = {};
+  function fsExists(name) { return Object.prototype.hasOwnProperty.call(fs, name); }
+  function fsMtime(name) { return fsExists(name) ? fs[name].mtime : -1; }
+  function fsSetContent(name, content) { fs[name] = { content: content, mtime: tick() }; }
+  function fsTouch(name) {
+    if (!fsExists(name)) { fs[name] = { content: '', mtime: tick() }; }
+    else { fs[name].mtime = tick(); }
+  }
+  function fsRemove(name) { delete fs[name]; }
+  function fsList() {
+    return Object.keys(fs).sort();
+  }
+
+  // Initial project contents (only filenames + truthy content matter for the simulator).
+  // Real cadets see these files in the lab; the widget shows them as present from the start.
+  const INITIAL_SOURCES = {
+    'main.c':         '/* main: calls one function from each module */',
+    'greet.h':        '/* declarations for greet */',
+    'greet.c':        '/* greeting implementation */',
+    'mathy.h':        '/* declarations for mathy */',
+    'mathy.c':        '/* arithmetic implementation */',
+    'randhelper.h':   '/* declarations for randhelper */',
+    'randhelper.c':   '/* random dice implementation */',
+  };
+  // Static dependencies (what each .c file #includes from this project's own headers).
+  // The widget uses this to figure out which .o files become stale when a header is touched.
+  const SOURCE_INCLUDES = {
+    'main.c': ['greet.h', 'mathy.h', 'randhelper.h'],
+    'greet.c': ['greet.h'],
+    'mathy.c': ['mathy.h'],
+    'randhelper.c': ['randhelper.h'],
+  };
+  const ALL_C_FILES = ['main.c', 'greet.c', 'mathy.c', 'randhelper.c'];
+  const ALL_O_FILES = ['main.o', 'greet.o', 'mathy.o', 'randhelper.o'];
+  const EXECUTABLE = 'program';
+
+  // ============================================================
+  // Makefile model
+  // ============================================================
+  // rules: array of { target, deps: [string], recipe: string } in insertion order.
+  // variables: { name: value } for CC, CFLAGS, etc.
+  const makefile = {
+    variables: {},   // e.g., { CC: 'gcc', CFLAGS: '-Wall -Werror' }
+    rules: [],       // [{ target, deps, recipe }]
+    raw: [],         // raw lines in user-entered order, for display in the Makefile pane
+  };
+  function mkReset() {
+    makefile.variables = {};
+    makefile.rules = [];
+    makefile.raw = [];
+  }
+  function mkAddVariable(name, value) {
+    makefile.variables[name] = value;
+    makefile.raw.push({ kind: 'var', text: name + ' = ' + value });
+  }
+  function mkAddRule(target, deps, recipe) {
+    makefile.rules.push({ target: target, deps: deps.slice(), recipe: recipe });
+    // raw form: blank line if any prior rules, then target line, then \trecipe
+    if (makefile.raw.length > 0 && makefile.raw[makefile.raw.length - 1].kind !== 'blank') {
+      makefile.raw.push({ kind: 'blank', text: '' });
+    }
+    makefile.raw.push({ kind: 'target', text: target + ': ' + deps.join(' ') });
+    makefile.raw.push({ kind: 'recipe', text: '\t' + recipe });
+  }
+  function mkFindRule(target) {
+    return makefile.rules.find(function(r) { return r.target === target; });
+  }
+  function mkExpandVars(s) {
+    // Expand $(NAME) and ${NAME} from makefile.variables
+    return s.replace(/\$\(([A-Za-z_][A-Za-z0-9_]*)\)|\$\{([A-Za-z_][A-Za-z0-9_]*)\}/g, function(_, a, b) {
+      const name = a || b;
+      return Object.prototype.hasOwnProperty.call(makefile.variables, name) ? makefile.variables[name] : '';
+    });
+  }
+
+  // ============================================================
+  // Make simulator
+  // ============================================================
+  // simulate_make: returns { commands: [string], rebuilt: [target], errors: [string], nothingToDo: bool }
+  // Logic: for each target reachable from the goal, if any dep mtime > target mtime (or target missing), rebuild.
+  function simulateMake(goal) {
+    if (!goal) goal = makefile.rules.length > 0 ? makefile.rules[0].target : null;
+    const result = { commands: [], rebuilt: [], errors: [], nothingToDo: false };
+    if (!goal) { result.errors.push("No targets defined in Makefile."); return result; }
+    const visited = {};
+    function build(target) {
+      if (visited[target]) return;
+      visited[target] = true;
+      const rule = mkFindRule(target);
+      if (!rule) {
+        // If it's a source file that exists, no rule needed.
+        if (fsExists(target)) return;
+        result.errors.push("make: *** No rule to make target '" + target + "'.  Stop.");
+        return;
+      }
+      // Build dependencies first
+      for (const dep of rule.deps) build(dep);
+      if (result.errors.length > 0) return;
+      // Compute whether target needs to be rebuilt
+      const targetMtime = fsMtime(target);
+      let mustRebuild = !fsExists(target);
+      let newestDep = -1;
+      for (const dep of rule.deps) {
+        const m = fsMtime(dep);
+        if (m === -1) {
+          result.errors.push("make: *** No rule to make target '" + dep + "', needed by '" + target + "'.  Stop.");
+          return;
+        }
+        if (m > newestDep) newestDep = m;
+        if (m > targetMtime) mustRebuild = true;
+      }
+      if (mustRebuild) {
+        const cmd = mkExpandVars(rule.recipe);
+        result.commands.push(cmd);
+        result.rebuilt.push(target);
+        // Simulate: producing the target file. Its content is irrelevant for the model.
+        fsSetContent(target, '/* built */');
+      }
+    }
+    build(goal);
+    if (result.errors.length === 0 && result.commands.length === 0) {
+      result.nothingToDo = true;
+    }
+    return result;
+  }
+
+  // ============================================================
+  // Terminal output
+  // ============================================================
+  const terminalEl = root.querySelector('#mkw-terminal');
+  function termWrite(text, cls) {
+    const span = document.createElement('span');
+    if (cls) span.className = cls;
+    span.textContent = text;
+    terminalEl.appendChild(span);
+  }
+  function termLine(text, cls) {
+    termWrite(text, cls);
+    terminalEl.appendChild(document.createElement('br'));
+    terminalEl.scrollTop = terminalEl.scrollHeight;
+  }
+  function termBlank() { terminalEl.appendChild(document.createElement('br')); }
+  function echoCommand(cmd) {
+    // Multi-line input: prefix only the first line with "$ "; subsequent lines indent with "  "
+    const lines = cmd.split('\n');
+    lines.forEach(function(ln, i) {
+      if (i === 0) { termWrite('$ ', 'prompt'); termLine(ln, 'typed'); }
+      else         { termWrite('  ', 'prompt'); termLine(ln, 'typed'); }
+    });
+  }
+
+  // ============================================================
+  // Right pane: Makefile view + dependency graph
+  // ============================================================
+  let activeTab = 'mkfile';
+  const paneBody = root.querySelector('#mkw-pane-body');
+
+  function renderRightPane() {
+    if (activeTab === 'mkfile') renderMakefilePane();
+    else renderGraphPane();
+  }
+
+  function renderMakefilePane() {
+    if (makefile.raw.length === 0) {
+      paneBody.innerHTML = '<div class="mkfile-empty">Your Makefile will appear here as you build it.<br><br>No rules yet.</div>';
+      return;
+    }
+    let html = '<div class="mkfile-content">';
+    makefile.raw.forEach(function(ln, i) {
+      const n = i + 1;
+      let cls = '';
+      if (ln.kind === 'var')    cls = 'mk-var';
+      if (ln.kind === 'target') cls = 'mk-target';
+      if (ln.kind === 'recipe') cls = 'mk-recipe';
+      if (ln.kind === 'comment')cls = 'mk-comment';
+      html += '<div class="mk-line"><span class="mk-lineno">' + n + '</span>' +
+              '<span class="mk-text ' + cls + '">' + escapeHtml(ln.text) + '</span></div>';
+    });
+    html += '</div>';
+    paneBody.innerHTML = html;
+  }
+
+  function renderGraphPane() {
+    // 3 columns: sources, objects, executable
+    // Highlight nodes based on existence and freshness vs deps
+    const sourceMtimes = ALL_C_FILES.concat(['greet.h', 'mathy.h', 'randhelper.h']).map(function(f) {
+      return { name: f, mtime: fsMtime(f), present: fsExists(f) };
+    });
+    function nodeStateFor(target) {
+      if (!fsExists(target)) return 'missing';
+      const rule = mkFindRule(target);
+      if (!rule) return 'built';
+      for (const dep of rule.deps) {
+        if (fsMtime(dep) > fsMtime(target)) return 'stale';
+      }
+      return 'built';
+    }
+    function nodeHtml(name, state, justRebuilt) {
+      const cls = 'node ' + state + (justRebuilt ? ' just-rebuilt' : '');
+      return '<div class="' + cls + '">' + escapeHtml(name) + '</div>';
+    }
+    // Group sources by their corresponding .o for visual alignment
+    const groups = [
+      { source: 'main.c',       headers: ['greet.h', 'mathy.h', 'randhelper.h'], obj: 'main.o' },
+      { source: 'greet.c',      headers: ['greet.h'],       obj: 'greet.o' },
+      { source: 'mathy.c',      headers: ['mathy.h'],       obj: 'mathy.o' },
+      { source: 'randhelper.c', headers: ['randhelper.h'],  obj: 'randhelper.o' },
+    ];
+    let html = '<div class="graph-area">';
+    html += '<div class="graph-col-header">Sources</div>';
+    html += '<div></div>';
+    html += '<div class="graph-col-header">Objects</div>';
+    html += '<div></div>';
+    html += '<div class="graph-col-header">Executable</div>';
+    groups.forEach(function(g, idx) {
+      // Sources cell: source .c plus its headers
+      let sourcesHtml = '';
+      sourcesHtml += nodeHtml(g.source, fsExists(g.source) ? 'built' : 'missing', false);
+      g.headers.forEach(function(h) {
+        sourcesHtml += nodeHtml(h, fsExists(h) ? 'built' : 'missing', false);
+      });
+      html += '<div>' + sourcesHtml + '</div>';
+      html += '<div class="arrow">&rarr;</div>';
+      const objState = nodeStateFor(g.obj);
+      const objJust = lastRebuilt.has(g.obj);
+      html += '<div>' + nodeHtml(g.obj, objState, objJust) + '</div>';
+      if (idx === 0) {
+        // First row gets the arrow into the executable; we'll span the next rows visually
+        const exeState = nodeStateFor(EXECUTABLE);
+        const exeJust = lastRebuilt.has(EXECUTABLE);
+        html += '<div class="arrow" style="grid-row: span ' + groups.length + ';">&rarr;</div>';
+        html += '<div style="grid-row: span ' + groups.length + '; display: flex; align-items: center;">' +
+                nodeHtml(EXECUTABLE, exeState, exeJust) + '</div>';
+      }
+    });
+    html += '</div>';
+    html += '<div class="graph-legend">' +
+            '<span><span class="swatch sw-built"></span>up to date</span>' +
+            '<span><span class="swatch sw-stale"></span>out of date</span>' +
+            '<span><span class="swatch sw-missing"></span>not built</span>' +
+            '</div>';
+    paneBody.innerHTML = html;
+  }
+
+  // Track which targets were just rebuilt so the graph can highlight them briefly
+  let lastRebuilt = new Set();
+  function markRebuilt(targets) {
+    lastRebuilt = new Set(targets);
+    renderRightPane();
+    setTimeout(function() {
+      lastRebuilt = new Set();
+      renderRightPane();
+    }, 1300);
+  }
+
+  // ============================================================
+  // Command parser/dispatcher
+  // Recognizes:
+  //   gcc ... -c file.c -o file.o
+  //   gcc file.o file.o ... -o executable
+  //   make [target]
+  //   make clean
+  //   touch file
+  //   ls
+  //   cat file
+  //   rm file
+  //   ./program
+  //   Multi-line Makefile rule (target line followed by tab-indented recipe)
+  //   Variable assignment (NAME = value)
+  // ============================================================
+  function dispatch(line) {
+    const raw = line;
+    const t = line.replace(/\r/g, '');
+    // Multi-line: if it contains a newline, try to parse as Makefile rule first.
+    if (t.indexOf('\n') !== -1) {
+      return parseMakefileChunk(t);
+    }
+    const single = t.trim();
+    if (!single) return { kind: 'noop' };
+    // Variable assignment on a single line: NAME = value
+    const varM = single.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+)$/);
+    if (varM && !/^make\b/.test(single) && !/^gcc\b/.test(single) && !single.includes(':')) {
+      return { kind: 'mk-var', name: varM[1], value: varM[2].trim() };
+    }
+    // gcc compile: gcc [flags] -c file.c -o file.o
+    if (/^gcc\b/.test(single)) {
+      return parseGcc(single);
+    }
+    // make
+    if (/^make\b/.test(single)) {
+      const args = single.substring(4).trim();
+      if (args === 'clean') return { kind: 'make-clean' };
+      return { kind: 'make', target: args || null };
+    }
+    // touch
+    const touchM = single.match(/^touch\s+(.+)$/);
+    if (touchM) return { kind: 'touch', files: touchM[1].trim().split(/\s+/) };
+    // ls
+    if (/^ls\b/.test(single)) return { kind: 'ls' };
+    // cat
+    const catM = single.match(/^cat\s+(.+)$/);
+    if (catM) return { kind: 'cat', file: catM[1].trim() };
+    // rm
+    const rmM = single.match(/^rm\s+(.+)$/);
+    if (rmM) return { kind: 'rm', files: rmM[1].trim().split(/\s+/) };
+    // ./program
+    if (/^\.\/program\b/.test(single)) return { kind: 'run-program' };
+    return { kind: 'unknown', text: single };
+  }
+
+  function parseGcc(line) {
+    // Two shapes we recognize:
+    //   gcc <flags...> -c source.c -o target.o
+    //   gcc <objs...> -o executable
+    // Normalize: split on whitespace, ignore -Wall, -Wextra, -Werror, -std=...
+    const toks = line.split(/\s+/);
+    // Drop the leading 'gcc'
+    toks.shift();
+    let hasC = false;
+    let outIdx = toks.indexOf('-o');
+    let outFile = null;
+    let positional = [];
+    let i = 0;
+    while (i < toks.length) {
+      const tk = toks[i];
+      if (tk === '-c') { hasC = true; i++; continue; }
+      if (tk === '-o') { outFile = toks[i + 1] || null; i += 2; continue; }
+      // Flags we silently accept
+      if (/^-W/.test(tk) || /^-std=/.test(tk) || /^-O/.test(tk) || /^-g/.test(tk) || /^-I/.test(tk)) { i++; continue; }
+      positional.push(tk);
+      i++;
+    }
+    if (hasC) {
+      // Compile: positional should be one source file
+      if (positional.length === 1 && /\.c$/.test(positional[0]) && outFile && /\.o$/.test(outFile)) {
+        return { kind: 'gcc-compile', source: positional[0], object: outFile };
+      }
+      return { kind: 'gcc-bad', reason: "compile form should be: gcc -Wall -Werror -c <file>.c -o <file>.o" };
+    } else {
+      // Link
+      if (positional.length >= 1 && positional.every(function(p){return /\.o$/.test(p);}) && outFile) {
+        return { kind: 'gcc-link', objects: positional, executable: outFile };
+      }
+      return { kind: 'gcc-bad', reason: "link form should be: gcc <objects>.o ... -o <executable>" };
+    }
+  }
+
+  function parseMakefileChunk(text) {
+    // Expect: first line = "target: dep1 dep2 ..."  (or variable assignment)
+    // Second line: tab + recipe
+    const lines = text.split('\n').filter(function(l){return l.length>0;});
+    if (lines.length === 0) return { kind: 'noop' };
+    // If single physical line ended up here (no newline), shouldn't happen but handle
+    if (lines.length === 1) {
+      // Could be just a target line without a recipe
+      const m = lines[0].match(/^([A-Za-z_][\w.-]*)\s*:\s*(.*)$/);
+      if (m) return { kind: 'mk-rule-incomplete', target: m[1], deps: m[2].trim().split(/\s+/).filter(Boolean) };
+      return { kind: 'unknown', text: lines[0] };
+    }
+    // Two or more lines: try rule
+    const targetLine = lines[0];
+    const recipeLines = lines.slice(1);
+    const m = targetLine.match(/^([A-Za-z_][\w.-]*)\s*:\s*(.*)$/);
+    if (!m) {
+      // Could be two variable assignments
+      const varM = targetLine.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+)$/);
+      if (varM) {
+        return { kind: 'mk-var-multi', items: lines.map(function(ln) {
+          const v = ln.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+)$/);
+          return v ? { name: v[1], value: v[2].trim() } : null;
+        }).filter(Boolean) };
+      }
+      return { kind: 'unknown', text: targetLine };
+    }
+    const target = m[1];
+    const deps = m[2].trim().split(/\s+/).filter(Boolean);
+    // Recipe must be tab-indented or at least start with whitespace
+    const recipe = recipeLines[0].replace(/^\s+/, '');
+    const tabIndented = /^\t/.test(recipeLines[0]) || /^ {4,}/.test(recipeLines[0]);
+    return { kind: 'mk-rule', target: target, deps: deps, recipe: recipe, tabIndented: tabIndented };
+  }
+  // ============================================================
+  // Executor: run a parsed command, produce terminal output, mutate state
+  // ============================================================
+  function execute(parsed) {
+    switch (parsed.kind) {
+      case 'noop': return;
+
+      case 'gcc-compile': {
+        if (!fsExists(parsed.source)) {
+          termLine('  gcc: error: ' + parsed.source + ': No such file or directory', 'err');
+          return;
+        }
+        fsSetContent(parsed.object, '/* object file from ' + parsed.source + ' */');
+        // No output on success from gcc -- mimic real behavior
+        renderRightPane();
+        return;
+      }
+      case 'gcc-link': {
+        for (const obj of parsed.objects) {
+          if (!fsExists(obj)) {
+            termLine('  gcc: error: ' + obj + ': No such file or directory', 'err');
+            return;
+          }
+        }
+        fsSetContent(parsed.executable, '/* executable */');
+        renderRightPane();
+        return;
+      }
+      case 'gcc-bad': {
+        termLine('  gcc: error: ' + parsed.reason, 'err');
+        return;
+      }
+      case 'mk-var': {
+        mkAddVariable(parsed.name, parsed.value);
+        termLine('  added variable ' + parsed.name + ' = ' + parsed.value + ' to Makefile', 'dim');
+        renderRightPane();
+        return;
+      }
+      case 'mk-var-multi': {
+        parsed.items.forEach(function(it) { mkAddVariable(it.name, it.value); });
+        termLine('  added ' + parsed.items.length + ' variable(s) to Makefile', 'dim');
+        renderRightPane();
+        return;
+      }
+      case 'mk-rule': {
+        if (!parsed.tabIndented) {
+          termLine('  Makefile error: recipe lines must begin with a TAB character.', 'err');
+          return;
+        }
+        mkAddRule(parsed.target, parsed.deps, parsed.recipe);
+        termLine('  added rule for ' + parsed.target + ' to Makefile', 'dim');
+        renderRightPane();
+        return;
+      }
+      case 'mk-rule-incomplete': {
+        termLine('  Makefile rule incomplete. Add a recipe line below (tab + command).', 'err');
+        return;
+      }
+      case 'make': {
+        const r = simulateMake(parsed.target);
+        if (r.errors.length > 0) {
+          r.errors.forEach(function(e) { termLine('  ' + e, 'err'); });
+          return;
+        }
+        if (r.nothingToDo) {
+          termLine("  make: '" + (parsed.target || (makefile.rules[0] && makefile.rules[0].target) || 'all') + "' is up to date.", 'note');
+          return;
+        }
+        r.commands.forEach(function(c) { termLine('  ' + c, 'out'); });
+        markRebuilt(r.rebuilt);
+        return;
+      }
+      case 'make-clean': {
+        // Conventional: remove .o files and the executable
+        const removed = [];
+        ALL_O_FILES.forEach(function(o) { if (fsExists(o)) { fsRemove(o); removed.push(o); } });
+        if (fsExists(EXECUTABLE)) { fsRemove(EXECUTABLE); removed.push(EXECUTABLE); }
+        const cleanRule = mkFindRule('clean');
+        if (cleanRule) {
+          termLine('  ' + mkExpandVars(cleanRule.recipe), 'out');
+        } else {
+          // Even without a clean rule we still simulate the conventional behavior so the
+          // walkthrough can advance; but warn the cadet.
+          termLine("  make: *** No rule to make target 'clean'.  Stop.", 'err');
+          return;
+        }
+        renderRightPane();
+        return;
+      }
+      case 'touch': {
+        parsed.files.forEach(function(f) { fsTouch(f); });
+        renderRightPane();
+        return;
+      }
+      case 'ls': {
+        const items = fsList();
+        if (items.length === 0) { termLine('  (empty directory)', 'dim'); return; }
+        // Group into columns of ~6
+        const cols = [];
+        const perCol = 5;
+        for (let i = 0; i < items.length; i += perCol) cols.push(items.slice(i, i + perCol));
+        cols.forEach(function(col) { termLine('  ' + col.join('  '), 'out'); });
+        return;
+      }
+      case 'cat': {
+        if (!fsExists(parsed.file)) {
+          termLine('  cat: ' + parsed.file + ': No such file or directory', 'err');
+          return;
+        }
+        termLine('  ' + fs[parsed.file].content, 'out');
+        return;
+      }
+      case 'rm': {
+        parsed.files.forEach(function(f) {
+          if (fsExists(f)) fsRemove(f);
+        });
+        renderRightPane();
+        return;
+      }
+      case 'run-program': {
+        if (!fsExists(EXECUTABLE)) {
+          termLine('  bash: ./program: No such file or directory', 'err');
+          return;
+        }
+        termLine('  ===== welcome =====', 'out');
+        termLine('  Hello, cadet!', 'out');
+        termLine('  2 + 3 = 5', 'out');
+        termLine('  rolled a 4', 'out');
+        return;
+      }
+      case 'unknown': {
+        termLine("  Sim shell: I don't recognize that command. Try gcc, make, touch, ls, cat, rm, or ./program.", 'err');
+        return;
+      }
+    }
+  }
+
+  // ============================================================
+  // Tasks — 10 tasks across 4 sections
+  // ============================================================
+  // Each task: match(rawInput) -> bool, normalize for matching, hint, note (post-task explanation),
+  //   accept (whether to execute() the parsed command -- usually true), preload (run before showing task)
+  function normalizeWS(s) { return s.replace(/\s+/g, ' ').trim(); }
+  function matchGccCompile(input, source, object) {
+    const t = normalizeWS(input).replace(/;$/, '');
+    // Must include -Wall and -Werror, -c source.c, -o object.o.
+    if (!/(?:^|\s)gcc(?=\s|$)/.test(t)) return false;
+    if (!/(?:^|\s)-Wall(?=\s|$)/.test(t)) return false;
+    if (!/(?:^|\s)-Werror(?=\s|$)/.test(t)) return false;
+    if (!new RegExp('(?:^|\\s)-c\\s+' + escapeRegex(source) + '(?=\\s|$)').test(t)) return false;
+    if (!new RegExp('(?:^|\\s)-o\\s+' + escapeRegex(object) + '(?=\\s|$)').test(t)) return false;
+    return true;
+  }
+  function matchGccLink(input, objects, exe) {
+    const t = normalizeWS(input).replace(/;$/, '');
+    if (!/(?:^|\s)gcc(?=\s|$)/.test(t)) return false;
+    if (!new RegExp('(?:^|\\s)-o\\s+' + escapeRegex(exe) + '(?=\\s|$)').test(t)) return false;
+    // All required objects must be present (any order).
+    for (const o of objects) {
+      if (!new RegExp('(?:^|\\s)' + escapeRegex(o) + '(?=\\s|$)').test(t)) return false;
+    }
+    // No extra .o files allowed
+    const objRe = /(?:^|\s)([\w./-]+\.o)(?=\s|$)/g;
+    const found = [];
+    let m;
+    while ((m = objRe.exec(t)) !== null) found.push(m[1]);
+    if (found.length !== objects.length) return false;
+    return true;
+  }
+
+  // Diagnose helpers
+  function diagGccCompile(input, source, object) {
+    const t = input.trim();
+    if (!/^gcc\b/.test(t)) return "This task wants a gcc command. Start with 'gcc'.";
+    if (!/(?:^|\s)-Wall(?=\s|$)/.test(t)) return "We use -Wall in this course. Add it to the flags.";
+    if (!/(?:^|\s)-Werror(?=\s|$)/.test(t)) return "We also use -Werror in this course. Add it after -Wall.";
+    if (!/(?:^|\s)-c(?=\s|$)/.test(t)) return "For a compile-only step you need -c (no link yet).";
+    if (!new RegExp('(?:^|\\s)' + escapeRegex(source) + '(?=\\s|$)').test(t))
+      return "Compile the right file: " + source + ".";
+    if (!new RegExp('(?:^|\\s)' + escapeRegex(object) + '(?=\\s|$)').test(t))
+      return "Name the output " + object + " with -o.";
+    return "Close. Expected form: gcc -Wall -Werror -c " + source + " -o " + object;
+  }
+  function diagGccLink(input, objects, exe) {
+    const t = input.trim();
+    if (!/^gcc\b/.test(t)) return "This task wants a gcc command. Start with 'gcc'.";
+    if (/(?:^|\s)-c(?=\s|$)/.test(t)) return "This is the link step. Drop the -c flag.";
+    if (!new RegExp('(?:^|\\s)-o\\s+' + escapeRegex(exe) + '(?=\\s|$)').test(t))
+      return "Name the output " + exe + " with -o.";
+    for (const o of objects) {
+      if (!new RegExp('(?:^|\\s)' + escapeRegex(o) + '(?=\\s|$)').test(t))
+        return "Missing object file: " + o + ".";
+    }
+    return null;
+  }
+
+  const tasks = [
+    // --- Section 1: Manual compilation ---
+    {
+      section: 'Section 1: Manual compilation',
+      label: 'Task 1 of 10',
+      text: 'Compile the greet module by itself. Use this exact form: ' +
+            'gcc -Wall -Werror -c greet.c -o greet.o',
+      hint: 'gcc -Wall -Werror -c greet.c -o greet.o',
+      match: function(cmd) { return matchGccCompile(cmd, 'greet.c', 'greet.o'); },
+      diagnose: function(cmd) { return diagGccCompile(cmd, 'greet.c', 'greet.o'); },
+      note: "greet.o is built. -c says 'compile only, do not link'. -Wall -Werror are flags this course requires: -Wall turns on warnings; -Werror makes warnings hard errors so they cannot be ignored.",
+      preload: null,
+    },
+    {
+      label: 'Task 2 of 10',
+      text: 'You would now repeat that for mathy.c, randhelper.c, and main.c — three more compile commands. ' +
+            'The widget will run those for you to save typing. Then you still need one more step: link the four .o files into the executable. ' +
+            'Type the link command: gcc greet.o mathy.o randhelper.o main.o -o program',
+      hint: 'gcc greet.o mathy.o randhelper.o main.o -o program',
+      match: function(cmd) { return matchGccLink(cmd, ['greet.o', 'mathy.o', 'randhelper.o', 'main.o'], 'program'); },
+      diagnose: function(cmd) { return diagGccLink(cmd, ['greet.o', 'mathy.o', 'randhelper.o', 'main.o'], 'program'); },
+      note: "program is built. That was 5 commands total (4 compiles + 1 link). Now imagine changing one file and doing all of that again. Every time. Forever. Make exists because nobody wants to do this by hand.",
+      preload: function() {
+        // Simulate compiling the other 3 .o files for the cadet
+        termLine('  (widget compiles the other three .c files for you...)', 'dim');
+        ['mathy.c', 'randhelper.c', 'main.c'].forEach(function(src) {
+          const obj = src.replace(/\.c$/, '.o');
+          termLine('  gcc -Wall -Werror -c ' + src + ' -o ' + obj, 'out');
+          fsSetContent(obj, '/* object file from ' + src + ' */');
+        });
+        renderRightPane();
+      },
+    },
+    {
+      label: 'Task 3 of 10',
+      text: 'Run the program to make sure it works. Type: ./program',
+      hint: './program',
+      match: function(cmd) { return /^\s*\.\/program\s*$/.test(cmd); },
+      diagnose: function(cmd) {
+        if (/program/.test(cmd) && !/\.\//.test(cmd)) return "On Linux you run a local executable with ./ in front, like ./program.";
+        return null;
+      },
+      note: "Works! That was the goal: a working multi-file C program. Now let's stop doing it by hand.",
+      preload: null,
+    },
+
+    // --- Section 2: First Makefile ---
+    {
+      section: 'Section 2: Your first Makefile',
+      label: 'Task 4 of 10',
+      text: 'Add the link rule to the Makefile. Type the target line, then Shift+Enter, then a TAB and the recipe. ' +
+            'Target line: program: greet.o mathy.o randhelper.o main.o   Then TAB + the link command from Task 2.',
+      hint: 'program: greet.o mathy.o randhelper.o main.o\n\tgcc greet.o mathy.o randhelper.o main.o -o program',
+      match: function(cmd) {
+        if (cmd.indexOf('\n') === -1) return false;
+        const parsed = parseMakefileChunk(cmd);
+        if (parsed.kind !== 'mk-rule') return false;
+        if (parsed.target !== 'program') return false;
+        const expectedDeps = ['greet.o', 'mathy.o', 'randhelper.o', 'main.o'];
+        if (parsed.deps.length !== expectedDeps.length) return false;
+        for (const d of expectedDeps) if (parsed.deps.indexOf(d) === -1) return false;
+        if (!/^gcc\b/.test(parsed.recipe)) return false;
+        if (!/-o\s+program\b/.test(parsed.recipe)) return false;
+        for (const o of expectedDeps) if (parsed.recipe.indexOf(o) === -1) return false;
+        return true;
+      },
+      diagnose: function(cmd) {
+        if (cmd.indexOf('\n') === -1) return "A Makefile rule is two lines. Type the target line, press Shift+Enter, then TAB + the recipe.";
+        const parsed = parseMakefileChunk(cmd);
+        if (parsed.kind !== 'mk-rule') return "First line should look like:  program: greet.o mathy.o randhelper.o main.o";
+        if (!parsed.tabIndented) return "The recipe (second line) must start with a TAB character. Spaces will not work.";
+        if (parsed.target !== 'program') return "The target should be 'program' (the executable name).";
+        return null;
+      },
+      note: "Your Makefile has one rule so far: how to build 'program'. It depends on four .o files and runs gcc to link them. But the .o files don't exist yet from make's view, so this rule alone isn't enough.",
+      preload: null,
+    },
+    {
+      label: 'Task 5 of 10',
+      text: 'You need rules to build each .o file too. To save typing, the widget will add those four rules for you ' +
+            '(each .o depends on its .c file plus the headers it #includes). Then type: make',
+      hint: 'make',
+      match: function(cmd) { return /^\s*make\s*$/.test(cmd); },
+      diagnose: function(cmd) { return null; },
+      note: "Five gcc commands fired. Make figured out the order itself: build each .o first, then link them into program. You did not have to retype anything.",
+      preload: function() {
+        termLine('  (widget adds rules for greet.o, mathy.o, randhelper.o, main.o)', 'dim');
+        mkAddRule('greet.o',      ['greet.c', 'greet.h'],                          'gcc -Wall -Werror -c greet.c -o greet.o');
+        mkAddRule('mathy.o',      ['mathy.c', 'mathy.h'],                          'gcc -Wall -Werror -c mathy.c -o mathy.o');
+        mkAddRule('randhelper.o', ['randhelper.c', 'randhelper.h'],                'gcc -Wall -Werror -c randhelper.c -o randhelper.o');
+        mkAddRule('main.o',       ['main.c', 'greet.h', 'mathy.h', 'randhelper.h'],'gcc -Wall -Werror -c main.c -o main.o');
+        // Also add a clean rule so make clean works later
+        mkAddRule('clean', [], 'rm -f *.o program');
+        // The current .o files are already on disk from Section 1; remove them so make has work to do.
+        ALL_O_FILES.forEach(function(o) { if (fsExists(o)) fsRemove(o); });
+        if (fsExists(EXECUTABLE)) fsRemove(EXECUTABLE);
+        renderRightPane();
+      },
+    },
+    {
+      label: 'Task 6 of 10',
+      text: 'Now type make a second time. Same project, nothing changed. What happens?',
+      hint: 'make',
+      match: function(cmd) { return /^\s*make\s*$/.test(cmd); },
+      diagnose: function(cmd) { return null; },
+      note: "Make compared the timestamps of every target against its dependencies. Everything was up to date, so nothing rebuilt. This is the whole point: make does the minimum work necessary.",
+      preload: null,
+    },
+
+    // --- Section 3: Variables ---
+    {
+      section: 'Section 3: Variables (CC and CFLAGS)',
+      label: 'Task 7 of 10',
+      text: 'Two of the recipes repeat "gcc" and "-Wall -Werror". Let\'s pull those into variables. ' +
+            'Type two assignments on separate lines:  CC = gcc   then Shift+Enter   CFLAGS = -Wall -Werror',
+      hint: 'CC = gcc\nCFLAGS = -Wall -Werror',
+      match: function(cmd) {
+        const parsed = parseMakefileChunk(cmd);
+        if (parsed.kind !== 'mk-var-multi') return false;
+        const hasCC = parsed.items.some(function(it){return it.name === 'CC' && it.value === 'gcc';});
+        const hasFL = parsed.items.some(function(it){return it.name === 'CFLAGS' && it.value === '-Wall -Werror';});
+        return hasCC && hasFL;
+      },
+      diagnose: function(cmd) {
+        const parsed = parseMakefileChunk(cmd);
+        if (parsed.kind !== 'mk-var-multi' && parsed.kind !== 'mk-var') return "Type two variable assignments, one per line, separated by Shift+Enter.";
+        return "Look at the names and values carefully. We want exactly:  CC = gcc  and  CFLAGS = -Wall -Werror";
+      },
+      note: "Variables are now defined at the top of the Makefile. The widget will rewrite the existing recipes to use $(CC) and $(CFLAGS). In a real Makefile you would write them this way from the start.",
+      preload: null,
+    },
+    {
+      label: 'Task 8 of 10',
+      text: 'Rewrite the existing recipes to use the variables (the widget will do it for you). ' +
+            'Then run: make clean   followed by   make',
+      hint: 'make clean\nmake',
+      match: function(cmd) {
+        // Accept either "make clean" + Shift+Enter + "make", or just the cadet typing the second one
+        // after running clean separately. To keep the flow tight, accept the combined form.
+        const lines = cmd.split('\n').map(function(s){return s.trim();}).filter(Boolean);
+        if (lines.length === 2 && lines[0] === 'make clean' && lines[1] === 'make') return true;
+        return false;
+      },
+      diagnose: function(cmd) {
+        const lines = cmd.split('\n').map(function(s){return s.trim();}).filter(Boolean);
+        if (lines.length === 1 && lines[0] === 'make clean') return "Good start. Now add Shift+Enter and type 'make' on the second line to rebuild.";
+        if (lines.length === 1 && lines[0] === 'make') return "First we need 'make clean' to remove the .o files. Type 'make clean', Shift+Enter, then 'make'.";
+        return "Type two lines: 'make clean' then Shift+Enter then 'make'.";
+      },
+      note: "Same five gcc commands fired. The variables make the recipes shorter and easier to change. To add an optimization flag later, you would update CFLAGS once instead of editing every recipe.",
+      preload: function() {
+        // Rewrite recipes to use the variables. Re-create the rules list and raw lines.
+        const newRules = makefile.rules.map(function(r) {
+          let newRecipe = r.recipe;
+          // Replace -Wall -Werror first so it becomes $(CFLAGS), then bare gcc -> $(CC).
+          newRecipe = newRecipe.replace(/-Wall\s+-Werror/, '$(CFLAGS)');
+          newRecipe = newRecipe.replace(/^gcc\b/, '$(CC)');
+          return { target: r.target, deps: r.deps.slice(), recipe: newRecipe };
+        });
+        makefile.rules = newRules;
+        // Rebuild raw lines: variables on top, then a blank, then each rule
+        const newRaw = [];
+        Object.keys(makefile.variables).forEach(function(k) {
+          newRaw.push({ kind: 'var', text: k + ' = ' + makefile.variables[k] });
+        });
+        newRules.forEach(function(r, i) {
+          newRaw.push({ kind: 'blank', text: '' });
+          newRaw.push({ kind: 'target', text: r.target + ': ' + r.deps.join(' ') });
+          newRaw.push({ kind: 'recipe', text: '\t' + r.recipe });
+        });
+        makefile.raw = newRaw;
+        renderRightPane();
+      },
+    },
+
+    // --- Section 4: Incremental rebuilds ---
+    {
+      section: 'Section 4: Incremental rebuilds',
+      label: 'Task 9 of 10',
+      text: 'Pretend you edited mathy.c (added a comment, say). Simulate that with touch, then run make. ' +
+            'Type:  touch mathy.c   Shift+Enter   make',
+      hint: 'touch mathy.c\nmake',
+      match: function(cmd) {
+        const lines = cmd.split('\n').map(function(s){return s.trim();}).filter(Boolean);
+        return lines.length === 2 && lines[0] === 'touch mathy.c' && lines[1] === 'make';
+      },
+      diagnose: function(cmd) {
+        const lines = cmd.split('\n').map(function(s){return s.trim();}).filter(Boolean);
+        if (lines.length === 1 && lines[0] === 'touch mathy.c') return "Good. Now Shift+Enter and type 'make' on the second line.";
+        if (lines.length === 1 && lines[0] === 'make') return "First we need to mark mathy.c as changed with 'touch mathy.c'.";
+        return "Two lines: 'touch mathy.c' then Shift+Enter then 'make'.";
+      },
+      note: "TWO commands instead of five. mathy.o rebuilt because its dependency mathy.c changed. program relinked because mathy.o changed. The other three .o files did NOT rebuild because nothing they depend on changed. This is what saves time on real projects.",
+      preload: null,
+    },
+    {
+      label: 'Task 10 of 10',
+      text: 'Now the tricky one. Pretend you edited mathy.h (changed a function signature). ' +
+            'Type:  touch mathy.h   Shift+Enter   make',
+      hint: 'touch mathy.h\nmake',
+      match: function(cmd) {
+        const lines = cmd.split('\n').map(function(s){return s.trim();}).filter(Boolean);
+        return lines.length === 2 && lines[0] === 'touch mathy.h' && lines[1] === 'make';
+      },
+      diagnose: function(cmd) {
+        const lines = cmd.split('\n').map(function(s){return s.trim();}).filter(Boolean);
+        if (lines.length === 1 && lines[0] === 'touch mathy.h') return "Good. Now Shift+Enter and type 'make' on the second line.";
+        return "Two lines: 'touch mathy.h' then Shift+Enter then 'make'.";
+      },
+      note: "THREE commands this time. main.o rebuilt too because main.c #includes mathy.h, and the Makefile listed mathy.h as one of main.o's dependencies. If you forget to list a header as a dependency, make won't know to rebuild what depends on it, and you'll get mysterious bugs where your code does not match what's running. Listing headers in deps lines matters.",
+      preload: null,
+    },
+  ];
+
+  // ============================================================
+  // Walkthrough controller
+  // ============================================================
+  let currentTaskIndex = 0;
+  let consecutiveFails = 0;
+  let mode = 'walkthrough';
+
+  function checkTask(rawCmd) {
+    if (mode === 'free' || currentTaskIndex >= tasks.length) return null;
+    const t = tasks[currentTaskIndex];
+    if (t.match(rawCmd)) {
+      // Echo what the cadet typed
+      echoCommand(rawCmd);
+      // Run any preload (e.g., compile other .o files, add rules)
+      if (t.preload) t.preload();
+      // Now actually execute the cadet's command
+      const parsedList = parseMultipleCommands(rawCmd);
+      parsedList.forEach(function(p) { execute(p); });
+      // Show the note
+      if (t.note) {
+        termBlank();
+        termLine('  ' + t.note, 'note');
+      }
+      currentTaskIndex++;
+      consecutiveFails = 0;
+      hideHintPulse();
+      renderTask();
+      if (currentTaskIndex >= tasks.length) {
+        setMode('free');
+        termBlank();
+        termLine('  Walkthrough complete. Free mode unlocked. Try touch on a file, then make again.', 'note');
+      }
+      return true;
+    } else {
+      echoCommand(rawCmd);
+      const diag = (t.diagnose && t.diagnose(rawCmd)) || null;
+      if (diag) {
+        termLine('  ' + diag, 'err');
+      } else {
+        termLine("  Not what this task is asking for. Look at the task card above, or click 'Show hint'.", 'err');
+      }
+      consecutiveFails++;
+      if (consecutiveFails >= 2) showHintPulse();
+      return false;
+    }
+  }
+
+  // For multi-line inputs that contain a sequence of independent shell commands separated by newlines
+  // (e.g., "touch mathy.c\nmake"), parse each line separately. A Makefile rule chunk stays as one.
+  function parseMultipleCommands(rawCmd) {
+    // If first non-blank line looks like a Makefile rule (target: deps), treat whole thing as one chunk.
+    const lines = rawCmd.split('\n');
+    const firstNonBlank = lines.find(function(l){return l.trim().length>0;}) || '';
+    if (/^[A-Za-z_][\w.-]*\s*:/.test(firstNonBlank) || /^[A-Za-z_][A-Za-z0-9_]*\s*=/.test(firstNonBlank.trim())) {
+      // Treat whole input as one Makefile chunk
+      return [ dispatch(rawCmd) ];
+    }
+    // Otherwise treat each line as its own shell command
+    const out = [];
+    lines.forEach(function(ln) {
+      if (ln.trim().length === 0) return;
+      out.push(dispatch(ln));
+    });
+    return out;
+  }
+
+  function renderTask() {
+    const fill = root.querySelector('#mkw-progress-fill');
+    const label = root.querySelector('#mkw-progress-label');
+    const card = root.querySelector('#mkw-task-card');
+    const labelEl = root.querySelector('#mkw-task-label');
+    const textEl = root.querySelector('#mkw-task-text');
+    const hintEl = root.querySelector('#mkw-task-hint');
+    const sectionEl = root.querySelector('#mkw-section-header');
+    const completionArea = root.querySelector('#mkw-completion-area');
+
+    const pct = (currentTaskIndex / tasks.length) * 100;
+    fill.style.width = pct + '%';
+    label.textContent = 'Task ' + Math.min(currentTaskIndex + 1, tasks.length) + ' of ' + tasks.length;
+
+    if (currentTaskIndex >= tasks.length) {
+      card.className = 'task-card complete';
+      labelEl.textContent = 'Complete';
+      textEl.textContent = "You built a multi-file project by hand, wrote a Makefile, used variables, and saw why incremental rebuilds matter. You're ready for the lab.";
+      hintEl.textContent = '';
+      fill.style.width = '100%';
+      label.textContent = 'All tasks complete';
+      sectionEl.textContent = 'All done';
+      completionArea.innerHTML = '';
+      cs210RenderCompletion(completionArea);
+      return;
+    }
+
+    completionArea.innerHTML = '';
+    card.className = 'task-card';
+    const t = tasks[currentTaskIndex];
+    if (t.section) sectionEl.textContent = t.section;
+    labelEl.textContent = t.label;
+    textEl.textContent = t.text;
+    hintEl.textContent = '';
+  }
+  function showHint() {
+    if (currentTaskIndex >= tasks.length) return;
+    const t = tasks[currentTaskIndex];
+    root.querySelector('#mkw-task-hint').textContent = 'Hint: ' + (t.hint || '');
+    hideHintPulse();
+  }
+  function showHintPulse() { root.querySelector('#mkw-hint-btn').classList.add('pulse'); }
+  function hideHintPulse() { root.querySelector('#mkw-hint-btn').classList.remove('pulse'); }
+
+  function reset() {
+    // Reinitialize file system with the starter sources
+    Object.keys(fs).forEach(function(k){ delete fs[k]; });
+    Object.keys(INITIAL_SOURCES).forEach(function(k) { fsSetContent(k, INITIAL_SOURCES[k]); });
+    mkReset();
+    currentTaskIndex = 0;
+    consecutiveFails = 0;
+    lastRebuilt = new Set();
+    hideHintPulse();
+    setMode('walkthrough');
+    terminalEl.innerHTML = '';
+    termLine('Welcome to the Lesson 7 Makefile walkthrough.', 'dim');
+    termLine('You have a 7-file project: main.c plus three helper modules (greet, mathy, randhelper),', 'dim');
+    termLine('each with a .h and a .c. Build it by hand, then automate with Make.', 'dim');
+    termBlank();
+    renderRightPane();
+    renderTask();
+  }
+
+  function setMode(newMode) {
+    mode = newMode;
+    const btn = root.querySelector('#mkw-mode-btn');
+    const placeholderInput = root.querySelector('#mkw-cli-input');
+    if (mode === 'free') {
+      btn.textContent = 'Return to walkthrough';
+      btn.style.background = '#E6F4EA';
+      btn.style.borderColor = '#2E7D32';
+      btn.style.color = '#1B5E20';
+      if (placeholderInput) placeholderInput.placeholder = 'free mode: type any shell command';
+    } else {
+      btn.textContent = 'Switch to free mode';
+      btn.style.background = '';
+      btn.style.borderColor = '';
+      btn.style.color = '';
+      if (placeholderInput) placeholderInput.placeholder = 'type the command from the task above';
+    }
+  }
+
+  // ============================================================
+  // Input wiring
+  // ============================================================
+  const inputEl = root.querySelector('#mkw-cli-input');
+
+  function autoResize() {
+    inputEl.style.height = 'auto';
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 200) + 'px';
+  }
+  inputEl.addEventListener('input', autoResize);
+
+  inputEl.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      const v = inputEl.value;
+      inputEl.value = '';
+      autoResize();
+      if (!v.trim()) return;
+      if (mode === 'walkthrough') {
+        checkTask(v);
+      } else {
+        echoCommand(v);
+        const parsedList = parseMultipleCommands(v);
+        parsedList.forEach(function(p) { execute(p); });
+      }
+    } else if (e.key === 'Tab' && !e.shiftKey) {
+      // Insert a literal tab character (for Makefile recipes)
+      e.preventDefault();
+      const start = inputEl.selectionStart;
+      const end = inputEl.selectionEnd;
+      inputEl.value = inputEl.value.substring(0, start) + '\t' + inputEl.value.substring(end);
+      inputEl.selectionStart = inputEl.selectionEnd = start + 1;
+      autoResize();
+    }
+  });
+
+  // Tabs
+  root.querySelectorAll('.pane-tab').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      root.querySelectorAll('.pane-tab').forEach(function(t){ t.classList.remove('active'); });
+      tab.classList.add('active');
+      activeTab = tab.getAttribute('data-tab');
+      renderRightPane();
+    });
+  });
+
+  root.querySelector('#mkw-hint-btn').addEventListener('click', showHint);
+  root.querySelector('#mkw-reset-btn').addEventListener('click', reset);
+  root.querySelector('#mkw-mode-btn').addEventListener('click', function() {
+    if (mode === 'walkthrough') {
+      setMode('free');
+      termBlank();
+      termLine('  Free mode. Type any supported shell command (gcc, make, touch, ls, cat, rm, ./program).', 'note');
+    } else {
+      setMode('walkthrough');
+      termBlank();
+      termLine('  Walkthrough mode. Follow the task card above.', 'note');
+    }
+  });
+
+  // Boot
+  reset();
+
+
+})();
+</script>
+
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 32px 0 10px 0;">Error-Matching Self-Check</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Five scenarios. Each shows code or a Makefile snippet, the command that ran, and the error you got back. Pick the cause. Reading errors and matching them to causes is a learnable skill.</p>
+
+<!-- ============================================================
+     CS210 Lesson 7 - Error-Matching Self-Check Quiz
+     Five compiler/linker/make errors. For each: source + command + error
+     message. Cadet picks the cause from 4 options. Submit-gated forward.
+     ============================================================ -->
+<style>
+.cs210-errq * { box-sizing: border-box; }
+.cs210-errq {
+  position: relative;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+}
+.cs210-errq h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-errq .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+
+/* Dot progress indicator */
+.cs210-errq .dots {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+.cs210-errq .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #E5E7EB;
+  border: 1px solid #C7CFD9;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.cs210-errq .dot.current {
+  background: #003087;
+  border-color: #00205B;
+  transform: scale(1.25);
+}
+.cs210-errq .dot.correct {
+  background: #2E7D32;
+  border-color: #1B5E20;
+}
+.cs210-errq .dot.incorrect {
+  background: #B8002F;
+  border-color: #6B0000;
+}
+.cs210-errq .dot.score {
+  width: 16px;
+  height: 12px;
+  border-radius: 3px;
+  background: #F0B92C;
+  border-color: #B88800;
+}
+
+/* Card */
+.cs210-errq .card {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 6px;
+  padding: 28px 32px;
+  margin-bottom: 14px;
+  min-height: 460px;
+  display: flex;
+  flex-direction: column;
+}
+.cs210-errq .card.answered.correct {
+  border-left: 4px solid #2E7D32;
+}
+.cs210-errq .card.answered.incorrect {
+  border-left: 4px solid #B8002F;
+}
+
+.cs210-errq .q-label {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.cs210-errq .scenario-section-label {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 6px;
+  margin-top: 14px;
+}
+.cs210-errq .scenario-section-label:first-of-type { margin-top: 0; }
+.cs210-errq .scenario-section-label .file-tag {
+  background: #E8EDF5;
+  color: #00205B;
+  padding: 1px 8px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  letter-spacing: 0;
+  text-transform: none;
+  font-size: 11.5px;
+  margin-left: 6px;
+}
+
+/* Code block (source/Makefile snippets) */
+.cs210-errq .code-block {
+  background: #F8FAFC;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  padding: 10px 14px;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13px;
+  color: #1a1a1a;
+  white-space: pre-wrap;
+  line-height: 1.55;
+  margin-bottom: 4px;
+  overflow-x: auto;
+}
+.cs210-errq .code-block .hl {
+  background: #FFF1A8;
+  padding: 0 2px;
+  border-radius: 2px;
+}
+.cs210-errq .code-block .com { color: #6B7280; font-style: italic; }
+.cs210-errq .code-block .kw  { color: #B86E00; font-weight: 600; }
+.cs210-errq .code-block .str { color: #1B5E20; }
+
+/* Terminal-style error message block */
+.cs210-errq .err-block {
+  background: #1E2A3A;
+  color: #E8EDF5;
+  border-radius: 4px;
+  padding: 10px 14px;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 12.5px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  margin-bottom: 4px;
+  overflow-x: auto;
+}
+.cs210-errq .err-block .prompt { color: #7FB3D5; }
+.cs210-errq .err-block .err    { color: #F47A7A; }
+.cs210-errq .err-block .out    { color: #B5BEC8; }
+.cs210-errq .err-block .note   { color: #F0B92C; }
+
+.cs210-errq .q-text {
+  font-size: 15px;
+  margin-top: 14px;
+  margin-bottom: 12px;
+  color: #1a1a1a;
+  font-weight: 600;
+}
+.cs210-errq .q-text code {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  color: #00205B;
+  font-weight: 400;
+}
+
+/* Options for multiple choice */
+.cs210-errq .options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.cs210-errq .option {
+  display: flex;
+  align-items: flex-start;
+  padding: 11px 14px;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  background: #ffffff;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.cs210-errq .option:hover:not(.disabled) {
+  background: #F5F7FA;
+  border-color: #003087;
+}
+.cs210-errq .option.disabled { cursor: default; }
+.cs210-errq .option input[type="radio"] {
+  margin-right: 10px;
+  margin-top: 3px;
+  accent-color: #003087;
+}
+.cs210-errq .option.selected {
+  border-color: #003087;
+  background: #F0F4FA;
+}
+.cs210-errq .option.reveal-correct {
+  border-color: #2E7D32;
+  background: #E6F4EA;
+  font-weight: 600;
+}
+.cs210-errq .option.incorrect {
+  border-color: #B8002F;
+  background: #FCE8E8;
+}
+.cs210-errq .option code {
+  background: rgba(0, 32, 91, 0.06);
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 12.5px;
+  color: #00205B;
+}
+
+/* Feedback */
+.cs210-errq .feedback {
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  margin-bottom: 4px;
+  line-height: 1.55;
+}
+.cs210-errq .feedback.correct {
+  background: #E6F4EA;
+  border-left: 3px solid #2E7D32;
+  color: #1B5E20;
+}
+.cs210-errq .feedback.incorrect {
+  background: #FCE8E8;
+  border-left: 3px solid #B8002F;
+  color: #6B0000;
+}
+.cs210-errq .feedback strong { color: inherit; }
+.cs210-errq .feedback code {
+  background: rgba(255, 255, 255, 0.7);
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+}
+
+.cs210-errq .spacer { flex: 1; }
+
+/* Nav */
+.cs210-errq .nav-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  gap: 10px;
+}
+.cs210-errq .nav-btn {
+  padding: 10px 18px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+  transition: background 0.15s ease;
+}
+.cs210-errq .nav-btn.back {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  color: #00205B;
+}
+.cs210-errq .nav-btn.back:hover:not(:disabled) { background: #F5F7FA; }
+.cs210-errq .nav-btn.primary {
+  background: #003087;
+  border: 1px solid #00205B;
+  color: #ffffff;
+}
+.cs210-errq .nav-btn.primary:hover:not(:disabled) { background: #00205B; }
+.cs210-errq .nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.cs210-errq .nav-position {
+  font-size: 13px;
+  color: #6B7280;
+  font-weight: 500;
+}
+
+/* Score card */
+.cs210-errq .score-card { text-align: center; }
+.cs210-errq .score-big {
+  font-size: 52px;
+  font-weight: 700;
+  color: #00205B;
+  margin: 4px 0 0 0;
+  line-height: 1;
+}
+.cs210-errq .score-card.full-correct .score-big { color: #1B5E20; }
+.cs210-errq .score-label {
+  font-size: 13px;
+  color: #6B7280;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin-bottom: 14px;
+}
+.cs210-errq .score-message {
+  font-size: 16px;
+  color: #1a1a1a;
+  margin-bottom: 22px;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.cs210-errq .score-message.good-job {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1B5E20;
+  margin-bottom: 12px;
+}
+.cs210-errq .recap {
+  text-align: left;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid #E5E7EB;
+}
+.cs210-errq .recap-title {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.cs210-errq .recap-item {
+  display: flex;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #F0F2F5;
+  font-size: 14px;
+}
+.cs210-errq .recap-item:last-child { border-bottom: none; }
+.cs210-errq .recap-icon {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+}
+.cs210-errq .recap-icon.correct { background: #2E7D32; }
+.cs210-errq .recap-icon.incorrect { background: #B8002F; }
+.cs210-errq .recap-body { flex: 1; }
+.cs210-errq .recap-question { color: #1a1a1a; margin-bottom: 4px; }
+.cs210-errq .recap-explanation {
+  font-size: 13px;
+  color: #4A5568;
+  font-style: italic;
+}
+.cs210-errq .recap-explanation code {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-style: normal;
+  font-size: 12.5px;
+  color: #00205B;
+}
+
+.cs210-errq .reset-row { margin-top: 22px; text-align: center; }
+.cs210-errq .reset-btn {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  padding: 10px 22px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  color: #00205B;
+  font-family: inherit;
+  font-weight: 600;
+}
+.cs210-errq .reset-btn:hover { background: #F5F7FA; }
+
+.cs210-errq .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #4A5568;
+  margin-top: 18px;
+}
+.cs210-errq .help-note strong { color: #00205B; }
+
+/* Name modal — scoped to widget container (position:absolute), paired with
+   position:relative on .cs210-errq above. */
+.cs210-errq .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.cs210-errq .name-modal {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+.cs210-errq .name-modal h2 { color: #00205B; font-size: 20px; margin: 0 0 10px 0; }
+.cs210-errq .name-modal p { color: #4A5568; font-size: 14px; margin: 0 0 16px 0; }
+.cs210-errq .name-modal input {
+  width: 100%; padding: 10px 12px; font-size: 15px;
+  border: 1px solid #CBD5E0; border-radius: 4px; margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-errq .name-modal input:focus {
+  outline: none; border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-errq .name-modal-btn {
+  background: #003087; color: #ffffff; border: none;
+  padding: 10px 20px; border-radius: 4px; font-size: 14px;
+  font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.cs210-errq .name-modal-btn:disabled { background: #A0AEC0; cursor: not-allowed; }
+.cs210-errq .name-modal-btn:not(:disabled):hover { background: #00205B; }
+
+/* Completion code display on score card */
+.cs210-errq .code-strip {
+  background: #F0F4FA;
+  border: 1px solid #003087;
+  border-radius: 4px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 14px auto 0 auto;
+  max-width: 480px;
+}
+.cs210-errq .code-strip.incomplete {
+  background: #FFF8E1;
+  border-color: #F0B92C;
+}
+.cs210-errq .code-strip-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #4A5568;
+  margin-bottom: 4px;
+  text-align: left;
+}
+.cs210-errq .code-strip-value {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 26px;
+  font-weight: 700;
+  color: #00205B;
+  letter-spacing: 3px;
+  text-align: left;
+}
+.cs210-errq .code-strip.incomplete .code-strip-value { color: #6B5300; }
+.cs210-errq .copy-btn {
+  background: #003087; color: #ffffff; border: none;
+  padding: 8px 14px; border-radius: 3px; font-size: 13px;
+  cursor: pointer; font-family: inherit;
+}
+.cs210-errq .copy-btn:hover { background: #00205B; }
+.cs210-errq .copy-btn.copied { background: #2E7D32; }
+.cs210-errq .code-strip-meta {
+  font-size: 12.5px;
+  color: #6B7280;
+  text-align: center;
+  margin: 8px auto 0 auto;
+  max-width: 480px;
+}
+.cs210-errq .code-strip-meta strong { color: #00205B; }
+</style>
+
+<div class="cs210-errq">
+
+<div class="name-modal-backdrop" id="errq-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the score screen so you can include it in your screenshot for the Lesson 7 reflection.</p>
+    <input type="text" id="errq-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="errq-cadet-name-btn" disabled>Start the quiz</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 7 &middot; Error-Matching Self-Check</h1>
+<div class="subtitle">Five scenarios. Each shows code or a Makefile snippet, the command that ran it, and the error you got back. Pick the cause. The skill being practiced is reading the error and matching it to what actually went wrong.</div>
+
+<div class="dots" id="errq-dots"></div>
+
+<div id="errq-card-area"></div>
+
+<div class="help-note">
+  <strong>How this works:</strong> One scenario per card. Pick the cause and click Submit. Answers are locked once submitted, so think before submitting. Score at least 4 out of 5 to earn the passing completion code.
+</div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-errq');
+  if (!root) return;
+
+  // ============================================================
+  // CS210 widget completion utilities
+  // Quiz uses two salts: _completed for passing, _incomplete for not.
+  // ============================================================
+  const CS210_PASS_SALT       = "lesson07_errormatch_completed";
+  const CS210_INCOMPLETE_SALT = "lesson07_errormatch_incomplete";
+  const CS210_PASS_THRESHOLD  = 0.7; // 70% per memory item #6
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE_PASS = cs210CodeFromSalt(CS210_PASS_SALT);
+  const CS210_CODE_INCO = cs210CodeFromSalt(CS210_INCOMPLETE_SALT);
+  let cs210CadetName = '';
+
+  // Name-entry modal. Scoped to the widget container (CSS uses
+  // position:absolute on the backdrop, position:relative on the widget root).
+  // Each widget owns its own modal; clicking Start dismisses only this widget's
+  // modal. Sibling widgets coordinate via the localStorage pre-fill.
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#errq-name-modal-backdrop');
+    const input = root.querySelector('#errq-cadet-name-input');
+    const btn = root.querySelector('#errq-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+
+    function readStoredName() {
+      try {
+        return (window.localStorage && window.localStorage.getItem('cs210_cadet_name')) || '';
+      } catch (e) { return ''; }
+    }
+
+    // Initial pre-fill from any name a previous visit (or sibling widget) stored.
+    const initial = readStoredName();
+    if (initial) input.value = initial;
+
+    function updateBtn() { btn.disabled = input.value.trim().length < 2; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    // Re-read localStorage on focus so that if a sibling widget on the same
+    // page wrote the name AFTER our IIFE ran, we still pre-fill it.
+    input.addEventListener('focus', function() {
+      if (input.value.trim()) return;
+      const stored = readStoredName();
+      if (stored) {
+        input.value = stored;
+        updateBtn();
+      }
+    });
+    // Same idea, but pushed: when a sibling widget on the same page submits
+    // its modal, it dispatches `cs210CadetNameSet`. Update our input field
+    // without waiting for focus.
+    window.addEventListener('cs210CadetNameSet', function(e) {
+      if (input.value.trim()) return;
+      const name = (e && e.detail) || readStoredName();
+      if (name) {
+        input.value = name;
+        updateBtn();
+      }
+    });
+
+    btn.addEventListener('click', function() {
+      const name = input.value.trim();
+      if (name.length < 2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      window.dispatchEvent(new CustomEvent('cs210CadetNameSet', { detail: name }));
+      backdrop.style.display = 'none';
+    });
+
+    setTimeout(function() { input.focus(); }, 50);
+  })();
+
+  function cs210FallbackCopy(text) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e) {}
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" })[c]);
+  }
+
+  // ============================================================
+  // Scenario definitions
+  // Each: id, scenario (HTML segments: source, command, error),
+  //       question, options, correct (index), correctFeedback, incorrectFeedback,
+  //       shortLabel for recap.
+  // ============================================================
+  const questions = [
+    {
+      id: 'q1',
+      // Scenario: forgot to include randhelper.o in the link command
+      scenario: [
+        { kind: 'code', tag: 'main.c', text:
+          '#include "greet.h"\n' +
+          '#include "mathy.h"\n' +
+          '#include "randhelper.h"\n' +
+          '\n' +
+          'int main(void) {\n' +
+          '    printf("%s\\n", make_greeting("cadet"));\n' +
+          '    printf("%d\\n", add_ints(2, 3));\n' +
+          '    printf("rolled a %d\\n", roll_die());\n' +
+          '    return 0;\n' +
+          '}'
+        },
+        { kind: 'cmd',  text: 'gcc -Wall -Werror main.o greet.o mathy.o -o program' },
+        { kind: 'err',  text:
+          '/usr/bin/ld: main.o: in function `main\':\n' +
+          'main.c:(.text+0x4e): undefined reference to `roll_die\'\n' +
+          'collect2: error: ld returned 1 exit status'
+        },
+      ],
+      text: 'What is the cause of this error?',
+      options: [
+        '<code>randhelper.h</code> is missing a function declaration.',
+        '<code>roll_die</code> is defined in <code>randhelper.c</code>, but <code>randhelper.o</code> was not given to the linker.',
+        'The compile step was skipped &mdash; <code>randhelper.o</code> does not exist yet.',
+        '<code>main.c</code> needs to <code>#include &lt;randhelper.h&gt;</code> instead of <code>#include "randhelper.h"</code>.',
+      ],
+      correct: 1,
+      correctFeedback: 'Correct. "undefined reference" is a <em>linker</em> error, not a compiler error. The compiler was happy: it saw the declaration in randhelper.h and emitted a call to roll_die. The linker is the one stuck, because the recipe did not include randhelper.o in the list of objects.',
+      incorrectFeedback: 'The correct answer is that <strong>randhelper.o was not given to the linker</strong>. "undefined reference" is a linker error. The compiler trusted the declaration in randhelper.h and emitted a call to roll_die. When ld went looking for the actual function body, none of the listed .o files had it.',
+      shortLabel: 'Missing object file in link line',
+    },
+
+    {
+      id: 'q2',
+      // Scenario: cadet edited mathy.h, ran make, sees old behavior
+      scenario: [
+        { kind: 'note', text: 'You changed <code>mathy.h</code> to make <code>add_ints</code> take three parameters instead of two, and updated <code>mathy.c</code> to match. Then you ran <code>make</code>. It said it rebuilt <code>mathy.o</code>. But <code>./program</code> still shows the old result. The relevant rule in your Makefile is:' },
+        { kind: 'code', tag: 'Makefile', text:
+          'main.o: main.c\n' +
+          '\t$(CC) $(CFLAGS) -c main.c -o main.o'
+        },
+        { kind: 'cmd',  text: 'make && ./program' },
+        { kind: 'err',  text:
+          '$(CC) $(CFLAGS) -c mathy.c -o mathy.o\n' +
+          '$(CC) main.o mathy.o greet.o randhelper.o -o program\n' +
+          '...prints the OLD output as if mathy.h was never changed...'
+        },
+      ],
+      text: 'Why is the program behaving as if your <code>mathy.h</code> change never happened?',
+      options: [
+        '<code>make</code> is broken on this machine. Run <code>make clean</code> first.',
+        'The recipe for <code>main.o</code> needs the <code>-fheader-rebuild</code> flag.',
+        'The Makefile does not list <code>mathy.h</code> as a dependency of <code>main.o</code>, so when <code>mathy.h</code> changed, <code>main.o</code> was not rebuilt and still references the old declarations.',
+        '<code>mathy.h</code> changes never affect the executable; only <code>mathy.c</code> changes do.',
+      ],
+      correct: 2,
+      correctFeedback: 'Correct. <code>main.c</code> #includes <code>mathy.h</code>, so when <code>mathy.h</code> changes, <code>main.o</code> needs to rebuild too. The Makefile only listed <code>main.c</code> as a dependency, so <code>make</code> did not know to rebuild <code>main.o</code>. The fix: <code>main.o: main.c mathy.h greet.h randhelper.h</code>. This is the most insidious Makefile bug because nothing errors; the build just gets quietly wrong.',
+      incorrectFeedback: 'The correct answer is that <strong>the Makefile does not list <code>mathy.h</code> as a dependency of <code>main.o</code></strong>. <code>main.c</code> #includes <code>mathy.h</code>, so <code>main.o</code> should rebuild when <code>mathy.h</code> changes. The Makefile only listed <code>main.c</code> as a dependency, so make never noticed. The fix: <code>main.o: main.c mathy.h greet.h randhelper.h</code>.',
+      shortLabel: 'Missing header in dependency list (silent bug)',
+    },
+
+    {
+      id: 'q3',
+      // Scenario: spaces instead of tab on the recipe line
+      scenario: [
+        { kind: 'code', tag: 'Makefile', text:
+          'CC = gcc\n' +
+          'CFLAGS = -Wall -Werror\n' +
+          '\n' +
+          'program: main.o\n' +
+          '    $(CC) main.o -o program'
+        },
+        { kind: 'cmd',  text: 'make' },
+        { kind: 'err',  text:
+          'Makefile:5: *** missing separator.  Stop.'
+        },
+      ],
+      text: 'What is wrong with this Makefile?',
+      options: [
+        'The variable <code>CC</code> is reserved; use a different name.',
+        'The recipe on line 5 is indented with spaces. Make requires a literal TAB character.',
+        'Line 4 needs a semicolon at the end.',
+        'The recipe should start with <code>recipe:</code> instead of just the command.',
+      ],
+      correct: 1,
+      correctFeedback: 'Correct. This is the most famous Makefile gotcha. Recipe lines must begin with a literal TAB character, not spaces. Many editors silently convert tabs to spaces. The error message says "missing separator" because make sees the line as just text, not as a recipe.',
+      incorrectFeedback: 'The correct answer is that <strong>the recipe is indented with spaces, not a TAB</strong>. Make is famously strict here: recipe lines must start with a literal tab character. Many editors silently convert tabs to spaces, which is what produces this cryptic "missing separator" error.',
+      shortLabel: 'Spaces instead of TAB before recipe',
+    },
+
+    {
+      id: 'q4',
+      // Scenario: forgot -c flag
+      scenario: [
+        { kind: 'code', tag: 'greet.c', text:
+          '#include "greet.h"\n' +
+          '\n' +
+          'const char *make_greeting(const char *name) {\n' +
+          '    return "Hello, friend!";\n' +
+          '}'
+        },
+        { kind: 'cmd',  text: 'gcc -Wall -Werror greet.c -o greet.o' },
+        { kind: 'err',  text:
+          '/usr/bin/ld: /usr/lib/gcc/x86_64-linux-gnu/Scrt1.o: in function `_start\':\n' +
+          '(.text+0x1b): undefined reference to `main\'\n' +
+          'collect2: error: ld returned 1 exit status'
+        },
+      ],
+      text: 'What went wrong?',
+      options: [
+        '<code>greet.c</code> needs a <code>main</code> function.',
+        'The compile is missing the <code>-c</code> flag, so gcc tried to link <code>greet.c</code> into a full executable.',
+        '<code>Scrt1.o</code> is missing from the system; reinstall gcc.',
+        '<code>-Werror</code> turned a missing-main warning into an error.',
+      ],
+      correct: 1,
+      correctFeedback: 'Correct. Without <code>-c</code>, gcc tries to do the whole pipeline: compile AND link. Linking expects a <code>main</code> function somewhere. <code>greet.c</code> does not have one. The fix: add <code>-c</code> so gcc stops after producing the object file. The cadet probably meant <code>gcc -Wall -Werror -c greet.c -o greet.o</code>.',
+      incorrectFeedback: 'The correct answer is that <strong>the <code>-c</code> flag is missing</strong>. Without <code>-c</code>, gcc does the whole pipeline (compile + link) and expects a <code>main</code> function. The fix: <code>gcc -Wall -Werror -c greet.c -o greet.o</code>. <code>-c</code> tells gcc to stop after producing the object file.',
+      shortLabel: 'Missing -c flag during compile',
+    },
+
+    {
+      id: 'q5',
+      // Scenario: #include <greet.h> instead of "greet.h"
+      scenario: [
+        { kind: 'code', tag: 'main.c', text:
+          '#include <stdio.h>\n' +
+          '#include <greet.h>\n' +
+          '#include "mathy.h"\n' +
+          '\n' +
+          'int main(void) { ... }'
+        },
+        { kind: 'cmd',  text: 'gcc -Wall -Werror -c main.c -o main.o' },
+        { kind: 'err',  text:
+          'main.c:2:10: fatal error: greet.h: No such file or directory\n' +
+          '    2 | #include <greet.h>\n' +
+          '      |          ^~~~~~~~~\n' +
+          'compilation terminated.'
+        },
+      ],
+      text: 'What needs to change?',
+      options: [
+        'Add <code>-I.</code> to the compile flags so gcc looks in the current directory.',
+        'Rename <code>greet.h</code> to <code>greet.hpp</code>.',
+        'Change <code>#include &lt;greet.h&gt;</code> to <code>#include "greet.h"</code>.',
+        'Move <code>greet.h</code> into <code>/usr/include/</code>.',
+      ],
+      correct: 2,
+      correctFeedback: 'Correct. The angle-bracket form (<code>&lt;...&gt;</code>) tells the preprocessor to search system include directories only. The quoted form (<code>"..."</code>) searches the current source directory first. Project headers always use quotes; library headers like <code>&lt;stdio.h&gt;</code> use angle brackets.',
+      incorrectFeedback: 'The correct answer is to <strong>use <code>#include "greet.h"</code> with quotes, not angle brackets</strong>. Angle brackets tell the preprocessor to search system include paths only. Quotes tell it to look in the source directory first. Project headers always use quotes; library headers like <code>&lt;stdio.h&gt;</code> use angle brackets.',
+      shortLabel: 'Wrong include form for project header',
+    },
+  ];
+
+  const state = questions.map(() => ({ answered: false, correct: false, choice: null }));
+  let currentIndex = 0;
+
+  const cardArea = root.querySelector('#errq-card-area');
+  const dotsArea = root.querySelector('#errq-dots');
+
+  function renderDots() {
+    dotsArea.innerHTML = '';
+    for (let i = 0; i < questions.length; i++) {
+      const d = document.createElement('div');
+      d.className = 'dot';
+      if (i === currentIndex && currentIndex < questions.length) d.classList.add('current');
+      else if (state[i].answered) d.classList.add(state[i].correct ? 'correct' : 'incorrect');
+      dotsArea.appendChild(d);
+    }
+    const scoreDot = document.createElement('div');
+    scoreDot.className = 'dot score';
+    if (currentIndex === questions.length) scoreDot.classList.add('current');
+    dotsArea.appendChild(scoreDot);
+  }
+
+  function submitAnswer(i) {
+    if (state[i].answered) return;
+    if (state[i].choice === null) return;
+    const q = questions[i];
+    state[i].answered = true;
+    state[i].correct = (state[i].choice === q.correct);
+    render();
+  }
+
+  function renderScenario(scenario) {
+    const wrap = document.createElement('div');
+    scenario.forEach(seg => {
+      if (seg.kind === 'code') {
+        const lab = document.createElement('div');
+        lab.className = 'scenario-section-label';
+        lab.innerHTML = 'Source <span class="file-tag">' + escapeHtml(seg.tag) + '</span>';
+        wrap.appendChild(lab);
+        const cb = document.createElement('div');
+        cb.className = 'code-block';
+        cb.textContent = seg.text;
+        wrap.appendChild(cb);
+      } else if (seg.kind === 'note') {
+        const note = document.createElement('div');
+        note.style.fontSize = '14px';
+        note.style.color = '#4A5568';
+        note.style.marginBottom = '8px';
+        note.innerHTML = seg.text;
+        wrap.appendChild(note);
+      } else if (seg.kind === 'cmd') {
+        const lab = document.createElement('div');
+        lab.className = 'scenario-section-label';
+        lab.textContent = 'Command';
+        wrap.appendChild(lab);
+        const eb = document.createElement('div');
+        eb.className = 'err-block';
+        eb.innerHTML = '<span class="prompt">$</span> ' + escapeHtml(seg.text);
+        wrap.appendChild(eb);
+      } else if (seg.kind === 'err') {
+        const lab = document.createElement('div');
+        lab.className = 'scenario-section-label';
+        lab.textContent = 'Output';
+        wrap.appendChild(lab);
+        const eb = document.createElement('div');
+        eb.className = 'err-block';
+        const span = document.createElement('span');
+        span.className = 'err';
+        span.textContent = seg.text;
+        eb.appendChild(span);
+        wrap.appendChild(eb);
+      }
+    });
+    return wrap;
+  }
+
+  function buildQuestionCard(i) {
+    const q = questions[i];
+    const card = document.createElement('div');
+    card.className = 'card';
+    if (state[i].answered) {
+      card.classList.add('answered');
+      card.classList.add(state[i].correct ? 'correct' : 'incorrect');
+    }
+
+    const label = document.createElement('div');
+    label.className = 'q-label';
+    label.textContent = 'Scenario ' + (i + 1) + ' of ' + questions.length;
+    card.appendChild(label);
+
+    card.appendChild(renderScenario(q.scenario));
+
+    const text = document.createElement('div');
+    text.className = 'q-text';
+    text.innerHTML = q.text;
+    card.appendChild(text);
+
+    const opts = document.createElement('div');
+    opts.className = 'options';
+    q.options.forEach((optText, j) => {
+      const opt = document.createElement('label');
+      opt.className = 'option';
+      if (state[i].answered) opt.classList.add('disabled');
+      if (state[i].choice === j) opt.classList.add('selected');
+      if (state[i].answered) {
+        if (j === q.correct) opt.classList.add('reveal-correct');
+        if (state[i].choice === j && j !== q.correct) opt.classList.add('incorrect');
+      }
+      const radio = document.createElement('input');
+      radio.type = 'radio';
+      radio.name = q.id;
+      radio.value = j;
+      radio.disabled = state[i].answered;
+      if (state[i].choice === j) radio.checked = true;
+      radio.addEventListener('change', () => {
+        if (state[i].answered) return;
+        state[i].choice = j;
+        render();
+      });
+      opt.appendChild(radio);
+      const span = document.createElement('span');
+      span.innerHTML = optText;
+      opt.appendChild(span);
+      opts.appendChild(opt);
+    });
+    card.appendChild(opts);
+
+    if (state[i].answered) {
+      const fb = document.createElement('div');
+      fb.className = 'feedback ' + (state[i].correct ? 'correct' : 'incorrect');
+      fb.innerHTML = (state[i].correct ? '<strong>Correct.</strong> ' : '<strong>Not quite.</strong> ') +
+                     (state[i].correct ? q.correctFeedback : q.incorrectFeedback);
+      card.appendChild(fb);
+    }
+
+    const spacer = document.createElement('div');
+    spacer.className = 'spacer';
+    card.appendChild(spacer);
+
+    const nav = document.createElement('div');
+    nav.className = 'nav-row';
+    const backBtn = document.createElement('button');
+    backBtn.className = 'nav-btn back';
+    backBtn.innerHTML = '&larr; Back';
+    backBtn.disabled = (i === 0);
+    backBtn.addEventListener('click', () => {
+      if (i > 0) { currentIndex--; render(); }
+    });
+    nav.appendChild(backBtn);
+
+    const positionLabel = document.createElement('div');
+    positionLabel.className = 'nav-position';
+    positionLabel.textContent = (i + 1) + ' / ' + questions.length;
+    nav.appendChild(positionLabel);
+
+    if (!state[i].answered) {
+      const submitBtn = document.createElement('button');
+      submitBtn.className = 'nav-btn primary';
+      submitBtn.textContent = 'Submit';
+      submitBtn.disabled = state[i].choice === null;
+      submitBtn.addEventListener('click', () => submitAnswer(i));
+      nav.appendChild(submitBtn);
+    } else {
+      const nextBtn = document.createElement('button');
+      nextBtn.className = 'nav-btn primary';
+      nextBtn.innerHTML = (i === questions.length - 1) ? 'See score &rarr;' : 'Next &rarr;';
+      nextBtn.addEventListener('click', () => { currentIndex++; render(); });
+      nav.appendChild(nextBtn);
+    }
+
+    card.appendChild(nav);
+    return card;
+  }
+
+  function buildScoreCard() {
+    const card = document.createElement('div');
+    card.className = 'card score-card';
+    const correctCount = state.filter(s => s.correct).length;
+    const total = questions.length;
+    const ratio = correctCount / total;
+    const passed = ratio >= CS210_PASS_THRESHOLD;
+    if (correctCount === total) card.classList.add('full-correct');
+
+    const label = document.createElement('div');
+    label.className = 'q-label';
+    label.textContent = 'Self-check complete';
+    card.appendChild(label);
+
+    const msg = document.createElement('div');
+    if (correctCount === total) {
+      msg.className = 'score-message good-job';
+      msg.textContent = 'Perfect score. Excellent work!';
+    } else if (passed) {
+      msg.className = 'score-message good-job';
+      msg.textContent = 'Nice work!';
+    } else {
+      msg.className = 'score-message good-job';
+      msg.style.color = '#6B5300';
+      msg.textContent = 'Worth another look.';
+    }
+    card.appendChild(msg);
+
+    const scoreBig = document.createElement('div');
+    scoreBig.className = 'score-big';
+    scoreBig.textContent = correctCount + ' / ' + total;
+    card.appendChild(scoreBig);
+
+    const scoreLabel = document.createElement('div');
+    scoreLabel.className = 'score-label';
+    scoreLabel.textContent = 'scenarios correct';
+    card.appendChild(scoreLabel);
+
+    // Completion code strip — different code for pass vs not-pass
+    const codeToShow = passed ? CS210_CODE_PASS : CS210_CODE_INCO;
+    const strip = document.createElement('div');
+    strip.className = 'code-strip' + (passed ? '' : ' incomplete');
+    strip.innerHTML =
+      '<div><div class="code-strip-label">Completion code</div>' +
+      '<div class="code-strip-value">' + codeToShow + '</div></div>' +
+      '<button class="copy-btn" id="errq-copy-btn" type="button">Copy code</button>';
+    card.appendChild(strip);
+
+    const safeName = (cs210CadetName || 'Cadet').replace(/[<>&"']/g, function(c) {
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+    const ts = new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const meta = document.createElement('div');
+    meta.className = 'code-strip-meta';
+    meta.innerHTML = 'Cadet: <strong>' + safeName + '</strong> &middot; Completed: ' + ts +
+                     (passed
+                       ? '<br>Enter this code in the Lesson 7 reflection in Blackboard.'
+                       : '<br>This code marks the attempt as <em>incomplete</em>. Review the missed scenarios below and take the quiz again to earn the passing code.');
+    card.appendChild(meta);
+
+    const detail = document.createElement('div');
+    detail.className = 'score-message';
+    detail.style.marginTop = '22px';
+    if (correctCount === total) {
+      detail.textContent = "You can read these error messages. That skill will save you hours in the lab.";
+    } else if (passed) {
+      detail.textContent = "Good. Review the scenarios you missed below so the next compiler error is faster to debug.";
+    } else {
+      detail.textContent = "Re-read the missed scenarios below, then take the quiz again. Reading errors is a learnable skill.";
+    }
+    card.appendChild(detail);
+
+    const recap = document.createElement('div');
+    recap.className = 'recap';
+    const recapTitle = document.createElement('div');
+    recapTitle.className = 'recap-title';
+    recapTitle.textContent = 'Scenario recap';
+    recap.appendChild(recapTitle);
+
+    state.forEach((s, i) => {
+      const item = document.createElement('div');
+      item.className = 'recap-item';
+      const icon = document.createElement('div');
+      icon.className = 'recap-icon ' + (s.correct ? 'correct' : 'incorrect');
+      icon.textContent = s.correct ? '\u2713' : '\u2717';
+      item.appendChild(icon);
+      const body = document.createElement('div');
+      body.className = 'recap-body';
+      const q = questions[i];
+      const qLine = document.createElement('div');
+      qLine.className = 'recap-question';
+      qLine.innerHTML = '<strong>S' + (i + 1) + '.</strong> ' + q.shortLabel;
+      body.appendChild(qLine);
+      if (!s.correct) {
+        const exp = document.createElement('div');
+        exp.className = 'recap-explanation';
+        exp.innerHTML = q.incorrectFeedback;
+        body.appendChild(exp);
+      }
+      item.appendChild(body);
+      recap.appendChild(item);
+    });
+    card.appendChild(recap);
+
+    const resetRow = document.createElement('div');
+    resetRow.className = 'reset-row';
+    const resetBtn = document.createElement('button');
+    resetBtn.className = 'reset-btn';
+    resetBtn.textContent = 'Take the quiz again';
+    resetBtn.addEventListener('click', reset);
+    resetRow.appendChild(resetBtn);
+    card.appendChild(resetRow);
+
+    const nav = document.createElement('div');
+    nav.className = 'nav-row';
+    const backBtn = document.createElement('button');
+    backBtn.className = 'nav-btn back';
+    backBtn.innerHTML = '&larr; Review scenarios';
+    backBtn.addEventListener('click', () => {
+      currentIndex = questions.length - 1;
+      render();
+    });
+    nav.appendChild(backBtn);
+    const spacer = document.createElement('div');
+    spacer.style.flex = '1';
+    nav.appendChild(spacer);
+    card.appendChild(nav);
+
+    // Copy button wiring (must run after appending to DOM in render())
+    setTimeout(() => {
+      const copyBtn = root.querySelector('#errq-copy-btn');
+      if (copyBtn) {
+        copyBtn.addEventListener('click', () => {
+          const text = codeToShow;
+          const ok = () => {
+            copyBtn.textContent = 'Copied';
+            copyBtn.classList.add('copied');
+            setTimeout(() => {
+              copyBtn.textContent = 'Copy code';
+              copyBtn.classList.remove('copied');
+            }, 1500);
+          };
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(ok, () => { cs210FallbackCopy(text); ok(); });
+          } else {
+            cs210FallbackCopy(text); ok();
+          }
+        });
+      }
+    }, 0);
+
+    return card;
+  }
+
+  function render() {
+    renderDots();
+    cardArea.innerHTML = '';
+    if (currentIndex >= questions.length) {
+      cardArea.appendChild(buildScoreCard());
+    } else {
+      cardArea.appendChild(buildQuestionCard(currentIndex));
+    }
+  }
+
+  function reset() {
+    state.forEach(s => { s.answered = false; s.correct = false; s.choice = null; });
+    currentIndex = 0;
+    render();
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (!root.contains(document.activeElement)) return;
+    if (e.key === 'ArrowLeft' && currentIndex > 0) { currentIndex--; render(); }
+    else if (e.key === 'ArrowRight') {
+      if (currentIndex >= questions.length) return;
+      if (state[currentIndex].answered) { currentIndex++; render(); }
+    }
+  });
+
+  render();
+})();
+</script>
+
+
+    </div>
+  </details>
+
+  <!-- ===================== 6. AFTER CLASS ===================== -->
+  <details id="after-class" style="margin-bottom: 24px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      6. After Class
+    </summary>
+    <div style="padding: 18px 22px;">
+      <ul style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;"><strong style="color: #00205B;">Take the Lesson 7 reflection in Blackboard.</strong> Enter the two completion codes from the Makefile walkthrough and the error-matching self-check, then answer the reflection prompt. Attach a screenshot of the walkthrough completion screen.</li>
+        <li style="margin-bottom: 6px;">Finish Lab 07 if you did not complete it in class. Submit through GitHub Classroom before Lesson 8.</li>
+        <li style="margin-bottom: 6px;">Heads up: Lesson 8 is GR1. It covers Lessons 1 through 7. Review the in-class material and your lab Makefile; both are fair game.</li>
+        <li style="margin-bottom: 0;">If anything in the walkthrough or the lab is still fuzzy, schedule EI before GR1.</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== HELP NOTE ===================== -->
+  <div style="background: #F5F7FA; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 3px; font-size: 13.5px; color: #4A5568;">
+    <strong style="color: #00205B;">Need help?</strong> Schedule EI with your instructor. Bring specific code or specific screenshots, and the exact error message or output you do not understand. Specific questions get unstuck quickly.
+  </div>
+
+</div>

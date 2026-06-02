@@ -1,0 +1,2510 @@
+<!-- ============================================================
+     CS210 - Lesson 37
+     Defensive Programming and Reading Existing C Code
+     Self-contained: all CSS inline. Native <details> for collapsing.
+     Two widgets embedded inline in Section 5 (harden walkthrough,
+     assert-vs-validate quiz). Defensive-programming reference card and
+     provided read-only code embedded in Section 4.
+     Paste into Blackboard Ultra via Document -> Add HTML block.
+     ============================================================ -->
+
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 980px; margin: 0 auto; line-height: 1.6;">
+
+  <!-- ===================== LIGHT HEADER ===================== -->
+  <div style="border-left: 5px solid #003087; padding: 8px 0 8px 18px; margin-bottom: 24px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 2px;">CS210 &middot; Block 5 &middot; Lesson 37</div>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 600; color: #00205B;">Defensive Programming and Reading Existing C Code</h1>
+    <div style="font-size: 14px; color: #4A5568; margin-top: 4px;">Assertions &middot; Error codes &amp; errno &middot; Input validation &middot; Reading code by other authors</div>
+  </div>
+
+  <!-- ===================== AT A GLANCE ===================== -->
+  <div style="background: #F5F7FA; border-left: 4px solid #B5B7BA; padding: 14px 18px; margin-bottom: 22px; font-size: 14px;">
+    <strong style="color: #00205B;">At a glance:</strong> You have been writing defensive code in pieces since Lesson 16. Today it comes together into one habit, and you add the skill that defines real engineering work: reading and hardening code you did not write. You practice through two widgets in Section 5, then harden a marketplace inventory loader a teammate left you. The organizing rule for the whole lesson: assertions catch <em>your</em> bugs; validation handles <em>bad input</em>.
+  </div>
+
+  <!-- ===================== TABLE OF CONTENTS ===================== -->
+  <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 20px; margin-bottom: 24px; border-radius: 3px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Contents</div>
+    <ol style="margin: 0; padding-left: 22px; font-size: 14px;">
+      <li style="margin-bottom: 4px;"><a href="#objectives" style="color: #003087; text-decoration: none;">Lesson Objectives</a></li>
+      <li style="margin-bottom: 4px;"><a href="#readings" style="color: #003087; text-decoration: none;">Assigned Readings</a></li>
+      <li style="margin-bottom: 4px;"><a href="#pre-class" style="color: #003087; text-decoration: none;">Pre-Class Work</a></li>
+      <li style="margin-bottom: 4px;"><a href="#materials" style="color: #003087; text-decoration: none;">Lesson Materials and Overview</a></li>
+      <li style="margin-bottom: 4px;"><a href="#in-class" style="color: #003087; text-decoration: none;">In-Class Work</a></li>
+      <li style="margin-bottom: 0;"><a href="#after-class" style="color: #003087; text-decoration: none;">After Class</a></li>
+    </ol>
+  </div>
+
+  <!-- ===================== 1. OBJECTIVES ===================== -->
+  <details id="objectives" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      1. Lesson Objectives
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 10px 0; font-style: italic;">By the end of this lesson, cadets will be able to:</p>
+      <!-- EDIT ME: confirm the (Outcome N) tags match the current course outcome list. -->
+      <ol style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Apply assertions to validate program assumptions during development. <span style="color: #6B7280; font-size: 12px;">(Outcome 1)</span></li>
+        <li style="margin-bottom: 6px;">Implement error handling using error codes and <code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">errno</code>. <span style="color: #6B7280; font-size: 12px;">(Outcomes 1, 3)</span></li>
+        <li style="margin-bottom: 6px;">Validate input against expected ranges and formats. <span style="color: #6B7280; font-size: 12px;">(Outcomes 1, 3)</span></li>
+        <li style="margin-bottom: 0;">Read and interpret a non-trivial C codebase written by other authors. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 2. READINGS ===================== -->
+  <details id="readings" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      2. Assigned Readings
+    </summary>
+    <div style="padding: 18px 22px; font-size: 14.5px;">
+      <p style="font-size:14.5px;margin:0 0 12px 0;">There is no new Beej chapter for this lesson. It consolidates defensive habits you have practiced since Lesson 16, so the reading is focused and short:</p>
+      <ul style="margin: 0 0 12px 0; padding-left: 22px;">
+        <li style="margin-bottom: 6px;">The <strong>Lesson 37 supplementary notes</strong> (linked in the course materials): a self-contained walk through reading existing code, assertions, error codes and <code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">errno</code>, and input validation.</li>
+        <li style="margin-bottom: 6px;">The <strong>provided loader source</strong> you will harden in the lab: read <code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">inventory.h</code> and <code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">main.c</code> before class. Both appear in Section 4 so you can read them here.</li>
+        <li style="margin-bottom: 0;">Keep the <strong>Defensive Programming reference card</strong> (Section 4) open while you work. It is the one-page summary you will reuse well beyond this lesson.</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== 3. PRE-CLASS ===================== -->
+  <details id="pre-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      3. Pre-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+      <h3 style="color: #00205B; font-size: 16px; margin: 0 0 10px 0;">Pre-Class Checklist</h3>
+      <ul style="list-style: none; padding: 0; margin: 0; font-size: 14.5px;">
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Read the Lesson 37 supplementary notes.</strong>
+          <span style="color: #4A5568;">Short. Frames the four pieces and the one rule that ties them together.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Read <code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">inventory.h</code> and <code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">main.c</code> (Section 4).</strong>
+          <span style="color: #4A5568;">Come to class able to say, in one sentence each, what the loader functions promise and what <code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">main</code> does with a failed line.</span>
+        </li>
+        <li style="margin-bottom: 0; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Skim the In-Class section below.</strong>
+          <span style="color: #4A5568;">Know what the two widgets and the lab will ask of you.</span>
+        </li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== 4. MATERIALS ===================== -->
+  <details id="materials" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      4. Lesson Materials and Overview
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 18px 0;">This lesson is a synthesis. Each piece below is something you have touched before; the goal today is to use them together and to apply them to code you did not write.</p>
+
+      <!-- Subsection navigation -->
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 18px; margin-bottom: 22px; border-radius: 3px;">
+        <div style="font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">Jump to</div>
+        <div style="font-size: 13.5px;">
+          <a href="#slides" style="color: #003087; text-decoration: none; margin-right: 14px;">Slides</a>
+          <a href="#reading-code" style="color: #003087; text-decoration: none; margin-right: 14px;">Reading Existing Code</a>
+          <a href="#the-contract" style="color: #003087; text-decoration: none; margin-right: 14px;">The Contract</a>
+          <a href="#the-driver" style="color: #003087; text-decoration: none; margin-right: 14px;">The Driver</a>
+          <a href="#assertions" style="color: #003087; text-decoration: none; margin-right: 14px;">Assertions</a>
+          <a href="#errno" style="color: #003087; text-decoration: none; margin-right: 14px;">Error Codes &amp; errno</a>
+          <a href="#validation" style="color: #003087; text-decoration: none; margin-right: 14px;">Input Validation</a>
+          <a href="#refcard" style="color: #003087; text-decoration: none;">Reference Card</a>
+        </div>
+      </div>
+
+      <!-- Slides -->
+      <h3 id="slides" style="color:#00205B;font-size:16px;margin:24px 0 10px 0;scroll-margin-top:16px; margin-top:0;">Slides</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">The Lesson 37 deck walks through reading existing code, the assert-vs-validate distinction, error reporting with <code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">errno</code>, and input validation, then sets up the lab.</p>
+      <!-- =========================================================
+           EDIT ME: Lesson 37 slide deck link
+           Replace href="#" below with the SharePoint share URL once the
+           deck is published. Leave target="_blank" and rel="noopener".
+           ========================================================= -->
+      <p style="margin: 0 0 18px 0;">
+        <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 10px 20px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 14px;">Open Lesson 37 slides &rarr;</a>
+      </p>
+
+      <!-- Reading existing code -->
+      <h3 id="reading-code" style="color:#00205B;font-size:16px;margin:24px 0 10px 0;scroll-margin-top:16px;">Reading code you did not write</h3>
+      <p style="font-size:14.5px;margin:0 0 12px 0;">Most code you will work on already exists, and reading it is its own skill. Find the entry point and follow the data: where input enters, what transforms it, where it ends up. Read the contract (the header) before the implementation. Then do the thing that finds bugs: trace the inputs the author did <em>not</em> consider, such as a NULL pointer, an empty line, a value out of range, a missing field. Working code handles the cases its author imagined; the gaps are everything else.</p>
+
+      <!-- The contract -->
+      <h3 id="the-contract" style="color:#00205B;font-size:16px;margin:24px 0 10px 0;scroll-margin-top:16px;">The contract: inventory.h</h3>
+      <p style="font-size:14.5px;margin:0 0 12px 0;">This header is the spec for the lab. Read each prototype as a promise: what it takes, what it returns, and what it sets <code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">errno</code> to on failure. You will match these promises exactly when you harden the loader.</p>
+      <pre style="background:#1E2A3A;color:#E8EDF5;padding:14px 16px;border-radius:4px;font-family:Consolas,monospace;font-size:12.5px;line-height:1.5;white-space:pre;overflow-x:auto;margin:0 0 18px 0;">#ifndef INVENTORY_H
+#define INVENTORY_H
+
+/*
+ * inventory.h - shared contract for the marketplace inventory loader.
+ *
+ * PROVIDED FILE. Do not modify. The autograder and main.c depend on
+ * these declarations exactly as written.
+ */
+
+/* Longest item name we store, including the terminating &#x27;\0&#x27;. */
+#define NAME_MAX_LEN 64
+
+/* A quantity above this is treated as bad data, not real stock. */
+#define MAX_QTY 10000
+
+/* Capacity of the in-memory inventory array. */
+#define CAPACITY 256
+
+/* One parsed marketplace listing. */
+struct listing {
+    char name[NAME_MAX_LEN];
+    int price;          /* whole dollars; must be &gt;= 0 */
+    int quantity;       /* must be 0..MAX_QTY inclusive */
+    char condition;     /* &#x27;N&#x27; new, &#x27;U&#x27; used, or &#x27;R&#x27; refurbished */
+};
+
+/*
+ * load_listing - parse one CSV line &quot;name,price,quantity,condition&quot;
+ *                into *out.
+ *
+ * @param line  the raw input line (may be NULL)
+ * @param out   destination listing (may be NULL)
+ * @return 0 on success.
+ *         -1 on failure, with errno set:
+ *            EFAULT if line or out is NULL,
+ *            EINVAL if the line is malformed or any field is out of range.
+ *
+ * On failure *out is left unchanged.
+ */
+int load_listing(const char *line, struct listing *out);
+
+/*
+ * add_listing - append item to inventory, tracking the running count.
+ *
+ * @param inventory  the array, with room for CAPACITY entries
+ * @param count      pointer to the current number of stored items
+ * @param item       the listing to append (must be non-NULL)
+ * @return 0 on success (item stored, *count incremented).
+ *         -1 if the inventory is full, with errno set to ENOSPC.
+ *
+ * It is a programmer error (not a runtime condition) for count to be
+ * NULL or *count to be negative; those are guarded with assert.
+ */
+int add_listing(struct listing inventory[], int *count,
+                const struct listing *item);
+
+#endif /* INVENTORY_H */
+</pre>
+
+      <!-- The driver -->
+      <h3 id="the-driver" style="color:#00205B;font-size:16px;margin:24px 0 10px 0;scroll-margin-top:16px;">The driver: main.c</h3>
+      <p style="font-size:14.5px;margin:0 0 12px 0;">This is the code that calls your functions. You cannot harden <code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">load_listing</code> well without understanding how it is used. Notice how <code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">main</code> reads one line at a time, what it does when a line is rejected, and which stream the error message goes to.</p>
+      <pre style="background:#1E2A3A;color:#E8EDF5;padding:14px 16px;border-radius:4px;font-family:Consolas,monospace;font-size:12.5px;line-height:1.5;white-space:pre;overflow-x:auto;margin:0 0 18px 0;">/*
+ * main.c - driver for the marketplace inventory loader.
+ *
+ * PROVIDED FILE. Do not modify. Read it carefully: this is the code that
+ * calls your functions, and you cannot harden load_listing well without
+ * understanding how it is used.
+ *
+ * Usage:
+ *   ./inventory &lt; feed.txt
+ *
+ * Reads one listing per line from standard input. Valid listings are
+ * stored; invalid lines are reported to stderr (with errno explained)
+ * and skipped. At the end it prints the accepted inventory.
+ */
+
+#include &lt;errno.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+#include &quot;inventory.h&quot;
+
+#define LINE_BUF 256
+
+static const char *condition_word(char c)
+{
+    switch (c) {
+        case &#x27;N&#x27;: return &quot;new&quot;;
+        case &#x27;U&#x27;: return &quot;used&quot;;
+        case &#x27;R&#x27;: return &quot;refurbished&quot;;
+        default:  return &quot;unknown&quot;;
+    }
+}
+
+int main(void)
+{
+    struct listing inventory[CAPACITY];
+    int count = 0;
+    char line[LINE_BUF];
+    int line_no = 0;
+
+    while (fgets(line, sizeof line, stdin) != NULL) {
+        line_no++;
+
+        /* Strip a trailing newline so condition is the last real char. */
+        size_t len = strlen(line);
+        if (len &gt; 0 &amp;&amp; line[len - 1] == &#x27;\n&#x27;) {
+            line[len - 1] = &#x27;\0&#x27;;
+        }
+
+        /* Skip blank lines silently. */
+        if (line[0] == &#x27;\0&#x27;) {
+            continue;
+        }
+
+        struct listing item;
+        errno = 0;
+        if (load_listing(line, &amp;item) != 0) {
+            /* perror turns the current errno into a readable reason and
+               writes it to stderr, not stdout. */
+            fprintf(stderr, &quot;line %d: rejected: &quot;, line_no);
+            perror(line);
+            continue;
+        }
+
+        if (add_listing(inventory, &amp;count, &amp;item) != 0) {
+            fprintf(stderr, &quot;line %d: not stored: &quot;, line_no);
+            perror(&quot;inventory&quot;);
+            continue;
+        }
+    }
+
+    printf(&quot;Accepted %d listing(s):\n&quot;, count);
+    for (int i = 0; i &lt; count; i++) {
+        printf(&quot;  %-20s $%d  qty %d  (%s)\n&quot;,
+               inventory[i].name,
+               inventory[i].price,
+               inventory[i].quantity,
+               condition_word(inventory[i].condition));
+    }
+
+    return 0;
+}
+</pre>
+
+      <!-- Assertions -->
+      <h3 id="assertions" style="color:#00205B;font-size:16px;margin:24px 0 10px 0;scroll-margin-top:16px;">Assertions: catching your own bugs</h3>
+      <p style="font-size:14.5px;margin:0 0 12px 0;"><code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">assert(condition);</code> from <code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">&lt;assert.h&gt;</code> aborts with a file-and-line message if the condition is false. Use it for <strong>invariants</strong>, conditions that can only be false if your own logic has a bug: an index your code computed being in bounds, a count never going negative. The catch is that <code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">-DNDEBUG</code> compiles every assertion out of release builds, so an assertion is a development-time check, never a runtime guarantee. That is the reason you never validate untrusted input with an assertion.</p>
+
+      <!-- errno -->
+      <h3 id="errno" style="color:#00205B;font-size:16px;margin:24px 0 10px 0;scroll-margin-top:16px;">Error codes and errno: failing on purpose</h3>
+      <p style="font-size:14.5px;margin:0 0 12px 0;">When a function cannot do its job, it should fail in a way the caller can detect and explain. The common C pattern is to return a status (often <code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">0</code> success, <code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">-1</code> failure) and set <code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">errno</code> from <code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">&lt;errno.h&gt;</code> to say why: <code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">EINVAL</code> for invalid data, <code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">EFAULT</code> for a bad address such as NULL, <code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">ENOSPC</code> when there is no room. The caller turns that into text with <code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">perror</code> or <code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">strerror(errno)</code> and writes it to <strong>stderr</strong>, so error messages never get mixed into the program's real output.</p>
+
+      <!-- Validation -->
+      <h3 id="validation" style="color:#00205B;font-size:16px;margin:24px 0 10px 0;scroll-margin-top:16px;">Input validation: handling the world</h3>
+      <p style="font-size:14.5px;margin:0 0 12px 0;">Validation is the runtime handling of data you cannot trust, and the order rarely changes: guard pointers before dereferencing; check return values (<code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">sscanf</code> returns how many fields it filled); range-check every field on both ends; allow-list enumerated values and reject everything else; and commit to the output only after every check passes, so a rejected input never leaves a half-filled result. The whole lesson reduces to one rule: <strong>assertions for your bugs, validation for bad input.</strong></p>
+
+      <!-- Reference card -->
+      <h3 id="refcard" style="color:#00205B;font-size:16px;margin:24px 0 10px 0;scroll-margin-top:16px;">Defensive Programming reference card</h3>
+      <p style="font-size: 14px; margin: 0 0 14px 0;">Keep this open while you code. It is cross-cutting: you will see it referenced from earlier defensive-programming touchpoints, and it lives here at its home lesson.</p>
+      <div style="border: 1px solid #D0D5DD; border-radius: 4px; padding: 16px 18px; margin-bottom: 6px; background: #ffffff;">
+<!-- ============================================================
+     CS210 - Defensive Programming Reference Card
+     Cross-cutting reference. Home lesson: 37. Referenced from the
+     defensive-programming touchpoints at Lessons 16, 21, 22, 23, and 26.
+     Self-contained styled block; paste into Blackboard via an HTML block,
+     or link as a standalone page.
+     ============================================================ -->
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 920px; margin: 0 auto; line-height: 1.55;">
+
+  <div style="border-left: 5px solid #003087; padding: 8px 0 8px 18px; margin-bottom: 18px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 2px;">CS210 &middot; Reference Card</div>
+    <h1 style="margin: 0; font-size: 22px; font-weight: 600; color: #00205B;">Defensive Programming</h1>
+    <div style="font-size: 13.5px; color: #4A5568; margin-top: 4px;">Assertions &middot; Error codes &amp; errno &middot; Input validation &middot; One page, keep it open while you code.</div>
+  </div>
+
+  <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 12px 16px; margin-bottom: 18px; font-size: 13.5px; color: #6B5300;">
+    <strong style="color: #4A3A00;">The one rule that organizes everything:</strong> use <em>assertions</em> for conditions that are false only when <em>your own code</em> has a bug; use <em>validation</em> for bad data that is an <em>expected</em> runtime event. Assertions catch programmer error; validation handles the world.
+  </div>
+
+  <!-- Assertions -->
+  <h2 style="color: #00205B; font-size: 16px; margin: 0 0 8px 0;">Assertions &mdash; <code style="background:#F0F2F5;padding:1px 6px;border-radius:2px;font-family:Consolas,monospace;font-size:13px;">#include &lt;assert.h&gt;</code></h2>
+  <ul style="margin: 0 0 8px 0; padding-left: 20px; font-size: 14px;">
+    <li style="margin-bottom: 5px;"><code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">assert(condition);</code> aborts the program with a file and line message if <code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">condition</code> is false.</li>
+    <li style="margin-bottom: 5px;">Use it to state and check <strong>invariants</strong>: things that must be true if your logic is correct (a computed index in bounds, a count never negative, a pointer your own code just set).</li>
+    <li style="margin-bottom: 5px;"><strong>Compiled out by <code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">-DNDEBUG</code>.</strong> Release builds delete every assert. Never put anything you always need to happen inside an assert.</li>
+    <li style="margin-bottom: 0;"><strong>Never</strong> assert on input you do not control (user, file, network). That is validation's job.</li>
+  </ul>
+  <pre style="background:#1E2A3A;color:#E8EDF5;padding:12px 16px;border-radius:4px;font-family:Consolas,monospace;font-size:12.5px;line-height:1.5;white-space:pre;overflow-x:auto;margin:0 0 18px 0;">assert(count &gt;= 0);          /* my bug if false  -&gt; assert  */
+assert(index &lt; CAPACITY);    /* my bug if false  -&gt; assert  */</pre>
+
+  <!-- Error codes & errno -->
+  <h2 style="color: #00205B; font-size: 16px; margin: 0 0 8px 0;">Error codes &amp; errno &mdash; <code style="background:#F0F2F5;padding:1px 6px;border-radius:2px;font-family:Consolas,monospace;font-size:13px;">#include &lt;errno.h&gt;</code></h2>
+  <ul style="margin: 0 0 8px 0; padding-left: 20px; font-size: 14px;">
+    <li style="margin-bottom: 5px;">Return a value that tells the caller success or failure (a common C convention is <code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">0</code> for success, <code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">-1</code> for failure).</li>
+    <li style="margin-bottom: 5px;"><code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">errno</code> is a shared global the standard library sets on failure; your code can set it too. Pair it with your return so the caller learns <em>that</em> it failed and <em>why</em>.</li>
+    <li style="margin-bottom: 5px;">Common values: <code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">EINVAL</code> (invalid argument/data), <code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">EFAULT</code> (bad address / NULL), <code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">ENOSPC</code> (no space left).</li>
+    <li style="margin-bottom: 5px;">Report with <code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">perror("context")</code> or <code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">strerror(errno)</code>. Send error text to <strong>stderr</strong>, not stdout.</li>
+    <li style="margin-bottom: 0;">Set <code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">errno = 0;</code> before a call when you intend to inspect it afterward.</li>
+  </ul>
+  <pre style="background:#1E2A3A;color:#E8EDF5;padding:12px 16px;border-radius:4px;font-family:Consolas,monospace;font-size:12.5px;line-height:1.5;white-space:pre;overflow-x:auto;margin:0 0 18px 0;">if (bad_data) { errno = EINVAL; return -1; }
+...
+if (load_listing(line, &amp;item) != 0)
+    perror("load_listing");   /* writes reason to stderr */</pre>
+
+  <!-- Input validation -->
+  <h2 style="color: #00205B; font-size: 16px; margin: 0 0 8px 0;">Input validation</h2>
+  <ul style="margin: 0 0 8px 0; padding-left: 20px; font-size: 14px;">
+    <li style="margin-bottom: 5px;"><strong>Guard pointers first.</strong> Check for <code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">NULL</code> before dereferencing anything.</li>
+    <li style="margin-bottom: 5px;"><strong>Check return values.</strong> <code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">scanf</code>/<code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">sscanf</code> return how many fields were assigned; anything short means the rest are garbage.</li>
+    <li style="margin-bottom: 5px;"><strong>Range-check every field</strong>, both ends. A value can parse cleanly and still be nonsense.</li>
+    <li style="margin-bottom: 5px;"><strong>Allow-list enumerated inputs.</strong> Accept the known-good set; reject everything else. Fail closed, not open.</li>
+    <li style="margin-bottom: 0;"><strong>Commit after validating.</strong> Write to the output only once every check passes, so a rejected input never leaves a half-filled result.</li>
+  </ul>
+
+  <!-- Reading existing code -->
+  <h2 style="color: #00205B; font-size: 16px; margin: 0 0 8px 0;">Reading code you did not write</h2>
+  <ul style="margin: 0; padding-left: 20px; font-size: 14px;">
+    <li style="margin-bottom: 5px;">Find the entry point and follow the data: where does input come from, where does it go.</li>
+    <li style="margin-bottom: 5px;">Read the header/contract first; it tells you what each function promises before you read how it delivers.</li>
+    <li style="margin-bottom: 5px;">Trace the inputs the author did <em>not</em> consider: NULL, empty, too long, out of range, wrong type. That is where the bugs live.</li>
+    <li style="margin-bottom: 0;">Watch for <code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">=</code> where <code style="background:#F0F2F5;padding:1px 5px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">==</code> was meant, ignored return values, and missing bounds checks.</li>
+  </ul>
+
+</div>
+
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ===================== 5. IN-CLASS ===================== -->
+  <details id="in-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      5. In-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 16px 0;">Three things to do in class. Use the checklist to track your progress.</p>
+
+      <ul style="list-style: none; padding: 0; margin: 0 0 24px 0; font-size: 14.5px;">
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Work through the Harden the Loader walkthrough below.</strong>
+          <span style="color: #4A5568;">Thirteen guided tasks: read a fragile loader, then add one defensive guard at a time and watch the bad records get caught. About 25 minutes.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Take the Assert vs Validate self-check.</strong>
+          <span style="color: #4A5568;">Seven questions on the line between catching your bugs and handling bad input. About 10 minutes.</span>
+        </li>
+        <li style="margin-bottom: 0; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Complete Lab 37: Harden the Marketplace Inventory Loader.</strong>
+          <span style="color: #4A5568;">One lab, 2 points. Auto-graded through GitHub Classroom. Full instructions in the lab repo.</span>
+          <!-- =========================================================
+               EDIT ME: Lab 37 GitHub Classroom assignment link
+               Replace href="#" with the classroom.github.com/a/... invite
+               URL once the assignment is published.
+               ========================================================= -->
+          <div style="margin-top: 8px; margin-left: 28px;">
+            <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 6px 14px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 13px;">Accept Lab 37 on GitHub Classroom &rarr;</a>
+          </div>
+        </li>
+      </ul>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 18px 0 10px 0;">Harden the Loader Walkthrough</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Thirteen tasks across five sections. Read the fragile loader, then type each guard at the prompt. The right pane shows the loader's behavior on a fixed test feed and the guards you have installed; both update as you go.</p>
+
+<!-- ============================================================
+     CS210 Lesson 37 - harden Walkthrough Widget
+     Defensive programming: read an existing loader, then add
+     validation, assertions, and graceful error reporting one
+     guard at a time. Right pane shows the loader's behavior on a
+     fixed test feed plus a guards-installed checklist; both update
+     as the cadet types each guard.
+     Template-aligned style. Native HTML/CSS + scoped JS.
+     Paste as a block; runs anywhere the parent page allows <script>.
+     ============================================================ -->
+<style>
+.cs210-harden * { box-sizing: border-box; }
+.cs210-harden {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-harden h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-harden .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 22px;
+}
+.cs210-harden .progress-bar {
+  background: #E5E7EB;
+  border-radius: 3px;
+  height: 8px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.cs210-harden .progress-fill {
+  background: #003087;
+  height: 100%;
+  transition: width 0.3s ease;
+}
+.cs210-harden .progress-label {
+  font-size: 12px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-harden .section-header {
+  background: #E8EDF5;
+  color: #00205B;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.cs210-harden .task-card {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  border-radius: 3px;
+}
+.cs210-harden .task-card.complete {
+  background: #E6F4EA;
+  border-left-color: #2E7D32;
+}
+.cs210-harden .task-label {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B5300;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.cs210-harden .task-card.complete .task-label {
+  color: #1B5E20;
+}
+.cs210-harden .task-text {
+  font-size: 15px;
+  color: #1a1a1a;
+}
+.cs210-harden .task-text code {
+  background: #F0F2F5;
+  padding: 1px 6px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+}
+.cs210-harden .task-hint {
+  font-size: 12.5px;
+  color: #6B7280;
+  margin-top: 6px;
+  font-style: italic;
+}
+
+/* Two-pane area: terminal left, loader behavior right */
+.cs210-harden .panes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+@media (max-width: 760px) {
+  .cs210-harden .panes { grid-template-columns: 1fr; }
+}
+.cs210-harden .terminal {
+  background: #1E2A3A;
+  color: #E8EDF5;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13.5px;
+  line-height: 1.5;
+  border-radius: 4px;
+  padding: 14px 18px;
+  min-height: 380px;
+  max-height: 440px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.cs210-harden .terminal .prompt { color: #7FB3D5; }
+.cs210-harden .terminal .typed { color: #FFFFFF; }
+.cs210-harden .terminal .out { color: #B5BEC8; }
+.cs210-harden .terminal .note { color: #F0B92C; }
+.cs210-harden .terminal .err { color: #F47A7A; }
+.cs210-harden .terminal .ok { color: #7FD17F; }
+.cs210-harden .terminal .dim { color: #6B7280; }
+
+.cs210-harden .behavior-pane {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  padding: 14px 16px;
+  min-height: 380px;
+  max-height: 440px;
+  overflow-y: auto;
+}
+.cs210-harden .behavior-pane-header {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #E5E7EB;
+}
+.cs210-harden .rec {
+  background: #F8FAFC;
+  border: 1px solid #D0D5DD;
+  border-left-width: 4px;
+  border-radius: 4px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+}
+.cs210-harden .rec .rec-raw {
+  font-family: Consolas, monospace;
+  font-size: 12px;
+  color: #4A5568;
+  word-break: break-all;
+  margin-bottom: 4px;
+}
+.cs210-harden .rec .rec-status {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.cs210-harden .rec .rec-reason {
+  font-size: 11px;
+  color: #6B7280;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+/* status colorings */
+.cs210-harden .rec.crash      { border-left-color: #B8002F; }
+.cs210-harden .rec.garbage    { border-left-color: #B8002F; }
+.cs210-harden .rec.accept-bad { border-left-color: #C77700; }
+.cs210-harden .rec.rejected   { border-left-color: #2E7D32; }
+.cs210-harden .rec.accepted   { border-left-color: #2E7D32; }
+.cs210-harden .rec.crash      .rec-status { color: #B8002F; }
+.cs210-harden .rec.garbage    .rec-status { color: #B8002F; }
+.cs210-harden .rec.accept-bad .rec-status { color: #C77700; }
+.cs210-harden .rec.rejected   .rec-status { color: #1B5E20; }
+.cs210-harden .rec.accepted   .rec-status { color: #1B5E20; }
+.cs210-harden .rec.just-changed { animation: cs210-harden-flash 0.9s ease; }
+@keyframes cs210-harden-flash {
+  0%   { background: #FFF8E1; }
+  100% { background: #F8FAFC; }
+}
+
+.cs210-harden .guards-box {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #E5E7EB;
+}
+.cs210-harden .guards-title {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.cs210-harden .guard-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: #6B7280;
+  padding: 3px 0;
+}
+.cs210-harden .guard-item .gbox {
+  width: 16px;
+  height: 16px;
+  border: 1px solid #C7CFD9;
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff;
+  flex: 0 0 16px;
+}
+.cs210-harden .guard-item.done { color: #1B5E20; }
+.cs210-harden .guard-item.done .gbox { background: #2E7D32; border-color: #1B5E20; }
+
+.cs210-harden .input-row {
+  display: flex;
+  background: #1E2A3A;
+  border-radius: 4px;
+  padding: 8px 14px;
+  margin-bottom: 14px;
+  border: 1px solid #003087;
+}
+.cs210-harden .input-prompt {
+  color: #7FB3D5;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  margin-right: 8px;
+  align-self: center;
+  white-space: nowrap;
+}
+.cs210-harden .input-row input {
+  flex: 1;
+  background: transparent;
+  color: #FFFFFF;
+  border: none;
+  outline: none;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  padding: 4px 0;
+}
+.cs210-harden .controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.cs210-harden .btn {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  padding: 6px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #00205B;
+  font-family: inherit;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.cs210-harden .btn:hover { background: #F5F7FA; }
+@keyframes cs210-harden-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(240, 185, 44, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0); }
+}
+.cs210-harden .btn.pulse {
+  background: #FFF8E1;
+  border-color: #F0B92C;
+  color: #6B5300;
+  font-weight: 600;
+  animation: cs210-harden-pulse 1.5s infinite;
+}
+.cs210-harden .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #4A5568;
+  margin-top: 12px;
+}
+.cs210-harden .help-note strong { color: #00205B; }
+
+/* Name modal overlay */
+.cs210-harden .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.cs210-harden .name-modal {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-harden .name-modal h2 { color: #00205B; font-size: 20px; margin: 0 0 10px 0; }
+.cs210-harden .name-modal p { color: #4A5568; font-size: 14px; line-height: 1.5; margin: 0 0 16px 0; }
+.cs210-harden .name-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-harden .name-modal input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-harden .name-modal-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-harden .name-modal-btn:disabled { background: #A0AEC0; cursor: not-allowed; }
+.cs210-harden .name-modal-btn:not(:disabled):hover { background: #00205B; }
+
+/* Completion screen (inline footer backup) */
+.cs210-harden .completion-screen {
+  background: #ffffff;
+  border: 2px solid #2E7D32;
+  border-radius: 6px;
+  padding: 24px 28px;
+  margin-top: 16px;
+}
+.cs210-harden .completion-screen .cs-heading { color: #1B5E20; font-size: 20px; font-weight: 600; margin: 0 0 6px 0; }
+.cs210-harden .completion-screen .cs-name-line { font-size: 15px; color: #1a1a1a; margin-bottom: 16px; }
+.cs210-harden .completion-screen .cs-name-line strong { color: #00205B; }
+.cs210-harden .completion-screen .cs-code-block {
+  background: #F0F4FA;
+  border: 1px solid #003087;
+  border-radius: 4px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.cs210-harden .completion-screen .cs-code-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: #4A5568; margin-bottom: 4px; }
+.cs210-harden .completion-screen .cs-code-value { font-family: Consolas, 'Courier New', monospace; font-size: 28px; font-weight: 700; color: #00205B; letter-spacing: 3px; }
+.cs210-harden .completion-screen .cs-copy-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-harden .completion-screen .cs-copy-btn:hover { background: #00205B; }
+.cs210-harden .completion-screen .cs-copy-btn.copied { background: #2E7D32; }
+.cs210-harden .completion-screen .cs-timestamp { font-size: 13px; color: #6B7280; }
+.cs210-harden .completion-screen .cs-reminder {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 14px;
+  color: #6B5300;
+  line-height: 1.5;
+}
+.cs210-harden .completion-screen .cs-reminder strong { color: #4A3A00; }
+</style>
+
+<div class="cs210-harden">
+
+<div class="name-modal-backdrop" id="harden-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Lesson 37 reflection.</p>
+    <input type="text" id="harden-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="harden-cadet-name-btn" disabled>Start the walkthrough</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 37 &middot; Harden the Loader</h1>
+<div class="subtitle">You inherited a marketplace inventory loader that someone else wrote. It works on clean data and falls apart on everything else. Read it, then add one guard at a time. The right pane shows what the loader does to a fixed test feed; watch the bad records get caught as you go.</div>
+
+<div class="progress-bar"><div class="progress-fill" id="harden-progress-fill" style="width: 0%;"></div></div>
+<div class="progress-label" id="harden-progress-label">Task 0 of 13</div>
+
+<div class="section-header" id="harden-section-header">Section 1: Read before you change</div>
+
+<div class="task-card" id="harden-task-card">
+  <div class="task-label" id="harden-task-label">Current task</div>
+  <div class="task-text" id="harden-task-text">Loading...</div>
+  <div class="task-hint" id="harden-task-hint"></div>
+</div>
+
+<div class="panes">
+  <div class="terminal" id="harden-terminal"></div>
+  <div class="behavior-pane">
+    <div class="behavior-pane-header">Loader behavior on the test feed</div>
+    <div id="harden-feed-area"></div>
+    <div class="guards-box">
+      <div class="guards-title">Guards installed</div>
+      <div id="harden-guards-area"></div>
+    </div>
+  </div>
+</div>
+
+<div class="input-row">
+  <span class="input-prompt">harden&gt;</span>
+  <input type="text" id="harden-cli-input" autocomplete="off" spellcheck="false" placeholder="type the guard the task asks for, or your prediction">
+</div>
+
+<div class="controls">
+  <button class="btn" id="harden-hint-btn">Show hint</button>
+  <button class="btn" id="harden-reset-btn">Reset</button>
+</div>
+
+<div class="help-note">
+  <strong>How this works:</strong> This is not a compiler. It is a teaching tool that simulates how the loader behaves on a fixed feed of records as you add defensive checks. The task card tells you what to add next; only the expected guard advances the walkthrough so the behavior stays predictable. Some tasks ask you to predict or decide instead of type a guard &mdash; read those carefully. Mistype twice and the hint button will pulse.
+</div>
+
+<div id="harden-completion-area"></div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-harden');
+  if (!root) return;
+
+  // ============================================================
+  // CS210 widget completion utilities
+  // Salt -> deterministic 6-char code via FNV-1a.
+  // ============================================================
+  const CS210_SALT = "lesson37_harden_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" })[c]);
+  }
+
+  // Name-modal gating
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#harden-name-modal-backdrop');
+    const input = root.querySelector('#harden-cadet-name-input');
+    const btn = root.querySelector('#harden-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length >= 2) {
+        cs210CadetName = stored.trim();
+        backdrop.style.display = 'none';
+        return;
+      }
+    } catch (e) {}
+    function updateBtn() { btn.disabled = input.value.trim().length < 2; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', function() {
+      const name = input.value.trim();
+      if (name.length < 2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+      const siblings = document.querySelectorAll('#assertval-name-modal-backdrop');
+      siblings.forEach(function(m) { m.style.display = 'none'; });
+      const cli = root.querySelector('#harden-cli-input');
+      if (cli) cli.focus();
+    });
+    setTimeout(function() { try { input.focus(); } catch (e) {} }, 50);
+  })();
+
+  function cs210FallbackCopy(text) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e) {}
+  }
+
+  function cs210RenderCompletion(area) {
+    if (!area) return;
+    if (root.querySelector('#cs210-harden-completion-overlay')) return;
+    const now = new Date();
+    const ts = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const safeName = escapeHtml(cs210CadetName || 'Cadet');
+    area.innerHTML =
+      '<div class="completion-screen">' +
+        '<div class="cs-heading">Walkthrough complete</div>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value">' + CS210_CODE + '</div></div>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+      '</div>';
+    const overlay = document.createElement('div');
+    overlay.id = 'cs210-harden-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.style.background = 'rgba(27, 94, 32, 0.55)';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">Walkthrough complete</h2>' +
+        '<p>Take a screenshot of this box. You will need the code and a visual of this screen for the Lesson 37 reflection.</p>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value" id="harden-cs-code-value">' + CS210_CODE + '</div></div>' +
+          '<button class="cs-copy-btn" id="harden-cs-copy-btn" type="button">Copy code</button>' +
+        '</div>' +
+        '<div class="cs-timestamp" style="margin-bottom:18px;">Completed: ' + ts + '</div>' +
+        '<div class="cs-reminder" style="margin-bottom:14px;">' +
+          '<strong>Next step:</strong> Open the Lesson 37 reflection in Blackboard. Enter this code, answer the reflection prompt, and attach your screenshot.' +
+        '</div>' +
+        '<button class="name-modal-btn" id="harden-cs-overlay-close" type="button" style="background:#2E7D32;">Got it &mdash; close this</button>' +
+      '</div>';
+    root.appendChild(overlay);
+    const closeBtn = overlay.querySelector('#harden-cs-overlay-close');
+    if (closeBtn) closeBtn.addEventListener('click', function() { overlay.style.display = 'none'; });
+    const copyBtn = overlay.querySelector('#harden-cs-copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function() {
+        const ok = function() {
+          copyBtn.textContent = 'Copied';
+          copyBtn.classList.add('copied');
+          setTimeout(function() { copyBtn.textContent = 'Copy code'; copyBtn.classList.remove('copied'); }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(CS210_CODE).then(ok, function() { cs210FallbackCopy(CS210_CODE); ok(); });
+        } else { cs210FallbackCopy(CS210_CODE); ok(); }
+      });
+    }
+  }
+
+  // ============================================================
+  // Constants surfaced to the cadet (mirror the lab header)
+  // ============================================================
+  const MAX_QTY = 10000;
+  const CAPACITY = 256;
+
+  // ============================================================
+  // Test feed + guard model
+  // Each record carries the status it shows BEFORE its fixing
+  // guard is installed, and which guard fixes it.
+  // ============================================================
+  const STATUS_TEXT = {
+    'crash':      'CRASH (segfault)',
+    'garbage':    'GARBAGE STORED',
+    'accept-bad': 'ACCEPTED (bad data)',
+    'rejected':   'REJECTED',
+    'accepted':   'ACCEPTED',
+  };
+
+  function makeFeed() {
+    return [
+      { raw: '(NULL pointer)',                  fix: 'null',  bad: 'crash',
+        reason: 'load_listing dereferences line before checking it',
+        okReason: 'NULL caught; error code returned' },
+      { raw: 'usb-c cable,,',                    fix: 'parse', bad: 'garbage',
+        reason: 'sscanf filled only 1 of 4 fields; price/qty/cond are garbage',
+        okReason: 'incomplete parse caught; error code returned' },
+      { raw: 'ramen 12-pack,-5,40,N',            fix: 'price', bad: 'accept-bad',
+        reason: 'negative price stored as-is',
+        okReason: 'negative price rejected' },
+      { raw: 'phone charger,15,999999,U',        fix: 'qty',   bad: 'accept-bad',
+        reason: 'quantity 999999 exceeds MAX_QTY but is stored',
+        okReason: 'out-of-range quantity rejected' },
+      { raw: 'desk lamp,20,3,Z',                 fix: 'cond',  bad: 'accept-bad',
+        reason: "condition 'Z' is not N/U/R but is stored",
+        okReason: 'invalid condition code rejected' },
+      { raw: 'mini fridge,85,2,U',               fix: null,    bad: 'accepted',
+        reason: 'valid record',
+        okReason: 'valid record accepted' },
+    ];
+  }
+
+  // guard id -> label for the checklist
+  const GUARD_DEFS = [
+    { id: 'null',     label: 'NULL pointer check' },
+    { id: 'parse',    label: 'sscanf return-count check' },
+    { id: 'price',    label: 'price range check' },
+    { id: 'qty',      label: 'quantity range check' },
+    { id: 'cond',     label: 'condition allow-list' },
+    { id: 'assert',   label: 'invariant assertion' },
+    { id: 'errno',    label: 'errno set on failure' },
+    { id: 'report',   label: 'error reported to stderr' },
+  ];
+
+  // ============================================================
+  // State
+  // ============================================================
+  let feed = makeFeed();
+  let guards = {};            // id -> true once installed
+  let currentTaskIndex = 0;
+  let consecutiveFails = 0;
+  let lastChangedFix = null;  // for flash animation
+
+  // ============================================================
+  // Tasks
+  // kind: 'predict' | 'guard' | 'decision' | 'reading' | 'bridge'
+  // match(cmd) -> bool ; diagnose(cmd) -> string|null ; apply() -> void
+  // ============================================================
+  function norm(s) { return s.trim().replace(/\s+/g, ' '); }
+  function squash(s) { return s.replace(/\s+/g, '').toLowerCase(); }
+
+  const tasks = [
+    // ---- Section 1: Read before you change ----
+    {
+      section: 'Section 1: Read before you change',
+      label: 'Task 1 of 13',
+      kind: 'predict',
+      text: 'Read the loader in the lesson materials. The very first thing it does is read <code>line[0]</code> &mdash; with no check. The first record in the feed is a NULL pointer. In one word, what happens? Type your prediction.',
+      hint: 'A NULL dereference is undefined behavior; on Linux it usually does this.',
+      match: (cmd) => /\b(crash|segfault|segfaults|segv|sigsegv|undefined|ub)\b/i.test(cmd),
+      diagnose: (cmd) => {
+        if (/null|nothing|skip|ignore/i.test(cmd)) return "Not quite. Reading through a NULL pointer is not a no-op. Think about what the OS does.";
+        return null;
+      },
+      apply: () => {},
+      note: 'Reading code means tracing what happens on inputs the author never considered. Dereferencing NULL is undefined behavior; on the lab machines it segfaults. The author tested clean data and never hit this.'
+    },
+    // ---- Section 2: Validate input ----
+    {
+      section: 'Section 2: Validate input',
+      label: 'Task 2 of 13',
+      kind: 'guard',
+      text: 'Add the first guard at the top of <code>load_listing</code>: if <code>line</code> is NULL, return the error code -1 immediately.',
+      hint: 'if (line == NULL) return -1;   (if (!line) return -1; also works)',
+      match: (cmd) => /^\s*if\s*\(\s*(line\s*==\s*NULL|NULL\s*==\s*line|!\s*line)\s*\)\s*\{?\s*return\s*-1\s*;?\s*\}?\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        if (/if\s*\(\s*line\s*\)/.test(cmd)) return "Close, but that checks the opposite. You want to act when line IS NULL.";
+        if (/line\s*==\s*NULL|!\s*line/.test(cmd) && !/return\s*-1/.test(cmd)) return "You found the condition. Now return -1 so the caller knows it failed.";
+        return null;
+      },
+      apply: () => { guards.null = true; },
+      note: 'Validation handles input you cannot trust. Returning an error code lets the caller decide what to do, and the program keeps running instead of crashing.'
+    },
+    {
+      label: 'Task 3 of 13',
+      kind: 'guard',
+      text: 'The loader calls <code>int n = sscanf(line, "%63[^,],%d,%d,%c", name, &amp;price, &amp;qty, &amp;cond);</code> and never checks <code>n</code>. Add a guard: if fewer than 4 fields were filled, return -1.',
+      hint: 'if (n != 4) return -1;   (if (n < 4) return -1; also works)',
+      match: (cmd) => /^\s*if\s*\(\s*n\s*(!=|<)\s*4\s*\)\s*\{?\s*return\s*-1\s*;?\s*\}?\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        if (/sscanf/.test(cmd)) return "You don't need to rewrite the sscanf call. Just check its return value n.";
+        if (/n\s*==\s*4/.test(cmd)) return "Close. Returning -1 when n == 4 rejects the GOOD case. Reject when n is NOT 4.";
+        return null;
+      },
+      apply: () => { guards.parse = true; },
+      note: 'sscanf returns the count of fields it successfully assigned. Using its outputs without checking that count is the classic "don\'t trust input" bug: the unfilled variables hold whatever garbage was already on the stack.'
+    },
+    {
+      label: 'Task 4 of 13',
+      kind: 'guard',
+      text: 'A price can parse cleanly and still be invalid. Reject any negative price.',
+      hint: 'if (price < 0) return -1;',
+      match: (cmd) => /^\s*if\s*\(\s*price\s*<\s*0\s*\)\s*\{?\s*return\s*-1\s*;?\s*\}?\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        if (/price\s*<=\s*0/.test(cmd)) return "Careful: <= 0 also rejects free items priced at 0. The task only rejects negatives.";
+        if (/price\s*>\s*0/.test(cmd)) return "That rejects valid positive prices. You want to reject prices below zero.";
+        return null;
+      },
+      apply: () => { guards.price = true; },
+      note: 'A value can be syntactically fine and semantically wrong. Range checks catch the values that parsed correctly but make no sense.'
+    },
+    {
+      label: 'Task 5 of 13',
+      kind: 'guard',
+      text: 'Quantity must be between 0 and <code>MAX_QTY</code> (' + MAX_QTY + '). Reject anything outside that range.',
+      hint: 'if (qty < 0 || qty > MAX_QTY) return -1;',
+      match: (cmd) => /^\s*if\s*\(\s*qty\s*<\s*0\s*\|\|\s*qty\s*>\s*MAX_QTY\s*\)\s*\{?\s*return\s*-1\s*;?\s*\}?\s*;?\s*$/.test(cmd)
+                   || /^\s*if\s*\(\s*qty\s*>\s*MAX_QTY\s*\|\|\s*qty\s*<\s*0\s*\)\s*\{?\s*return\s*-1\s*;?\s*\}?\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        if (/qty\s*>\s*MAX_QTY/.test(cmd) && !/qty\s*<\s*0/.test(cmd)) return "Good upper bound. Now bound the low end too: qty < 0.";
+        if (/qty\s*<\s*0/.test(cmd) && !/MAX_QTY/.test(cmd)) return "Good lower bound. Now bound the high end with MAX_QTY.";
+        if (/10000/.test(cmd)) return "Use the named constant MAX_QTY, not the magic number.";
+        return null;
+      },
+      apply: () => { guards.qty = true; },
+      note: 'Bound both ends. "Can\'t be negative" is half the check; "can\'t be absurd" is the other half. Use the named constant MAX_QTY, never a bare 10000.'
+    },
+    {
+      label: 'Task 6 of 13',
+      kind: 'guard',
+      text: "Condition code must be 'N' (new), 'U' (used), or 'R' (refurbished). Reject anything else.",
+      hint: "if (cond != 'N' && cond != 'U' && cond != 'R') return -1;",
+      match: (cmd) => {
+        const s = squash(cmd);
+        return /^if\(cond!='n'&&cond!='u'&&cond!='r'\)\{?return-1;?\}?;?$/.test(s);
+      },
+      diagnose: (cmd) => {
+        if (/\|\|/.test(cmd) && /cond\s*!=/.test(cmd)) return "Check your logic: with !=, the conditions must be joined by && (it must differ from all three).";
+        if (/cond\s*==/.test(cmd)) return "You can write it with == and ||, but then you must reject the ELSE. Easier: reject when cond is not any of the three using !=.";
+        return null;
+      },
+      apply: () => { guards.cond = true; },
+      note: 'Enumerated inputs need an explicit allow-list. Anything not on the list is rejected by default. Fail closed, not open: unknown means no.'
+    },
+    // ---- Section 3: Assertions vs validation ----
+    {
+      section: 'Section 3: Assertions vs validation',
+      label: 'Task 7 of 13',
+      kind: 'decision',
+      text: 'You are tempted to replace the price check with <code>assert(price &gt;= 0);</code>. Should you use assert here instead of validation? Type <code>yes</code> or <code>no</code>.',
+      hint: 'Think about what happens to assert in a release build, and whether bad input is "unexpected".',
+      match: (cmd) => /^\s*no\.?\s*$/i.test(cmd),
+      diagnose: (cmd) => {
+        if (/^\s*yes\.?\s*$/i.test(cmd)) return "No. assert is the wrong tool for user input. Re-read the task and think about NDEBUG.";
+        return "Type just 'yes' or 'no'.";
+      },
+      apply: () => {},
+      note: 'NO. assert catches YOUR bugs during development and is compiled out entirely with -DNDEBUG in release builds. Bad input is expected and must be checked by code that always runs. Never assert on input you do not control.'
+    },
+    {
+      label: 'Task 8 of 13',
+      kind: 'guard',
+      text: 'Now the right use of assert. After validation passes, the loader writes to <code>inventory[count]</code>. If the rest of your code is correct, <code>count</code> is always below <code>CAPACITY</code> (' + CAPACITY + '). Assert that invariant.',
+      hint: 'assert(count < CAPACITY);    (needs #include <assert.h>)',
+      match: (cmd) => /^\s*assert\s*\(\s*count\s*<\s*CAPACITY\s*\)\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        if (/assert\s*\(\s*count\s*<=\s*CAPACITY/.test(cmd)) return "Off by one: a valid index runs 0..CAPACITY-1, so the invariant is count < CAPACITY.";
+        if (/if\s*\(\s*count/.test(cmd)) return "This is an internal invariant, not external input. Express it with assert, not an if/return.";
+        if (/assert/.test(cmd) && /CAPACITY/.test(cmd)) return "Right tool. Check the comparison: a valid index is strictly less than CAPACITY.";
+        return null;
+      },
+      apply: () => { guards.assert = true; },
+      note: 'This is the correct use of assert: a condition that can only be false if your own logic has a bug. If it ever fires, you have a programmer error to fix, not bad input to reject. It needs #include <assert.h>.'
+    },
+    // ---- Section 4: Fail gracefully with error codes ----
+    {
+      section: 'Section 4: Fail gracefully',
+      label: 'Task 9 of 13',
+      kind: 'guard',
+      text: 'A bare -1 tells the caller THAT it failed but not WHY. Before returning on the incomplete-parse case, set <code>errno</code> to <code>EINVAL</code> (invalid argument).',
+      hint: 'errno = EINVAL;    (needs #include <errno.h>)',
+      match: (cmd) => /^\s*errno\s*=\s*EINVAL\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        if (/errno\s*==\s*EINVAL/.test(cmd)) return "Use assignment (=), not comparison (==). You are setting errno, not testing it.";
+        if (/EINVAL/.test(cmd) && /return/.test(cmd)) return "Set errno on its own line first, then return -1. The task is just the errno assignment.";
+        return null;
+      },
+      apply: () => { guards.errno = true; },
+      note: 'errno is the C standard\'s shared error channel. Library functions set it; your code can too. Pair errno = EINVAL with return -1 so the caller learns both that it failed and why. Needs #include <errno.h>.'
+    },
+    {
+      label: 'Task 10 of 13',
+      kind: 'guard',
+      text: 'At the call site, when <code>load_listing</code> returns -1, report a human-readable reason from <code>errno</code>. Use the standard one-call reporter.',
+      hint: 'perror("load_listing");    (fprintf(stderr, "%s\\n", strerror(errno)); also works)',
+      match: (cmd) => {
+        const s = squash(cmd);
+        return /^perror\(".*"\);?$/.test(s)
+            || /fprintf\(stderr,"%s\\?n?",strerror\(errno\)\);?/.test(s);
+      },
+      diagnose: (cmd) => {
+        if (/printf\s*\(/.test(cmd) && !/fprintf/.test(cmd)) return "Errors go to stderr, not stdout. Use perror or fprintf(stderr, ...).";
+        if (/strerror/.test(cmd) && !/stderr/.test(cmd)) return "strerror gives you the text; send it to stderr with fprintf(stderr, ...).";
+        return null;
+      },
+      apply: () => { guards.report = true; },
+      note: 'perror and strerror turn an errno number into readable text. Report to stderr, not stdout, so error messages do not pollute the program\'s real output or get captured as data.'
+    },
+    // ---- Section 5: Verify, then read again ----
+    {
+      section: 'Section 5: Verify, then read again',
+      label: 'Task 11 of 13',
+      kind: 'predict',
+      text: 'With every guard installed, run the loader on the 6-record feed. How many records does it ACCEPT? Type the number.',
+      hint: 'Look at the feed pane. Count the green ACCEPTED records, not the rejected ones.',
+      match: (cmd) => /^\s*(1|one)\s*$/i.test(cmd),
+      diagnose: (cmd) => {
+        if (/^\s*(6|six)\s*$/i.test(cmd)) return "That's the total feed size. How many are actually VALID?";
+        if (/^\s*(5|five)\s*$/i.test(cmd)) return "That's how many you reject. The task asks how many you accept.";
+        if (/^\s*0\s*$/i.test(cmd)) return "Not zero: one record is fully valid. Check the feed.";
+        return "Count the ACCEPTED records in the feed pane.";
+      },
+      apply: () => {},
+      note: 'A defensive loader accepts the one valid record and rejects the five bad ones without crashing or storing garbage. That is the whole game: keep running, reject what you cannot trust, and say why.'
+    },
+    {
+      label: 'Task 12 of 13',
+      kind: 'reading',
+      text: "Reading check. A teammate wrote <code>if (price = 0) return -1;</code> to reject free items. It never rejects anything and silently zeroes the price. Type the operator they should have used.",
+      hint: 'They wrote one equals sign. Comparison needs how many?',
+      match: (cmd) => /^\s*==\s*$/.test(cmd) || /^\s*(equality|comparison|double\s*equals?)\s*$/i.test(cmd),
+      diagnose: (cmd) => {
+        if (/^\s*=\s*$/.test(cmd)) return "That's the bug, not the fix. A single = assigns. What operator COMPARES?";
+        return "Type the comparison operator, e.g. the symbol you'd use to test equality.";
+      },
+      apply: () => {},
+      note: '= assigns; == compares. if (price = 0) sets price to 0 and is always false, so it never rejects and silently corrupts the data. -Wall warns about this, and reading carefully catches it. This is exactly why we read code by other authors.'
+    },
+    {
+      label: 'Task 13 of 13',
+      kind: 'bridge',
+      text: 'Last one, and a look ahead. The accepted listings live in a global array <code>struct listing inventory[CAPACITY];</code> declared outside any function and never initialized. Which memory segment holds it? Type one word.',
+      hint: 'A global, zero-initialized array does not sit with your code or on the stack. It has its own segment.',
+      match: (cmd) => /^\s*(bss|\.bss|data|\.data|static|global)\s*$/i.test(cmd),
+      diagnose: (cmd) => {
+        if (/stack/i.test(cmd)) return "Locals live on the stack. This array is global, so it does not.";
+        if (/heap/i.test(cmd)) return "The heap is for malloc. This array is declared statically, not allocated at runtime.";
+        if (/text|code/i.test(cmd)) return "The text segment holds machine code, not data. Where do uninitialized globals go?";
+        return null;
+      },
+      apply: () => {},
+      note: 'A zero-initialized global array lives in the BSS segment. Tomorrow\'s lesson maps every part of a running program (code, globals, heap, stack) to where it actually sits in memory. You just found your first landmark.'
+    },
+  ];
+
+  // ============================================================
+  // Terminal output
+  // ============================================================
+  const terminalEl = root.querySelector('#harden-terminal');
+  function termWrite(text, cls) {
+    const span = document.createElement('span');
+    if (cls) span.className = cls;
+    span.textContent = text;
+    terminalEl.appendChild(span);
+  }
+  function termLine(text, cls) {
+    termWrite(text, cls);
+    terminalEl.appendChild(document.createElement('br'));
+    terminalEl.scrollTop = terminalEl.scrollHeight;
+  }
+  function echoCommand(cmd) {
+    termWrite('harden> ', 'prompt');
+    termLine(cmd, 'typed');
+  }
+
+  // ============================================================
+  // Behavior pane rendering
+  // ============================================================
+  const feedEl = root.querySelector('#harden-feed-area');
+  const guardsEl = root.querySelector('#harden-guards-area');
+
+  function recStatus(rec) {
+    if (rec.fix === null) return 'accepted';
+    return guards[rec.fix] ? 'rejected' : rec.bad;
+  }
+  function renderFeed() {
+    let html = '';
+    feed.forEach((rec, i) => {
+      const st = recStatus(rec);
+      const fixed = (rec.fix !== null && guards[rec.fix]);
+      const reason = (st === 'accepted' || st === 'rejected') ? rec.okReason : rec.reason;
+      const changed = (lastChangedFix !== null && rec.fix === lastChangedFix);
+      html +=
+        '<div class="rec ' + st + (changed ? ' just-changed' : '') + '">' +
+          '<div class="rec-raw">#' + (i + 1) + ' &nbsp;"' + escapeHtml(rec.raw) + '"</div>' +
+          '<div class="rec-status">' + STATUS_TEXT[st] +
+            '<span class="rec-reason">&mdash; ' + escapeHtml(reason) + '</span>' +
+          '</div>' +
+        '</div>';
+    });
+    feedEl.innerHTML = html;
+  }
+  function renderGuards() {
+    let html = '';
+    GUARD_DEFS.forEach(g => {
+      const done = !!guards[g.id];
+      html +=
+        '<div class="guard-item' + (done ? ' done' : '') + '">' +
+          '<span class="gbox">' + (done ? '\u2713' : '') + '</span>' +
+          escapeHtml(g.label) +
+        '</div>';
+    });
+    guardsEl.innerHTML = html;
+  }
+  function renderBehavior() { renderFeed(); renderGuards(); }
+
+  // ============================================================
+  // Walkthrough controller
+  // ============================================================
+  function checkTask(rawCmd) {
+    if (currentTaskIndex >= tasks.length) return;
+    const t = tasks[currentTaskIndex];
+    echoCommand(rawCmd);
+    if (t.match(rawCmd)) {
+      // Apply effect
+      lastChangedFix = null;
+      if (t.apply) t.apply();
+      // Determine flashed record: match by the guard that this task set
+      lastChangedFix = guardForTask(t);
+      // Terminal result
+      if (t.kind === 'guard') {
+        termLine('  guard installed.', 'ok');
+        const rec = feed.find(r => r.fix === lastChangedFix);
+        if (rec) {
+          const idx = feed.indexOf(rec) + 1;
+          termLine('  record #' + idx + ' now ' + STATUS_TEXT[recStatus(rec)].toLowerCase() + ' instead of ' + STATUS_TEXT[rec.bad].toLowerCase() + '.', 'out');
+        } else {
+          termLine('  internal hardening applied (no feed record changes).', 'out');
+        }
+      } else {
+        termLine('  correct.', 'ok');
+        lastChangedFix = null;
+      }
+      if (t.note) {
+        termLine('', 'out');
+        termLine('  ' + t.note, 'note');
+      }
+      renderBehavior();
+      lastChangedFix = null;
+      currentTaskIndex++;
+      consecutiveFails = 0;
+      hideHintPulse();
+      renderTask();
+      if (currentTaskIndex >= tasks.length) {
+        termLine('', 'out');
+        termLine('  Walkthrough complete. The loader is hardened: it survives every record in the feed.', 'note');
+      }
+    } else {
+      const diag = (t.diagnose && t.diagnose(rawCmd)) || null;
+      if (diag) termLine('  ' + diag, 'err');
+      else termLine("  Not what this task is asking for. Re-read the task card, or click 'Show hint'.", 'err');
+      consecutiveFails++;
+      if (consecutiveFails >= 2) showHintPulse();
+    }
+  }
+
+  // map a task to the guard id it installs (guard tasks only)
+  function guardForTask(t) {
+    if (t.kind !== 'guard') return null;
+    // infer from the apply effect: find the guard id newly true that has a feed record
+    // simplest: read it from a tag we set on the task
+    return t._guardId || null;
+  }
+  // tag guard tasks with their guard id by inspecting apply source once
+  tasks.forEach(t => {
+    if (t.kind === 'guard') {
+      const src = t.apply.toString();
+      const m = src.match(/guards\.(\w+)\s*=\s*true/);
+      if (m) t._guardId = m[1];
+    }
+  });
+
+  function renderTask() {
+    const fill = root.querySelector('#harden-progress-fill');
+    const label = root.querySelector('#harden-progress-label');
+    const card = root.querySelector('#harden-task-card');
+    const labelEl = root.querySelector('#harden-task-label');
+    const textEl = root.querySelector('#harden-task-text');
+    const hintEl = root.querySelector('#harden-task-hint');
+    const sectionEl = root.querySelector('#harden-section-header');
+    const completionArea = root.querySelector('#harden-completion-area');
+
+    fill.style.width = ((currentTaskIndex / tasks.length) * 100) + '%';
+    label.textContent = 'Task ' + Math.min(currentTaskIndex + 1, tasks.length) + ' of ' + tasks.length;
+
+    if (currentTaskIndex >= tasks.length) {
+      card.className = 'task-card complete';
+      labelEl.textContent = 'Complete';
+      textEl.innerHTML = "You read a loader you did not write, traced its failures, and hardened it: NULL and parse checks, range and allow-list validation, an assertion on a real invariant, errno, and graceful reporting. That is defensive programming end to end.";
+      hintEl.textContent = '';
+      fill.style.width = '100%';
+      label.textContent = 'All tasks complete';
+      sectionEl.textContent = 'All done';
+      completionArea.innerHTML = '';
+      cs210RenderCompletion(completionArea);
+      return;
+    }
+    completionArea.innerHTML = '';
+    card.className = 'task-card';
+    const t = tasks[currentTaskIndex];
+    if (t.section) sectionEl.textContent = t.section;
+    labelEl.textContent = t.label;
+    textEl.innerHTML = t.text;
+    hintEl.textContent = '';
+  }
+
+  function showHint() {
+    if (currentTaskIndex >= tasks.length) return;
+    const t = tasks[currentTaskIndex];
+    root.querySelector('#harden-task-hint').textContent = 'Hint: ' + (t.hint || '');
+    hideHintPulse();
+  }
+  function showHintPulse() { root.querySelector('#harden-hint-btn').classList.add('pulse'); }
+  function hideHintPulse() { root.querySelector('#harden-hint-btn').classList.remove('pulse'); }
+
+  function reset() {
+    feed = makeFeed();
+    guards = {};
+    currentTaskIndex = 0;
+    consecutiveFails = 0;
+    lastChangedFix = null;
+    hideHintPulse();
+    terminalEl.innerHTML = '';
+    termLine('Welcome to the harden walkthrough.', 'dim');
+    termLine('You are working on load_listing(), shown in the lesson materials.', 'dim');
+    termLine('Follow the task card. Type the guard it asks for at the prompt.', 'dim');
+    termLine('', 'out');
+    renderBehavior();
+    renderTask();
+  }
+
+  // ============================================================
+  // Input wiring
+  // ============================================================
+  const inputEl = root.querySelector('#harden-cli-input');
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const v = inputEl.value;
+      inputEl.value = '';
+      if (!v.trim()) return;
+      if (currentTaskIndex >= tasks.length) {
+        echoCommand(v);
+        termLine('  Walkthrough is complete. Click Reset to run through it again.', 'dim');
+        return;
+      }
+      checkTask(v);
+    }
+  });
+  root.querySelector('#harden-hint-btn').addEventListener('click', showHint);
+  root.querySelector('#harden-reset-btn').addEventListener('click', reset);
+
+  // Boot
+  reset();
+})();
+</script>
+
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 28px 0 10px 0;">Assert vs Validate Self-Check</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Seven questions. Pick or type your answer and submit; answers lock once submitted. Pass at 70% or above.</p>
+
+<!-- ============================================================
+     CS210 Lesson 37 - Assert vs Validate Self-Check Quiz Widget
+     Card/slide flow: one question per card, Submit + Next/Back.
+     Score card at the end with per-question recap and two-salt
+     completion code (passing >= 70% uses _completed salt;
+     non-passing uses _incomplete salt).
+     ============================================================ -->
+<style>
+.cs210-assertval * { box-sizing: border-box; }
+.cs210-assertval {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-assertval h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-assertval .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+
+.cs210-assertval .dots {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+.cs210-assertval .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #E5E7EB;
+  border: 1px solid #C7CFD9;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.cs210-assertval .dot.current {
+  background: #003087;
+  border-color: #00205B;
+  transform: scale(1.25);
+}
+.cs210-assertval .dot.correct {
+  background: #2E7D32;
+  border-color: #1B5E20;
+}
+.cs210-assertval .dot.incorrect {
+  background: #B8002F;
+  border-color: #6B0000;
+}
+.cs210-assertval .dot.score {
+  width: 16px;
+  height: 12px;
+  border-radius: 3px;
+  background: #F0B92C;
+  border-color: #6B5300;
+}
+
+.cs210-assertval .card {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 6px;
+  padding: 22px 24px;
+  margin-bottom: 14px;
+}
+.cs210-assertval .q-label {
+  font-size: 11.5px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.cs210-assertval .q-text {
+  font-size: 15.5px;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+}
+.cs210-assertval .q-text code {
+  background: #F0F2F5;
+  padding: 1px 6px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13.5px;
+}
+.cs210-assertval pre.q-code {
+  background: #1E2A3A;
+  color: #E8EDF5;
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 0 0 16px 0;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.cs210-assertval .choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.cs210-assertval .choice {
+  display: block;
+  padding: 10px 14px;
+  border: 1px solid #C7CFD9;
+  border-radius: 4px;
+  background: #ffffff;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: inherit;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.cs210-assertval .choice:hover { background: #F5F7FA; }
+.cs210-assertval .choice.selected {
+  background: #E8EDF5;
+  border-color: #003087;
+}
+.cs210-assertval .choice.locked { cursor: default; }
+.cs210-assertval .choice.locked:hover { background: inherit; }
+.cs210-assertval .choice.correct {
+  background: #E6F4EA;
+  border-color: #2E7D32;
+  color: #1B5E20;
+  font-weight: 600;
+}
+.cs210-assertval .choice.incorrect {
+  background: #FCE7EA;
+  border-color: #B8002F;
+  color: #6B0000;
+  font-weight: 600;
+}
+.cs210-assertval .choice code {
+  background: #F0F2F5;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+}
+
+.cs210-assertval .text-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: Consolas, monospace;
+}
+.cs210-assertval .text-input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-assertval .text-input:disabled {
+  background: #F5F7FA;
+  color: #4A5568;
+}
+
+.cs210-assertval .feedback {
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  margin-bottom: 14px;
+  display: none;
+}
+.cs210-assertval .feedback.visible { display: block; }
+.cs210-assertval .feedback.correct {
+  background: #E6F4EA;
+  border-left: 4px solid #2E7D32;
+  color: #1B5E20;
+}
+.cs210-assertval .feedback.incorrect {
+  background: #FCE7EA;
+  border-left: 4px solid #B8002F;
+  color: #6B0000;
+}
+.cs210-assertval .feedback code {
+  background: rgba(255,255,255,0.6);
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+}
+
+.cs210-assertval .btn-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+.cs210-assertval .submit-btn,
+.cs210-assertval .nav-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 9px 18px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-assertval .submit-btn:hover,
+.cs210-assertval .nav-btn:hover { background: #00205B; }
+.cs210-assertval .submit-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-assertval .nav-btn.back {
+  background: #ffffff;
+  color: #003087;
+  border: 1px solid #C7CFD9;
+}
+.cs210-assertval .nav-btn.back:hover { background: #F5F7FA; color: #00205B; }
+.cs210-assertval .nav-row { display: flex; gap: 8px; }
+
+/* Score card */
+.cs210-assertval .score-card { text-align: center; }
+.cs210-assertval .score-big {
+  font-size: 48px;
+  font-weight: 700;
+  color: #003087;
+  margin: 10px 0 4px 0;
+}
+.cs210-assertval .score-card.full-correct .score-big { color: #1B5E20; }
+.cs210-assertval .score-card.passing .score-big      { color: #2E7D32; }
+.cs210-assertval .score-card.not-passing .score-big  { color: #6B0000; }
+.cs210-assertval .score-label {
+  font-size: 13px;
+  color: #6B7280;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.cs210-assertval .score-message {
+  font-size: 15px;
+  color: #4A5568;
+  margin-bottom: 18px;
+}
+.cs210-assertval .score-message.good-job {
+  color: #1B5E20;
+  font-weight: 600;
+}
+.cs210-assertval .recap {
+  text-align: left;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #E5E7EB;
+}
+.cs210-assertval .recap-title {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.cs210-assertval .recap-item {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #F0F2F5;
+}
+.cs210-assertval .recap-item:last-child { border-bottom: none; }
+.cs210-assertval .recap-icon {
+  flex: 0 0 22px;
+  font-size: 16px;
+  font-weight: 700;
+}
+.cs210-assertval .recap-icon.correct { color: #2E7D32; }
+.cs210-assertval .recap-icon.incorrect { color: #B8002F; }
+.cs210-assertval .recap-body { flex: 1; font-size: 13.5px; }
+.cs210-assertval .recap-question { color: #1a1a1a; margin-bottom: 3px; }
+.cs210-assertval .recap-explanation { color: #4A5568; font-size: 13px; }
+.cs210-assertval .recap-explanation code {
+  background: #F0F2F5;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 12.5px;
+}
+.cs210-assertval .reset-row {
+  margin-top: 18px;
+  display: flex;
+  justify-content: center;
+}
+.cs210-assertval .reset-btn {
+  background: #ffffff;
+  border: 1px solid #003087;
+  color: #003087;
+  padding: 8px 18px;
+  border-radius: 4px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-assertval .reset-btn:hover { background: #F5F7FA; }
+
+.cs210-assertval .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #4A5568;
+  margin-top: 12px;
+}
+.cs210-assertval .help-note strong { color: #00205B; }
+
+/* Completion code block on the score card */
+.cs210-assertval .code-block {
+  background: #F0F4FA;
+  border: 1px solid #003087;
+  border-radius: 4px;
+  padding: 14px 18px;
+  margin: 14px 0 6px 0;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.cs210-assertval .code-block.fail {
+  background: #FFF1F3;
+  border-color: #B8002F;
+}
+.cs210-assertval .code-block .code-left { text-align: left; }
+.cs210-assertval .code-block .code-label {
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #4A5568;
+}
+.cs210-assertval .code-block .code-value {
+  font-family: Consolas, monospace;
+  font-size: 26px;
+  font-weight: 700;
+  color: #00205B;
+  letter-spacing: 3px;
+}
+.cs210-assertval .code-block.fail .code-value { color: #6B0000; }
+.cs210-assertval .code-block .copy-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-assertval .code-block .copy-btn:hover { background: #00205B; }
+.cs210-assertval .code-block .copy-btn.copied { background: #2E7D32; }
+.cs210-assertval .code-block.fail .copy-btn { background: #6B0000; }
+.cs210-assertval .inline-code-footer {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 8px 12px;
+  border-radius: 3px;
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: #4A5568;
+  font-family: Consolas, monospace;
+}
+
+/* Name modal overlay */
+.cs210-assertval .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.cs210-assertval .name-modal {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-assertval .name-modal h2 {
+  color: #00205B;
+  font-size: 20px;
+  margin: 0 0 10px 0;
+}
+.cs210-assertval .name-modal p {
+  color: #4A5568;
+  font-size: 14px;
+  margin: 0 0 16px 0;
+}
+.cs210-assertval .name-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-assertval .name-modal input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-assertval .name-modal-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-assertval .name-modal-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-assertval .name-modal-btn:not(:disabled):hover {
+  background: #00205B;
+}
+</style>
+
+<div class="cs210-assertval">
+
+<div class="name-modal-backdrop" id="assertval-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the score card so you can include it in your screenshot for the Blackboard reflection.</p>
+    <input type="text" id="assertval-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="assertval-cadet-name-btn" disabled>Start the quiz</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 37 &middot; Assert vs Validate</h1>
+<div class="subtitle">Seven questions on the line between catching your own bugs and handling bad input: assertions, validation, errno, and reporting. Pass at 70% or above; below that, take it again after reviewing.</div>
+
+<div class="dots" id="assertval-dots"></div>
+
+<div id="assertval-card-area"></div>
+
+<div class="help-note">
+  <strong>How this works:</strong> One question per card. Pick or type your answer and click Submit. Feedback appears, then click Next to move on. Answers lock once submitted, so think before you submit. After all seven, you get a score, a completion code, and a per-question recap.
+</div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-assertval');
+  if (!root) return;
+
+  // ============================================================
+  // Completion code generation (two-salt scheme: pass vs. fail)
+  // ============================================================
+  const CS210_SALT_PASS = "lesson37_assertval_completed";
+  const CS210_SALT_FAIL = "lesson37_assertval_incomplete";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const PASSING_THRESHOLD = 0.70;
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE_PASS = cs210CodeFromSalt(CS210_SALT_PASS);
+  const CS210_CODE_FAIL = cs210CodeFromSalt(CS210_SALT_FAIL);
+  let cadetName = '';
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+  function cs210Copy(text) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch (e) {}
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      return true;
+    } catch (e) { return false; }
+  }
+
+  // ============================================================
+  // Name modal
+  // ============================================================
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#assertval-name-modal-backdrop');
+    const input = root.querySelector('#assertval-cadet-name-input');
+    const btn = root.querySelector('#assertval-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length > 0) {
+        // Name already known from a previous widget or visit. Skip the modal.
+        cadetName = stored.trim();
+        backdrop.style.display = 'none';
+        return;
+      }
+    } catch (e) {}
+    function updateBtn() { btn.disabled = input.value.trim().length === 0; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', () => {
+      const n = input.value.trim();
+      if (!n) return;
+      cadetName = n;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', n); } catch (e) {}
+      backdrop.style.display = 'none';
+      // Dismiss any sibling widget modals on the same page.
+      const siblings = document.querySelectorAll(
+        '#harden-name-modal-backdrop'
+      );
+      siblings.forEach(function(m) { m.style.display = 'none'; });
+    });
+    setTimeout(() => { try { input.focus(); } catch (e) {} }, 50);
+  })();
+
+  // ============================================================
+  // Questions
+  // ============================================================
+  const questions = [
+    {
+      id: 'q1',
+      type: 'choice',
+      text: 'What is the core difference between <code>assert()</code> and input validation?',
+      options: [
+        '<code>assert()</code> catches bugs in <em>your own</em> code during development; input validation handles bad data that is <em>expected</em> at runtime.',
+        'They are interchangeable; use whichever reads more clearly.',
+        '<code>assert()</code> handles runtime errors; validation handles compile-time errors.',
+        'Validation is removed in release builds; <code>assert()</code> always runs.',
+      ],
+      correct: 0,
+      correctFeedback: 'Right. <code>assert()</code> guards an assumption that is only false if you have a bug. Validation guards against input you cannot trust and which is expected to be wrong sometimes.',
+      incorrectFeedback: 'The correct answer is the first one. <code>assert()</code> is for programmer errors caught during development; validation is for bad input that is a normal, expected runtime event.',
+      shortLabel: 'assert vs validation: the core difference',
+    },
+    {
+      id: 'q2',
+      type: 'choice',
+      text: 'You rely on <code>assert(user_value &gt; 0);</code> to reject bad input. You build the release version with <code>-DNDEBUG</code>. What happens?',
+      options: [
+        'Nothing changes; <code>assert()</code> always runs.',
+        'The check vanishes entirely, so bad input is no longer rejected.',
+        'The program fails to compile.',
+        '<code>assert()</code> is automatically replaced with <code>return -1;</code>.',
+      ],
+      correct: 1,
+      correctFeedback: 'Right. <code>-DNDEBUG</code> compiles out every <code>assert()</code>. Anything you depended on assert to enforce is simply gone in release, which is exactly why you never validate input with assert.',
+      incorrectFeedback: 'The correct answer is the second one. Defining <code>NDEBUG</code> removes all <code>assert()</code> calls from the build. Input validation must live in code that always runs, not in an assert.',
+      shortLabel: 'effect of -DNDEBUG on assert',
+    },
+    {
+      id: 'q3',
+      type: 'choice',
+      text: 'A function receives a file path string supplied by the user. How should it handle a possible NULL path?',
+      options: [
+        'Use <code>assert(path != NULL);</code>, since a NULL path is obviously a bug.',
+        'Validate with <code>if (path == NULL) return -1;</code>, since user input can legitimately be wrong.',
+        'Both approaches are equivalent here.',
+        'No check is needed; trust the caller.',
+      ],
+      correct: 1,
+      correctFeedback: 'Right. The path comes from outside your control, so a NULL is an expected runtime possibility, not a programmer bug. Validate it and return an error the caller can handle.',
+      incorrectFeedback: 'The correct answer is the second one. Because the path is user-supplied input, a NULL is expected and must be validated in code that always runs. <code>assert()</code> would be wrong (and gone under NDEBUG).',
+      shortLabel: 'user file path: assert or validate?',
+    },
+    {
+      id: 'q4',
+      type: 'text',
+      text: 'A library call failed and set <code>errno</code>. Which standard function prints a human-readable message for the current <code>errno</code> to <code>stderr</code> in one call? Type just the function name.',
+      correct: ['perror'],
+      normalize: s => s.trim().toLowerCase().replace(/\(\)$/, ''),
+      placeholder: 'e.g. printf',
+      correctFeedback: 'Right. <code>perror("context")</code> prints your context string, a colon, and the text for the current <code>errno</code>, all to <code>stderr</code>.',
+      incorrectFeedback: 'The correct answer is <code>perror</code>. It takes a context string and writes that plus the <code>strerror(errno)</code> text to <code>stderr</code> in a single call.',
+      shortLabel: 'one-call errno reporter to stderr',
+    },
+    {
+      id: 'q5',
+      type: 'choice',
+      text: 'Which of these is the <em>best</em> use of <code>assert()</code>?',
+      options: [
+        'Checking that the user typed a valid menu choice.',
+        'Checking that <code>fopen()</code> returned a non-NULL file pointer.',
+        'Checking that an array index <em>your own code</em> just computed is within bounds.',
+        'Checking that <code>sscanf()</code> read the expected number of fields.',
+      ],
+      correct: 2,
+      correctFeedback: 'Right. A self-computed index being out of bounds can only happen if your logic is wrong. That is a programmer error, exactly what <code>assert()</code> is for. The other three are external failures you must validate.',
+      incorrectFeedback: 'The correct answer is the third one. Menu input, <code>fopen()</code> results, and <code>sscanf()</code> counts are all expected runtime failures to be validated. Only the self-computed index is an internal invariant suited to <code>assert()</code>.',
+      shortLabel: 'best use of assert',
+    },
+    {
+      id: 'q6',
+      type: 'choice',
+      text: 'You write <code>int n = sscanf(line, "%d %d %d", &amp;a, &amp;b, &amp;c);</code>. What is the correct way to detect a malformed line?',
+      options: [
+        'Only <code>if (n == 0)</code>, since a partial read is fine.',
+        '<code>if (n != 3)</code>, because anything other than all three fields is malformed.',
+        'A <code>line == NULL</code> check alone is enough.',
+        'No check is needed; <code>sscanf()</code> cannot fail.',
+      ],
+      correct: 1,
+      correctFeedback: 'Right. <code>sscanf()</code> returns how many fields it assigned. A clean line gives 3; anything else (including a partial read of 1 or 2) means the rest are garbage, so <code>n != 3</code> is the guard.',
+      incorrectFeedback: 'The correct answer is the second one. <code>sscanf()</code> returns the count of assigned fields. A partial read leaves the remaining variables as garbage, so you must require the full count: <code>n != 3</code>.',
+      shortLabel: 'detecting a malformed sscanf line',
+    },
+    {
+      id: 'q7',
+      type: 'text',
+      text: 'An <code>assert()</code> guards an invariant: a condition false only when your own code has a bug. An <code>if</code>-check that handles data a user could legitimately get wrong is doing what, in one word?',
+      correct: ['validation', 'validating', 'validate', 'validates'],
+      normalize: s => s.trim().toLowerCase().replace(/[.!]$/, ''),
+      placeholder: 'one word',
+      correctFeedback: 'Right. Validation is the runtime handling of input you cannot trust. Assertions guard invariants; validation guards against bad input.',
+      incorrectFeedback: 'The answer is <code>validation</code>. Assertions guard invariants (your bugs); validation handles untrusted input (expected bad data) in code that always runs.',
+      shortLabel: 'the complement to an invariant assertion',
+    },
+  ];
+
+  // ============================================================
+  // State
+  // ============================================================
+  const state = questions.map(() => ({ answered: false, correct: false, choice: null, value: '' }));
+  let currentIndex = 0;
+
+  const dotsArea = root.querySelector('#assertval-dots');
+  const cardArea = root.querySelector('#assertval-card-area');
+
+  // ============================================================
+  // Rendering: dots
+  // ============================================================
+  function renderDots() {
+    dotsArea.innerHTML = '';
+    for (let i = 0; i < questions.length; i++) {
+      const d = document.createElement('div');
+      d.className = 'dot';
+      if (i === currentIndex) d.classList.add('current');
+      if (state[i].answered) {
+        d.classList.add(state[i].correct ? 'correct' : 'incorrect');
+      }
+      dotsArea.appendChild(d);
+    }
+    const scoreDot = document.createElement('div');
+    scoreDot.className = 'dot score';
+    if (currentIndex === questions.length) scoreDot.classList.add('current');
+    dotsArea.appendChild(scoreDot);
+  }
+
+  // ============================================================
+  // Rendering: question card
+  // ============================================================
+  function buildQuestionCard(i) {
+    const q = questions[i];
+    const s = state[i];
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    const label = document.createElement('div');
+    label.className = 'q-label';
+    label.textContent = 'Question ' + (i + 1) + ' of ' + questions.length;
+    card.appendChild(label);
+
+    const text = document.createElement('div');
+    text.className = 'q-text';
+    text.innerHTML = q.text;
+    card.appendChild(text);
+
+    if (q.code) {
+      const pre = document.createElement('pre');
+      pre.className = 'q-code';
+      pre.textContent = q.code;
+      card.appendChild(pre);
+    }
+
+    // Answer surface
+    let getAnswer; // closure returning chosen index (choice) or string (text)
+    if (q.type === 'choice') {
+      const choices = document.createElement('div');
+      choices.className = 'choices';
+      const buttons = [];
+      q.options.forEach((opt, idx) => {
+        const b = document.createElement('button');
+        b.className = 'choice';
+        b.innerHTML = opt;
+        b.type = 'button';
+        b.addEventListener('click', () => {
+          if (s.answered) return;
+          buttons.forEach(x => x.classList.remove('selected'));
+          b.classList.add('selected');
+          s.choice = idx;
+          submitBtn.disabled = false;
+        });
+        if (s.choice === idx) b.classList.add('selected');
+        if (s.answered) {
+          b.classList.add('locked');
+          if (idx === q.correct) b.classList.add('correct');
+          else if (idx === s.choice) b.classList.add('incorrect');
+        }
+        choices.appendChild(b);
+        buttons.push(b);
+      });
+      card.appendChild(choices);
+      getAnswer = () => s.choice;
+    } else {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'text-input';
+      input.placeholder = q.placeholder || '';
+      input.value = s.value || '';
+      input.spellcheck = false;
+      input.autocomplete = 'off';
+      input.addEventListener('input', () => {
+        if (s.answered) return;
+        s.value = input.value;
+        submitBtn.disabled = input.value.trim().length === 0;
+      });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !s.answered && input.value.trim().length > 0) {
+          e.preventDefault();
+          submitBtn.click();
+        }
+      });
+      if (s.answered) input.disabled = true;
+      card.appendChild(input);
+      getAnswer = () => input.value;
+      setTimeout(() => { try { input.focus(); } catch (e) {} }, 50);
+    }
+
+    // Feedback
+    const fb = document.createElement('div');
+    fb.className = 'feedback';
+    if (s.answered) {
+      fb.classList.add('visible');
+      fb.classList.add(s.correct ? 'correct' : 'incorrect');
+      fb.innerHTML = s.correct ? q.correctFeedback : q.incorrectFeedback;
+    }
+    card.appendChild(fb);
+
+    // Button row
+    const row = document.createElement('div');
+    row.className = 'btn-row';
+
+    const navL = document.createElement('div');
+    navL.className = 'nav-row';
+    if (i > 0) {
+      const back = document.createElement('button');
+      back.className = 'nav-btn back';
+      back.type = 'button';
+      back.innerHTML = '&larr; Back';
+      back.addEventListener('click', () => { currentIndex = i - 1; render(); });
+      navL.appendChild(back);
+    }
+    row.appendChild(navL);
+
+    const submitBtn = document.createElement('button');
+    submitBtn.type = 'button';
+    if (s.answered) {
+      submitBtn.className = 'nav-btn';
+      submitBtn.innerHTML = (i === questions.length - 1) ? 'See score &rarr;' : 'Next &rarr;';
+      submitBtn.addEventListener('click', () => { currentIndex = i + 1; render(); });
+    } else {
+      submitBtn.className = 'submit-btn';
+      submitBtn.textContent = 'Submit';
+      // Enable state
+      if (q.type === 'choice') submitBtn.disabled = (s.choice === null);
+      else submitBtn.disabled = (!s.value || s.value.trim().length === 0);
+      submitBtn.addEventListener('click', () => {
+        const ans = getAnswer();
+        let correct = false;
+        if (q.type === 'choice') {
+          correct = (ans === q.correct);
+        } else {
+          const v = q.normalize ? q.normalize(ans) : ans;
+          correct = q.correct.some(c => (q.normalize ? q.normalize(c) : c) === v);
+        }
+        s.answered = true;
+        s.correct = correct;
+        render();
+      });
+    }
+    row.appendChild(submitBtn);
+    card.appendChild(row);
+
+    return card;
+  }
+
+  // ============================================================
+  // Rendering: score card
+  // ============================================================
+  function buildScoreCard() {
+    const card = document.createElement('div');
+    card.className = 'card score-card';
+    const correctCount = state.filter(s => s.correct).length;
+    const pct = correctCount / questions.length;
+    const passed = pct >= PASSING_THRESHOLD;
+
+    if (correctCount === questions.length) card.classList.add('full-correct');
+    else if (passed) card.classList.add('passing');
+    else card.classList.add('not-passing');
+
+    const label = document.createElement('div');
+    label.className = 'q-label';
+    label.textContent = 'Quiz complete';
+    card.appendChild(label);
+
+    const msg = document.createElement('div');
+    msg.className = 'score-message';
+    if (correctCount === questions.length) {
+      msg.className = 'score-message good-job';
+      msg.textContent = 'Perfect score. You can tell an invariant from untrusted input.';
+    } else if (passed) {
+      msg.className = 'score-message good-job';
+      msg.textContent = 'Passed.';
+    } else {
+      msg.style.color = '#6B0000';
+      msg.textContent = 'Below the 70% threshold. Review and try again.';
+    }
+    card.appendChild(msg);
+
+    const scoreBig = document.createElement('div');
+    scoreBig.className = 'score-big';
+    scoreBig.textContent = correctCount + ' / ' + questions.length;
+    card.appendChild(scoreBig);
+
+    const scoreLabel = document.createElement('div');
+    scoreLabel.className = 'score-label';
+    scoreLabel.textContent = 'questions correct (' + Math.round(pct * 100) + '%)';
+    card.appendChild(scoreLabel);
+
+    // Detail message
+    const detail = document.createElement('div');
+    detail.className = 'score-message';
+    if (correctCount === questions.length) {
+      detail.textContent = 'You have the assert-vs-validate line down: assertions for your bugs, validation for bad input, errno and stderr for reporting. Move on to the lab.';
+    } else if (passed) {
+      detail.textContent = 'You crossed the threshold. Review the questions you missed below before the lab.';
+    } else {
+      detail.textContent = 'Re-read the defensive programming section in the lesson materials. The harden walkthrough is also there if you want to replay it.';
+    }
+    card.appendChild(detail);
+
+    // Completion code block — passing vs non-passing salt
+    const code = passed ? CS210_CODE_PASS : CS210_CODE_FAIL;
+    const codeBlock = document.createElement('div');
+    codeBlock.className = 'code-block' + (passed ? '' : ' fail');
+    const left = document.createElement('div');
+    left.className = 'code-left';
+    const codeLabel = document.createElement('div');
+    codeLabel.className = 'code-label';
+    codeLabel.textContent = passed ? 'Passing code' : 'Non-passing code';
+    left.appendChild(codeLabel);
+    const codeValue = document.createElement('div');
+    codeValue.className = 'code-value';
+    codeValue.textContent = code;
+    left.appendChild(codeValue);
+    codeBlock.appendChild(left);
+    const copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.className = 'copy-btn';
+    copyBtn.textContent = 'Copy';
+    copyBtn.addEventListener('click', () => {
+      const ok = cs210Copy(code);
+      copyBtn.textContent = ok ? 'Copied!' : 'Copy failed';
+      if (ok) copyBtn.classList.add('copied');
+      setTimeout(() => { copyBtn.textContent = 'Copy'; copyBtn.classList.remove('copied'); }, 1500);
+    });
+    codeBlock.appendChild(copyBtn);
+    card.appendChild(codeBlock);
+
+    const now = new Date();
+    const pad = (n) => n.toString().padStart(2, '0');
+    const ts = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate()) +
+               ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+
+    const footer = document.createElement('div');
+    footer.className = 'inline-code-footer';
+    footer.innerHTML = '<strong>' + escapeHtml(cadetName || '(name not set)') + '</strong> &middot; ' + ts +
+                       (passed ? ' &middot; passing' : ' &middot; non-passing');
+    card.appendChild(footer);
+
+    // Recap
+    const recap = document.createElement('div');
+    recap.className = 'recap';
+    const recapTitle = document.createElement('div');
+    recapTitle.className = 'recap-title';
+    recapTitle.textContent = 'Question recap';
+    recap.appendChild(recapTitle);
+
+    state.forEach((s, i) => {
+      const item = document.createElement('div');
+      item.className = 'recap-item';
+      const icon = document.createElement('div');
+      icon.className = 'recap-icon ' + (s.correct ? 'correct' : 'incorrect');
+      icon.textContent = s.correct ? '\u2713' : '\u2717';
+      item.appendChild(icon);
+      const body = document.createElement('div');
+      body.className = 'recap-body';
+      const q = questions[i];
+      const qLine = document.createElement('div');
+      qLine.className = 'recap-question';
+      qLine.innerHTML = '<strong>Q' + (i + 1) + '.</strong> ' + q.shortLabel;
+      body.appendChild(qLine);
+      if (!s.correct) {
+        const exp = document.createElement('div');
+        exp.className = 'recap-explanation';
+        exp.innerHTML = q.incorrectFeedback;
+        body.appendChild(exp);
+      }
+      item.appendChild(body);
+      recap.appendChild(item);
+    });
+    card.appendChild(recap);
+
+    const resetRow = document.createElement('div');
+    resetRow.className = 'reset-row';
+    const resetBtn = document.createElement('button');
+    resetBtn.type = 'button';
+    resetBtn.className = 'reset-btn';
+    resetBtn.textContent = 'Take the quiz again';
+    resetBtn.addEventListener('click', reset);
+    resetRow.appendChild(resetBtn);
+    card.appendChild(resetRow);
+
+    return card;
+  }
+
+  function render() {
+    renderDots();
+    cardArea.innerHTML = '';
+    if (currentIndex >= questions.length) {
+      cardArea.appendChild(buildScoreCard());
+    } else {
+      cardArea.appendChild(buildQuestionCard(currentIndex));
+    }
+  }
+
+  function reset() {
+    state.forEach(s => { s.answered = false; s.correct = false; s.choice = null; s.value = ''; });
+    currentIndex = 0;
+    render();
+  }
+
+  // Boot
+  render();
+})();
+</script>
+
+    </div>
+  </details>
+
+  <!-- ===================== 6. AFTER CLASS ===================== -->
+  <details id="after-class" style="margin-bottom: 24px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      6. After Class
+    </summary>
+    <div style="padding: 18px 22px;">
+      <ul style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Finish Lab 37 if you did not complete it in class. Submit through GitHub Classroom and confirm the autograder ran on Gradescope.</li>
+        <li style="margin-bottom: 6px;">Complete the <strong>Lesson 37 reflection</strong> in Blackboard. Enter both widget completion codes and answer the reflection prompt; attach your screenshot of the walkthrough completion screen.</li>
+        <li style="margin-bottom: 6px;">Preview the Lesson 38 materials on program memory layout: where code, globals, the heap, and the stack actually live. The last task of the walkthrough was your first landmark.</li>
+        <li style="margin-bottom: 0;">Lessons 37 and 38 close out Block 5. Keep the Defensive Programming reference card handy; it applies to every program you write from here on.</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== HELP NOTE ===================== -->
+  <div style="background: #F5F7FA; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 3px; font-size: 13.5px; color: #4A5568;">
+    <strong style="color: #00205B;">Need help?</strong> Schedule EI with your instructor. Bring the specific input that breaks your loader, the exact error message or output, and the guard you think should have caught it. Specific questions get unstuck quickly.
+  </div>
+
+</div>

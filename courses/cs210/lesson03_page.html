@@ -1,0 +1,2124 @@
+<!-- ============================================================
+     CS210 - Lesson 3
+     Operators and Standard Libraries
+     Self-contained: all CSS inline. Native <details> for collapsing.
+     One walkthrough widget embedded inline in section 5:
+       - cs210-arith  (arithmetic & overflow walkthrough)
+     Paste into Blackboard Ultra via Document -> Add HTML block.
+     ============================================================ -->
+
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 980px; margin: 0 auto; line-height: 1.6;">
+
+  <!-- ===================== LIGHT HEADER ===================== -->
+  <div style="border-left: 5px solid #003087; padding: 8px 0 8px 18px; margin-bottom: 24px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 2px;">CS210 &middot; Block 1 &middot; Lesson 3</div>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 600; color: #00205B;">Operators and Standard Libraries</h1>
+    <div style="font-size: 14px; color: #4A5568; margin-top: 4px;">Arithmetic &middot; Comparison &middot; Precedence &middot; Standard libraries &middot; math.h &middot; User input with scanf</div>
+  </div>
+
+  <!-- ===================== AT A GLANCE ===================== -->
+  <div style="background: #F5F7FA; border-left: 4px solid #B5B7BA; padding: 14px 18px; margin-bottom: 22px; font-size: 14px;">
+    <strong style="color: #00205B;">At a glance:</strong> Now that you can declare variables, you make them do things. Today is arithmetic and comparison operators, the precedence rules that decide what gets evaluated first, your first taste of the C standard library through <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&lt;math.h&gt;</code>, and your first way to get input from the user with scanf. The interactive widget in Section 5 watches what happens when arithmetic pushes a variable past its type's edge; the lab puts scanf, arithmetic, and math.h together in one small program.
+  </div>
+
+  <!-- ===================== TABLE OF CONTENTS ===================== -->
+  <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 20px; margin-bottom: 24px; border-radius: 3px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Contents</div>
+    <ol style="margin: 0; padding-left: 22px; font-size: 14px;">
+      <li style="margin-bottom: 4px;"><a href="#objectives" style="color: #003087; text-decoration: none;">Lesson Objectives</a></li>
+      <li style="margin-bottom: 4px;"><a href="#readings" style="color: #003087; text-decoration: none;">Assigned Readings</a></li>
+      <li style="margin-bottom: 4px;"><a href="#pre-class" style="color: #003087; text-decoration: none;">Pre-Class Work</a></li>
+      <li style="margin-bottom: 4px;"><a href="#materials" style="color: #003087; text-decoration: none;">Lesson Materials and Overview</a></li>
+      <li style="margin-bottom: 4px;"><a href="#in-class" style="color: #003087; text-decoration: none;">In-Class Work</a></li>
+      <li style="margin-bottom: 0;"><a href="#after-class" style="color: #003087; text-decoration: none;">After Class</a></li>
+    </ol>
+  </div>
+
+  <!-- ===================== 1. OBJECTIVES ===================== -->
+  <details id="objectives" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      1. Lesson Objectives
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 10px 0; font-style: italic;">By the end of this lesson, cadets will be able to:</p>
+      <ol style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Apply arithmetic and comparison operators in C expressions. <span style="color: #6B7280; font-size: 12px;">(Outcome 1)</span></li>
+        <li style="margin-bottom: 6px;">Predict the result of expressions involving operator precedence and associativity. <span style="color: #6B7280; font-size: 12px;">(Outcome 1)</span></li>
+        <li style="margin-bottom: 6px;">Locate and call functions from the C standard library, using <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&lt;math.h&gt;</code> as an example. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+        <li style="margin-bottom: 6px;">Read library reference documentation to understand a function's parameters, return value, and usage. <span style="color: #6B7280; font-size: 12px;">(Outcome 7)</span></li>
+        <li style="margin-bottom: 0;">Read numeric input from the user with <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">scanf</code>, using <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;</code> before variable names as a required syntactic ritual until pointers are formally introduced in Lesson 12. <span style="color: #6B7280; font-size: 12px;">(Outcomes 1, 2)</span></li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 2. READINGS ===================== -->
+  <details id="readings" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      2. Assigned Readings
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 12px 0;">Complete before class. The first two are the spine of today's lecture; the King chapter is optional reinforcement.</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <thead>
+          <tr style="background: #E8EDF5; color: #00205B;">
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 160px;">Source</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9;">Sections</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 240px;">Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;"><a href="https://beej.us/guide/bgc/" style="color: #003087; text-decoration: underline;">Beej-C</a></td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Chapter 3 (Variables and Statements: Operators) cont., including scanf coverage</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Arithmetic and comparison operators (skip logical/bitwise for now); how scanf reads input</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;"><a href="https://beej.us/guide/bgclr/" style="color: #003087; text-decoration: underline;">Beej-Lib</a></td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&lt;math.h&gt;</code> reference page</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Skim the function index; we use it as a worked example of reading library docs</td>
+          </tr>
+          <tr>
+            <td style="padding: 9px 12px;">King, <em>C Programming: A Modern Approach</em></td>
+            <td style="padding: 9px 12px;">Chapter 4 (Expressions)</td>
+            <td style="padding: 9px 12px; color: #4A5568;">Optional deeper dive on arithmetic operators and precedence</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 12px 16px; margin-top: 14px; border-radius: 3px; font-size: 13px; color: #5A4B00;">
+        <strong style="color: #6B5300;">Heads up:</strong> The Beej website may be blocked on USAFA networks. If you cannot reach it from a campus connection, try from off-network or schedule EI to get a mirrored copy.
+      </div>
+    </div>
+  </details>
+
+  <!-- ===================== 3. PRE-CLASS WORK ===================== -->
+  <details id="pre-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      3. Pre-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 18px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #6B5300; font-size: 14px; margin-bottom: 4px;">Do this first</div>
+        <div style="font-size: 14px; color: #5A4B00;">Plan on about 30 minutes for the reading and the Lesson 2 self-check. Most of today's learning happens through the two widgets in Section 5; come ready to type.</div>
+      </div>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 0 0 10px 0;">Pre-Class Checklist</h3>
+
+      <!-- Step 1: Read -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">1</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Read Beej-C Chapter 3 (Variables and Statements: Operators) cont. &mdash; focus on operators and scanf</div>
+            <div style="font-size: 14px; margin-bottom: 6px;">Focus on:</div>
+            <ul style="font-size: 13.5px; margin: 0; padding-left: 20px;">
+              <li style="margin-bottom: 3px;">Arithmetic operators (<code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">+ - * / %</code>)</li>
+              <li style="margin-bottom: 3px;">Comparison operators (<code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">== != &lt; &gt; &lt;= &gt;=</code>)</li>
+              <li style="margin-bottom: 0;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">scanf</code> for reading user input (skip <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;&amp;</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">||</code>, and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">!</code> for now; those come in Lesson 4)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Lesson 2 check-in -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">2</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Make sure Lesson 2 still feels solid</div>
+            <div style="font-size: 14px;">Today builds on declarations, types, and overflow from Lesson 2. If any of those feel shaky, replay the Lesson 2 cmem or binary walkthroughs before class. If the trap (a value that does not fit in its type wraps to something unexpected) is not familiar, you will struggle with the arithmetic widget today.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Skim widgets -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 8px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">3</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Skim the In-Class section below</div>
+            <div style="font-size: 14px;">Section 5 has one widget: an arithmetic walkthrough that watches values change as you do arithmetic on them. You do not need to use it yet; just know it is there.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ===================== 4. LESSON MATERIALS AND OVERVIEW ===================== -->
+  <details id="materials" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      4. Lesson Materials and Overview
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 18px 0;">Lesson 2 gave you values; Lesson 3 makes you do things with them and start reading values from the user. The pieces below cover scanf for input, arithmetic and comparison operators (with their traps and precedence rules), and a first look at the C standard library through <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&lt;math.h&gt;</code>. The reference material below previews the concepts you will see in lecture and exercise in the arithmetic walkthrough and the lab.</p>
+
+      <!-- Subsection navigation -->
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 18px; margin-bottom: 22px; border-radius: 3px;">
+        <div style="font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">Jump to</div>
+        <div style="font-size: 13.5px;">
+          <a href="#slides" style="color: #003087; text-decoration: none; margin-right: 14px;">Slides</a>
+          <a href="#scanf" style="color: #003087; text-decoration: none; margin-right: 14px;">scanf</a>
+          <a href="#arithmetic" style="color: #003087; text-decoration: none; margin-right: 14px;">Arithmetic</a>
+          <a href="#comparison" style="color: #003087; text-decoration: none; margin-right: 14px;">Comparison</a>
+          <a href="#precedence" style="color: #003087; text-decoration: none; margin-right: 14px;">Precedence</a>
+          <a href="#libraries" style="color: #003087; text-decoration: none; margin-right: 14px;">Libraries</a>
+          <a href="#reading-docs" style="color: #003087; text-decoration: none; margin-right: 14px;">Reading Docs</a>
+          <a href="#dfcs-standard" style="color: #003087; text-decoration: none;">DFCS Standard</a>
+        </div>
+      </div>
+
+      <!-- Slides -->
+      <h3 id="slides" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0; scroll-margin-top: 16px;">Slides</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">The Lesson 3 deck covers scanf and the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;</code> ritual, arithmetic and comparison operators, the precedence table, the integer division and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">=</code> vs <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">==</code> traps, and a worked example of reading the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&lt;math.h&gt;</code> documentation. The slides are the spine of the in-class lecture; the arithmetic widget in Section 5 is where you practice.</p>
+
+      <p style="margin: 0 0 18px 0;">
+        <!-- EDIT ME: replace href="#" with the SharePoint URL of the Lesson 3 slide deck before deployment -->
+        <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 10px 20px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 14px;">Open Lesson 3 slides &rarr;</a>
+      </p>
+
+      <!-- scanf for user input -->
+      <h3 id="scanf" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">scanf for user input</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Your programs so far have only computed values you hard-coded. <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">scanf</code> reads values from standard input (typed at the terminal, or piped in from a file) and stores them in variables. It is the input counterpart of <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">printf</code>.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Like <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">printf</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">scanf</code> uses format specifiers to decide how to interpret the input. The same specifiers you learned in Lesson 2 apply, with one important wrinkle for <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">double</code>:</p>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 14px;">
+        <thead>
+          <tr style="background: #00205B; color: #ffffff;">
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 110px;">Specifier</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 160px;">For reading into</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600;">Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace;">%d</td><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">int</td><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Same as printf.</td></tr>
+          <tr style="background: #F8FAFC;"><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace;">%f</td><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">float</td><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Same as printf.</td></tr>
+          <tr><td style="padding: 8px 12px; font-family: Consolas, monospace;">%lf</td><td style="padding: 8px 12px;">double</td><td style="padding: 8px 12px;"><strong style="color: #B8002F;">Different from printf.</strong> printf accepts <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">%f</code> for both float and double, but <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">scanf</code> requires <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">%lf</code> for double. Using <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">%f</code> for a double will silently store garbage.</td></tr>
+        </tbody>
+      </table>
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 12px 16px; margin-bottom: 14px; border-radius: 3px; font-size: 13.5px; color: #5A4B00;">
+        <strong style="color: #6B5300;">The <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;</code> ritual.</strong> Always put <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;</code> before the variable name when reading into it. You will learn why in Lesson 12; for now, treat it as required syntax. Forgetting the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;</code> is one of the most common C bugs and the compiler will not stop you. Your program will compile, run, and quietly corrupt memory.
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Two examples. First, read an int:</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">int</span> n;<br>
+        <span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"Enter an integer: "</span>);<br>
+        <span style="color: #DCDCAA;">scanf</span>(<span style="color: #CE9178;">"%d"</span>, <span style="color: #F0B92C;">&amp;</span>n);<br>
+        <span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"You entered %d.\n"</span>, n);
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Now a double:</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">double</span> x;<br>
+        <span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"Enter a number: "</span>);<br>
+        <span style="color: #DCDCAA;">scanf</span>(<span style="color: #CE9178;">"%lf"</span>, <span style="color: #F0B92C;">&amp;</span>x);&nbsp;&nbsp;<span style="color: #6B7280;">// note %lf, not %f</span><br>
+        <span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"You entered %.2f.\n"</span>, x);
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;"><strong style="color: #00205B;">Return value.</strong> <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">scanf</code> returns the number of items it successfully read. For one variable, a successful read returns 1. You can ignore the return value for now, but production code checks it to catch input errors (the user typed letters when you asked for a number).</p>
+
+      <!-- Arithmetic -->
+      <h3 id="arithmetic" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Arithmetic operators</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Five arithmetic operators: <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">+</code> addition, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">-</code> subtraction, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">*</code> multiplication, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">/</code> division, and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">%</code> modulo (remainder after division). The first three behave like you would expect from Python. The last two have a trap.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><strong style="color: #00205B;">The integer division trap.</strong> In C, if both operands of <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">/</code> are integers, the result is an integer with the decimal part truncated. This is the same trap from Lesson 2's casting section; today it shows up everywhere arithmetic does.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">int</span> a = <span style="color: #B5CEA8;">5</span> / <span style="color: #B5CEA8;">2</span>;<br>
+        <span style="color: #6B7280;">// a is 2, not 2.5</span><br><br>
+        <span style="color: #569CD6;">float</span> b = (<span style="color: #569CD6;">float</span>)<span style="color: #B5CEA8;">5</span> / <span style="color: #B5CEA8;">2</span>;<br>
+        <span style="color: #6B7280;">// b is 2.5  -- cast one operand to float</span>
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><strong style="color: #00205B;">The modulo operator.</strong> <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">a % b</code> gives you the remainder when <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">a</code> is divided by <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">b</code>. Together, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">/</code> and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">%</code> split an integer into its quotient and remainder, which is useful for things like extracting digits, checking divisibility, or implementing time conversions (<code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">seconds / 60</code> for minutes, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">seconds % 60</code> for leftover seconds).</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><strong style="color: #00205B;">Arithmetic overflow.</strong> In Lesson 2 you saw what happens when you store a too-big value in a too-small type. Today you will see the same effect through arithmetic: adding 1 to a variable at its type's maximum wraps it to the minimum; the compiler does not warn you. The arithmetic walkthrough in Section 5 makes this concrete.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;"><strong style="color: #00205B;">Operator shorthands.</strong> <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">x += 5</code> is the same as <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">x = x + 5</code>. Similar shorthands exist for <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">-=</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">*=</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">/=</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">%=</code>. <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">x++</code> increments x by 1; <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">x--</code> decrements. These shorthands save typing but do not change behavior or speed; use them when they read more clearly than the long form.</p>
+
+      <!-- Comparison -->
+      <h3 id="comparison" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Comparison operators</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Six comparison operators that take two values and return either 0 (false) or 1 (true): <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">==</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">!=</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&lt;</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&gt;</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&lt;=</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&gt;=</code>. Notice that equality is <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">==</code>, not <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">=</code>. The single equals sign is assignment; the double equals sign is comparison.</p>
+
+      <div style="background: #F5F7FA; border-left: 4px solid #B8002F; padding: 12px 16px; margin-bottom: 14px; border-radius: 3px; font-size: 13.5px;">
+        <strong style="color: #B8002F;">Classic bug.</strong> Writing <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">x = 5</code> when you meant <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">x == 5</code>. The single-equals form is assignment: it stores 5 in x and produces the value 5. The double-equals form is comparison: it leaves x alone and produces either 0 or 1. The compiler will not error on a mix-up; some compilers warn under <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">-Wall</code>. Two defenses worth building as habits: write <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">==</code> for comparisons by reflex, and consider putting the constant on the left (<code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">5 == x</code>) so a typo of <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">=</code> becomes a hard error the compiler must reject.
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;"><strong style="color: #00205B;">Truthiness in C.</strong> C does not have a separate boolean type at this level. Integers stand in for booleans directly: zero means false, anything else means true. Comparison operators always produce exactly 0 or 1. You will start using comparisons inside actual conditional statements in Lesson 4.</p>
+
+      <!-- Precedence -->
+      <h3 id="precedence" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Operator precedence and associativity</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">When an expression has multiple operators, precedence decides which ones get evaluated first. Higher rows bind tighter. The full table has 15+ tiers; these are the ones you need today.</p>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 13.5px; margin-bottom: 14px;">
+        <thead>
+          <tr style="background: #00205B; color: #ffffff;">
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; width: 80px;">Tier</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600;">Operators</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; width: 160px;">Associativity</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="padding: 7px 12px; border-bottom: 1px solid #E5E7EB; font-weight: 600;">1 (tightest)</td><td style="padding: 7px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace;">-x (unary minus) &nbsp;&nbsp; (type) &nbsp;&nbsp; <span style="color: #6B7280;">! (Lesson 4)</span></td><td style="padding: 7px 12px; border-bottom: 1px solid #E5E7EB;">right to left</td></tr>
+          <tr style="background: #F8FAFC;"><td style="padding: 7px 12px; border-bottom: 1px solid #E5E7EB; font-weight: 600;">2</td><td style="padding: 7px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace;">* &nbsp;&nbsp; / &nbsp;&nbsp; %</td><td style="padding: 7px 12px; border-bottom: 1px solid #E5E7EB;">left to right</td></tr>
+          <tr><td style="padding: 7px 12px; border-bottom: 1px solid #E5E7EB; font-weight: 600;">3</td><td style="padding: 7px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace;">+ &nbsp;&nbsp; -</td><td style="padding: 7px 12px; border-bottom: 1px solid #E5E7EB;">left to right</td></tr>
+          <tr style="background: #F8FAFC;"><td style="padding: 7px 12px; border-bottom: 1px solid #E5E7EB; font-weight: 600;">4</td><td style="padding: 7px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace;">&lt; &nbsp;&nbsp; &lt;= &nbsp;&nbsp; &gt; &nbsp;&nbsp; &gt;=</td><td style="padding: 7px 12px; border-bottom: 1px solid #E5E7EB;">left to right</td></tr>
+          <tr><td style="padding: 7px 12px; border-bottom: 1px solid #E5E7EB; font-weight: 600;">5</td><td style="padding: 7px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace;">== &nbsp;&nbsp; !=</td><td style="padding: 7px 12px; border-bottom: 1px solid #E5E7EB;">left to right</td></tr>
+          <tr style="background: #F8FAFC;"><td style="padding: 7px 12px; border-bottom: 1px solid #E5E7EB; font-weight: 600; color: #6B7280;">6</td><td style="padding: 7px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; color: #6B7280;">&amp;&amp; &nbsp;&nbsp; <span style="font-style: italic;">(Lesson 4)</span></td><td style="padding: 7px 12px; border-bottom: 1px solid #E5E7EB; color: #6B7280;">left to right</td></tr>
+          <tr><td style="padding: 7px 12px; border-bottom: 1px solid #E5E7EB; font-weight: 600; color: #6B7280;">7</td><td style="padding: 7px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; color: #6B7280;">|| &nbsp;&nbsp; <span style="font-style: italic;">(Lesson 4)</span></td><td style="padding: 7px 12px; border-bottom: 1px solid #E5E7EB; color: #6B7280;">left to right</td></tr>
+          <tr style="background: #F8FAFC;"><td style="padding: 7px 12px; font-weight: 600;">8 (loosest)</td><td style="padding: 7px 12px; font-family: Consolas, monospace;">= &nbsp;&nbsp; += &nbsp;&nbsp; -= &nbsp;&nbsp; *= &nbsp;&nbsp; /= &nbsp;&nbsp; %=</td><td style="padding: 7px 12px;">right to left</td></tr>
+        </tbody>
+      </table>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><strong style="color: #00205B;">The key thing to internalize.</strong> Arithmetic binds tighter than comparison. So <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">x + 1 &gt; y * 2</code> is parsed as <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">(x + 1) &gt; (y * 2)</code>. Multiplication, division, and modulo also bind tighter than addition and subtraction, just like in math. Lesson 4 adds the logical operators (<code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;&amp;</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">||</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">!</code>) into the precedence mix; you can see where they sit in the table above for future reference.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;"><strong style="color: #00205B;">When in doubt, parenthesize.</strong> The compiler does not care if you parenthesize an expression that did not need it. The next person reading your code (including future you) will thank you.</p>
+
+      <!-- Libraries -->
+      <h3 id="libraries" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Standard libraries</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">C ships with a small set of standard library headers that give you common functions: input/output, strings, math, memory, time, and a few more. You <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">#include</code> the header to make the functions visible, then call them like any other function.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Today's worked example is <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&lt;math.h&gt;</code>. Common functions:</p>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 14px;">
+        <thead>
+          <tr style="background: #00205B; color: #ffffff;">
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; width: 180px;">Function</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600;">What it does</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="padding: 7px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">sqrt(x)</td><td style="padding: 7px 12px; border-bottom: 1px solid #E5E7EB;">Square root of x. Returns NaN if x is negative.</td></tr>
+          <tr style="background: #F8FAFC;"><td style="padding: 7px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">pow(x, y)</td><td style="padding: 7px 12px; border-bottom: 1px solid #E5E7EB;">x raised to the y power.</td></tr>
+          <tr><td style="padding: 7px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">fabs(x)</td><td style="padding: 7px 12px; border-bottom: 1px solid #E5E7EB;">Absolute value of x (for floating-point).</td></tr>
+          <tr style="background: #F8FAFC;"><td style="padding: 7px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">ceil(x), floor(x)</td><td style="padding: 7px 12px; border-bottom: 1px solid #E5E7EB;">Round up / round down to the nearest integer.</td></tr>
+          <tr><td style="padding: 7px 12px; font-family: Consolas, monospace; font-size: 13px;">round(x)</td><td style="padding: 7px 12px;">Round to nearest integer; ties round away from zero.</td></tr>
+        </tbody>
+      </table>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><strong style="color: #00205B;">The linker flag trap.</strong> When you compile a program that uses <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&lt;math.h&gt;</code>, you need to tell the linker to include the math library:</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #7FB3D5;">$</span> gcc program.c -o program <span style="color: #F0B92C;">-lm</span><br>
+        <span style="color: #6B7280;">//                          ^^^ "link the math library"</span>
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">If you forget <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">-lm</code>, you will see a confusing "undefined reference to <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">sqrt</code>" error at link time. The compiler found the prototype in the header, but the linker could not find the actual code. This is a category of error worth recognizing now; we will see it again with other libraries later in the course.</p>
+
+      <!-- Reading docs -->
+      <h3 id="reading-docs" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Reading library documentation</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Real C development means reading reference docs constantly. You cannot memorize every function, and you do not need to. The skill is reading a doc entry and pulling out four things:</p>
+
+      <ol style="font-size: 14.5px; margin: 0 0 14px 0; padding-left: 22px;">
+        <li style="margin-bottom: 4px;">What header do I need to <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">#include</code>?</li>
+        <li style="margin-bottom: 4px;">What does the function take (parameters and their types)?</li>
+        <li style="margin-bottom: 4px;">What does it return (and what type)?</li>
+        <li style="margin-bottom: 0;">What does it do on edge cases (negative inputs, zero, very large values)?</li>
+      </ol>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">A typical reference page looks like this:</p>
+
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 18px; margin-bottom: 14px; border-radius: 3px; font-family: Consolas, monospace; font-size: 13px; color: #1a1a1a;">
+        <strong style="color: #00205B;">sqrt, sqrtf, sqrtl</strong><br>
+        <em style="color: #6B7280;">Compute the square root</em><br><br>
+        <span style="color: #003087;">#include &lt;math.h&gt;</span><br><br>
+        <span style="color: #569CD6;">double</span> sqrt(<span style="color: #569CD6;">double</span> x);<br><br>
+        <strong style="color: #00205B;">Description</strong><br>
+        Returns the non-negative square root of x. If x is negative, a domain<br>
+        error occurs and the function returns NaN.<br><br>
+        <strong style="color: #00205B;">Return value</strong><br>
+        The square root of x.
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">From that page, you can read off: include <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&lt;math.h&gt;</code>, takes a double, returns a double, returns NaN on negative input. That is enough to use the function correctly.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">In class we will walk through three or four entries from Beej-Lib's <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&lt;math.h&gt;</code> page together so you build the habit of reading docs rather than guessing.</p>
+
+      <!-- DFCS C Programming Standard reference -->
+      <h3 id="dfcs-standard" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">DFCS C Programming Standard</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Three sections of the DFCS C Programming Standard start landing today. Once introduced, they are course-wide rules and apply to every lab you write for the rest of CS210.</p>
+      <ul style="font-size: 14.5px; margin: 0 0 14px 0; padding-left: 22px;">
+        <li style="margin-bottom: 6px;"><strong style="color: #00205B;">§6.1 Whitespace around operators.</strong> Write <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">x + 1</code>, not <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">x+1</code>. Write <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">a == b</code>, not <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">a==b</code>. The space between operators and operands makes expressions readable; the standard treats it as required.</li>
+        <li style="margin-bottom: 6px;"><strong style="color: #00205B;">§7.1 No magic numbers.</strong> When a constant has meaning (the 100 in <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">rate / 100</code> converts a percent to a fraction; the 9.81 in physics code is gravity), give it a name with <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">#define</code> or <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">const</code>. The next person reading your code should not have to guess what the literal means.</li>
+        <li style="margin-bottom: 0;"><strong style="color: #00205B;">§8.2 Don't trust input data.</strong> <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">scanf</code> returns the number of values it successfully read. Production code checks that count and handles the mismatch case (bad input, end-of-file, etc). You will see this pattern in the reference solution to Lab 03 after grading. We revisit "don't trust input" at Lesson 12 with NULL checks and again at Lesson 37 in defensive programming.</li>
+      </ul>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">The full standard lives in the course Resources section. Keep it open in a tab while you write code.</p>
+
+    </div>
+  </details>
+
+  <!-- ===================== 5. IN-CLASS WORK ===================== -->
+  <details id="in-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      5. In-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 16px 0;">Two things to do in class. Use the checklist to track your progress.</p>
+
+      <ul style="list-style: none; padding: 0; margin: 0 0 24px 0; font-size: 14.5px;">
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Work through the arithmetic walkthrough.</strong>
+          <span style="color: #4A5568;">Ten guided tasks: declare a variable, do arithmetic on it, watch overflow happen at the edge of the type. About 20 minutes.</span>
+        </li>
+        <li style="margin-bottom: 0; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Complete Lab 03: Compound Interest.</strong>
+          <span style="color: #4A5568;">Read three numbers from the user with scanf, apply arithmetic operators and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">pow</code> from <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&lt;math.h&gt;</code> to compute compound interest. Submitted through Gradescope. Full instructions in the lab repo.</span>
+          <div style="margin-top: 8px;">
+            <!-- EDIT ME: replace href="#" with the GitHub Classroom invitation URL for Lab 03 before deployment -->
+            <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 6px 14px; border-radius: 3px; text-decoration: none; font-size: 13px; font-weight: 600;">Accept Lab 03 on GitHub Classroom &rarr;</a>
+          </div>
+        </li>
+      </ul>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 18px 0 10px 0;">Arithmetic &amp; Overflow Walkthrough</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Ten tasks across four sections. Declare a variable, then type arithmetic expressions to update it. The right pane shows what gets stored and which bits flipped.</p>
+
+<!-- ============================================================
+     CS210 Lesson 3 - Arithmetic & Overflow Walkthrough Widget
+     Pattern-aligned with Lesson 2's cs210-binw widget.
+     Cadets declare typed variables, perform arithmetic, watch
+     bits flip and overflow happen.
+     ============================================================ -->
+<style>
+.cs210-arith * { box-sizing: border-box; }
+.cs210-arith {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-arith h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-arith .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 22px;
+}
+.cs210-arith .progress-bar {
+  background: #E5E7EB;
+  border-radius: 3px;
+  height: 8px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.cs210-arith .progress-fill {
+  background: #003087;
+  height: 100%;
+  transition: width 0.3s ease;
+}
+.cs210-arith .progress-label {
+  font-size: 12px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-arith .section-header {
+  background: #E8EDF5;
+  color: #00205B;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.cs210-arith .task-card {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  border-radius: 3px;
+}
+.cs210-arith .task-card.complete {
+  background: #E6F4EA;
+  border-left-color: #2E7D32;
+}
+.cs210-arith .task-label {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B5300;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.cs210-arith .task-card.complete .task-label { color: #1B5E20; }
+.cs210-arith .task-text { font-size: 15px; color: #1a1a1a; }
+.cs210-arith .task-hint {
+  font-size: 12.5px; color: #6B7280; margin-top: 6px; font-style: italic;
+}
+
+.cs210-arith .panes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+@media (max-width: 760px) {
+  .cs210-arith .panes { grid-template-columns: 1fr; }
+}
+.cs210-arith .terminal {
+  background: #1E2A3A;
+  color: #E8EDF5;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13.5px;
+  line-height: 1.5;
+  border-radius: 4px;
+  padding: 14px 18px;
+  min-height: 380px;
+  max-height: 480px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.cs210-arith .terminal .prompt { color: #7FB3D5; }
+.cs210-arith .terminal .typed { color: #FFFFFF; }
+.cs210-arith .terminal .out { color: #B5BEC8; }
+.cs210-arith .terminal .note { color: #F0B92C; }
+.cs210-arith .terminal .err { color: #F47A7A; }
+.cs210-arith .terminal .ok { color: #7FD17F; }
+.cs210-arith .terminal .dim { color: #6B7280; }
+
+.cs210-arith .bit-pane {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  padding: 14px 16px;
+  min-height: 380px;
+  max-height: 480px;
+  overflow-y: auto;
+}
+.cs210-arith .bit-pane-header {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #E5E7EB;
+}
+.cs210-arith .empty {
+  color: #6B7280; font-style: italic; font-size: 13px;
+  text-align: center; padding: 80px 10px;
+}
+
+/* Variable card with bit grid */
+.cs210-arith .var-card {
+  background: #F8FAFC;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+.cs210-arith .var-decl {
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  color: #00205B;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.cs210-arith .bit-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 2px;
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+.cs210-arith .bit-grid.wide-16 { grid-template-columns: repeat(16, 1fr); }
+.cs210-arith .bit-cell {
+  background: #E8EDF5;
+  border: 1px solid #C7CFD9;
+  text-align: center;
+  font-family: Consolas, monospace;
+  font-size: 16px;
+  font-weight: 700;
+  color: #6B7280;
+  padding: 6px 0;
+  border-radius: 2px;
+  transition: background 0.3s ease, color 0.3s ease, transform 0.3s ease;
+}
+.cs210-arith .bit-cell.on {
+  background: #003087;
+  color: #ffffff;
+  border-color: #00205B;
+}
+.cs210-arith .bit-cell.sign-bit {
+  border-color: #B8002F;
+  border-width: 2px;
+}
+.cs210-arith .bit-cell.flipped {
+  animation: cs210-arith-flip 0.9s ease-out;
+}
+@keyframes cs210-arith-flip {
+  0%   { transform: scale(1); background: #F0B92C; color: #1a1a1a; box-shadow: 0 0 0 0 rgba(240,185,44,0.7); }
+  50%  { transform: scale(1.15); background: #F0B92C; color: #1a1a1a; box-shadow: 0 0 0 8px rgba(240,185,44,0); }
+  100% { transform: scale(1); }
+}
+.cs210-arith .bit-positions {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 2px;
+  font-family: Consolas, monospace;
+  font-size: 9px;
+  color: #6B7280;
+  text-align: center;
+  margin-bottom: 4px;
+}
+.cs210-arith .bit-positions.wide-16 { grid-template-columns: repeat(16, 1fr); }
+.cs210-arith .bit-pos { padding: 2px 0; }
+.cs210-arith .bit-pos.sign { color: #B8002F; font-weight: 700; }
+.cs210-arith .interp-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #D0D5DD;
+}
+.cs210-arith .interp-cell { text-align: center; font-size: 12px; color: #6B7280; }
+.cs210-arith .interp-cell .lbl {
+  font-size: 10px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #6B7280;
+  margin-bottom: 2px;
+}
+.cs210-arith .interp-cell .val {
+  font-family: Consolas, monospace;
+  font-size: 16px;
+  font-weight: 700;
+  color: #00205B;
+}
+.cs210-arith .interp-cell .val.warn { color: #B8002F; }
+.cs210-arith .hex-line {
+  font-family: Consolas, monospace;
+  font-size: 11px;
+  color: #6B7280;
+  margin-top: 4px;
+  text-align: center;
+}
+
+/* Arithmetic result card - shown in pane after each arithmetic op */
+.cs210-arith .arith-card {
+  background: #ffffff;
+  border: 2px solid #003087;
+  border-radius: 4px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.cs210-arith .arith-title {
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  color: #00205B;
+  font-weight: 600;
+  margin-bottom: 10px;
+  text-align: center;
+}
+.cs210-arith .arith-step {
+  font-size: 11px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #6B7280;
+  margin: 10px 0 4px 0;
+  font-weight: 600;
+}
+.cs210-arith .arith-true {
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  color: #1a1a1a;
+  text-align: center;
+  margin-bottom: 6px;
+}
+.cs210-arith .arith-result {
+  text-align: center;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed #D0D5DD;
+}
+.cs210-arith .arith-result .answer {
+  font-family: Consolas, monospace;
+  font-size: 22px;
+  font-weight: 700;
+}
+.cs210-arith .arith-result .answer.warn { color: #B8002F; }
+.cs210-arith .arith-result .answer.ok   { color: #2E7D32; }
+.cs210-arith .arith-result .label {
+  font-size: 11px;
+  color: #6B7280;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 4px;
+}
+.cs210-arith .overflow-tag {
+  display: inline-block;
+  background: #B8002F;
+  color: #ffffff;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 2px;
+  margin-left: 8px;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+.cs210-arith .input-row {
+  display: flex;
+  background: #1E2A3A;
+  border-radius: 4px;
+  padding: 8px 14px;
+  margin-bottom: 14px;
+  border: 1px solid #003087;
+}
+.cs210-arith .input-prompt {
+  color: #7FB3D5;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  margin-right: 8px;
+  align-self: center;
+  white-space: nowrap;
+}
+.cs210-arith .input-row input {
+  flex: 1;
+  background: transparent;
+  color: #FFFFFF;
+  border: none;
+  outline: none;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  padding: 4px 0;
+}
+.cs210-arith .controls {
+  display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap;
+}
+.cs210-arith .btn {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  padding: 6px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #00205B;
+  font-family: inherit;
+  transition: box-shadow 0.2s ease;
+}
+.cs210-arith .btn:hover { background: #F5F7FA; }
+@keyframes cs210-arith-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(240, 185, 44, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0); }
+}
+.cs210-arith .btn.pulse {
+  background: #FFF8E1;
+  border-color: #F0B92C;
+  color: #6B5300;
+  font-weight: 600;
+  animation: cs210-arith-pulse 1.5s infinite;
+}
+.cs210-arith .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #4A5568;
+  margin-top: 12px;
+}
+.cs210-arith .help-note strong { color: #00205B; }
+.cs210-arith .completion {
+  background: #E6F4EA;
+  border: 1px solid #2E7D32;
+  color: #1B5E20;
+  padding: 16px 20px;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 15px;
+  margin-top: 12px;
+}
+
+/* Name modal overlay */
+.cs210-arith .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.cs210-arith .name-modal {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-arith .name-modal h2 {
+  color: #00205B;
+  font-size: 20px;
+  margin: 0 0 10px 0;
+}
+.cs210-arith .name-modal p {
+  color: #4A5568;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+.cs210-arith .name-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-arith .name-modal input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-arith .name-modal-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-arith .name-modal-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-arith .name-modal-btn:not(:disabled):hover {
+  background: #00205B;
+}
+
+/* Completion screen (inline footer + overlay reuse the same inner classes) */
+.cs210-arith .completion-screen {
+  background: #ffffff;
+  border: 2px solid #2E7D32;
+  border-radius: 6px;
+  padding: 24px 28px;
+  margin-top: 16px;
+}
+.cs210-arith .completion-screen .cs-heading {
+  color: #1B5E20;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 6px 0;
+}
+.cs210-arith .completion-screen .cs-name-line {
+  font-size: 15px;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+}
+.cs210-arith .completion-screen .cs-name-line strong {
+  color: #00205B;
+}
+.cs210-arith .completion-screen .cs-code-block {
+  background: #F0F4FA;
+  border: 1px solid #003087;
+  border-radius: 4px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.cs210-arith .completion-screen .cs-code-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #4A5568;
+  margin-bottom: 4px;
+}
+.cs210-arith .completion-screen .cs-code-value {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 28px;
+  font-weight: 700;
+  color: #00205B;
+  letter-spacing: 3px;
+}
+.cs210-arith .completion-screen .cs-copy-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-arith .completion-screen .cs-copy-btn:hover { background: #00205B; }
+.cs210-arith .completion-screen .cs-copy-btn.copied { background: #2E7D32; }
+.cs210-arith .completion-screen .cs-timestamp {
+  font-size: 13px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-arith .completion-screen .cs-reminder {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 14px;
+  color: #6B5300;
+  line-height: 1.5;
+}
+.cs210-arith .completion-screen .cs-reminder strong { color: #4A3A00; }
+</style>
+
+<div class="cs210-arith">
+
+<div class="name-modal-backdrop" id="aw-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Blackboard reflection quiz.</p>
+    <input type="text" id="aw-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="aw-cadet-name-btn" disabled>Start the walkthrough</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 3 &middot; Arithmetic &amp; Overflow Walkthrough</h1>
+<div class="subtitle">Declare typed variables, then do arithmetic on them. Watch values change byte by byte; watch overflow happen when a sum no longer fits.</div>
+
+<div class="progress-bar"><div class="progress-fill" id="aw-progress-fill" style="width: 0%;"></div></div>
+<div class="progress-label" id="aw-progress-label">Task 0 of 10</div>
+
+<div class="section-header" id="aw-section-header">Section 1: Declare and add</div>
+
+<div class="task-card" id="aw-task-card">
+  <div class="task-label" id="aw-task-label">Current task</div>
+  <div class="task-text" id="aw-task-text">Loading...</div>
+  <div class="task-hint" id="aw-task-hint"></div>
+</div>
+
+<div class="panes">
+  <div class="terminal" id="aw-terminal"></div>
+  <div class="bit-pane">
+    <div class="bit-pane-header">Memory &amp; arithmetic</div>
+    <div id="aw-area">
+      <div class="empty">No variables yet.<br>Type a declaration on the left.</div>
+    </div>
+  </div>
+</div>
+
+<div class="input-row">
+  <span class="input-prompt">arith&gt;</span>
+  <input type="text" id="aw-input" autocomplete="off" spellcheck="false" placeholder="follow the task above">
+</div>
+
+<div class="controls">
+  <button class="btn" id="aw-hint-btn">Show hint</button>
+  <button class="btn" id="aw-reset-btn">Reset</button>
+  <button class="btn" id="aw-mode-btn">Switch to free mode</button>
+</div>
+
+<div class="help-note">
+  <strong>How this works:</strong> Type real C statements. A declaration like <code style="background:#E8EDF5; padding:1px 4px; border-radius:2px;">short s = 100;</code> creates a variable. An assignment like <code style="background:#E8EDF5; padding:1px 4px; border-radius:2px;">s = s + 30;</code> updates it; the compound form <code style="background:#E8EDF5; padding:1px 4px; border-radius:2px;">s += 30;</code> does the same thing. The right pane shows the new bits and which ones flipped. Operators: <code style="background:#E8EDF5; padding:1px 4px; border-radius:2px;">+ - * / %</code> (and their compound forms <code style="background:#E8EDF5; padding:1px 4px; border-radius:2px;">+= -= *= /= %=</code>).
+</div>
+
+<div id="aw-completion-area"></div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-arith');
+  if (!root) return;
+
+  // ============================================================
+  // CS210 widget completion utilities
+  // Salt -> deterministic 6-char code via FNV-1a.
+  // Alphabet excludes 0, 1, O, I (uppercase only output).
+  // ============================================================
+  const CS210_SALT = "lesson03_arith_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  // Name-modal gating: widget stays blocked until name entered.
+  // Pre-fill from localStorage if available, but still require explicit Start.
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#aw-name-modal-backdrop');
+    const input = root.querySelector('#aw-cadet-name-input');
+    const btn = root.querySelector('#aw-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored) input.value = stored;
+    } catch (e) { /* localStorage may be disabled */ }
+
+    function updateBtn() {
+      btn.disabled = input.value.trim().length < 2;
+    }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', function() {
+      const name = input.value.trim();
+      if (name.length < 2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+      const cli = root.querySelector('#aw-input');
+      if (cli) cli.focus();
+    });
+    setTimeout(function() { input.focus(); }, 50);
+  })();
+
+  function cs210FallbackCopy(text) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e) { /* nothing else to do */ }
+  }
+
+  function cs210RenderCompletion(area) {
+    if (!area) return;
+    if (root.querySelector('#aw-cs210-completion-overlay')) return; // already shown
+    const now = new Date();
+    const ts = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const safeName = (cs210CadetName || 'Cadet').replace(/[<>&"']/g, function(c) {
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+    // Inline footer (kept so screenshot of widget body still has the code)
+    area.innerHTML =
+      '<div class="completion-screen">' +
+        '<div class="cs-heading">Walkthrough complete</div>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value">' + CS210_CODE + '</div></div>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+      '</div>';
+    // Overlay (the unmissable version)
+    const overlay = document.createElement('div');
+    overlay.id = 'aw-cs210-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.style.background = 'rgba(27, 94, 32, 0.55)';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">Walkthrough complete</h2>' +
+        '<p>Take a screenshot of this box. You will need the code and a visual of this screen for the Blackboard reflection quiz.</p>' +
+        '<div class="cs-name-line" style="font-size:15px;margin-bottom:14px;">Cadet: <strong style="color:#00205B;">' + safeName + '</strong></div>' +
+        '<div class="cs-code-block" style="background:#F0F4FA;border:1px solid #003087;border-radius:4px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px;">' +
+          '<div><div class="cs-code-label" style="font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:#4A5568;margin-bottom:4px;">Completion code</div>' +
+          '<div class="cs-code-value" id="aw-cs-code-value" style="font-family:Consolas,monospace;font-size:28px;font-weight:700;color:#00205B;letter-spacing:3px;">' + CS210_CODE + '</div></div>' +
+          '<button class="cs-copy-btn" id="aw-cs-copy-btn" type="button" style="background:#003087;color:#fff;border:none;padding:8px 14px;border-radius:3px;font-size:13px;cursor:pointer;font-family:inherit;">Copy code</button>' +
+        '</div>' +
+        '<div class="cs-timestamp" style="font-size:13px;color:#6B7280;margin-bottom:14px;">Completed: ' + ts + '</div>' +
+        '<div class="cs-reminder" style="background:#FFF8E1;border-left:4px solid #F0B92C;padding:12px 16px;border-radius:3px;font-size:14px;color:#6B5300;line-height:1.5;margin-bottom:14px;">' +
+          '<strong style="color:#4A3A00;">Next step:</strong> Open the Lesson 3 reflection quiz in Blackboard. Enter this code, answer the reflection prompt, and attach your screenshot.' +
+        '</div>' +
+        '<button class="name-modal-btn" id="aw-cs-overlay-close" type="button" style="background:#2E7D32;">Got it &mdash; close this</button>' +
+      '</div>';
+    root.appendChild(overlay);
+    const closeBtn = overlay.querySelector('#aw-cs-overlay-close');
+    if (closeBtn) closeBtn.addEventListener('click', function() { overlay.style.display = 'none'; });
+    const copyBtn = overlay.querySelector('#aw-cs-copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function() {
+        const text = CS210_CODE;
+        const ok = function() {
+          copyBtn.textContent = 'Copied';
+          copyBtn.classList.add('copied');
+          copyBtn.style.background = '#2E7D32';
+          setTimeout(function() {
+            copyBtn.textContent = 'Copy code';
+            copyBtn.classList.remove('copied');
+            copyBtn.style.background = '#003087';
+          }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(ok, function() {
+            cs210FallbackCopy(text); ok();
+          });
+        } else {
+          cs210FallbackCopy(text); ok();
+        }
+      });
+    }
+  }
+
+  // ============================================================
+  // Type metadata
+  // ============================================================
+  const TYPES = {
+    "signed char":    { size: 1, signed: true,  min: -128n, max: 127n },
+    "unsigned char":  { size: 1, signed: false, min: 0n,    max: 255n },
+    "char":           { size: 1, signed: true,  min: -128n, max: 127n },
+    "short":          { size: 2, signed: true,  min: -32768n, max: 32767n },
+    "unsigned short": { size: 2, signed: false, min: 0n,      max: 65535n },
+    "int":            { size: 4, signed: true,  min: -2147483648n, max: 2147483647n },
+    "unsigned int":   { size: 4, signed: false, min: 0n,           max: 4294967295n },
+  };
+  const TYPE_LIST = Object.keys(TYPES).sort((a,b) => b.length - a.length);
+
+  // ============================================================
+  // State
+  // ============================================================
+  const variables = []; // {type, name, unsignedBits, rawValue, wrapped}
+  let currentTaskIndex = 0;
+  let consecutiveFails = 0;
+  let mode = "walkthrough";
+  let lastFlipped = new Set();   // MSB-indexed positions that flipped
+  let lastFlippedVar = null;     // name of variable whose bits flipped
+  let lastArith = null;          // {decl, op, operandText, trueResult, wrappedResult, wrapped, type}
+
+  // ============================================================
+  // Encode/decode
+  // ============================================================
+  function encodeInt(value, size, signed) {
+    let n = BigInt(value);
+    const bits = BigInt(size * 8);
+    const mask = (1n << bits);
+    let stored = ((n % mask) + mask) % mask;
+    return stored;
+  }
+  function decodeSigned(unsignedBigInt, size) {
+    const bits = BigInt(size * 8);
+    const signBit = 1n << (bits - 1n);
+    if (unsignedBigInt & signBit) return unsignedBigInt - (1n << bits);
+    return unsignedBigInt;
+  }
+  function bitsFromUnsigned(u, size) {
+    const bits = [];
+    for (let i = size * 8 - 1; i >= 0; i--) {
+      bits.push(Number((u >> BigInt(i)) & 1n));
+    }
+    return bits;
+  }
+  function toHex(u, size) {
+    return "0x" + u.toString(16).toUpperCase().padStart(size * 2, "0");
+  }
+  function flippedBitIndices(prev, curr, size) {
+    if (prev === null || prev === undefined) return new Set();
+    const out = new Set();
+    for (let i = 0; i < size * 8; i++) {
+      const pb = Number((prev >> BigInt(i)) & 1n);
+      const cb = Number((curr >> BigInt(i)) & 1n);
+      if (pb !== cb) out.add(size * 8 - 1 - i); // MSB-indexed
+    }
+    return out;
+  }
+
+  // ============================================================
+  // Parsers
+  // ============================================================
+  function tryParseDecl(line) {
+    const trimmed = line.trim().replace(/;?\s*$/, "");
+    let matched = null, matchLen = 0;
+    for (const t of TYPE_LIST) {
+      const re = new RegExp("^(" + t.replace(/ /g, "\\s+") + ")\\b");
+      const m = trimmed.match(re);
+      if (m) { matched = t; matchLen = m[1].length; break; }
+    }
+    if (!matched) return null;
+    const rest = trimmed.substring(matchLen).trim();
+    // Plain literal init:  type name = N
+    let m = rest.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(-?\d+)\s*$/);
+    if (m) return { type: matched, name: m[1], value: BigInt(m[2]), rawValue: m[2] };
+    // Expression init:  type name = <rhs-expression>
+    m = rest.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+?)\s*$/);
+    if (m) {
+      const rhs = tryParseRhs(m[2]);
+      if (rhs) return { type: matched, name: m[1], rhs: rhs };
+      return { type: matched, error: "could not parse the right side of '='. Try a literal or an arithmetic expression." };
+    }
+    return { type: matched, error: "expected: <type> <name> = <value>;" };
+  }
+  // Real C statements only:
+  //   <var> = <expr>;        e.g.  s = s + 5;     or   s = 5;
+  //   <var> OP= <expr>;      e.g.  s += 5;        (OP in + - * / %)
+  // The RHS <expr> is one of:
+  //   literal           5
+  //   variable          t
+  //   variable OP lit   s + 1
+  //   variable OP var   s + t
+  //   lit OP lit        5 / 2     (when paired with a sink var on the LHS)
+  function tryParseRhs(text) {
+    const t = text.trim();
+    let m = t.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*([+\-*\/%])\s*([A-Za-z_][A-Za-z0-9_]*)\s*$/);
+    if (m) return { kind: "var-var", lhsName: m[1], op: m[2], rhsName: m[3] };
+    m = t.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*([+\-*\/%])\s*(-?\d+)\s*$/);
+    if (m) return { kind: "var-lit", lhsName: m[1], op: m[2], operand: BigInt(m[3]), operandText: m[3] };
+    m = t.match(/^(-?\d+)\s*([+\-*\/%])\s*(-?\d+)\s*$/);
+    if (m) return { kind: "lit-lit", lhs: BigInt(m[1]), op: m[2], rhs: BigInt(m[3]), lhsText: m[1], rhsText: m[3] };
+    m = t.match(/^(-?\d+)\s*$/);
+    if (m) return { kind: "lit", value: BigInt(m[1]), text: m[1] };
+    m = t.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*$/);
+    if (m) return { kind: "var", name: m[1] };
+    return null;
+  }
+
+  // Returns { target, op, rhs } where op is null for plain "=" or one of +-*/% for compound.
+  // Returns null if not an assignment.
+  function tryParseAssign(line) {
+    const trimmed = line.trim().replace(/;?\s*$/, "");
+    // compound assignment first (so += doesn't get matched by =)
+    let m = trimmed.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*([+\-*\/%])=\s*(.+?)\s*$/);
+    if (m) {
+      const rhs = tryParseRhs(m[3]);
+      return { target: m[1], op: m[2], rhs, rhsText: m[3] };
+    }
+    // plain assignment
+    m = trimmed.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+?)\s*$/);
+    if (m) {
+      const rhs = tryParseRhs(m[2]);
+      return { target: m[1], op: null, rhs, rhsText: m[2] };
+    }
+    return null;
+  }
+
+  // For diagnose hints only: did the user type a bare expression instead of an assignment?
+  function looksLikeBareExpr(line) {
+    const t = line.trim().replace(/;?\s*$/, "");
+    if (tryParseRhs(t) === null) return false;
+    // Must NOT be a plain bareword (that's just a variable reference, ambiguous)
+    if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(t)) return false;
+    // Must NOT be a number alone
+    if (/^-?\d+$/.test(t)) return false;
+    return true;
+  }
+
+  // ============================================================
+  // Evaluators
+  // ============================================================
+  function evalDecl(parsed) {
+    if (!parsed.name) throw new Error(parsed.error || "missing variable name");
+    const meta = TYPES[parsed.type];
+
+    // Resolve the init value: either the legacy parsed.value (bare literal)
+    // or parsed.rhs (an arithmetic expression like 5 / 2).
+    let initValue, initRaw;
+    if (parsed.value !== undefined) {
+      initValue = parsed.value;
+      initRaw = parsed.rawValue;
+    } else if (parsed.rhs) {
+      const r = parsed.rhs;
+      if (r.kind === "lit") {
+        initValue = r.value;
+        initRaw = r.text;
+      } else if (r.kind === "var") {
+        const other = variables.find(x => x.name === r.name);
+        if (!other) throw new Error("'" + r.name + "' is not declared.");
+        const otherMeta = TYPES[other.type];
+        initValue = otherMeta.signed ? decodeSigned(other.unsignedBits, otherMeta.size) : other.unsignedBits;
+        initRaw = initValue.toString();
+      } else if (r.kind === "var-lit") {
+        const lhsVar = variables.find(x => x.name === r.lhsName);
+        if (!lhsVar) throw new Error("'" + r.lhsName + "' is not declared.");
+        const lhsMeta = TYPES[lhsVar.type];
+        const lhsVal = lhsMeta.signed ? decodeSigned(lhsVar.unsignedBits, lhsMeta.size) : lhsVar.unsignedBits;
+        initValue = doMath(lhsVal, r.op, r.operand);
+        initRaw = initValue.toString();
+      } else if (r.kind === "var-var") {
+        const a = variables.find(x => x.name === r.lhsName);
+        const b = variables.find(x => x.name === r.rhsName);
+        if (!a) throw new Error("'" + r.lhsName + "' is not declared.");
+        if (!b) throw new Error("'" + r.rhsName + "' is not declared.");
+        const am = TYPES[a.type], bm = TYPES[b.type];
+        const av = am.signed ? decodeSigned(a.unsignedBits, am.size) : a.unsignedBits;
+        const bv = bm.signed ? decodeSigned(b.unsignedBits, bm.size) : b.unsignedBits;
+        initValue = doMath(av, r.op, bv);
+        initRaw = initValue.toString();
+      } else if (r.kind === "lit-lit") {
+        initValue = doMath(r.lhs, r.op, r.rhs);
+        initRaw = initValue.toString();
+      } else {
+        throw new Error("could not evaluate the initializer");
+      }
+    } else {
+      throw new Error("declaration has no initializer");
+    }
+
+    const unsignedBits = encodeInt(initValue, meta.size, meta.signed);
+    const existingIdx = variables.findIndex(v => v.name === parsed.name);
+    let prevBits = null;
+    if (existingIdx !== -1) prevBits = variables[existingIdx].unsignedBits;
+    const wrappedInit = meta.signed
+      ? (initValue < meta.min || initValue > meta.max)
+      : (initValue < 0n || initValue > meta.max);
+    const v = {
+      type: parsed.type,
+      name: parsed.name,
+      rawValue: initRaw,
+      unsignedBits,
+      wrapped: wrappedInit,
+    };
+    if (existingIdx !== -1) {
+      variables[existingIdx] = v;
+      lastFlipped = flippedBitIndices(prevBits, unsignedBits, meta.size);
+      lastFlippedVar = v.name;
+    } else {
+      variables.push(v);
+      lastFlipped = new Set();
+      lastFlippedVar = null;
+    }
+    lastArith = null;
+    return { kind: "var-added", variable: v, overwrite: existingIdx !== -1 };
+  }
+
+  function doMath(lhs, op, rhs) {
+    // BigInt arithmetic; C semantics for / and % toward zero
+    if (op === "+") return lhs + rhs;
+    if (op === "-") return lhs - rhs;
+    if (op === "*") return lhs * rhs;
+    if (op === "/") {
+      if (rhs === 0n) throw new Error("division by zero");
+      // C truncates toward zero
+      const q = lhs / rhs;
+      // BigInt division in JS is already truncated toward zero
+      return q;
+    }
+    if (op === "%") {
+      if (rhs === 0n) throw new Error("modulo by zero");
+      // BigInt % matches C truncation semantics
+      return lhs % rhs;
+    }
+    throw new Error("unknown operator " + op);
+  }
+
+  function evalAssign(parsed) {
+    if (!parsed.target) throw new Error("missing target variable");
+    const v = variables.find(x => x.name === parsed.target);
+    if (!v) throw new Error("'" + parsed.target + "' is not declared. Declare it first with a type.");
+    if (!parsed.rhs) throw new Error("right side of '=' did not parse. Try: " + parsed.target + " = " + parsed.target + " + 1;");
+    const meta = TYPES[v.type];
+    const currentSigned = meta.signed ? decodeSigned(v.unsignedBits, meta.size) : v.unsignedBits;
+
+    // Resolve the RHS expression to a true (unbounded) numeric value, plus a
+    // human-readable description for the arith card.
+    let rhsValue, rhsBeforeText, rhsOpForCard, rhsOperandText;
+    const r = parsed.rhs;
+    if (r.kind === "lit") {
+      rhsValue = r.value;
+      rhsBeforeText = null;        // no "before OP operand" math line
+      rhsOpForCard = null;
+      rhsOperandText = r.text;
+    } else if (r.kind === "var") {
+      const other = variables.find(x => x.name === r.name);
+      if (!other) throw new Error("'" + r.name + "' is not declared.");
+      const otherMeta = TYPES[other.type];
+      rhsValue = otherMeta.signed ? decodeSigned(other.unsignedBits, otherMeta.size) : other.unsignedBits;
+      rhsBeforeText = null;
+      rhsOpForCard = null;
+      rhsOperandText = r.name + " (= " + rhsValue.toString() + ")";
+    } else if (r.kind === "var-lit") {
+      const lhsVar = variables.find(x => x.name === r.lhsName);
+      if (!lhsVar) throw new Error("'" + r.lhsName + "' is not declared.");
+      const lhsMeta = TYPES[lhsVar.type];
+      const lhsVal = lhsMeta.signed ? decodeSigned(lhsVar.unsignedBits, lhsMeta.size) : lhsVar.unsignedBits;
+      rhsValue = doMath(lhsVal, r.op, r.operand);
+      rhsBeforeText = lhsVal.toString();
+      rhsOpForCard = r.op;
+      rhsOperandText = r.operandText;
+    } else if (r.kind === "var-var") {
+      const lhsVar = variables.find(x => x.name === r.lhsName);
+      const rhsVar = variables.find(x => x.name === r.rhsName);
+      if (!lhsVar) throw new Error("'" + r.lhsName + "' is not declared.");
+      if (!rhsVar) throw new Error("'" + r.rhsName + "' is not declared.");
+      const lhsMeta = TYPES[lhsVar.type], rhsMeta = TYPES[rhsVar.type];
+      const lhsVal = lhsMeta.signed ? decodeSigned(lhsVar.unsignedBits, lhsMeta.size) : lhsVar.unsignedBits;
+      const rhsVal = rhsMeta.signed ? decodeSigned(rhsVar.unsignedBits, rhsMeta.size) : rhsVar.unsignedBits;
+      rhsValue = doMath(lhsVal, r.op, rhsVal);
+      rhsBeforeText = r.lhsName + " (=" + lhsVal.toString() + ")";
+      rhsOpForCard = r.op;
+      rhsOperandText = r.rhsName + " (=" + rhsVal.toString() + ")";
+    } else if (r.kind === "lit-lit") {
+      rhsValue = doMath(r.lhs, r.op, r.rhs);
+      rhsBeforeText = r.lhsText;
+      rhsOpForCard = r.op;
+      rhsOperandText = r.rhsText;
+    } else {
+      throw new Error("could not evaluate the right side of the assignment");
+    }
+
+    // If this is a compound assignment (s += 5;), the actual value to store is
+    // (current value of target) OP (RHS value). For plain assignment, the value
+    // is just rhsValue.
+    let trueResult, displayBefore, displayOp, displayOperand;
+    if (parsed.op !== null) {
+      // compound
+      trueResult = doMath(currentSigned, parsed.op, rhsValue);
+      displayBefore = currentSigned.toString();
+      displayOp = parsed.op;
+      displayOperand = (r.kind === "lit" || r.kind === "var") ? rhsOperandText : ("(" + rhsBeforeText + " " + rhsOpForCard + " " + rhsOperandText + ")");
+    } else {
+      // plain
+      trueResult = rhsValue;
+      // For card display: if RHS was a binary op, show "before OP operand = result"
+      if (rhsOpForCard !== null) {
+        displayBefore = rhsBeforeText;
+        displayOp = rhsOpForCard;
+        displayOperand = rhsOperandText;
+      } else {
+        // RHS was a single literal or variable - just show the value being assigned
+        displayBefore = null;
+        displayOp = null;
+        displayOperand = rhsOperandText;
+      }
+    }
+
+    const newUnsigned = encodeInt(trueResult, meta.size, meta.signed);
+    const newSigned = meta.signed ? decodeSigned(newUnsigned, meta.size) : newUnsigned;
+    const wrapped = (meta.signed ? newSigned : newUnsigned) !== trueResult;
+
+    const prevBits = v.unsignedBits;
+    v.unsignedBits = newUnsigned;
+    v.rawValue = (meta.signed ? newSigned : newUnsigned).toString();
+    v.wrapped = wrapped;
+    lastFlipped = flippedBitIndices(prevBits, newUnsigned, meta.size);
+    lastFlippedVar = v.name;
+
+    lastArith = {
+      kind: "assign",
+      target: v.name,
+      lhsType: v.type,
+      compoundOp: parsed.op,          // null for plain "="
+      displayBefore: displayBefore,   // may be null for plain assign of single value
+      displayOp: displayOp,           // null for plain assign of single value
+      displayOperand: displayOperand,
+      trueResult: trueResult.toString(),
+      storedAsSigned: newSigned.toString(),
+      storedAsUnsigned: newUnsigned.toString(),
+      wrapped,
+    };
+    return { kind: "arith-done", variable: v };
+  }
+
+  // ============================================================
+  // Dispatcher
+  // ============================================================
+  function runCommand(line) {
+    const t = line.trim();
+    if (!t) return null;
+    const lower = t.toLowerCase().replace(/;?$/, "");
+    if (lower === "clear" || lower === "reset") {
+      variables.length = 0;
+      lastFlipped = new Set();
+      lastFlippedVar = null;
+      lastArith = null;
+      return { kind: "cleared" };
+    }
+    if (lower === "help" || lower === "?") return { kind: "help" };
+    if (lower === "list") return { kind: "list" };
+
+    // Declaration first (so "short s = 5;" doesn't get caught by arithmetic)
+    const d = tryParseDecl(t);
+    if (d && d.type && d.name) return evalDecl(d);
+    if (d && d.error) throw new Error(d.error);
+
+    // Real C assignment: s = ...; or s += ...;
+    const a = tryParseAssign(t);
+    if (a) return evalAssign(a);
+
+    // Friendly hint if the cadet typed a bare expression like "s + 1"
+    if (looksLikeBareExpr(t)) {
+      // Try to suggest the proper form
+      const r = tryParseRhs(t.replace(/;?\s*$/, ""));
+      if (r && r.kind === "var-lit") {
+        throw new Error("that is an expression, not a statement. In C, write '" +
+          r.lhsName + " = " + r.lhsName + " " + r.op + " " + r.operandText + ";' or '" +
+          r.lhsName + " " + r.op + "= " + r.operandText + ";'");
+      }
+      throw new Error("that is an expression, not a statement. C statements end in ';' and an arithmetic result has to be assigned to a variable.");
+    }
+
+    if (/^(ls|cd|pwd|cat|echo|mkdir|rm|mv|cp)\b/.test(t)) {
+      throw new Error("not a shell. Try a declaration or an assignment.");
+    }
+    throw new Error("couldn't parse '" + t + "'. Try: short s = 5;   or   s = s + 1;   or   s += 1;");
+  }
+
+  // ============================================================
+  // Terminal output
+  // ============================================================
+  const terminalEl = root.querySelector('#aw-terminal');
+  function termWrite(text, cls) {
+    const span = document.createElement('span');
+    if (cls) span.className = cls;
+    span.textContent = text;
+    terminalEl.appendChild(span);
+  }
+  function termLine(text, cls) {
+    termWrite(text, cls);
+    terminalEl.appendChild(document.createElement('br'));
+    terminalEl.scrollTop = terminalEl.scrollHeight;
+  }
+  function echoCommand(cmd) {
+    termWrite('arith> ', 'prompt');
+    termLine(cmd, 'typed');
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" })[c]);
+  }
+
+  // ============================================================
+  // Bit pane rendering
+  // ============================================================
+  const areaEl = root.querySelector('#aw-area');
+
+  function renderBitGrid(unsignedBits, size, flippedSet, signed) {
+    const bits = bitsFromUnsigned(unsignedBits, size);
+    const wide = size > 1;
+    let positions = '<div class="bit-positions' + (wide ? ' wide-16' : '') + '">';
+    for (let i = 0; i < size * 8; i++) {
+      const power = size * 8 - 1 - i;
+      const isSign = signed && power === size * 8 - 1;
+      const label = isSign ? "sign" : ("2^" + power);
+      positions += '<div class="bit-pos' + (isSign ? ' sign' : '') + '">' + label + '</div>';
+    }
+    positions += '</div>';
+
+    let grid = '<div class="bit-grid' + (wide ? ' wide-16' : '') + '">';
+    for (let i = 0; i < bits.length; i++) {
+      const b = bits[i];
+      const power = size * 8 - 1 - i;
+      const isSign = signed && power === size * 8 - 1;
+      const isFlipped = flippedSet && flippedSet.has(i);
+      const cls = ['bit-cell'];
+      if (b === 1) cls.push('on');
+      if (isSign) cls.push('sign-bit');
+      if (isFlipped) cls.push('flipped');
+      grid += '<div class="' + cls.join(' ') + '">' + b + '</div>';
+    }
+    grid += '</div>';
+    return positions + grid;
+  }
+
+  function renderVarCard(v, isLatest) {
+    const meta = TYPES[v.type];
+    const unsignedDisp = v.unsignedBits.toString();
+    const signedDisp = decodeSigned(v.unsignedBits, meta.size).toString();
+    const hexDisp = toHex(v.unsignedBits, meta.size);
+    const isFlippedVar = (lastFlippedVar === v.name);
+    const flippedSet = (isLatest || isFlippedVar) ? lastFlipped : null;
+    const displayedVal = meta.signed ? signedDisp : unsignedDisp;
+    const decl = v.type + ' ' + v.name + ' = ' + displayedVal + ';';
+
+    // For int / unsigned int (4 bytes), skip the bit grid - it does not fit
+    // legibly and the teaching value is in the value, not the bit pattern.
+    if (meta.size > 2) {
+      let valLine = '<div style="font-family: Consolas, monospace; font-size: 20px; font-weight: 700; color: '
+                  + (v.wrapped ? '#B8002F' : '#00205B')
+                  + '; text-align: center; margin-top: 8px;">'
+                  + displayedVal
+                  + '</div>';
+      return '<div class="var-card">' +
+             '<div class="var-decl">' + escapeHtml(decl) + '</div>' +
+             valLine +
+             '<div class="hex-line">hex: ' + hexDisp + '</div>' +
+             '</div>';
+    }
+
+    let interp = '<div class="interp-grid">';
+    if (meta.signed) {
+      interp += '<div class="interp-cell"><div class="lbl">as signed</div><div class="val' + (v.wrapped ? ' warn' : '') + '">' + signedDisp + '</div></div>';
+      interp += '<div class="interp-cell"><div class="lbl">as unsigned</div><div class="val">' + unsignedDisp + '</div></div>';
+    } else {
+      interp += '<div class="interp-cell"><div class="lbl">as unsigned</div><div class="val' + (v.wrapped ? ' warn' : '') + '">' + unsignedDisp + '</div></div>';
+      interp += '<div class="interp-cell"><div class="lbl">as signed</div><div class="val">' + signedDisp + '</div></div>';
+    }
+    interp += '</div>';
+
+    return '<div class="var-card">' +
+           '<div class="var-decl">' + escapeHtml(decl) + '</div>' +
+           renderBitGrid(v.unsignedBits, meta.size, flippedSet, meta.signed) +
+           '<div class="hex-line">hex: ' + hexDisp + '</div>' +
+           interp +
+           '</div>';
+  }
+
+  function renderArithCard(a) {
+    if (a.kind !== "assign") return '';
+    const meta = TYPES[a.lhsType];
+
+    // Title: reconstruct the C statement
+    let title;
+    if (a.compoundOp !== null) {
+      title = a.target + ' ' + a.compoundOp + '= ' + escapeHtml(a.displayOperand) + ';';
+    } else if (a.displayOp !== null) {
+      title = a.target + ' = ' + escapeHtml(a.displayBefore) + ' ' + a.displayOp + ' ' + escapeHtml(a.displayOperand) + ';';
+    } else {
+      title = a.target + ' = ' + escapeHtml(a.displayOperand) + ';';
+    }
+
+    let html = '<div class="arith-card">';
+    html += '<div class="arith-title">' + title + '</div>';
+
+    // Show the math line if there is actually arithmetic happening
+    if (a.compoundOp !== null) {
+      // s += 5  -> "s_before + 5 = trueResult"
+      html += '<div class="arith-step">true math</div>';
+      html += '<div class="arith-true">' + escapeHtml(a.displayBefore) + ' ' + a.compoundOp + ' ' + escapeHtml(a.displayOperand) + ' = ' + escapeHtml(a.trueResult) + '</div>';
+    } else if (a.displayOp !== null) {
+      // s = a + b  -> "a + b = trueResult"
+      html += '<div class="arith-step">true math</div>';
+      html += '<div class="arith-true">' + escapeHtml(a.displayBefore) + ' ' + a.displayOp + ' ' + escapeHtml(a.displayOperand) + ' = ' + escapeHtml(a.trueResult) + '</div>';
+    }
+    // else: plain "s = 5;" - no math to show
+
+    if (a.wrapped) {
+      html += '<div class="arith-step">but it does not fit in ' + escapeHtml(a.lhsType) + '</div>';
+      html += '<div class="arith-result">' +
+              '<div class="label">stored</div>' +
+              '<div class="answer warn">' + escapeHtml(meta.signed ? a.storedAsSigned : a.storedAsUnsigned) +
+              '<span class="overflow-tag">overflow</span></div>' +
+              '</div>';
+    } else {
+      html += '<div class="arith-result">' +
+              '<div class="label">stored</div>' +
+              '<div class="answer ok">' + escapeHtml(meta.signed ? a.storedAsSigned : a.storedAsUnsigned) + '</div>' +
+              '</div>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function isPaneAtBottom(scrollContainer) {
+    if (!scrollContainer) return true;
+    return scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight < 40;
+  }
+  function scrollPaneToBottom(scrollContainer) {
+    if (!scrollContainer) return;
+    scrollContainer.scrollTop = scrollContainer.scrollHeight;
+  }
+  function renderArea() {
+    const pane = areaEl.closest('.bit-pane');
+    const wasAtBottom = isPaneAtBottom(pane);
+    if (variables.length === 0 && !lastArith) {
+      areaEl.innerHTML = '<div class="empty">No variables yet.<br>Type a declaration on the left.</div>';
+      return;
+    }
+    // Reorder: put the variable last that was just modified, so its bit grid
+    // sits right above the arith card and stays visible.
+    let ordered = variables.slice();
+    if (lastFlippedVar) {
+      const idx = ordered.findIndex(v => v.name === lastFlippedVar);
+      if (idx !== -1) {
+        const [moved] = ordered.splice(idx, 1);
+        ordered.push(moved);
+      }
+    }
+    let html = '';
+    for (let i = 0; i < ordered.length; i++) {
+      const isLatest = (i === ordered.length - 1);
+      html += renderVarCard(ordered[i], isLatest);
+    }
+    if (lastArith) {
+      html += renderArithCard(lastArith);
+    }
+    areaEl.innerHTML = html;
+    if (wasAtBottom) scrollPaneToBottom(pane);
+  }
+
+  // ============================================================
+  // Task diagnosis
+  // ============================================================
+  function diagDecl(cmd, expected) {
+    const trimmed = cmd.trim();
+    const noSemi = new RegExp(
+      "^\\s*" + expected.type.replace(/ /g, "\\s+") + "\\s+" +
+      expected.name + "\\s*=\\s*" + expected.value + "\\s*$"
+    );
+    if (noSemi.test(trimmed)) return "Almost. Don't forget the semicolon at the end.";
+    const anyDeclRe = /^\s*([a-z][a-z ]*?)\s+([A-Za-z_]\w*)\s*=\s*(-?\d+)\s*;?\s*$/i;
+    const m = trimmed.match(anyDeclRe);
+    if (m) {
+      const userType = m[1].trim().replace(/\s+/g, " ");
+      const userName = m[2];
+      const userVal = m[3];
+      if (userName !== expected.name && userType === expected.type)
+        return "Close. Check the variable name. The task wants '" + expected.name + "'.";
+      if (userType !== expected.type && userName === expected.name)
+        return "Close. Check the type. The task wants '" + expected.type + "'.";
+      if (userVal !== expected.value && userType === expected.type && userName === expected.name)
+        return "Close. Check the value. The task wants '" + expected.value + "'.";
+    }
+    return null;
+  }
+  // diagAssign handles the new task format. expected =
+  //   { target, op, operandText }   -- accepts either   target = target op operand;   OR   target op= operand;
+  // For plain assignment of a literal (no arithmetic), use { target, op: null, operandText }
+  // which accepts   target = operand;
+  function diagAssign(cmd, expected) {
+    const trimmed = cmd.trim();
+    const stripped = trimmed.replace(/;?\s*$/, "");
+    const hasSemi = /;\s*$/.test(trimmed);
+
+    // Compound form first:  target OP= operand
+    const compoundRe = new RegExp("^\\s*([A-Za-z_]\\w*)\\s*([+\\-*\\/%])=\\s*(-?\\d+)\\s*$");
+    let m = stripped.match(compoundRe);
+    if (m) {
+      const [, t, op, operand] = m;
+      if (t !== expected.target)
+        return "Close. The task wants you to update '" + expected.target + "', not '" + t + "'.";
+      if (expected.op !== null && op !== expected.op)
+        return "Close. Check the operator. The task wants '" + expected.op + "'.";
+      if (operand !== expected.operandText)
+        return "Close. Check the value. The task wants '" + expected.operandText + "'.";
+      if (!hasSemi) return "Almost. Don't forget the semicolon at the end.";
+      return null;
+    }
+
+    // Plain assignment with arithmetic RHS:  target = something OP something
+    const plainArithRe = new RegExp("^\\s*([A-Za-z_]\\w*)\\s*=\\s*([A-Za-z_]\\w*|-?\\d+)\\s*([+\\-*\\/%])\\s*(-?\\d+)\\s*$");
+    m = stripped.match(plainArithRe);
+    if (m) {
+      const [, t, lhs, op, operand] = m;
+      if (t !== expected.target)
+        return "Close. The task wants you to update '" + expected.target + "', not '" + t + "'.";
+      if (expected.op !== null && lhs !== expected.target && lhs !== expected.operandText)
+        return "Close. The right side should reference '" + expected.target + "'. Try: " + expected.target + " = " + expected.target + " " + expected.op + " " + expected.operandText + ";";
+      if (expected.op !== null && op !== expected.op)
+        return "Close. Check the operator. The task wants '" + expected.op + "'.";
+      if (expected.op !== null && operand !== expected.operandText)
+        return "Close. Check the value. The task wants '" + expected.operandText + "'.";
+      if (!hasSemi) return "Almost. Don't forget the semicolon at the end.";
+      return null;
+    }
+
+    // Plain assignment of a literal:  target = N
+    const plainLitRe = new RegExp("^\\s*([A-Za-z_]\\w*)\\s*=\\s*(-?\\d+)\\s*$");
+    m = stripped.match(plainLitRe);
+    if (m) {
+      const [, t, operand] = m;
+      if (expected.op !== null) {
+        return "Close. The task wants an arithmetic update like '" + expected.target + " = " + expected.target + " " + expected.op + " " + expected.operandText + ";' or '" + expected.target + " " + expected.op + "= " + expected.operandText + ";'";
+      }
+      if (t !== expected.target)
+        return "Close. The task wants to assign to '" + expected.target + "', not '" + t + "'.";
+      if (operand !== expected.operandText)
+        return "Close. Check the value. The task wants '" + expected.operandText + "'.";
+      if (!hasSemi) return "Almost. Don't forget the semicolon at the end.";
+      return null;
+    }
+
+    // Bare expression hint - already mostly handled by parser, but catch here too
+    if (looksLikeBareExpr(stripped)) {
+      return "That is an expression, not a statement. Try: '" + expected.target + " = " + expected.target + " " + (expected.op || "+") + " " + expected.operandText + ";' or '" + expected.target + " " + (expected.op || "+") + "= " + expected.operandText + ";'";
+    }
+    return null;
+  }
+
+  // Builds a match function that accepts BOTH forms for arithmetic updates:
+  //   target = target op operand;
+  //   target op= operand;
+  // For plain literal assignment (no arithmetic), pass op=null:
+  //   target = operand;
+  function makeMatch(target, op, operandText) {
+    const opEscaped = op === null ? null : op.replace(/([.*+?^${}()|[\]\\])/g, "\\$&");
+    const targetEsc = target.replace(/([.*+?^${}()|[\]\\])/g, "\\$&");
+    const operandEsc = operandText.replace(/([.*+?^${}()|[\]\\])/g, "\\$&");
+    if (op === null) {
+      const re = new RegExp("^\\s*" + targetEsc + "\\s*=\\s*" + operandEsc + "\\s*;\\s*$");
+      return (cmd) => re.test(cmd);
+    }
+    const plain = new RegExp("^\\s*" + targetEsc + "\\s*=\\s*" + targetEsc + "\\s*" + opEscaped + "\\s*" + operandEsc + "\\s*;\\s*$");
+    const compound = new RegExp("^\\s*" + targetEsc + "\\s*" + opEscaped + "=\\s*" + operandEsc + "\\s*;\\s*$");
+    return (cmd) => plain.test(cmd) || compound.test(cmd);
+  }
+
+  // ============================================================
+  // Tasks
+  // ============================================================
+  // Workhorse types in this walkthrough: short (16-bit signed), unsigned short
+  // (16-bit unsigned), and int (32-bit signed) for the division/modulo demo.
+  // signed char / unsigned char / char remain parseable for free-mode exploration
+  // but are not the focus of the walkthrough.
+  const tasks = [
+    // Section 1: Declare and update
+    {
+      section: 'Section 1: Declare and update',
+      label: 'Task 1 of 10',
+      text: 'Declare a short named s with value 10. We will update s over the next few tasks.',
+      hint: 'short s = 10;',
+      match: (cmd) => /^\s*short\s+s\s*=\s*10\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diagDecl(cmd, { type: "short", name: "s", value: "10" }),
+      note: 's now holds 10. A short is 16 bits, so the bit grid is wider than what you saw in Lesson 2; the position labels still read the same way (powers of 2 from right to left).',
+    },
+    {
+      label: 'Task 2 of 10',
+      text: 'Add 5 to s. Write it as a full C statement: s = s + 5;',
+      hint: 's = s + 5;     (or:  s += 5;)',
+      match: makeMatch('s', '+', '5'),
+      diagnose: (cmd) => diagAssign(cmd, { target: 's', op: '+', operandText: '5' }),
+      note: 's is now 15. Either form works: s = s + 5; spells it out, while s += 5; is the compound shorthand. They are exactly equivalent. Use whichever reads more clearly to you.',
+    },
+
+    // Section 2: Integer division and the modulo gotcha
+    {
+      section: 'Section 2: Integer division and modulo',
+      label: 'Task 3 of 10',
+      text: "Declare an int named q to hold a quotient. Write: int q = 5 / 2;",
+      hint: 'int q = 5 / 2;',
+      match: (cmd) => /^\s*int\s+q\s*=\s*5\s*\/\s*2\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        // Loose diagnose for this declaration-with-expression form
+        const t = cmd.trim();
+        if (!/;\s*$/.test(t)) return "Almost. Don't forget the semicolon at the end.";
+        if (/^\s*int\s+q\s*=\s*5\s*\/\s*2\s*;\s*$/.test(t.replace(/\s+/g, ' '))) return null;
+        if (/^\s*int\s+\w+\s*=\s*5\s*\/\s*2\s*;?\s*$/.test(t)) return "Close. The task wants the variable named 'q'.";
+        return "The task wants exactly: int q = 5 / 2;";
+      },
+      note: 'q is 2, not 2.5. Both 5 and 2 are integer literals, so the division operator does integer division and truncates the decimal. This is the same trap from Lesson 2; today you see it through an operator instead of through a declaration.',
+    },
+    {
+      label: 'Task 4 of 10',
+      text: 'Now declare an int named r to hold the remainder. Write: int r = 5 % 2;',
+      hint: 'int r = 5 % 2;',
+      match: (cmd) => /^\s*int\s+r\s*=\s*5\s*%\s*2\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (!/;\s*$/.test(t)) return "Almost. Don't forget the semicolon at the end.";
+        if (/^\s*int\s+\w+\s*=\s*5\s*%\s*2\s*;?\s*$/.test(t)) return "Close. The task wants the variable named 'r'.";
+        return "The task wants exactly: int r = 5 % 2;";
+      },
+      note: 'r is 1, the remainder of 5 divided by 2. Together, / and % split an integer into its quotient and remainder. Useful for extracting digits, checking divisibility (n % 2 == 0 to test even), or converting time (seconds / 60 for minutes, seconds % 60 for leftover seconds).',
+    },
+
+    // Section 3: Approaching the edge
+    {
+      section: 'Section 3: Approaching the edge',
+      label: 'Task 5 of 10',
+      text: 'Reset s to a value near the top of its range. Write: s = 32760;',
+      hint: 's = 32760;',
+      match: makeMatch('s', null, '32760'),
+      diagnose: (cmd) => diagAssign(cmd, { target: 's', op: null, operandText: '32760' }),
+      note: "s is now 32760, just below the short max of 32767. We are about to push it over the edge. Notice the bit grid: most of the high bits are now set since 32760 is close to the max positive value a short can hold.",
+    },
+    {
+      label: 'Task 6 of 10',
+      text: 'Add 5 to s using the compound form. Write: s += 5;',
+      hint: 's += 5;     (also accepts: s = s + 5;)',
+      match: makeMatch('s', '+', '5'),
+      diagnose: (cmd) => diagAssign(cmd, { target: 's', op: '+', operandText: '5' }),
+      note: 's is now 32765. Still within range. The compound assignment s += 5; is exactly equivalent to s = s + 5; -- two ways to say the same thing. Pick whichever you prefer.',
+    },
+
+    // Section 4: Arithmetic overflow
+    {
+      section: 'Section 4: Arithmetic overflow',
+      label: 'Task 7 of 10',
+      text: 'Add 5 more to s. This is the overflow moment. Write: s += 5;',
+      hint: 's += 5;     (or:  s = s + 5;)',
+      match: makeMatch('s', '+', '5'),
+      diagnose: (cmd) => diagAssign(cmd, { target: 's', op: '+', operandText: '5' }),
+      note: 'OVERFLOW. True math says 32765 + 5 = 32770, but short cannot hold anything above 32767. The bit pattern that would represent 32770 reads as -32766 when interpreted as a signed short. s wrapped from near the top of its range to near the bottom, silently, with no compiler warning. This is the arithmetic overflow trap.',
+    },
+    {
+      label: 'Task 8 of 10',
+      text: 'Subtract 5 from s. Write: s -= 5;',
+      hint: 's -= 5;     (or:  s = s - 5;)',
+      match: makeMatch('s', '-', '5'),
+      diagnose: (cmd) => diagAssign(cmd, { target: 's', op: '-', operandText: '5' }),
+      note: 's wraps further: -32766 - 5 should be -32771, but that does not fit either. The result wraps to 32765. Overflow goes both directions; subtracting past the minimum wraps to the high end, and the same arithmetic that worked fine moments ago now produces nonsense.',
+    },
+
+    // Multiplication overflow on unsigned
+    {
+      label: 'Task 9 of 10',
+      text: 'Now an unsigned example. Declare: unsigned short u = 50000;',
+      hint: 'unsigned short u = 50000;',
+      match: (cmd) => /^\s*unsigned\s+short\s+u\s*=\s*50000\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diagDecl(cmd, { type: "unsigned short", name: "u", value: "50000" }),
+      note: 'u is 50000. The max for unsigned short is 65535. We are about to multiply u by 2, which should be 100000 -- too big to fit.',
+    },
+    {
+      label: 'Task 10 of 10',
+      text: 'Multiply u by 2 using compound form. Write: u *= 2;',
+      hint: 'u *= 2;     (or:  u = u * 2;)',
+      match: makeMatch('u', '*', '2'),
+      diagnose: (cmd) => diagAssign(cmd, { target: 'u', op: '*', operandText: '2' }),
+      note: 'OVERFLOW on unsigned. 50000 * 2 = 100000, but unsigned short tops out at 65535. The result wraps: 100000 mod 65536 = 34464. Unsigned overflow wraps cleanly to a positive value (no sign bit to flip), but the value is still wrong. Multiplications in small types overflow far faster than additions: just doubling a mid-range value can blow past the limit in one step.',
+    },
+  ];
+
+  // ============================================================
+  // Walkthrough controller
+  // ============================================================
+  function checkTask(rawCmd) {
+    if (mode === "free" || currentTaskIndex >= tasks.length) return null;
+    const t = tasks[currentTaskIndex];
+    if (t.match(rawCmd)) {
+      process(rawCmd);
+      if (t.note) {
+        termLine('', 'out');
+        termLine('  ' + t.note, 'note');
+      }
+      currentTaskIndex++;
+      consecutiveFails = 0;
+      hideHintPulse();
+      renderTask();
+      if (currentTaskIndex >= tasks.length) {
+        setMode("free");
+        termLine('', 'out');
+        termLine('  Arithmetic walkthrough complete. Free mode unlocked.', 'note');
+      }
+      return true;
+    } else {
+      echoCommand(rawCmd);
+      const diag = (t.diagnose && t.diagnose(rawCmd)) || null;
+      if (diag) termLine('  ' + diag, 'err');
+      else termLine("  Not what this task is asking for. Look at the task card above, or click 'Show hint'.", 'err');
+      consecutiveFails++;
+      if (consecutiveFails >= 2) showHintPulse();
+      return false;
+    }
+  }
+  function renderTask() {
+    const fill = root.querySelector('#aw-progress-fill');
+    const label = root.querySelector('#aw-progress-label');
+    const card = root.querySelector('#aw-task-card');
+    const labelEl = root.querySelector('#aw-task-label');
+    const textEl = root.querySelector('#aw-task-text');
+    const hintEl = root.querySelector('#aw-task-hint');
+    const sectionEl = root.querySelector('#aw-section-header');
+    const completionArea = root.querySelector('#aw-completion-area');
+
+    const pct = (currentTaskIndex / tasks.length) * 100;
+    fill.style.width = pct + '%';
+    label.textContent = 'Task ' + Math.min(currentTaskIndex + 1, tasks.length) + ' of ' + tasks.length;
+
+    if (currentTaskIndex >= tasks.length) {
+      card.className = 'task-card complete';
+      labelEl.textContent = 'Complete';
+      textEl.textContent = "You did arithmetic on typed variables. You saw the integer division trap, the modulo operator, and four flavors of arithmetic overflow. This is the mental model Lab 03 will exercise.";
+      hintEl.textContent = '';
+      fill.style.width = '100%';
+      label.textContent = 'All tasks complete';
+      sectionEl.textContent = 'All done';
+      cs210RenderCompletion(completionArea);
+      return;
+    }
+    completionArea.innerHTML = '';
+    card.className = 'task-card';
+    const t = tasks[currentTaskIndex];
+    if (t.section) sectionEl.textContent = t.section;
+    labelEl.textContent = t.label;
+    textEl.textContent = t.text;
+    hintEl.textContent = '';
+  }
+  function showHint() {
+    if (currentTaskIndex >= tasks.length) return;
+    const t = tasks[currentTaskIndex];
+    root.querySelector('#aw-task-hint').textContent = 'Hint: ' + (t.hint || '');
+    hideHintPulse();
+  }
+  function showHintPulse() { root.querySelector('#aw-hint-btn').classList.add('pulse'); }
+  function hideHintPulse() { root.querySelector('#aw-hint-btn').classList.remove('pulse'); }
+
+  function reset() {
+    variables.length = 0;
+    lastFlipped = new Set();
+    lastFlippedVar = null;
+    lastArith = null;
+    currentTaskIndex = 0;
+    consecutiveFails = 0;
+    hideHintPulse();
+    setMode("walkthrough");
+    terminalEl.innerHTML = '';
+    termLine('Welcome to the arithmetic walkthrough.', 'dim');
+    termLine("Type real C statements: declarations, assignments, compound assignments.", 'dim');
+    termLine('', 'out');
+    // Tear down any completion artifacts so re-completing works.
+    const oldOverlay = root.querySelector('#aw-cs210-completion-overlay');
+    if (oldOverlay) oldOverlay.remove();
+    const completionArea = root.querySelector('#aw-completion-area');
+    if (completionArea) completionArea.innerHTML = '';
+    renderArea();
+    renderTask();
+  }
+
+  function setMode(newMode) {
+    mode = newMode;
+    const btn = root.querySelector('#aw-mode-btn');
+    if (mode === "free") {
+      btn.textContent = 'Return to walkthrough';
+      btn.style.background = '#E6F4EA';
+      btn.style.borderColor = '#2E7D32';
+      btn.style.color = '#1B5E20';
+      root.querySelector('#aw-input').placeholder = 'free mode: any declaration or expression';
+    } else {
+      btn.textContent = 'Switch to free mode';
+      btn.style.background = '';
+      btn.style.borderColor = '';
+      btn.style.color = '';
+      root.querySelector('#aw-input').placeholder = 'follow the task above';
+    }
+  }
+
+  function process(line) {
+    echoCommand(line);
+    try {
+      const r = runCommand(line);
+      if (!r) return;
+      if (r.kind === "var-added") {
+        const v = r.variable;
+        const meta = TYPES[v.type];
+        const signedDisp = decodeSigned(v.unsignedBits, meta.size).toString();
+        const unsignedDisp = v.unsignedBits.toString();
+        if (r.overwrite) {
+          termLine('  ' + v.type + ' ' + v.name + ' updated to ' + v.rawValue, 'out');
+        } else {
+          termLine('  ' + v.type + ' ' + v.name + ' = ' + v.rawValue, 'out');
+        }
+        if (v.wrapped) {
+          termLine('  note: value did not fit in ' + v.type + '. Stored as signed: ' + signedDisp + ', unsigned: ' + unsignedDisp + '.', 'err');
+        }
+      } else if (r.kind === "arith-done") {
+        const v = r.variable;
+        const meta = TYPES[v.type];
+        const a = lastArith;
+        // Reconstruct a friendly one-line summary
+        let summary = '  ' + v.name + ' = ';
+        if (a.compoundOp !== null || a.displayOp !== null) {
+          const opShown = a.compoundOp !== null ? a.compoundOp : a.displayOp;
+          summary += a.displayBefore + ' ' + opShown + ' ' + a.displayOperand + ' = ' + a.trueResult;
+        } else {
+          summary += a.displayOperand;
+        }
+        termLine(summary, 'out');
+        if (a.wrapped) {
+          const storedDisp = meta.signed ? a.storedAsSigned : a.storedAsUnsigned;
+          termLine('  overflow: ' + a.trueResult + ' does not fit in ' + v.type + '. Stored as ' + storedDisp + '.', 'err');
+        } else {
+          termLine('  stored: ' + v.rawValue + ' (no overflow)', 'ok');
+        }
+      } else if (r.kind === "cleared") {
+        termLine('  memory cleared', 'out');
+      } else if (r.kind === "list") {
+        if (variables.length === 0) termLine('  no variables', 'out');
+        else {
+          for (const v of variables) {
+            const meta = TYPES[v.type];
+            const signedDisp = decodeSigned(v.unsignedBits, meta.size).toString();
+            termLine('    ' + v.type + ' ' + v.name + ' = ' + (meta.signed ? signedDisp : v.unsignedBits.toString()), 'out');
+          }
+        }
+      } else if (r.kind === "help") {
+        termLine('  declarations:   short s = 10;   unsigned short u = 50;   int q = 0;', 'out');
+        termLine('  assignment:     s = s + 5;     s = 100;', 'out');
+        termLine('  compound:       s += 5;        u *= 2;        q = a + b;', 'out');
+        termLine('  types:          short, unsigned short, int, unsigned int, char, signed char, unsigned char', 'out');
+        termLine('  meta:           clear  list  help', 'out');
+      }
+      renderArea();
+    } catch (e) {
+      termLine('  error: ' + e.message, 'err');
+    }
+  }
+
+  // ============================================================
+  // Input wiring
+  // ============================================================
+  const inputEl = root.querySelector('#aw-input');
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const v = inputEl.value;
+      inputEl.value = '';
+      if (!v.trim()) return;
+      if (mode === "walkthrough") {
+        checkTask(v);
+      } else {
+        process(v);
+      }
+    }
+  });
+  root.querySelector('#aw-hint-btn').addEventListener('click', showHint);
+  root.querySelector('#aw-reset-btn').addEventListener('click', reset);
+  root.querySelector('#aw-mode-btn').addEventListener('click', () => {
+    if (mode === "walkthrough") {
+      setMode("free");
+      termLine('', 'out');
+      termLine('  Free mode. Any declaration or expression runs.', 'note');
+    } else {
+      setMode("walkthrough");
+      termLine('', 'out');
+      termLine('  Walkthrough mode. Follow the task card above.', 'note');
+    }
+  });
+
+  reset();
+})();
+</script>
+
+
+    </div>
+  </details>
+
+  <!-- ===================== 6. AFTER CLASS ===================== -->
+  <details id="after-class" style="margin-bottom: 24px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      6. After Class
+    </summary>
+    <div style="padding: 18px 22px;">
+      <ul style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Finish Lab 03 if you did not complete it in class. Submit through Gradescope before Lesson 4.</li>
+        <li style="margin-bottom: 6px;">Read Beej-C Chapter 3 (Variables and Statements: Flow Control, if) for Lesson 4. We will spend a full lesson on conditionals, truthiness vs Python, and the logical operators (<code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;&amp;</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">||</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">!</code>) that combine conditions.</li>
+        <li style="margin-bottom: 6px;">Replay the arithmetic walkthrough. In free mode, try multiplications and divisions with edge values. Predict the wrap before you press Enter. Try mixing types (e.g., a <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">short</code> and an <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">int</code>) and see what happens.</li>
+        <li style="margin-bottom: 0;"><strong style="color: #B8002F;">Heads up:</strong> Quiz 1 at Lesson 4 covers Lessons 2 and 3 together. Variables, types, sizeof, overflow, arithmetic operators, comparison operators, precedence, math.h, scanf, and output formatting are all fair game.</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== HELP NOTE ===================== -->
+  <div style="background: #F5F7FA; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 3px; font-size: 13.5px; color: #4A5568;">
+    <strong style="color: #00205B;">Need help?</strong> Schedule EI with your instructor. Bring specific code or specific screenshots, and the exact error message or output you do not understand. Specific questions get unstuck quickly.
+  </div>
+
+</div>

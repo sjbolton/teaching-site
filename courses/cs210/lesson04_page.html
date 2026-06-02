@@ -1,0 +1,1525 @@
+<!-- ============================================================
+     CS210 — Lesson 4
+     Conditionals
+     Self-contained: all CSS inline. Native <details> for collapsing.
+     Logic tracer widget embedded inline in section 5.
+     Paste into Blackboard Ultra via Document → Add HTML block.
+     ============================================================ -->
+
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 980px; margin: 0 auto; line-height: 1.6;">
+
+  <!-- ===================== LIGHT HEADER ===================== -->
+  <div style="border-left: 5px solid #003087; padding: 8px 0 8px 18px; margin-bottom: 24px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 2px;">CS210 &middot; Block 1 &middot; Lesson 4</div>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 600; color: #00205B;">Conditionals</h1>
+    <div style="font-size: 14px; color: #4A5568; margin-top: 4px;">Logical operators &middot; Short-circuit &middot; Truthiness &middot; if / else if / else &middot; switch &middot; Common bugs</div>
+  </div>
+
+  <!-- ===================== AT A GLANCE ===================== -->
+  <div style="background: #F5F7FA; border-left: 4px solid #B5B7BA; padding: 14px 18px; margin-bottom: 22px; font-size: 14px;">
+    <strong style="color: #00205B;">At a glance:</strong> Today programs start making decisions. You'll meet C's logical operators (<code>&amp;&amp;</code>, <code>||</code>, <code>!</code>), see how short-circuit evaluation lets you write safe guards, and learn how C treats truthiness differently from Python. Then you'll wire those expressions into <code>if</code> / <code>else if</code> / <code>else</code> and <code>switch</code> statements, and learn the four bugs that bite cadets writing their first real conditionals.
+  </div>
+
+  <!-- ===================== TABLE OF CONTENTS ===================== -->
+  <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 20px; margin-bottom: 24px; border-radius: 3px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Contents</div>
+    <ol style="margin: 0; padding-left: 22px; font-size: 14px;">
+      <li style="margin-bottom: 4px;"><a href="#objectives" style="color: #003087; text-decoration: none;">Lesson Objectives</a></li>
+      <li style="margin-bottom: 4px;"><a href="#readings" style="color: #003087; text-decoration: none;">Assigned Readings</a></li>
+      <li style="margin-bottom: 4px;"><a href="#pre-class" style="color: #003087; text-decoration: none;">Pre-Class Work</a></li>
+      <li style="margin-bottom: 4px;"><a href="#materials" style="color: #003087; text-decoration: none;">Lesson Materials and Overview</a></li>
+      <li style="margin-bottom: 4px;"><a href="#in-class" style="color: #003087; text-decoration: none;">In-Class Work</a></li>
+      <li style="margin-bottom: 0;"><a href="#after-class" style="color: #003087; text-decoration: none;">After Class</a></li>
+    </ol>
+  </div>
+
+  <!-- ===================== 1. OBJECTIVES ===================== -->
+  <details id="objectives" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      1. Lesson Objectives
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 10px 0; font-style: italic;">By the end of this lesson, cadets will be able to:</p>
+      <ol style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Apply C's logical operators (<code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;&amp;</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">||</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">!</code>) and predict the effect of short-circuit evaluation. <span style="color: #6B7280; font-size: 12px;">(Outcome 1)</span></li>
+        <li style="margin-bottom: 6px;">Implement conditional logic using <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">if</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">else if</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">else</code>, and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">switch</code> statements. <span style="color: #6B7280; font-size: 12px;">(Outcome 1)</span></li>
+        <li style="margin-bottom: 6px;">Distinguish how C evaluates truthiness compared to Python. <span style="color: #6B7280; font-size: 12px;">(Outcome 1)</span></li>
+        <li style="margin-bottom: 0;">Identify and avoid common conditional bugs such as assignment vs equality, dangling else, and switch fall-through. <span style="color: #6B7280; font-size: 12px;">(Outcome 3)</span></li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 2. READINGS ===================== -->
+  <details id="readings" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      2. Assigned Readings
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 12px 0;">Complete before class. These set the vocabulary we will use.</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <thead>
+          <tr style="background: #E8EDF5; color: #00205B;">
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 130px;">Source</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9;">Sections</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 220px;">Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;"><a href="https://beej.us/guide/bgc/" style="color: #003087; text-decoration: underline;">Beej-C</a></td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Chapter 3 (sections on logical operators, <code style="background: #F0F2F5; padding: 1px 4px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">if</code> / <code style="background: #F0F2F5; padding: 1px 4px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">else</code>, and <code style="background: #F0F2F5; padding: 1px 4px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">switch</code>)</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Logical operators, conditional statements, truthiness rules</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 9px 12px;">King, <em>C Programming: A Modern Approach</em></td>
+            <td style="padding: 9px 12px;">Chapter 5 (Selection Statements)</td>
+            <td style="padding: 9px 12px; color: #4A5568;">Optional deeper dive on <code style="background: #F0F2F5; padding: 1px 4px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">if</code>, <code style="background: #F0F2F5; padding: 1px 4px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">switch</code>, and short-circuit evaluation</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <!-- ===================== 3. PRE-CLASS WORK ===================== -->
+  <details id="pre-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      3. Pre-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 18px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #6B5300; font-size: 14px; margin-bottom: 4px;">Do this first</div>
+        <div style="font-size: 14px; color: #5A4B00;">Plan on 30 to 45 minutes. The reading and skim below set you up to spend class time on the tracer and the lab instead of catching up.</div>
+      </div>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 0 0 10px 0;">Pre-Class Checklist</h3>
+
+      <!-- Step 1: Reading -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">1</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Read Beej-C Chapter 3 (logical operators, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">if</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">switch</code>)</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">Read closely if any of these terms feel unfamiliar:</div>
+            <ul style="font-size: 13.5px; margin: 0 0 6px 0; padding-left: 20px;">
+              <li style="margin-bottom: 3px;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;&amp;</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">||</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">!</code> (logical AND, OR, NOT)</li>
+              <li style="margin-bottom: 3px;">Short-circuit evaluation</li>
+              <li style="margin-bottom: 3px;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">if</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">else if</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">else</code></li>
+              <li style="margin-bottom: 0;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">switch</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">case</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">break</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">default</code></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Skim widget -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 8px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">2</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Skim the In-Class section below</div>
+            <div style="font-size: 14px;">You will see an interactive logic tracer widget. No need to work it yet; just know it is there and what it looks like.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ===================== 4. LESSON MATERIALS AND OVERVIEW ===================== -->
+  <details id="materials" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      4. Lesson Materials and Overview
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 18px 0;">Today's content has two halves that come together. First half: logical operators and how C decides what counts as true. Second half: the statements (<code>if</code>, <code>else if</code>, <code>else</code>, <code>switch</code>) that act on those decisions. The reference material below covers what you'll see in lecture and use in the logic tracer.</p>
+
+      <!-- Subsection navigation -->
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 18px; margin-bottom: 22px; border-radius: 3px;">
+        <div style="font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">Jump to</div>
+        <div style="font-size: 13.5px;">
+          <a href="#slides" style="color: #003087; text-decoration: none; margin-right: 14px;">Slides</a>
+          <a href="#truthiness" style="color: #003087; text-decoration: none; margin-right: 14px;">Truthiness in C</a>
+          <a href="#logical-ops" style="color: #003087; text-decoration: none; margin-right: 14px;">Logical Operators</a>
+          <a href="#short-circuit" style="color: #003087; text-decoration: none; margin-right: 14px;">Short-Circuit</a>
+          <a href="#if-else" style="color: #003087; text-decoration: none; margin-right: 14px;">if / else if / else</a>
+          <a href="#ternary" style="color: #003087; text-decoration: none; margin-right: 14px;">Ternary</a>
+          <a href="#switch" style="color: #003087; text-decoration: none; margin-right: 14px;">switch</a>
+          <a href="#bugs" style="color: #003087; text-decoration: none;">Common Bugs</a>
+        </div>
+      </div>
+
+      <!-- Slides -->
+      <h3 id="slides" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0; scroll-margin-top: 16px;">Slides</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">The Lesson 4 deck covers logical operators, truthiness, short-circuit evaluation, the conditional statements, and the four bugs to watch for. The slides are the spine of the in-class lecture; the logic tracer is where you practice predicting how expressions evaluate.</p>
+
+      <p style="margin: 0 0 18px 0;">
+        <!-- EDIT ME: replace href="#" below with the deployed slide deck URL (SharePoint, OneDrive, etc.) -->
+        <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 10px 20px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 14px;">Open Lesson 4 slides &rarr;</a>
+        <span style="display: inline-block; margin-left: 10px; font-size: 12.5px; color: #6B7280;">replace href with your deployed slide deck URL</span>
+      </p>
+
+      <!-- Truthiness -->
+      <h3 id="truthiness" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Truthiness in C</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">C does not have a dedicated boolean type the way Python does. The native keyword <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">_Bool</code> exists (added in C99), and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&lt;stdbool.h&gt;</code> provides the friendlier <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">bool</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">true</code>, and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">false</code> on top of it. You will see plain integers used for truth values all over real C code, though. The rule is exactly one sentence:</p>
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 14px; border-radius: 3px; font-size: 14.5px;">
+        <strong style="color: #6B5300;">In C, zero is false. Every other value is true.</strong>
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">That includes negative numbers, positive numbers, floating-point values that are not exactly zero, and yes, even <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">-1</code>. All of these evaluate to true:</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">if</span> (<span style="color: #B5CEA8;">1</span>) { ... }&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #6B7280;">// true</span><br>
+        <span style="color: #569CD6;">if</span> (<span style="color: #B5CEA8;">-7</span>) { ... }&nbsp;&nbsp;&nbsp;<span style="color: #6B7280;">// true (nonzero)</span><br>
+        <span style="color: #569CD6;">if</span> (<span style="color: #B5CEA8;">0.001</span>) { ... }&nbsp;<span style="color: #6B7280;">// true</span><br>
+        <span style="color: #569CD6;">if</span> (<span style="color: #B5CEA8;">0</span>) { ... }&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #6B7280;">// false</span>
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 8px 0; font-weight: 600; color: #00205B;">What is different from Python:</p>
+      <ul style="font-size: 14.5px; margin: 0 0 18px 0; padding-left: 22px;">
+        <li style="margin-bottom: 6px;">Python has rich truthiness rules: empty strings, empty lists, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">None</code>, and zero are all false. C does not have those concepts here; it just checks "is this number zero?"</li>
+        <li style="margin-bottom: 6px;">When comparison operators like <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">==</code> produce a result, they give you <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">1</code> for true and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">0</code> for false. The logical operators (<code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;&amp;</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">||</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">!</code>) do the same.</li>
+        <li style="margin-bottom: 0;">There is no <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">True</code> or <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">False</code> keyword in C the way there is in Python. Write <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">1</code> and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">0</code>.</li>
+      </ul>
+
+      <!-- Logical operators -->
+      <h3 id="logical-ops" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Logical operators and truth tables</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Three logical operators. They combine truth values (which, remember, are just zero and nonzero in C) and produce <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">1</code> or <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">0</code> as their result.</p>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 18px;">
+        <thead>
+          <tr style="background: #00205B; color: #ffffff;">
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 90px;">Operator</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 120px;">Name</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600;">True when</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">a &amp;&amp; b</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Logical AND</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Both <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">a</code> and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">b</code> are nonzero</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">a || b</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Logical OR</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">At least one of <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">a</code> or <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">b</code> is nonzero</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; font-family: Consolas, monospace; font-size: 13px;">!a</td>
+            <td style="padding: 8px 12px;">Logical NOT (unary)</td>
+            <td style="padding: 8px 12px;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">a</code> is zero (i.e. flips truth)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0; font-weight: 600; color: #00205B;">Truth tables:</p>
+
+      <div style="display: table; width: 100%; margin-bottom: 18px;">
+        <div style="display: table-cell; width: 50%; padding-right: 10px; vertical-align: top;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 13.5px;">
+            <thead>
+              <tr style="background: #E8EDF5; color: #00205B;">
+                <th style="padding: 7px 10px; text-align: center; border-bottom: 1px solid #C7CFD9; font-family: Consolas, monospace;">a</th>
+                <th style="padding: 7px 10px; text-align: center; border-bottom: 1px solid #C7CFD9; font-family: Consolas, monospace;">b</th>
+                <th style="padding: 7px 10px; text-align: center; border-bottom: 1px solid #C7CFD9; font-family: Consolas, monospace;">a &amp;&amp; b</th>
+                <th style="padding: 7px 10px; text-align: center; border-bottom: 1px solid #C7CFD9; font-family: Consolas, monospace;">a || b</th>
+              </tr>
+            </thead>
+            <tbody style="font-family: Consolas, monospace;">
+              <tr><td style="padding: 6px 10px; text-align: center; border-bottom: 1px solid #E5E7EB;">0</td><td style="padding: 6px 10px; text-align: center; border-bottom: 1px solid #E5E7EB;">0</td><td style="padding: 6px 10px; text-align: center; border-bottom: 1px solid #E5E7EB;">0</td><td style="padding: 6px 10px; text-align: center; border-bottom: 1px solid #E5E7EB;">0</td></tr>
+              <tr style="background: #F8FAFC;"><td style="padding: 6px 10px; text-align: center; border-bottom: 1px solid #E5E7EB;">0</td><td style="padding: 6px 10px; text-align: center; border-bottom: 1px solid #E5E7EB;">1</td><td style="padding: 6px 10px; text-align: center; border-bottom: 1px solid #E5E7EB;">0</td><td style="padding: 6px 10px; text-align: center; border-bottom: 1px solid #E5E7EB;">1</td></tr>
+              <tr><td style="padding: 6px 10px; text-align: center; border-bottom: 1px solid #E5E7EB;">1</td><td style="padding: 6px 10px; text-align: center; border-bottom: 1px solid #E5E7EB;">0</td><td style="padding: 6px 10px; text-align: center; border-bottom: 1px solid #E5E7EB;">0</td><td style="padding: 6px 10px; text-align: center; border-bottom: 1px solid #E5E7EB;">1</td></tr>
+              <tr style="background: #F8FAFC;"><td style="padding: 6px 10px; text-align: center;">1</td><td style="padding: 6px 10px; text-align: center;">1</td><td style="padding: 6px 10px; text-align: center;">1</td><td style="padding: 6px 10px; text-align: center;">1</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="display: table-cell; width: 50%; padding-left: 10px; vertical-align: top;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 13.5px;">
+            <thead>
+              <tr style="background: #E8EDF5; color: #00205B;">
+                <th style="padding: 7px 10px; text-align: center; border-bottom: 1px solid #C7CFD9; font-family: Consolas, monospace;">a</th>
+                <th style="padding: 7px 10px; text-align: center; border-bottom: 1px solid #C7CFD9; font-family: Consolas, monospace;">!a</th>
+              </tr>
+            </thead>
+            <tbody style="font-family: Consolas, monospace;">
+              <tr><td style="padding: 6px 10px; text-align: center; border-bottom: 1px solid #E5E7EB;">0</td><td style="padding: 6px 10px; text-align: center; border-bottom: 1px solid #E5E7EB;">1</td></tr>
+              <tr style="background: #F8FAFC;"><td style="padding: 6px 10px; text-align: center; border-bottom: 1px solid #E5E7EB;">nonzero</td><td style="padding: 6px 10px; text-align: center; border-bottom: 1px solid #E5E7EB;">0</td></tr>
+            </tbody>
+          </table>
+          <p style="font-size: 12.5px; color: #6B7280; margin: 10px 0 0 0; font-style: italic;">Remember: <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12px;">!</code> turns nonzero into <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12px;">0</code>, and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12px;">0</code> into <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12px;">1</code>. It always returns exactly <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12px;">0</code> or <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12px;">1</code>.</p>
+        </div>
+      </div>
+
+      <div style="background: #FFF4E5; border-left: 4px solid #E68A00; padding: 14px 18px; margin-bottom: 18px; border-radius: 3px; font-size: 14px;">
+        <strong style="color: #8C5500;">Coming from Python:</strong> Python uses the words <code style="background: #F5E6CC; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">and</code>, <code style="background: #F5E6CC; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">or</code>, <code style="background: #F5E6CC; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">not</code>. In C, those words mean nothing. Use the symbols: <code style="background: #F5E6CC; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;&amp;</code>, <code style="background: #F5E6CC; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">||</code>, <code style="background: #F5E6CC; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">!</code>. Also: <code style="background: #F5E6CC; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;&amp;</code> is two ampersands. A single <code style="background: #F5E6CC; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;</code> is the bitwise AND (Lesson 34) and means something completely different.</div>
+
+      <!-- Short-circuit -->
+      <h3 id="short-circuit" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Short-circuit evaluation</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">C evaluates <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;&amp;</code> and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">||</code> left to right and <em>stops as soon as the answer is known</em>.</p>
+
+      <ul style="font-size: 14.5px; margin: 0 0 12px 0; padding-left: 22px;">
+        <li style="margin-bottom: 6px;">For <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">a &amp;&amp; b</code>: if <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">a</code> is false, the whole thing is false. <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">b</code> is never evaluated.</li>
+        <li style="margin-bottom: 0;">For <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">a || b</code>: if <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">a</code> is true, the whole thing is true. <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">b</code> is never evaluated.</li>
+      </ul>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">That is not just a performance optimization. It is a tool. You can rely on it to protect dangerous expressions:</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #6B7280;">// The "guard" pattern. The left side protects the right side.</span><br>
+        <span style="color: #569CD6;">if</span> (denom != <span style="color: #B5CEA8;">0</span> &amp;&amp; num / denom &gt; <span style="color: #B5CEA8;">10</span>) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #6B7280;">// safe: we only divide when denom is nonzero</span><br>
+        }
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Swap the order and the program crashes on division by zero whenever <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">denom</code> is zero:</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #6B7280;">// BUG: division happens first, regardless of denom</span><br>
+        <span style="color: #569CD6;">if</span> (num / denom &gt; <span style="color: #B5CEA8;">10</span> &amp;&amp; denom != <span style="color: #B5CEA8;">0</span>) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #6B7280;">// floating-point exception when denom == 0</span><br>
+        }
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">Order matters. The cheaper or safer check goes on the left.</p>
+
+      <!-- if / else if / else -->
+      <h3 id="if-else" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">if / else if / else</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">The basic conditional in C is shaped like Python's, with three syntactic differences: parentheses around the test, curly braces (not indentation) define the body, and the keyword is <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">else if</code> (two words) instead of Python's <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">elif</code>.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">int</span> score = <span style="color: #B5CEA8;">85</span>;<br><br>
+        <span style="color: #569CD6;">if</span> (score &gt;= <span style="color: #B5CEA8;">90</span>) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"A\n"</span>);<br>
+        } <span style="color: #569CD6;">else if</span> (score &gt;= <span style="color: #B5CEA8;">80</span>) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"B\n"</span>);<br>
+        } <span style="color: #569CD6;">else if</span> (score &gt;= <span style="color: #B5CEA8;">70</span>) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"C\n"</span>);<br>
+        } <span style="color: #569CD6;">else</span> {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"below C\n"</span>);<br>
+        }
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Style note: braces are technically optional for single-statement bodies, but always include them. It prevents the dangling-else bug (see below) and makes the code less ambiguous to humans and easier to extend later.</p>
+
+      <div style="background: #F5F7FA; border-left: 4px solid #00205B; padding: 12px 16px; margin: 0 0 16px 0; border-radius: 3px; font-size: 14px;">
+        <strong style="color: #00205B;">DFCS C Programming Standard:</strong> two style rules become teachable here. <strong>&sect;6.2</strong> sets indentation at four spaces and places the opening brace on the same line as the <code style="background: #E8EDF5; padding: 1px 4px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">if</code> / <code style="background: #E8EDF5; padding: 1px 4px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">else</code> / <code style="background: #E8EDF5; padding: 1px 4px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">switch</code> statement (the K&amp;R style you see in every example on this page). <strong>&sect;7.4</strong> forbids single-line <code style="background: #E8EDF5; padding: 1px 4px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">if</code> statements; every branch body sits on its own line inside braces. See the DFCS C Programming Standard in the course Resources section for the full rules.
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">The <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">else</code> branch is optional. Exactly one branch executes: C tries each condition in order and stops at the first true one. If none are true and there is no <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">else</code>, nothing in the chain runs.</p>
+
+      <!-- Ternary -->
+      <h3 id="ternary" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">The ternary operator</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">C has a compact form of <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">if</code>/<code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">else</code> that returns a value. It's called the <em>ternary operator</em> because it takes three operands. The syntax is <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">condition ? value_if_true : value_if_false</code>.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">int</span> score = <span style="color: #B5CEA8;">85</span>;<br>
+        <span style="color: #569CD6;">char</span> *result = (score &gt;= <span style="color: #B5CEA8;">60</span>) ? <span style="color: #CE9178;">"pass"</span> : <span style="color: #CE9178;">"fail"</span>;<br>
+        <span style="color: #6B7280;">// equivalent to:</span><br>
+        <span style="color: #569CD6;">char</span> *result;<br>
+        <span style="color: #569CD6;">if</span> (score &gt;= <span style="color: #B5CEA8;">60</span>) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;result = <span style="color: #CE9178;">"pass"</span>;<br>
+        } <span style="color: #569CD6;">else</span> {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;result = <span style="color: #CE9178;">"fail"</span>;<br>
+        }
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Use it when both branches produce a value of the same type and the whole thing fits comfortably on one line. Common cases: picking between two strings, two numeric constants, or two simple expressions. The <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">printf</code> example below is a typical use:</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"You have %d item%s.\n"</span>, n, (n == <span style="color: #B5CEA8;">1</span>) ? <span style="color: #CE9178;">""</span> : <span style="color: #CE9178;">"s"</span>);
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">Reach for a full <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">if</code>/<code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">else</code> when the branches are statements (not values), when either branch is more than a short expression, or when nesting ternaries would hurt readability. Most code in this course should use full conditional statements; the ternary appears here so you recognize it when you see it in Beej or in real C code.</p>
+
+      <!-- switch -->
+      <h3 id="switch" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">switch statements</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">When you're branching on the integer value (or character value) of a single variable, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">switch</code> is often cleaner than an <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">if</code>/<code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">else if</code> chain.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">char</span> grade = <span style="color: #CE9178;">'B'</span>;<br><br>
+        <span style="color: #569CD6;">switch</span> (grade) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #569CD6;">case</span> <span style="color: #CE9178;">'A'</span>:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"Excellent\n"</span>);<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #569CD6;">break</span>;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #569CD6;">case</span> <span style="color: #CE9178;">'B'</span>:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"Good\n"</span>);<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #569CD6;">break</span>;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #569CD6;">case</span> <span style="color: #CE9178;">'C'</span>:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"Passing\n"</span>);<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #569CD6;">break</span>;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #569CD6;">default</span>:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"Unknown grade\n"</span>);<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #569CD6;">break</span>;<br>
+        }
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 8px 0; font-weight: 600; color: #00205B;">Rules to keep in mind:</p>
+      <ul style="font-size: 14.5px; margin: 0 0 12px 0; padding-left: 22px;">
+        <li style="margin-bottom: 6px;">The switch value must be an integer type. That includes <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">char</code> (which is just a small integer). You cannot switch on a <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">double</code> or a string.</li>
+        <li style="margin-bottom: 6px;">Each <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">case</code> label must be a constant, not a variable or a range.</li>
+        <li style="margin-bottom: 6px;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">default</code> is optional and runs when no case matches.</li>
+        <li style="margin-bottom: 0;">Without a <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">break</code>, execution falls through to the next case. See the bugs section below.</li>
+      </ul>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">When in doubt, write <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">if</code> / <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">else if</code>. Reach for <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">switch</code> when you have three or more cases on a single integer value and the cases are exact matches (not ranges or comparisons).</p>
+
+      <!-- Common bugs -->
+      <h3 id="bugs" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Four bugs that bite first-time conditionals</h3>
+
+      <!-- Bug 1: = vs == -->
+      <div style="background: #FFEEEE; border-left: 4px solid #B8002F; padding: 14px 18px; margin-bottom: 14px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #8B0024; font-size: 14.5px; margin-bottom: 8px;">Bug 1: <code style="background: #FFD6D6; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 13px;">=</code> instead of <code style="background: #FFD6D6; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 13px;">==</code></div>
+        <div style="font-size: 14px; margin-bottom: 8px;">You saw this introduced in Lesson 3 with comparison operators. In an <code style="background: #FFD6D6; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">if</code>, it bites hard:</div>
+        <div style="background: #1E2A3A; color: #E8EDF5; padding: 12px 16px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6;">
+          <span style="color: #569CD6;">if</span> (x = <span style="color: #B5CEA8;">5</span>) {&nbsp;&nbsp;<span style="color: #6B7280;">// BUG: assigns 5 to x, then tests 5 (true)</span><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"always runs\n"</span>);<br>
+          }
+        </div>
+        <div style="font-size: 13.5px; color: #5C0018; margin-top: 8px;">The compiler will warn under <code style="background: #FFD6D6; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">-Wall</code>. Read your warnings. Defensive trick: write the constant on the left (<code style="background: #FFD6D6; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">if (5 == x)</code>) so an accidental single <code style="background: #FFD6D6; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">=</code> becomes a compile error.</div>
+      </div>
+
+      <!-- Bug 2: Dangling else -->
+      <div style="background: #FFEEEE; border-left: 4px solid #B8002F; padding: 14px 18px; margin-bottom: 14px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #8B0024; font-size: 14.5px; margin-bottom: 8px;">Bug 2: The dangling <code style="background: #FFD6D6; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 13px;">else</code></div>
+        <div style="font-size: 14px; margin-bottom: 8px;">When you skip the braces, an <code style="background: #FFD6D6; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">else</code> binds to the nearest unmatched <code style="background: #FFD6D6; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">if</code>, not the one your indentation suggests:</div>
+        <div style="background: #1E2A3A; color: #E8EDF5; padding: 12px 16px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6;">
+          <span style="color: #569CD6;">if</span> (x &gt; <span style="color: #B5CEA8;">0</span>)<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #569CD6;">if</span> (y &gt; <span style="color: #B5CEA8;">0</span>)<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"both positive\n"</span>);<br>
+          <span style="color: #569CD6;">else</span><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"x is not positive?\n"</span>);<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #6B7280;">// actually runs when x &gt; 0 and y &lt;= 0</span>
+        </div>
+        <div style="font-size: 13.5px; color: #5C0018; margin-top: 8px;">Fix: always use braces, even for single-statement bodies. The compiler will not catch this for you.</div>
+      </div>
+
+      <!-- Bug 3: switch fall-through -->
+      <div style="background: #FFEEEE; border-left: 4px solid #B8002F; padding: 14px 18px; margin-bottom: 14px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #8B0024; font-size: 14.5px; margin-bottom: 8px;">Bug 3: Missing <code style="background: #FFD6D6; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 13px;">break</code> in <code style="background: #FFD6D6; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 13px;">switch</code></div>
+        <div style="font-size: 14px; margin-bottom: 8px;">If you forget a <code style="background: #FFD6D6; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">break</code>, execution falls through into the next case:</div>
+        <div style="background: #1E2A3A; color: #E8EDF5; padding: 12px 16px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6;">
+          <span style="color: #569CD6;">switch</span> (n) {<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #569CD6;">case</span> <span style="color: #B5CEA8;">1</span>: <span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"one\n"</span>);<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #569CD6;">case</span> <span style="color: #B5CEA8;">2</span>: <span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"two\n"</span>);&nbsp;&nbsp;<span style="color: #6B7280;">// no break above!</span><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #569CD6;">case</span> <span style="color: #B5CEA8;">3</span>: <span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"three\n"</span>); <span style="color: #569CD6;">break</span>;<br>
+          }<br>
+          <span style="color: #6B7280;">// If n is 1, this prints: one, two, three</span>
+        </div>
+        <div style="font-size: 13.5px; color: #5C0018; margin-top: 8px;">Fix: end every case with <code style="background: #FFD6D6; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">break</code>. (Intentional fall-through is a real pattern, but until you have a reason, treat the missing <code style="background: #FFD6D6; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">break</code> as a bug.)</div>
+      </div>
+
+      <!-- Bug 4: semicolon after if -->
+      <div style="background: #FFEEEE; border-left: 4px solid #B8002F; padding: 14px 18px; margin-bottom: 18px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #8B0024; font-size: 14.5px; margin-bottom: 8px;">Bug 4: Accidental semicolon after <code style="background: #FFD6D6; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 13px;">if</code></div>
+        <div style="font-size: 14px; margin-bottom: 8px;">A stray semicolon turns an <code style="background: #FFD6D6; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">if</code> into an empty statement:</div>
+        <div style="background: #1E2A3A; color: #E8EDF5; padding: 12px 16px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6;">
+          <span style="color: #569CD6;">if</span> (x &gt; <span style="color: #B5CEA8;">0</span>);&nbsp;&nbsp;<span style="color: #6B7280;">// BUG: the if does nothing</span><br>
+          {<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"always runs\n"</span>);<br>
+          }
+        </div>
+        <div style="font-size: 13.5px; color: #5C0018; margin-top: 8px;">The block runs every time, regardless of <code style="background: #FFD6D6; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">x</code>. The compiler accepts this; <code style="background: #FFD6D6; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">-Wall</code> may warn. When your conditional &ldquo;always runs&rdquo;, look for a stray semicolon first.</div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ===================== 5. IN-CLASS WORK ===================== -->
+  <details id="in-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      5. In-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 16px 0;">Two things to do in class.</p>
+
+      <ul style="list-style: none; padding: 0; margin: 0 0 24px 0; font-size: 14.5px;">
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Work through the logic tracer below.</strong>
+          <span style="color: #4A5568;">Eight prediction rounds. You read a code snippet with variable values, predict what prints, then see a step-by-step trace including which expressions got short-circuited. About 25 minutes.</span>
+        </li>
+        <li style="margin-bottom: 0; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Complete <!-- EDIT ME: replace href="#" below with the GitHub Classroom assignment URL --><a href="#" target="_blank" rel="noopener" style="color: #003087; text-decoration: underline;">Lab 04: VFR Go/No-Go</a>.</strong>
+          <span style="color: #4A5568;">Auto-graded through GitHub Classroom. Read ceiling, visibility, and crosswind; combine logical operators with conditionals to print a GO or NO-GO decision. Full instructions in the lab repo.</span>
+        </li>
+      </ul>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 18px 0 10px 0;">Logic Tracer</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Eight rounds. Each one shows you a small snippet, the current values of the variables, and asks what prints. After you predict, the widget walks you through the evaluation step by step, including which conditions got short-circuited and which conditionals ran.</p>
+
+      
+<!-- ============================================================
+     CS210 Lesson 4 - Logical Operators Tracer Widget
+     Originally built for Lesson 3; moved to Lesson 4 when logical
+     operators were consolidated with conditionals.
+     Pattern: CSA-style prediction rounds. Cadet sees a code
+     snippet + variable values, predicts what prints, then reveals
+     a step-by-step trace highlighting short-circuit evaluation.
+     ============================================================ -->
+<style>
+.cs210-logic * { box-sizing: border-box; }
+.cs210-logic {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+}
+.cs210-logic h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-logic .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+
+/* Dots progress, matching the L2 binary quiz pattern */
+.cs210-logic .dots {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.cs210-logic .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #E5E7EB;
+  border: 1px solid #C7CFD9;
+}
+.cs210-logic .dot.current {
+  background: #003087;
+  border-color: #00205B;
+}
+.cs210-logic .dot.correct {
+  background: #2E7D32;
+  border-color: #1B5E20;
+}
+.cs210-logic .dot.incorrect {
+  background: #B8002F;
+  border-color: #8B0024;
+}
+
+.cs210-logic .round-meta {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  font-weight: 600;
+  text-align: center;
+}
+.cs210-logic .round-card {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  padding: 22px 26px;
+  margin-bottom: 14px;
+}
+.cs210-logic .round-title {
+  color: #00205B;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+.cs210-logic .vars-line {
+  background: #F8FAFC;
+  border: 1px solid #D0D5DD;
+  border-radius: 3px;
+  padding: 8px 12px;
+  font-family: Consolas, monospace;
+  font-size: 13.5px;
+  color: #00205B;
+  margin-bottom: 12px;
+}
+.cs210-logic .code {
+  background: #1E2A3A;
+  color: #E8EDF5;
+  padding: 14px 18px;
+  border-radius: 3px;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13.5px;
+  line-height: 1.55;
+  white-space: pre;
+  overflow-x: auto;
+  margin-bottom: 16px;
+}
+.cs210-logic .code .kw { color: #569CD6; }
+.cs210-logic .code .num { color: #B5CEA8; }
+.cs210-logic .code .str { color: #CE9178; }
+.cs210-logic .code .com { color: #7FB3D5; }
+.cs210-logic .code .fn  { color: #DCDCAA; }
+
+.cs210-logic .prompt {
+  font-size: 14.5px;
+  color: #00205B;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.cs210-logic .options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.cs210-logic .option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: #ffffff;
+  border: 1.5px solid #C7CFD9;
+  border-radius: 3px;
+  padding: 11px 16px;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  cursor: pointer;
+  color: #1a1a1a;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.cs210-logic .option:hover:not(:disabled) {
+  background: #F5F7FA;
+  border-color: #003087;
+}
+.cs210-logic .option.selected {
+  background: #E8EDF5;
+  border-color: #003087;
+}
+.cs210-logic .option.correct-final {
+  background: #E6F4EA;
+  border-color: #2E7D32;
+  color: #1B5E20;
+  font-weight: 700;
+}
+.cs210-logic .option.incorrect-pick {
+  background: #FDE7EC;
+  border-color: #B8002F;
+  color: #8B0024;
+}
+.cs210-logic .option:disabled { cursor: default; }
+
+.cs210-logic .controls-row {
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  margin-top: 6px;
+}
+.cs210-logic .btn {
+  background: #003087;
+  border: 1px solid #00205B;
+  color: #ffffff;
+  padding: 8px 18px;
+  border-radius: 3px;
+  font-size: 13.5px;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+}
+.cs210-logic .btn:hover { background: #00205B; }
+.cs210-logic .btn:disabled {
+  background: #B5B7BA;
+  border-color: #B5B7BA;
+  cursor: not-allowed;
+}
+.cs210-logic .btn.secondary {
+  background: #ffffff;
+  color: #003087;
+  border-color: #C7CFD9;
+  font-weight: 500;
+}
+.cs210-logic .btn.secondary:hover { background: #F5F7FA; }
+
+.cs210-logic .feedback {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 3px;
+  font-size: 14px;
+}
+.cs210-logic .feedback.right {
+  background: #E6F4EA;
+  border: 1px solid #2E7D32;
+  color: #1B5E20;
+}
+.cs210-logic .feedback.wrong {
+  background: #FDE7EC;
+  border: 1px solid #B8002F;
+  color: #8B0024;
+}
+.cs210-logic .feedback strong { font-weight: 700; }
+
+.cs210-logic .trace {
+  margin-top: 14px;
+  border: 1px solid #D0D5DD;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.cs210-logic .trace-header {
+  background: #E8EDF5;
+  color: #00205B;
+  padding: 8px 14px;
+  font-size: 12px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.cs210-logic .trace-step {
+  padding: 10px 16px;
+  border-top: 1px solid #E5E7EB;
+  font-size: 14px;
+}
+.cs210-logic .trace-step:first-of-type { border-top: none; }
+.cs210-logic .trace-step code {
+  font-family: Consolas, monospace;
+  background: #F0F2F5;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-size: 13px;
+}
+.cs210-logic .trace-step.short {
+  background: #FFF8E1;
+}
+.cs210-logic .trace-step.short-tag {
+  display: inline-block;
+  background: #F0B92C;
+  color: #6B5300;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 2px;
+  margin-left: 6px;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+.cs210-logic .nav-row {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 14px;
+}
+.cs210-logic .nav-info {
+  font-size: 13px;
+  color: #6B7280;
+}
+
+.cs210-logic .summary-card {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  padding: 26px 30px;
+  text-align: center;
+}
+.cs210-logic .summary-score {
+  font-size: 48px;
+  font-weight: 700;
+  color: #00205B;
+  margin: 8px 0;
+}
+.cs210-logic .summary-label {
+  font-size: 14px;
+  color: #6B7280;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+}
+.cs210-logic .summary-recap {
+  text-align: left;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid #E5E7EB;
+}
+.cs210-logic .summary-recap h4 {
+  color: #00205B;
+  font-size: 14px;
+  margin: 0 0 10px 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.cs210-logic .recap-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid #F0F2F5;
+  font-size: 14px;
+}
+.cs210-logic .recap-row:last-child { border-bottom: none; }
+.cs210-logic .recap-mark {
+  width: 22px;
+  font-weight: 700;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.cs210-logic .recap-mark.right { color: #2E7D32; }
+.cs210-logic .recap-mark.wrong { color: #B8002F; }
+.cs210-logic .recap-text { flex: 1; color: #4A5568; }
+.cs210-logic .recap-text strong { color: #00205B; }
+
+.cs210-logic .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #4A5568;
+  margin-top: 14px;
+}
+.cs210-logic .help-note strong { color: #00205B; }
+
+/* ===== Name modal (gating overlay) ===== */
+.cs210-logic { position: relative; }
+.cs210-logic .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.cs210-logic .name-modal {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-logic .name-modal h2 {
+  color: #00205B;
+  font-size: 20px;
+  margin: 0 0 10px 0;
+}
+.cs210-logic .name-modal p {
+  color: #4A5568;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+.cs210-logic .name-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+.cs210-logic .name-modal input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-logic .name-modal-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-logic .name-modal-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-logic .name-modal-btn:not(:disabled):hover {
+  background: #00205B;
+}
+
+/* ===== Inline completion footer (in score card) ===== */
+.cs210-logic .completion-screen {
+  background: #ffffff;
+  border: 2px solid #2E7D32;
+  border-radius: 6px;
+  padding: 20px 24px;
+  margin-top: 18px;
+}
+.cs210-logic .completion-screen.incomplete {
+  border-color: #B88800;
+}
+.cs210-logic .completion-screen .cs-heading {
+  color: #1B5E20;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 6px 0;
+}
+.cs210-logic .completion-screen.incomplete .cs-heading {
+  color: #6B5300;
+}
+.cs210-logic .completion-screen .cs-name-line {
+  font-size: 15px;
+  color: #1a1a1a;
+  margin-bottom: 14px;
+}
+.cs210-logic .completion-screen .cs-name-line strong {
+  color: #00205B;
+}
+.cs210-logic .completion-screen .cs-code-block {
+  background: #F0F4FA;
+  border: 1px solid #003087;
+  border-radius: 4px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+.cs210-logic .completion-screen.incomplete .cs-code-block {
+  background: #FFF8E1;
+  border-color: #B88800;
+}
+.cs210-logic .completion-screen .cs-code-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #4A5568;
+  margin-bottom: 4px;
+}
+.cs210-logic .completion-screen .cs-code-value {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 26px;
+  font-weight: 700;
+  color: #00205B;
+  letter-spacing: 3px;
+}
+.cs210-logic .completion-screen.incomplete .cs-code-value {
+  color: #6B5300;
+}
+.cs210-logic .completion-screen .cs-timestamp {
+  font-size: 13px;
+  color: #6B7280;
+}
+
+/* ===== Overlay copy button (used inside the floating overlay only) ===== */
+.cs210-logic .cs-copy-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-logic .cs-copy-btn:hover { background: #00205B; }
+.cs210-logic .cs-copy-btn.copied { background: #2E7D32; }
+.cs210-logic .cs-reminder {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 14px;
+  color: #6B5300;
+  line-height: 1.5;
+}
+.cs210-logic .cs-reminder strong { color: #4A3A00; }
+</style>
+
+<div class="cs210-logic">
+
+<div class="name-modal-backdrop" id="lg-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Blackboard reflection quiz.</p>
+    <input type="text" id="lg-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="lg-cadet-name-btn" disabled>Start the tracer</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 4 &middot; Logical Operators Tracer</h1>
+<div class="subtitle">Read the code, predict what prints, then check yourself. Watch what short-circuit evaluation does to the order things get evaluated in.</div>
+
+<div class="dots" id="lg-dots"></div>
+<div class="round-meta" id="lg-meta">Round 1 of 8</div>
+<div id="lg-stage"></div>
+
+<div class="help-note">
+  <strong>How this works:</strong> Each round shows a snippet of C with the values of the variables on top. You predict what gets printed, then click Check. After you answer, the trace reveals the steps the compiler evaluates. A yellow-highlighted step means short-circuit evaluation skipped the right-hand operand because the result was already determined.
+</div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-logic');
+  if (!root) return;
+
+  // ============================================================
+  // CS210 widget completion utilities
+  // Two salts: one for passing (>=70%), one for non-passing.
+  // The code that lands in Blackboard tells the instructor which.
+  // FNV-1a -> 6-char base-32 code over an unambiguous alphabet.
+  // ============================================================
+  const CS210_SALT_PASS = "lesson04_logic_tracer_completed";
+  const CS210_SALT_FAIL = "lesson04_logic_tracer_incomplete";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const CS210_PASS_THRESHOLD = 0.7;
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE_PASS = cs210CodeFromSalt(CS210_SALT_PASS);
+  const CS210_CODE_FAIL = cs210CodeFromSalt(CS210_SALT_FAIL);
+  let cs210CadetName = '';
+
+  // Name-modal gating. Pre-fill from localStorage (shared across L4 widgets).
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#lg-name-modal-backdrop');
+    const input = root.querySelector('#lg-cadet-name-input');
+    const btn = root.querySelector('#lg-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored) input.value = stored;
+    } catch (e) { /* localStorage may be disabled */ }
+
+    function updateBtn() {
+      btn.disabled = input.value.trim().length < 2;
+    }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', function() {
+      const name = input.value.trim();
+      if (name.length < 2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+    });
+    setTimeout(function() { input.focus(); }, 50);
+  })();
+
+  function cs210EscapeName(s) {
+    return (s || 'Cadet').replace(/[<>&"']/g, function(c) {
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+  }
+
+  function cs210FallbackCopy(text) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e) { /* nothing else to do */ }
+  }
+
+  function cs210RenderCompletion(card, passed) {
+    // Idempotent: if a previous overlay exists (e.g., user restarted), remove it.
+    const existingOverlay = root.querySelector('#lg-cs210-completion-overlay');
+    if (existingOverlay) existingOverlay.remove();
+
+    const code = passed ? CS210_CODE_PASS : CS210_CODE_FAIL;
+    const now = new Date();
+    const ts = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const safeName = cs210EscapeName(cs210CadetName);
+    const accent = passed ? '#2E7D32' : '#B88800';
+    const accentDark = passed ? '#1B5E20' : '#6B5300';
+    const overlayBg = passed ? 'rgba(27, 94, 32, 0.55)' : 'rgba(184, 136, 0, 0.55)';
+    const heading = passed ? 'Tracer complete \u2014 you passed' : 'Tracer complete \u2014 below the passing mark';
+    const introCopy = passed
+      ? 'Take a screenshot of this box. You will need the code and a visual of this screen for the Blackboard reflection quiz.'
+      : 'You scored below 70%, so this is the non-passing code. Enter it in Blackboard so credit for taking the tracer lands, then review the Lesson Materials and re-take it to earn the passing code.';
+    const reminderCopy = passed
+      ? '<strong>Next step:</strong> Open the Lesson 4 reflection quiz in Blackboard. Enter this code, answer the reflection prompt, and attach your screenshot.'
+      : '<strong>Next step:</strong> Enter this code in Blackboard so the attempt is recorded, then re-take the tracer. The passing code is different and will land you full credit on the widget question.';
+
+    // Inline footer in the score card. Even if the overlay gets dismissed
+    // first, a screenshot of the widget body still has the code.
+    const footer = document.createElement('div');
+    footer.className = 'completion-screen' + (passed ? '' : ' incomplete');
+    footer.innerHTML =
+      '<div class="cs-heading">' + heading + '</div>' +
+      '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+      '<div class="cs-code-block">' +
+        '<div><div class="cs-code-label">' + (passed ? 'Completion code' : 'Non-passing code') + '</div>' +
+        '<div class="cs-code-value">' + code + '</div></div>' +
+      '</div>' +
+      '<div class="cs-timestamp">Completed: ' + ts + '</div>';
+    card.appendChild(footer);
+
+    // Floating overlay — the unmissable version with copy button.
+    const overlay = document.createElement('div');
+    overlay.id = 'lg-cs210-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.style.background = overlayBg;
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid ' + accent + ';">' +
+        '<h2 style="color:' + accentDark + ';">' + heading + '</h2>' +
+        '<p>' + introCopy + '</p>' +
+        '<div style="font-size:15px;margin-bottom:14px;">Cadet: <strong style="color:#00205B;">' + safeName + '</strong></div>' +
+        '<div style="background:' + (passed ? '#F0F4FA' : '#FFF8E1') + ';border:1px solid ' + accent + ';border-radius:4px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px;">' +
+          '<div><div style="font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:#4A5568;margin-bottom:4px;">' + (passed ? 'Completion code' : 'Non-passing code') + '</div>' +
+          '<div style="font-family:Consolas,monospace;font-size:26px;font-weight:700;color:' + (passed ? '#00205B' : '#6B5300') + ';letter-spacing:3px;" id="lg-cs-code-value">' + code + '</div></div>' +
+          '<button class="cs-copy-btn" id="lg-cs-copy-btn" type="button">Copy code</button>' +
+        '</div>' +
+        '<div style="font-size:13px;color:#6B7280;margin-bottom:14px;">Completed: ' + ts + '</div>' +
+        '<div class="cs-reminder" style="margin-bottom:14px;">' + reminderCopy + '</div>' +
+        '<button class="name-modal-btn" id="lg-cs-overlay-close" type="button" style="background:' + accent + ';">Got it &mdash; close this</button>' +
+      '</div>';
+    root.appendChild(overlay);
+
+    const closeBtn = overlay.querySelector('#lg-cs-overlay-close');
+    if (closeBtn) closeBtn.addEventListener('click', function() { overlay.style.display = 'none'; });
+
+    const copyBtn = overlay.querySelector('#lg-cs-copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function() {
+        const ok = function() {
+          copyBtn.textContent = 'Copied';
+          copyBtn.classList.add('copied');
+          setTimeout(function() {
+            copyBtn.textContent = 'Copy code';
+            copyBtn.classList.remove('copied');
+          }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(code).then(ok, function() {
+            cs210FallbackCopy(code); ok();
+          });
+        } else {
+          cs210FallbackCopy(code); ok();
+        }
+      });
+    }
+  }
+
+  // ============================================================
+  // Rounds. Each round has:
+  //   title, vars (string), code (string with class spans),
+  //   prompt, options [strings], correct (index),
+  //   trace [{text, short?:bool}],
+  //   recap (one-line takeaway for the summary)
+  // ============================================================
+  const rounds = [
+    // 1. Plain AND
+    {
+      title: 'Plain && (AND)',
+      vars: 'int age = 17; int hasLicense = 1;',
+      code:
+        '<span class="kw">if</span> (age &gt;= <span class="num">18</span> &amp;&amp; hasLicense) {\n' +
+        '    <span class="fn">printf</span>(<span class="str">"can rent\\n"</span>);\n' +
+        '} <span class="kw">else</span> {\n' +
+        '    <span class="fn">printf</span>(<span class="str">"cannot rent\\n"</span>);\n' +
+        '}',
+      prompt: 'What prints?',
+      options: ['can rent', 'cannot rent'],
+      correct: 1,
+      trace: [
+        { text: 'Evaluate <code>age &gt;= 18</code> &rarr; 17 &gt;= 18 &rarr; <strong>false</strong>.' },
+        { text: 'Because the left side of <code>&amp;&amp;</code> is false, the overall expression must be false. Skip the right side.', short: true },
+        { text: 'Take the <code>else</code> branch. Print <code>cannot rent</code>.' },
+      ],
+      recap: 'AND short-circuits when the left side is false.',
+    },
+
+    // 2. Plain OR with short-circuit
+    {
+      title: 'Plain || (OR) with short-circuit',
+      vars: 'int isAdmin = 1; int hasKey = 0;',
+      code:
+        '<span class="kw">if</span> (isAdmin || hasKey) {\n' +
+        '    <span class="fn">printf</span>(<span class="str">"access granted\\n"</span>);\n' +
+        '} <span class="kw">else</span> {\n' +
+        '    <span class="fn">printf</span>(<span class="str">"access denied\\n"</span>);\n' +
+        '}',
+      prompt: 'What prints?',
+      options: ['access granted', 'access denied'],
+      correct: 0,
+      trace: [
+        { text: 'Evaluate <code>isAdmin</code> &rarr; 1 &rarr; <strong>true</strong> (nonzero is true in C).' },
+        { text: 'Because the left side of <code>||</code> is true, the overall expression must be true. Skip the right side.', short: true },
+        { text: 'Take the <code>if</code> branch. Print <code>access granted</code>.' },
+      ],
+      recap: 'OR short-circuits when the left side is true.',
+    },
+
+    // 3. Negation - the ! operator
+    {
+      title: 'The ! (NOT) operator',
+      vars: 'int found = 0;',
+      code:
+        '<span class="kw">if</span> (!found) {\n' +
+        '    <span class="fn">printf</span>(<span class="str">"keep looking\\n"</span>);\n' +
+        '} <span class="kw">else</span> {\n' +
+        '    <span class="fn">printf</span>(<span class="str">"got it\\n"</span>);\n' +
+        '}',
+      prompt: 'What prints?',
+      options: ['keep looking', 'got it'],
+      correct: 0,
+      trace: [
+        { text: 'Evaluate <code>found</code> &rarr; 0 &rarr; <strong>false</strong>.' },
+        { text: 'Apply <code>!</code>: <code>!false</code> &rarr; <strong>true</strong>.' },
+        { text: 'Take the <code>if</code> branch. Print <code>keep looking</code>.' },
+      ],
+      recap: '!x is true exactly when x is zero (false).',
+    },
+
+    // 4. Truthiness vs Python
+    {
+      title: 'Truthiness in C',
+      vars: 'int x = -5;',
+      code:
+        '<span class="kw">if</span> (x) {\n' +
+        '    <span class="fn">printf</span>(<span class="str">"truthy\\n"</span>);\n' +
+        '} <span class="kw">else</span> {\n' +
+        '    <span class="fn">printf</span>(<span class="str">"falsy\\n"</span>);\n' +
+        '}',
+      prompt: 'What prints?',
+      options: ['truthy', 'falsy'],
+      correct: 0,
+      trace: [
+        { text: 'In C, any nonzero integer counts as true.' },
+        { text: 'Evaluate <code>x</code> &rarr; -5 &rarr; nonzero &rarr; <strong>true</strong>.' },
+        { text: 'Take the <code>if</code> branch. Print <code>truthy</code>.' },
+        { text: 'Worth knowing: only the value 0 is false in C. Negative numbers, large numbers, and even floating-point values that round to nonzero all count as true.' },
+      ],
+      recap: 'In C, only 0 is false. Every other integer (including negatives) is true.',
+    },
+
+    // 5. Combined && and || - precedence
+    {
+      title: 'Precedence: && binds tighter than ||',
+      vars: 'int a = 0; int b = 1; int c = 0;',
+      code:
+        '<span class="kw">if</span> (a &amp;&amp; b || c) {\n' +
+        '    <span class="fn">printf</span>(<span class="str">"yes\\n"</span>);\n' +
+        '} <span class="kw">else</span> {\n' +
+        '    <span class="fn">printf</span>(<span class="str">"no\\n"</span>);\n' +
+        '}',
+      prompt: 'What prints?',
+      options: ['yes', 'no'],
+      correct: 1,
+      trace: [
+        { text: '<code>&amp;&amp;</code> binds tighter than <code>||</code>, so this is parsed as <code>(a &amp;&amp; b) || c</code>.' },
+        { text: 'Evaluate <code>a</code> &rarr; 0 &rarr; <strong>false</strong>. Short-circuit: <code>a &amp;&amp; b</code> is false; skip <code>b</code>.', short: true },
+        { text: 'Now evaluate <code>false || c</code>. Evaluate <code>c</code> &rarr; 0 &rarr; <strong>false</strong>.' },
+        { text: 'Result is <code>false || false</code> &rarr; false. Take the <code>else</code> branch. Print <code>no</code>.' },
+      ],
+      recap: 'a && b || c means (a && b) || c. Always parenthesize when in doubt.',
+    },
+
+    // 6. Nested if  (CSA style)
+    {
+      title: 'Nested if-else',
+      vars: 'int score = 72;',
+      code:
+        '<span class="kw">if</span> (score &gt;= <span class="num">90</span>) {\n' +
+        '    <span class="fn">printf</span>(<span class="str">"A\\n"</span>);\n' +
+        '} <span class="kw">else if</span> (score &gt;= <span class="num">80</span>) {\n' +
+        '    <span class="fn">printf</span>(<span class="str">"B\\n"</span>);\n' +
+        '} <span class="kw">else if</span> (score &gt;= <span class="num">70</span>) {\n' +
+        '    <span class="fn">printf</span>(<span class="str">"C\\n"</span>);\n' +
+        '} <span class="kw">else</span> {\n' +
+        '    <span class="fn">printf</span>(<span class="str">"F\\n"</span>);\n' +
+        '}',
+      prompt: 'What prints?',
+      options: ['A', 'B', 'C', 'F'],
+      correct: 2,
+      trace: [
+        { text: 'Evaluate <code>score &gt;= 90</code> &rarr; 72 &gt;= 90 &rarr; <strong>false</strong>. Skip the A branch.' },
+        { text: 'Evaluate <code>score &gt;= 80</code> &rarr; 72 &gt;= 80 &rarr; <strong>false</strong>. Skip the B branch.' },
+        { text: 'Evaluate <code>score &gt;= 70</code> &rarr; 72 &gt;= 70 &rarr; <strong>true</strong>. Take this branch.' },
+        { text: 'Print <code>C</code>. The remaining else is skipped because the chain already found a true branch.' },
+      ],
+      recap: 'else-if chains stop at the first true condition.',
+    },
+
+    // 7. Short-circuit guards a NULL-like check
+    {
+      title: 'Short-circuit as a guard',
+      vars: 'int hasData = 0; int value = 42;',
+      code:
+        '<span class="com">// We don\'t want to use value if hasData is 0</span>\n' +
+        '<span class="kw">if</span> (hasData &amp;&amp; value &gt; <span class="num">10</span>) {\n' +
+        '    <span class="fn">printf</span>(<span class="str">"big\\n"</span>);\n' +
+        '} <span class="kw">else</span> {\n' +
+        '    <span class="fn">printf</span>(<span class="str">"skip\\n"</span>);\n' +
+        '}',
+      prompt: 'What prints?',
+      options: ['big', 'skip'],
+      correct: 1,
+      trace: [
+        { text: 'Evaluate <code>hasData</code> &rarr; 0 &rarr; <strong>false</strong>.' },
+        { text: 'Short-circuit: <code>&amp;&amp;</code> is false; <code>value &gt; 10</code> is not evaluated at all.', short: true },
+        { text: 'Take the <code>else</code> branch. Print <code>skip</code>.' },
+        { text: 'This is the standard guard pattern: put the safety check on the left so the dangerous-if-unset operation on the right never runs when the guard fails.' },
+      ],
+      recap: 'Put your safety check on the left of && so short-circuit guards the right side.',
+    },
+
+    // 8. = vs == gotcha
+    {
+      title: 'The classic = vs == bug',
+      vars: 'int x = 5;',
+      code:
+        '<span class="kw">if</span> (x = <span class="num">0</span>) {\n' +
+        '    <span class="fn">printf</span>(<span class="str">"branch A\\n"</span>);\n' +
+        '} <span class="kw">else</span> {\n' +
+        '    <span class="fn">printf</span>(<span class="str">"branch B\\n"</span>);\n' +
+        '}\n' +
+        '<span class="fn">printf</span>(<span class="str">"x is %d\\n"</span>, x);',
+      prompt: 'What prints?',
+      options: [
+        'branch A then x is 0',
+        'branch B then x is 0',
+        'branch B then x is 5',
+        'compiler error: cannot use = in if',
+      ],
+      correct: 1,
+      trace: [
+        { text: 'This is a classic bug: <code>=</code> is assignment, not equality (<code>==</code>).' },
+        { text: 'Evaluate <code>x = 0</code>: assign 0 to x, then the value of the expression is the assigned value, 0.' },
+        { text: '0 is false, so take the <code>else</code> branch. Print <code>branch B</code>.' },
+        { text: 'But x is now 0 (the assignment happened). Print <code>x is 0</code>.' },
+        { text: 'The compiler will not error on this; some compilers warn under <code>-Wall</code>. To avoid the bug, write <code>==</code> for comparisons and consider putting the constant on the left (<code>0 == x</code>) so a typo of <code>=</code> becomes a hard error.' },
+      ],
+      recap: '= is assignment, == is comparison. The compiler does not catch this for you.',
+    },
+  ];
+
+  // ============================================================
+  // State
+  // ============================================================
+  const state = rounds.map(() => ({ pick: null, answered: false }));
+  let currentIndex = 0;
+
+  // ============================================================
+  // Rendering
+  // ============================================================
+  const stage = root.querySelector('#lg-stage');
+  const dotsEl = root.querySelector('#lg-dots');
+  const metaEl = root.querySelector('#lg-meta');
+
+  function renderDots() {
+    let html = '';
+    for (let i = 0; i < rounds.length; i++) {
+      const cls = ['dot'];
+      if (i === currentIndex) cls.push('current');
+      else if (state[i].answered) {
+        cls.push(state[i].pick === rounds[i].correct ? 'correct' : 'incorrect');
+      }
+      html += '<div class="' + cls.join(' ') + '"></div>';
+    }
+    dotsEl.innerHTML = html;
+  }
+
+  function renderRound() {
+    renderDots();
+    if (currentIndex >= rounds.length) {
+      renderSummary();
+      return;
+    }
+    metaEl.textContent = 'Round ' + (currentIndex + 1) + ' of ' + rounds.length;
+    const r = rounds[currentIndex];
+    const s = state[currentIndex];
+
+    let html = '<div class="round-card">';
+    html += '<div class="round-title">' + r.title + '</div>';
+    html += '<div class="vars-line">' + r.vars + '</div>';
+    html += '<div class="code">' + r.code + '</div>';
+    html += '<div class="prompt">' + r.prompt + '</div>';
+    html += '<div class="options">';
+    for (let i = 0; i < r.options.length; i++) {
+      const cls = ['option'];
+      if (s.answered) {
+        if (i === r.correct) cls.push('correct-final');
+        else if (i === s.pick) cls.push('incorrect-pick');
+      } else if (s.pick === i) {
+        cls.push('selected');
+      }
+      const disabled = s.answered ? ' disabled' : '';
+      html += '<button class="' + cls.join(' ') + '" data-idx="' + i + '"' + disabled + '>' + r.options[i] + '</button>';
+    }
+    html += '</div>';
+
+    // Controls
+    html += '<div class="controls-row">';
+    if (!s.answered) {
+      html += '<button class="btn" id="lg-check" ' + (s.pick === null ? 'disabled' : '') + '>Check</button>';
+    } else {
+      // Show trace + nav
+      const right = s.pick === r.correct;
+      html += '<div class="feedback ' + (right ? 'right' : 'wrong') + '">';
+      html += '<strong>' + (right ? 'Correct.' : 'Not quite.') + '</strong> ';
+      html += 'The answer is <strong>' + r.options[r.correct] + '</strong>. ' + r.recap;
+      html += '</div>';
+    }
+    html += '</div>';
+
+    if (s.answered) {
+      html += '<div class="trace">';
+      html += '<div class="trace-header">Step-by-step trace</div>';
+      for (const step of r.trace) {
+        html += '<div class="trace-step' + (step.short ? ' short' : '') + '">';
+        html += step.text;
+        if (step.short) html += '<span class="trace-step short-tag">short-circuit</span>';
+        html += '</div>';
+      }
+      html += '</div>';
+    }
+
+    html += '<div class="nav-row">';
+    html += '<button class="btn secondary" id="lg-back" ' + (currentIndex === 0 ? 'disabled' : '') + '>&larr; Back</button>';
+    html += '<div class="nav-info">' + countAnswered() + ' of ' + rounds.length + ' answered</div>';
+    if (s.answered) {
+      const isLast = currentIndex === rounds.length - 1;
+      html += '<button class="btn" id="lg-next">' + (isLast ? 'See summary &rarr;' : 'Next round &rarr;') + '</button>';
+    } else {
+      html += '<button class="btn secondary" id="lg-next" disabled>Next round &rarr;</button>';
+    }
+    html += '</div>';
+
+    html += '</div>';
+    stage.innerHTML = html;
+    wireRound();
+  }
+
+  function countAnswered() { return state.filter(s => s.answered).length; }
+
+  function wireRound() {
+    const s = state[currentIndex];
+    const r = rounds[currentIndex];
+    // Option buttons
+    stage.querySelectorAll('.option').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (s.answered) return;
+        s.pick = parseInt(btn.dataset.idx);
+        renderRound();
+      });
+    });
+    const checkBtn = stage.querySelector('#lg-check');
+    if (checkBtn) checkBtn.addEventListener('click', () => {
+      if (s.pick === null) return;
+      s.answered = true;
+      renderRound();
+    });
+    const backBtn = stage.querySelector('#lg-back');
+    if (backBtn) backBtn.addEventListener('click', () => {
+      if (currentIndex > 0) { currentIndex--; renderRound(); }
+    });
+    const nextBtn = stage.querySelector('#lg-next');
+    if (nextBtn && !nextBtn.disabled) nextBtn.addEventListener('click', () => {
+      currentIndex++;
+      renderRound();
+    });
+  }
+
+  function renderSummary() {
+    metaEl.textContent = 'Summary';
+    const right = state.filter((s, i) => s.pick === rounds[i].correct).length;
+    let html = '<div class="summary-card">';
+    html += '<div class="summary-label">Score</div>';
+    html += '<div class="summary-score">' + right + ' / ' + rounds.length + '</div>';
+    let msg = "Solid. You're ready for Lab 04.";
+    if (right < rounds.length) msg = "Good run. Replay any rounds you missed; the trace explains the steps.";
+    if (right < rounds.length / 2) msg = "Worth another pass. Re-read the slides on logical operators and short-circuit, then try again.";
+    html += '<div style="color:#4A5568; font-size:14px; margin-top:6px;">' + msg + '</div>';
+    html += '<div class="summary-recap"><h4>Round recap</h4>';
+    for (let i = 0; i < rounds.length; i++) {
+      const correct = state[i].pick === rounds[i].correct;
+      html += '<div class="recap-row">';
+      html += '<div class="recap-mark ' + (correct ? 'right' : 'wrong') + '">' + (correct ? '\u2713' : '\u2715') + '</div>';
+      html += '<div class="recap-text"><strong>' + rounds[i].title + '.</strong> ' + rounds[i].recap + '</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+    html += '<div style="margin-top:16px;"><button class="btn secondary" id="lg-restart">Restart</button></div>';
+    html += '</div>';
+    stage.innerHTML = html;
+    stage.querySelector('#lg-restart').addEventListener('click', () => {
+      for (const s of state) { s.pick = null; s.answered = false; }
+      currentIndex = 0;
+      // Remove any existing completion overlay so a fresh run is clean
+      const ex = root.querySelector('#lg-cs210-completion-overlay');
+      if (ex) ex.remove();
+      renderRound();
+    });
+    renderDots();
+
+    // Drop the completion footer + overlay into the summary card.
+    const card = stage.querySelector('.summary-card');
+    if (card) {
+      const passed = (right / rounds.length) >= CS210_PASS_THRESHOLD;
+      cs210RenderCompletion(card, passed);
+    }
+  }
+
+  // Keyboard navigation
+  document.addEventListener('keydown', (e) => {
+    if (!root.contains(document.activeElement) && document.activeElement !== document.body) return;
+    if (document.activeElement && document.activeElement.tagName === 'INPUT' && document.activeElement.type === 'text') return;
+    if (e.key === 'ArrowLeft' && currentIndex > 0) {
+      currentIndex--;
+      renderRound();
+    } else if (e.key === 'ArrowRight') {
+      if (currentIndex >= rounds.length) return;
+      if (state[currentIndex].answered) {
+        currentIndex++;
+        renderRound();
+      }
+    }
+  });
+
+  renderRound();
+})();
+</script>
+
+
+    </div>
+  </details>
+
+  <!-- ===================== 6. AFTER CLASS ===================== -->
+  <details id="after-class" style="margin-bottom: 24px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      6. After Class
+    </summary>
+    <div style="padding: 18px 22px;">
+      <ul style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Finish Lab 04 if you did not complete it in class. Submit through GitHub Classroom before Lesson 5.</li>
+        <li style="margin-bottom: 6px;">Open the <strong>Lesson 4 reflection quiz</strong> in Blackboard. Enter your tracer completion code, answer the reflection prompt, and attach your screenshot of the tracer completion screen.</li>
+        <li style="margin-bottom: 6px;">Read Beej-C Chapter 3 (loop sections) for Lesson 5.</li>
+        <li style="margin-bottom: 6px;">Replay the logic tracer. Try predicting <em>before</em> you read the values; harder, more useful.</li>
+        <li style="margin-bottom: 0;">Heads up: the next quiz covers conditionals, loops, and functions (Lessons 4 through 6).</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== HELP NOTE ===================== -->
+  <div style="background: #F5F7FA; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 3px; font-size: 13.5px; color: #4A5568;">
+    <strong style="color: #00205B;">Need help?</strong> Schedule EI with your instructor. Bring specific code or specific screenshots, and the exact error message or output you do not understand. Specific questions get unstuck quickly.
+  </div>
+
+</div>

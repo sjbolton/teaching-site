@@ -1,0 +1,3228 @@
+<!-- ============================================================
+     CS210 — Lesson 6
+     Functions
+     Self-contained: all CSS inline. Native <details> for collapsing.
+     Call-stack walkthrough widget and functions quiz embedded in section 5.
+     Paste into Blackboard Ultra via Document → Add HTML block.
+     ============================================================ -->
+
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 980px; margin: 0 auto; line-height: 1.6;">
+
+  <!-- ===================== LIGHT HEADER ===================== -->
+  <div style="border-left: 5px solid #003087; padding: 8px 0 8px 18px; margin-bottom: 24px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 2px;">CS210 &middot; Block 1 &middot; Lesson 6</div>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 600; color: #00205B;">Functions</h1>
+    <div style="font-size: 14px; color: #4A5568; margin-top: 4px;">Defining and calling functions &middot; Prototypes &middot; Parameters and return values &middot; const parameters &middot; Compilation model preview</div>
+  </div>
+
+  <!-- ===================== AT A GLANCE ===================== -->
+  <div style="background: #F5F7FA; border-left: 4px solid #B5B7BA; padding: 14px 18px; margin-bottom: 22px; font-size: 14px;">
+    <strong style="color: #00205B;">At a glance:</strong> Functions are how you organize C programs into named pieces that call each other. Today you learn the syntax (definition, prototype, parameters, return value), the mental model (every call pushes a frame on the stack; every return pops one off), the meaning of <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">const</code> on a parameter, and the four phases of compilation. The in-class call stack walkthrough makes the mental model concrete, the quiz checks your understanding, and two labs put you in the seat: one writing your first multi-function C program from scratch, one refactoring an existing monolithic one.
+  </div>
+
+  <!-- ===================== TABLE OF CONTENTS ===================== -->
+  <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 20px; margin-bottom: 24px; border-radius: 3px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Contents</div>
+    <ol style="margin: 0; padding-left: 22px; font-size: 14px;">
+      <li style="margin-bottom: 4px;"><a href="#objectives" style="color: #003087; text-decoration: none;">Lesson Objectives</a></li>
+      <li style="margin-bottom: 4px;"><a href="#readings" style="color: #003087; text-decoration: none;">Assigned Readings</a></li>
+      <li style="margin-bottom: 4px;"><a href="#pre-class" style="color: #003087; text-decoration: none;">Pre-Class Work</a></li>
+      <li style="margin-bottom: 4px;"><a href="#materials" style="color: #003087; text-decoration: none;">Lesson Materials and Overview</a></li>
+      <li style="margin-bottom: 4px;"><a href="#in-class" style="color: #003087; text-decoration: none;">In-Class Work</a></li>
+      <li style="margin-bottom: 0;"><a href="#after-class" style="color: #003087; text-decoration: none;">After Class</a></li>
+    </ol>
+  </div>
+
+  <!-- ===================== 1. OBJECTIVES ===================== -->
+  <details id="objectives" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      1. Lesson Objectives
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 10px 0; font-style: italic;">By the end of this lesson, cadets will be able to:</p>
+      <ol style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Define and call C functions with parameters and return values. <span style="color: #6B7280; font-size: 12px;">(Outcomes 1, 2)</span></li>
+        <li style="margin-bottom: 6px;">Write a function prototype and explain why C requires one before the call site. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+        <li style="margin-bottom: 6px;">Apply <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">const</code> to a function parameter and explain the promise it makes. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+        <li style="margin-bottom: 0;">Describe the four phases of C compilation (preprocess, compile, assemble, link) and what each produces. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 2. READINGS ===================== -->
+  <details id="readings" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      2. Assigned Readings
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 12px 0;">Complete before class. These set the vocabulary we will use.</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <thead>
+          <tr style="background: #E8EDF5; color: #00205B;">
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 130px;">Source</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9;">Sections</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 220px;">Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;"><a href="https://beej.us/guide/bgc/" style="color: #003087; text-decoration: underline;">Beej-C</a></td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Chapter 4 (Functions)</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Definitions, prototypes, parameters, return values</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 9px 12px;">King, <em>C Programming: A Modern Approach</em></td>
+            <td style="padding: 9px 12px;">Chapter 9 (Functions)</td>
+            <td style="padding: 9px 12px; color: #4A5568;">Optional deeper dive into scope and storage class</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <!-- ===================== 3. PRE-CLASS WORK ===================== -->
+  <details id="pre-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      3. Pre-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 18px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #6B5300; font-size: 14px; margin-bottom: 4px;">Do this first</div>
+        <div style="font-size: 14px; color: #5A4B00;">Plan on 30 to 45 minutes for the reading and the pre-class self-check. The walkthrough and lab in class will move faster if you arrive with the vocabulary already in your head.</div>
+      </div>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 0 0 10px 0;">Pre-Class Checklist</h3>
+
+      <!-- Step 1: Reading -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">1</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 4px;">Read Beej-C Chapter 4.</div>
+            <div style="font-size: 14px; color: #4A5568;">All of it. The chapter is short. Pay attention to the parts on prototypes and on what parameters actually are. Those are the two things cadets get wrong first.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: L5 lab finish -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">2</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 4px;">Finish Lab 05 if you have not.</div>
+            <div style="font-size: 14px; color: #4A5568;">Today's labs assume you are comfortable with conditionals, loops, and writing a small program that reads input and produces output. If Lab 05 is still open, finish it before you start the Lab 06 work.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Self-check quiz -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 0; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">3</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 4px;">Take the functions self-check (in Section 5 below).</div>
+            <div style="font-size: 14px; color: #4A5568;">Eight questions covering prototypes, parameters vs arguments, return values, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">const</code>, the compilation phases, and how locals behave on return. You need 6 of 8 (70%) to pass. The score card gives you a completion code to enter on the Blackboard reflection quiz.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ===================== 4. LESSON MATERIALS AND OVERVIEW ===================== -->
+  <details id="materials" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      4. Lesson Materials and Overview
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 18px 0;">Up to this point your programs have lived entirely inside <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">main</code>. Today that changes. Functions are how C programs grow past a few dozen lines without becoming unreadable. The mental model matters as much as the syntax: every function call pushes a frame onto a stack, and every return pops one off. The walkthrough in Section 5 makes that visual.</p>
+
+      <!-- Subsection navigation -->
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 18px; margin-bottom: 22px; border-radius: 3px;">
+        <div style="font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">Jump to</div>
+        <div style="font-size: 13.5px;">
+          <a href="#slides" style="color: #003087; text-decoration: none; margin-right: 14px;">Slides</a>
+          <a href="#anatomy" style="color: #003087; text-decoration: none; margin-right: 14px;">Anatomy</a>
+          <a href="#parameters" style="color: #003087; text-decoration: none; margin-right: 14px;">Parameters &amp; Return</a>
+          <a href="#prototypes" style="color: #003087; text-decoration: none; margin-right: 14px;">Prototypes</a>
+          <a href="#stack" style="color: #003087; text-decoration: none; margin-right: 14px;">The Call Stack</a>
+          <a href="#const" style="color: #003087; text-decoration: none; margin-right: 14px;">const Parameters</a>
+          <a href="#compilation" style="color: #003087; text-decoration: none;">Compilation Model</a>
+        </div>
+      </div>
+
+      <!-- Slides -->
+      <h3 id="slides" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0; scroll-margin-top: 16px;">Slides</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">The Lesson 6 deck covers everything in this section. The slides are the spine of the in-class lecture; the call stack walkthrough is where the mental model becomes concrete.</p>
+
+      <!-- =========================================================
+           EDIT ME: Lesson 6 slide deck link
+           Replace href="#" below with the SharePoint share URL once the
+           deck is published. Leave target="_blank" and rel="noopener".
+           ========================================================= -->
+      <p style="margin: 0 0 18px 0;">
+        <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 10px 20px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 14px;">Open Lesson 6 slides &rarr;</a>
+      </p>
+
+      <!-- Anatomy -->
+      <h3 id="anatomy" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Anatomy of a C function</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">A C function has four parts: a return type, a name, a parameter list, and a body in curly braces. Here is the smallest useful example.</p>
+
+      <pre style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; overflow-x: auto; margin: 0 0 12px 0;">int add(int a, int b) {
+    int sum = a + b;
+    return sum;
+}</pre>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Reading left to right: <strong>int</strong> is the return type (this function gives back an <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">int</code>). <strong>add</strong> is the name. The two items inside the parentheses are the parameters. The body, inside curly braces, runs each time the function is called and ends with a <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">return</code> statement.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">If a function returns nothing, you write <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">void</code> as the return type and either omit <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">return</code> or use a bare <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">return;</code> with no value. You have already been doing this implicitly: <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">main</code> is itself a function, and the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">int</code> in front of it is its return type.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">The DFCS C Programming Standard introduces three rules at this lesson that apply to every function you write from now on. <strong>&sect;5.2</strong> requires function names in snake_case, descriptive of what the function does (<code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">compute_total</code>, not <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">ct</code> and not <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">computeTotal</code>). <strong>&sect;2.2</strong> requires a <em>function header block</em> directly above each function prototype that names what the function does (<code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">@brief</code>), each parameter (<code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">@param</code>), and the return value (<code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">@return</code>). <strong>&sect;2.3</strong> requires a documentation statement in the file containing <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">main</code> (the comment header block you have been writing since Lesson 1 already counts). The full standard lives in the course Resources section.</p>
+
+      <!-- Parameters and return -->
+      <h3 id="parameters" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Parameters and return values</h3>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Two terms that mean similar things and often get used loosely: a <em>parameter</em> is the name that appears in the function definition. An <em>argument</em> is the value the caller passes in at the call site. In <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">add(int a, int b)</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">a</code> and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">b</code> are parameters. In <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">add(3, 4);</code>, the values <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">3</code> and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">4</code> are arguments.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">The important property: <strong>parameters in C are copies</strong>. When you call <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">add(x, y)</code>, the function receives the current values of <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">x</code> and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">y</code> in its own local parameters <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">a</code> and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">b</code>. If <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">add</code> changes <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">a</code> inside its body, the caller's <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">x</code> does not change. This is called <em>pass by value</em>. Scenario 2 in the in-class walkthrough makes this concrete.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">The return value flows in the opposite direction. The function computes a value with <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">return expr;</code>, the function ends immediately, and the value of <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">expr</code> arrives at the call site. So <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">int result = add(3, 4);</code> assigns the returned 7 to <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">result</code>.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">Parameters and return values are how functions share data with each other in C. Some of you wrote Python where a function reads or writes a variable defined at the top of the file and the code "just works." The DFCS C Programming Standard <strong>&sect;7.2</strong> forbids that pattern in CS210: when it is reasonably possible to avoid a global variable, avoid it. Pass what the function needs as parameters and return what it produces. Global state hides what a function actually depends on and is one of the most common sources of hard-to-find bugs in C code.</p>
+
+      <!-- Prototypes -->
+      <h3 id="prototypes" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Prototypes: the rule C needs that Python doesn't</h3>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Python is happy to find a function definition anywhere in the file. C is not. When the C compiler hits a call to <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">add(3, 4)</code>, it must already know the function's signature: what types it takes and what it returns. The <em>prototype</em> is how you tell the compiler that information ahead of time.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">A prototype is just the function header followed by a semicolon, with no body.</p>
+
+      <pre style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; overflow-x: auto; margin: 0 0 12px 0;">int add(int a, int b);   <span style="color: #6B7280;">// prototype (parameter names optional)</span>
+int add(int, int);       <span style="color: #6B7280;">// also valid: names dropped</span></pre>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Put the prototype near the top of your <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">.c</code> file, above <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">main</code>. The full definition (with the body) can come later in the file. If you forget the prototype and call the function anyway, the compiler will warn you with something like:</p>
+
+      <pre style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.55; overflow-x: auto; margin: 0 0 12px 0;">lab.c:8:18: <span style="color: #F0B92C;">warning:</span> implicit declaration of function &lsquo;add&rsquo; [-Wimplicit-function-declaration]</pre>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;"><strong>Always fix this warning.</strong> "Implicit declaration" means the compiler had to invent a signature for your function because no prototype was visible. The fix is short: write the prototype above the call. Quiz Question 4 in Section 5 walks through one of these errors in detail.</p>
+
+      <!-- Stack -->
+      <h3 id="stack" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">The call stack: a mental model</h3>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Every function call in a C program pushes a <em>frame</em> onto a structure called the <em>call stack</em>. The frame holds that function's parameters, its local variables, and a note about where to return to. When the function returns, its frame is popped off the stack and disappears, taking its locals with it.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">When <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">main</code> calls <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">add</code>, the stack briefly looks like this (top frame is the function currently running):</p>
+
+      <pre style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; overflow-x: auto; margin: 0 0 12px 0;">  [ add  ]   <span style="color: #6B7280;">&larr; running. params: a=3, b=4. local: sum=7</span>
+  [ main ]   <span style="color: #6B7280;">&larr; paused, waiting for add to return</span></pre>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">When <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">add</code> returns 7, its frame is popped, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">main</code> is back on top, and the 7 flows into whatever variable was waiting for it. Two things to internalize: locals exist only while their frame is on the stack, and a function does not have access to another function's locals. The walkthrough in Section 5 makes both of these visible.</p>
+
+      <!-- const -->
+      <h3 id="const" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">const parameters: a promise to the compiler</h3>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">If a parameter will not be modified inside the function body, mark it <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">const</code>:</p>
+
+      <pre style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; overflow-x: auto; margin: 0 0 12px 0;">double circle_area(const double radius) {
+    return 3.14159265 * radius * radius;
+}</pre>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">The <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">const</code> is a promise: the function will not assign a new value to <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">radius</code> inside its body. If you accidentally write code that does, the compiler stops you. This catches bugs and documents intent in one go. We will use it on at least one parameter in today's lab.</p>
+
+      <!-- Compilation model -->
+      <h3 id="compilation" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">The compilation model (preview)</h3>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">When you type <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">gcc lab.c -o lab</code>, four things happen in sequence:</p>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 14px;">
+        <thead>
+          <tr style="background: #00205B; color: #ffffff;">
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 130px;">Phase</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 160px;">Produces</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600;">What it does</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-weight: 600;">Preprocess</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Expanded C source</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Expands <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">#include</code> directives and macros into a single big source file.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-weight: 600;">Compile</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Assembly code</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Turns C into the assembly language for your machine architecture.</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-weight: 600;">Assemble</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Object file (<code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">.o</code>)</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Turns assembly into machine code in an object file. Not yet runnable.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; font-weight: 600;">Link</td>
+            <td style="padding: 8px 12px; color: #4A5568;">Executable</td>
+            <td style="padding: 8px 12px; color: #4A5568;">Combines object files with library code (like <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">printf</code>) into a runnable program.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">gcc</code> runs all four phases for you in one command. You do not need to memorize each step's flags; you do need to recognize the names so the error messages make sense (a "linker error" is different from a "compiler error" and the fix is different too). <strong>Lesson 7 introduces <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">make</code></strong>, which automates running these phases across multiple files.</p>
+
+    </div>
+  </details>
+
+  <!-- ===================== 5. IN-CLASS WORK ===================== -->
+  <details id="in-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      5. In-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 16px 0;">Four things to do in class. Use the checklist to track your progress.</p>
+
+      <ul style="list-style: none; padding: 0; margin: 0 0 24px 0; font-size: 14.5px;">
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Work through the call stack walkthrough below.</strong>
+          <span style="color: #4A5568;">Five short scenarios with prediction checkpoints. Watch frames push and pop as functions call each other. About 20 minutes.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Take the functions self-check.</strong>
+          <span style="color: #4A5568;">Eight questions on prototypes, parameters, return values, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">const</code>, and the compilation phases. About 10 minutes. The score card produces your completion code.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Complete Lab 06.1: Projectile Energy.</strong>
+          <span style="color: #4A5568;">Write four small functions with prototypes and one <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">const</code> parameter. Single file. About 20 minutes. Worth 1 point.</span>
+          <!-- =========================================================
+               EDIT ME: Lab 06.1 GitHub Classroom assignment link
+               Replace href="#" with the classroom.github.com/a/... invite
+               URL once the assignment is published.
+               ========================================================= -->
+          <div style="margin-top: 8px; margin-left: 28px;">
+            <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 6px 14px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 13px;">Accept Lab 06.1 on GitHub Classroom &rarr;</a>
+          </div>
+        </li>
+        <li style="margin-bottom: 0; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Complete Lab 06.2: Refactor Mountain Hike Planner.</strong>
+          <span style="color: #4A5568;">Start with a working monolithic program. Refactor it into well-named functions so <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">main()</code> is under 15 lines. About 25 minutes. Worth 1 point.</span>
+          <!-- =========================================================
+               EDIT ME: Lab 06.2 GitHub Classroom assignment link
+               Replace href="#" with the classroom.github.com/a/... invite
+               URL once the assignment is published.
+               ========================================================= -->
+          <div style="margin-top: 8px; margin-left: 28px;">
+            <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 6px 14px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 13px;">Accept Lab 06.2 on GitHub Classroom &rarr;</a>
+          </div>
+        </li>
+      </ul>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 18px 0 10px 0;">Call Stack Walkthrough</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Five short C programs. Step through them one line at a time and watch the call stack change. Before each return, the widget asks you to predict the value coming back. Get it right to keep stepping.</p>
+
+      <!-- ============================================================
+     CS210 Lesson 6 - Call Stack Walkthrough Widget
+     Stepped execution visualizer with prediction checkpoints.
+     Template-aligned style. Native HTML/CSS + scoped JS.
+     Paste as a block; runs anywhere the parent page allows <script>.
+     ============================================================ -->
+<style>
+.cs210-stack * { box-sizing: border-box; }
+.cs210-stack {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-stack h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-stack .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 22px;
+}
+.cs210-stack .progress-bar {
+  background: #E5E7EB;
+  border-radius: 3px;
+  height: 8px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.cs210-stack .progress-fill {
+  background: #003087;
+  height: 100%;
+  transition: width 0.3s ease;
+}
+.cs210-stack .progress-label {
+  font-size: 12px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-stack .scenario-bar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.cs210-stack .scenario-chip {
+  background: #F8FAFC;
+  border: 1px solid #D0D5DD;
+  border-radius: 3px;
+  padding: 6px 12px;
+  font-size: 12.5px;
+  color: #4A5568;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s ease;
+}
+.cs210-stack .scenario-chip:hover { background: #EEF2F7; }
+.cs210-stack .scenario-chip.active {
+  background: #003087;
+  color: #ffffff;
+  border-color: #003087;
+  font-weight: 600;
+}
+.cs210-stack .scenario-chip.done {
+  background: #E6F4EA;
+  border-color: #2E7D32;
+  color: #1B5E20;
+}
+.cs210-stack .scenario-chip.active.done {
+  background: #2E7D32;
+  color: #ffffff;
+  border-color: #2E7D32;
+}
+.cs210-stack .scenario-chip .chip-check {
+  display: inline-block;
+  margin-right: 4px;
+  font-weight: 700;
+}
+.cs210-stack .section-header {
+  background: #E8EDF5;
+  color: #00205B;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.cs210-stack .task-card {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  border-radius: 3px;
+}
+.cs210-stack .task-card.complete {
+  background: #E6F4EA;
+  border-left-color: #2E7D32;
+}
+.cs210-stack .task-label {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B5300;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.cs210-stack .task-card.complete .task-label { color: #1B5E20; }
+.cs210-stack .task-text {
+  font-size: 15px;
+  color: #1a1a1a;
+}
+.cs210-stack .task-hint {
+  font-size: 12.5px;
+  color: #6B7280;
+  margin-top: 6px;
+  font-style: italic;
+}
+
+/* Two-pane area: code left, stack right */
+.cs210-stack .panes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+@media (max-width: 760px) {
+  .cs210-stack .panes { grid-template-columns: 1fr; }
+}
+
+/* Code pane */
+.cs210-stack .code-pane {
+  background: #1E2A3A;
+  color: #E8EDF5;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13.5px;
+  line-height: 1.6;
+  border-radius: 4px;
+  padding: 14px 16px 14px 14px;
+  min-height: 360px;
+  max-height: 460px;
+  overflow-y: auto;
+}
+.cs210-stack .code-row {
+  display: flex;
+  padding: 1px 4px;
+  border-radius: 2px;
+  transition: background 0.15s ease;
+}
+.cs210-stack .code-row.current {
+  background: rgba(240, 185, 44, 0.18);
+}
+.cs210-stack .code-row.returning {
+  background: rgba(127, 209, 127, 0.18);
+}
+.cs210-stack .code-marker {
+  width: 16px;
+  color: #F0B92C;
+  font-weight: 700;
+  flex: 0 0 16px;
+}
+.cs210-stack .code-line-no {
+  width: 30px;
+  color: #6B7280;
+  text-align: right;
+  margin-right: 12px;
+  flex: 0 0 30px;
+}
+.cs210-stack .code-text {
+  white-space: pre;
+  flex: 1;
+}
+.cs210-stack .code-text .kw  { color: #7FB3D5; }
+.cs210-stack .code-text .ty  { color: #5DC9A0; }
+.cs210-stack .code-text .fn  { color: #FFD080; }
+.cs210-stack .code-text .num { color: #F0B92C; }
+.cs210-stack .code-text .com { color: #6B8090; font-style: italic; }
+.cs210-stack .code-text .pun { color: #B5BEC8; }
+
+/* Stack pane */
+.cs210-stack .stack-pane {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  padding: 14px 16px;
+  min-height: 360px;
+  max-height: 460px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.cs210-stack .stack-pane-header {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #E5E7EB;
+}
+.cs210-stack .stack-empty {
+  color: #6B7280;
+  font-style: italic;
+  font-size: 13px;
+  text-align: center;
+  padding: 80px 10px;
+}
+.cs210-stack .stack-frames {
+  display: flex;
+  flex-direction: column-reverse; /* top of stack visually on top */
+  gap: 6px;
+}
+.cs210-stack .frame {
+  border: 1px solid #C7CFD9;
+  border-radius: 4px;
+  background: #F8FAFC;
+  padding: 8px 10px;
+  font-family: Consolas, monospace;
+  font-size: 12.5px;
+  animation: cs210-stack-push 0.35s ease;
+}
+.cs210-stack .frame.top {
+  background: #FFF8E1;
+  border-color: #F0B92C;
+  box-shadow: 0 2px 6px rgba(240, 185, 44, 0.15);
+}
+.cs210-stack .frame.popping {
+  animation: cs210-stack-pop 0.35s ease forwards;
+}
+.cs210-stack .frame-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px dashed #C7CFD9;
+}
+.cs210-stack .frame-name {
+  color: #00205B;
+  font-weight: 700;
+  font-size: 13px;
+}
+.cs210-stack .frame-tag {
+  font-size: 10px;
+  color: #6B7280;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.cs210-stack .frame.top .frame-tag { color: #6B5300; font-weight: 600; }
+.cs210-stack .frame-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 1px 0;
+}
+.cs210-stack .frame-row .lbl { color: #4A5568; }
+.cs210-stack .frame-row .val { color: #00205B; font-weight: 600; }
+.cs210-stack .frame-row.flash .val {
+  animation: cs210-stack-flash 0.8s ease;
+}
+.cs210-stack .frame-row.param .lbl::before {
+  content: "param ";
+  color: #6B7280;
+  font-size: 10px;
+  margin-right: 2px;
+}
+.cs210-stack .frame-row.ret .val { color: #1B5E20; }
+.cs210-stack .frame-section {
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #6B7280;
+  margin-top: 6px;
+  margin-bottom: 2px;
+}
+@keyframes cs210-stack-push {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes cs210-stack-pop {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(20px); }
+}
+@keyframes cs210-stack-flash {
+  0%   { background: #FFF8E1; }
+  100% { background: transparent; }
+}
+
+/* Status line */
+.cs210-stack .status-line {
+  background: #F0F4FA;
+  border: 1px solid #C7CFD9;
+  border-radius: 3px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #00205B;
+  margin-bottom: 12px;
+  font-family: Consolas, monospace;
+}
+.cs210-stack .status-line .next-action {
+  color: #4A5568;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 12.5px;
+  font-style: italic;
+  margin-top: 2px;
+}
+
+/* Checkpoint prompt */
+.cs210-stack .checkpoint {
+  background: #FFF8E1;
+  border: 2px solid #F0B92C;
+  border-radius: 4px;
+  padding: 14px 18px;
+  margin-bottom: 12px;
+}
+.cs210-stack .checkpoint.locked-good {
+  background: #E6F4EA;
+  border-color: #2E7D32;
+}
+.cs210-stack .checkpoint-label {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: #6B5300;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.cs210-stack .checkpoint.locked-good .checkpoint-label { color: #1B5E20; }
+.cs210-stack .checkpoint-question {
+  font-size: 14.5px;
+  color: #1a1a1a;
+  margin-bottom: 10px;
+}
+.cs210-stack .checkpoint-question code {
+  background: #F0F2F5;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  color: #00205B;
+}
+.cs210-stack .checkpoint-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.cs210-stack .checkpoint-row input {
+  flex: 1;
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  border-radius: 3px;
+  padding: 7px 12px;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  color: #00205B;
+  outline: none;
+}
+.cs210-stack .checkpoint-row input:focus {
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-stack .checkpoint-row input:disabled {
+  background: #F5F7FA;
+  color: #6B7280;
+}
+.cs210-stack .checkpoint-row .check-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 7px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-stack .checkpoint-row .check-btn:hover { background: #00205B; }
+.cs210-stack .checkpoint-row .check-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-stack .checkpoint-feedback {
+  margin-top: 8px;
+  font-size: 13px;
+  font-style: italic;
+}
+.cs210-stack .checkpoint-feedback.err { color: #B8002F; }
+.cs210-stack .checkpoint-feedback.ok  { color: #1B5E20; font-style: normal; }
+.cs210-stack .checkpoint .check-locked {
+  font-size: 13px;
+  color: #1B5E20;
+  margin-top: 6px;
+}
+
+/* Controls */
+.cs210-stack .controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.cs210-stack .btn {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  padding: 7px 16px;
+  border-radius: 3px;
+  font-size: 13.5px;
+  cursor: pointer;
+  color: #00205B;
+  font-family: inherit;
+  font-weight: 600;
+  transition: box-shadow 0.2s ease;
+}
+.cs210-stack .btn:hover:not(:disabled) { background: #F5F7FA; }
+.cs210-stack .btn:disabled {
+  background: #F5F7FA;
+  color: #A0AEC0;
+  cursor: not-allowed;
+  border-color: #E5E7EB;
+}
+.cs210-stack .btn.primary {
+  background: #003087;
+  color: #ffffff;
+  border-color: #003087;
+}
+.cs210-stack .btn.primary:hover:not(:disabled) { background: #00205B; }
+.cs210-stack .btn.primary:disabled {
+  background: #A0AEC0;
+  color: #ffffff;
+  border-color: #A0AEC0;
+}
+.cs210-stack .btn.danger {
+  color: #6B0000;
+  border-color: #D0D5DD;
+}
+@keyframes cs210-stack-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(240, 185, 44, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0); }
+}
+.cs210-stack .btn.pulse {
+  background: #FFF8E1;
+  border-color: #F0B92C;
+  color: #6B5300;
+  animation: cs210-stack-pulse 1.5s infinite;
+}
+
+.cs210-stack .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #4A5568;
+  margin-top: 12px;
+}
+.cs210-stack .help-note strong { color: #00205B; }
+
+/* Name modal (reused pattern) */
+.cs210-stack .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.cs210-stack .name-modal {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-stack .name-modal h2 {
+  color: #00205B;
+  font-size: 20px;
+  margin: 0 0 10px 0;
+}
+.cs210-stack .name-modal p {
+  color: #4A5568;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+.cs210-stack .name-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-stack .name-modal input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-stack .name-modal-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-stack .name-modal-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-stack .name-modal-btn:not(:disabled):hover { background: #00205B; }
+
+/* Completion screen */
+.cs210-stack .completion-screen {
+  background: #ffffff;
+  border: 2px solid #2E7D32;
+  border-radius: 6px;
+  padding: 24px 28px;
+  margin-top: 16px;
+}
+.cs210-stack .completion-screen .cs-heading {
+  color: #1B5E20;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 6px 0;
+}
+.cs210-stack .completion-screen .cs-name-line {
+  font-size: 15px;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+}
+.cs210-stack .completion-screen .cs-name-line strong { color: #00205B; }
+.cs210-stack .completion-screen .cs-code-block {
+  background: #F0F4FA;
+  border: 1px solid #003087;
+  border-radius: 4px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.cs210-stack .completion-screen .cs-code-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #4A5568;
+  margin-bottom: 4px;
+}
+.cs210-stack .completion-screen .cs-code-value {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 28px;
+  font-weight: 700;
+  color: #00205B;
+  letter-spacing: 3px;
+}
+.cs210-stack .completion-screen .cs-copy-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-stack .completion-screen .cs-copy-btn:hover { background: #00205B; }
+.cs210-stack .completion-screen .cs-copy-btn.copied { background: #2E7D32; }
+.cs210-stack .completion-screen .cs-timestamp {
+  font-size: 13px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-stack .completion-screen .cs-reminder {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 14px;
+  color: #6B5300;
+  line-height: 1.5;
+}
+.cs210-stack .completion-screen .cs-reminder strong { color: #4A3A00; }
+</style>
+
+<div class="cs210-stack">
+
+<div class="name-modal-backdrop" id="cs-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Blackboard reflection quiz.</p>
+    <input type="text" id="cs-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="cs-cadet-name-btn" disabled>Start the walkthrough</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 6 &middot; Call Stack Walkthrough</h1>
+<div class="subtitle">Step through five short programs and watch the call stack grow and shrink as functions call other functions and return. Predict what happens at each checkpoint before stepping forward.</div>
+
+<div class="progress-bar"><div class="progress-fill" id="cs-progress-fill" style="width: 0%;"></div></div>
+<div class="progress-label" id="cs-progress-label">Scenario 1 of 5</div>
+
+<div class="scenario-bar" id="cs-scenario-bar"></div>
+
+<div class="section-header" id="cs-section-header">Scenario 1 &middot; Simplest call</div>
+
+<div class="task-card" id="cs-task-card">
+  <div class="task-label" id="cs-task-label">Predict, then step</div>
+  <div class="task-text" id="cs-task-text">Loading scenario...</div>
+  <div class="task-hint" id="cs-task-hint" style="display:none;"></div>
+</div>
+
+<div class="status-line" id="cs-status-line">
+  <div id="cs-status-text">Press <strong>Step</strong> to begin.</div>
+  <div class="next-action" id="cs-next-action"></div>
+</div>
+
+<div class="checkpoint" id="cs-checkpoint" style="display:none;">
+  <div class="checkpoint-label" id="cs-checkpoint-label">Checkpoint</div>
+  <div class="checkpoint-question" id="cs-checkpoint-question"></div>
+  <div class="checkpoint-row">
+    <input type="text" id="cs-checkpoint-input" autocomplete="off" spellcheck="false">
+    <button class="check-btn" id="cs-checkpoint-btn">Check</button>
+  </div>
+  <div class="checkpoint-feedback" id="cs-checkpoint-feedback"></div>
+</div>
+
+<div class="panes">
+  <div class="code-pane" id="cs-code-pane"></div>
+  <div class="stack-pane">
+    <div class="stack-pane-header">Call stack &middot; top frame is the function currently running</div>
+    <div id="cs-stack-content"><div class="stack-empty">Stack is empty. Press Step to call main().</div></div>
+  </div>
+</div>
+
+<div class="controls">
+  <button class="btn primary" id="cs-step-btn">Step &rarr;</button>
+  <button class="btn" id="cs-run-btn">Run to end</button>
+  <button class="btn" id="cs-back-btn">&larr; Back</button>
+  <button class="btn danger" id="cs-reset-btn">Reset scenario</button>
+</div>
+
+<div id="cs-completion-area"></div>
+
+<div class="help-note">
+  <strong>Stuck?</strong> The status line tells you what just ran and what's next. The current line in the code pane has a yellow highlight. The stack pane shows every function that has been called but not yet returned. When a function returns, its frame is removed from the stack and its return value goes back to whoever called it.
+</div>
+
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-stack');
+  if (!root) return;
+
+  // ============================================================
+  // CS210 widget completion utilities
+  // ============================================================
+  const CS210_SALT = "lesson06_callstack_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#cs-name-modal-backdrop');
+    const input = root.querySelector('#cs-cadet-name-input');
+    const btn = root.querySelector('#cs-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored) input.value = stored;
+    } catch (e) {}
+    function updateBtn() { btn.disabled = input.value.trim().length < 2; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', function() {
+      const name = input.value.trim();
+      if (name.length < 2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+    });
+    setTimeout(function() { input.focus(); }, 50);
+  })();
+
+  function cs210RenderCompletion(area) {
+    if (!area) return;
+    if (root.querySelector('#cs210-completion-overlay')) return;
+    const now = new Date();
+    const ts = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const safeName = (cs210CadetName || 'Cadet').replace(/[<>&"']/g, function(c) {
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+    area.innerHTML =
+      '<div class="completion-screen">' +
+        '<div class="cs-heading">Walkthrough complete</div>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value">' + CS210_CODE + '</div></div>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+      '</div>';
+    const overlay = document.createElement('div');
+    overlay.id = 'cs210-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.style.background = 'rgba(27, 94, 32, 0.55)';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">Walkthrough complete</h2>' +
+        '<p>Take a screenshot of this box. You will need the code and a visual of this screen for the Blackboard reflection quiz.</p>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value" id="cs-overlay-code">' + CS210_CODE + '</div></div>' +
+          '<button class="cs-copy-btn" id="cs-copy-btn" type="button">Copy code</button>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+        '<div class="cs-reminder" style="margin-bottom:14px;">' +
+          '<strong>Next step:</strong> Open the Lesson 6 reflection quiz in Blackboard. Enter this code, answer the reflection prompt, and attach your screenshot.' +
+        '</div>' +
+        '<button class="name-modal-btn" id="cs-overlay-close" type="button" style="background:#2E7D32;">Got it &mdash; close this</button>' +
+      '</div>';
+    root.appendChild(overlay);
+    const closeBtn = overlay.querySelector('#cs-overlay-close');
+    if (closeBtn) closeBtn.addEventListener('click', function() { overlay.style.display = 'none'; });
+    const copyBtn = overlay.querySelector('#cs-copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function() {
+        const text = CS210_CODE;
+        const ok = function() {
+          copyBtn.textContent = 'Copied';
+          copyBtn.classList.add('copied');
+          setTimeout(function() {
+            copyBtn.textContent = 'Copy code';
+            copyBtn.classList.remove('copied');
+          }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(ok, function() { cs210FallbackCopy(text); ok(); });
+        } else { cs210FallbackCopy(text); ok(); }
+      });
+    }
+  }
+  function cs210FallbackCopy(text) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e) {}
+  }
+
+  // ============================================================
+  // Scenario definitions
+  // Each step is an executable instruction with metadata for rendering:
+  //   kind: 'enter' | 'declare' | 'assign' | 'call' | 'return' | 'no-op' | 'exit'
+  //   line: 1-based line number in the code listing (current-line marker)
+  //   desc: human-readable status text after the step runs
+  //   next: human-readable preview of what the NEXT step will do
+  //   args/params/value: depending on kind
+  // checkpoints: { atIndex: { id, label, question, answer (string or array), tolerance?, normalize?,
+  //                           correctMsg, wrongMsg } }
+  //   atIndex = step index at which the checkpoint is offered BEFORE executing that step
+  // ============================================================
+
+  const scenarios = [
+    {
+      id: 'simple-call',
+      title: 'Simplest call',
+      summary: 'main() calls add(3, 4). One frame pushes on, one frame pops off.',
+      hint: 'Watch the new frame appear when add is called, then disappear when it returns.',
+      code: [
+        'int add(int a, int b) {',
+        '    int sum = a + b;',
+        '    return sum;',
+        '}',
+        '',
+        'int main(void) {',
+        '    int result = add(3, 4);',
+        '    return result;',
+        '}',
+      ],
+      steps: [
+        { kind: 'enter', fn: 'main', line: 6, locals: {}, desc: 'Program starts. main() begins execution.',
+          next: 'Declare result and call add(3, 4).' },
+        { kind: 'call', fn: 'add', line: 7, args: { a: 3, b: 4 }, callerLine: 7,
+          desc: 'main calls add(3, 4). A new frame for add is pushed onto the stack.',
+          next: 'Compute sum = a + b inside add.' },
+        { kind: 'declare', fn: 'add', line: 2, name: 'sum', value: 7,
+          desc: 'Inside add: sum = a + b = 3 + 4 = 7.',
+          next: 'Return sum from add.' },
+        { kind: 'return', fn: 'add', line: 3, value: 7, toLine: 7, toVar: 'result',
+          desc: 'add returns 7. Its frame is popped. The 7 flows back to result in main.',
+          next: 'main holds the return value of add.' },
+        { kind: 'assign', fn: 'main', line: 7, name: 'result', value: 7,
+          desc: 'result = 7 in main.',
+          next: 'main returns result.' },
+        { kind: 'return', fn: 'main', line: 8, value: 7, toLine: null, toVar: null,
+          desc: 'main returns 7. The program ends.',
+          next: 'Scenario complete.' },
+        { kind: 'exit', desc: 'Program finished.' },
+      ],
+      checkpoints: {
+        3: { // before the return step
+          id: 'sc1-cp1',
+          label: 'Predict the return value',
+          question: 'add was called with a = 3 and b = 4. What value will add return on the next step?',
+          answer: ['7'],
+          normalize: 'int',
+          correctMsg: 'Correct. add returns a + b = 7.',
+          wrongMsg: 'Not quite. Look at the frame for add: a = 3 and b = 4. The function returns a + b.',
+        },
+        4: { // before the assign in main
+          id: 'sc1-cp2',
+          label: 'Predict the assignment',
+          question: 'add returned 7. What will the value of result be in main after the next step?',
+          answer: ['7'],
+          normalize: 'int',
+          correctMsg: 'Correct. The return value flows into result.',
+          wrongMsg: 'The return value of a function is what gets assigned at the call site. add returned 7.',
+        },
+      },
+    },
+
+    {
+      id: 'params-copies',
+      title: 'Parameters are copies',
+      summary: 'tweak(x) tries to change its parameter. The caller\'s variable is untouched.',
+      hint: 'C passes parameters by value. The function gets a copy.',
+      code: [
+        'int tweak(int x) {',
+        '    x = x + 100;',
+        '    return x;',
+        '}',
+        '',
+        'int main(void) {',
+        '    int n = 5;',
+        '    int t = tweak(n);',
+        '    return n;',
+        '}',
+      ],
+      steps: [
+        { kind: 'enter', fn: 'main', line: 6, locals: {}, desc: 'Program starts. main() begins execution.',
+          next: 'Declare n = 5.' },
+        { kind: 'declare', fn: 'main', line: 7, name: 'n', value: 5,
+          desc: 'n = 5 in main.',
+          next: 'Call tweak(n), passing the value of n.' },
+        { kind: 'call', fn: 'tweak', line: 8, args: { x: 5 }, callerLine: 8,
+          desc: 'tweak is called. The value of n (5) is COPIED into the parameter x.',
+          next: 'Inside tweak, modify x.' },
+        { kind: 'assign', fn: 'tweak', line: 2, name: 'x', value: 105,
+          desc: 'Inside tweak: x = x + 100 = 105. This changes the LOCAL x in this frame only.',
+          next: 'Return x from tweak.' },
+        { kind: 'return', fn: 'tweak', line: 3, value: 105, toLine: 8, toVar: 't',
+          desc: 'tweak returns 105. Its frame is popped. 105 flows into t in main.',
+          next: 'main holds t = 105. What about n?' },
+        { kind: 'assign', fn: 'main', line: 8, name: 't', value: 105,
+          desc: 't = 105 in main. n was never touched.',
+          next: 'main returns n.' },
+        { kind: 'return', fn: 'main', line: 9, value: 5, toLine: null, toVar: null,
+          desc: 'main returns n = 5. Even though tweak modified its parameter, n in main is unchanged.',
+          next: 'Scenario complete.' },
+        { kind: 'exit', desc: 'Program finished.' },
+      ],
+      checkpoints: {
+        3: {
+          id: 'sc2-cp1',
+          label: 'Predict the local change',
+          question: 'tweak\'s parameter x is currently 5. After x = x + 100 runs, what will x be inside tweak?',
+          answer: ['105'],
+          normalize: 'int',
+          correctMsg: 'Correct. x in tweak is now 105.',
+          wrongMsg: 'x starts as 5 (copied from n). Then x = x + 100.',
+        },
+        6: {
+          id: 'sc2-cp2',
+          label: 'Predict the caller\'s variable',
+          question: 'tweak returned 105 into t. What is the value of n in main right now?',
+          answer: ['5'],
+          normalize: 'int',
+          correctMsg: 'Correct. Parameters are copies. Modifying x in tweak did not touch n in main.',
+          wrongMsg: 'This is the key idea of pass-by-value. The function modified its OWN copy. n in main was set to 5 and was never assigned again.',
+        },
+      },
+    },
+
+    {
+      id: 'with-locals',
+      title: 'Function with locals',
+      summary: 'square_plus_one(n) declares a local, computes with it, returns. The local disappears with the frame.',
+      hint: 'Local variables live and die with their frame.',
+      code: [
+        'int square_plus_one(int n) {',
+        '    int sq = n * n;',
+        '    int answer = sq + 1;',
+        '    return answer;',
+        '}',
+        '',
+        'int main(void) {',
+        '    int r = square_plus_one(6);',
+        '    return r;',
+        '}',
+      ],
+      steps: [
+        { kind: 'enter', fn: 'main', line: 7, locals: {}, desc: 'Program starts. main() begins execution.',
+          next: 'Call square_plus_one(6).' },
+        { kind: 'call', fn: 'square_plus_one', line: 8, args: { n: 6 }, callerLine: 8,
+          desc: 'square_plus_one is called with n = 6. New frame pushed.',
+          next: 'Declare local sq = n * n.' },
+        { kind: 'declare', fn: 'square_plus_one', line: 2, name: 'sq', value: 36,
+          desc: 'Local sq = n * n = 36.',
+          next: 'Declare local answer = sq + 1.' },
+        { kind: 'declare', fn: 'square_plus_one', line: 3, name: 'answer', value: 37,
+          desc: 'Local answer = sq + 1 = 37.',
+          next: 'Return answer.' },
+        { kind: 'return', fn: 'square_plus_one', line: 4, value: 37, toLine: 8, toVar: 'r',
+          desc: 'square_plus_one returns 37. Frame popped. sq and answer no longer exist anywhere.',
+          next: 'r holds the returned value back in main.' },
+        { kind: 'assign', fn: 'main', line: 8, name: 'r', value: 37,
+          desc: 'r = 37 in main.',
+          next: 'main returns r.' },
+        { kind: 'return', fn: 'main', line: 9, value: 37, toLine: null, toVar: null,
+          desc: 'main returns 37. Program ends.',
+          next: 'Scenario complete.' },
+        { kind: 'exit', desc: 'Program finished.' },
+      ],
+      checkpoints: {
+        3: {
+          id: 'sc3-cp1',
+          label: 'Predict the local',
+          question: 'square_plus_one\'s parameter n is 6 and sq is now 36. After the next line runs, what will answer be?',
+          answer: ['37'],
+          normalize: 'int',
+          correctMsg: 'Correct. answer = sq + 1 = 37.',
+          wrongMsg: 'Read the next line: answer = sq + 1. sq is 36.',
+        },
+        5: {
+          id: 'sc3-cp2',
+          label: 'Where did the locals go?',
+          question: 'After square_plus_one returns, how many variables named sq exist anywhere in the program? (Answer with a number.)',
+          answer: ['0'],
+          normalize: 'int',
+          correctMsg: 'Correct. sq lived inside the square_plus_one frame. When the frame was popped, sq vanished with it.',
+          wrongMsg: 'Locals belong to their frame. When the frame is gone, the locals are gone.',
+        },
+      },
+    },
+
+    {
+      id: 'nested-calls',
+      title: 'Nested calls (3 deep)',
+      summary: 'main calls outer, outer calls inner. Watch the stack grow to three frames and shrink back.',
+      hint: 'The deepest function (the most recently called) sits on top.',
+      code: [
+        'int inner(int v) {',
+        '    return v + 1;',
+        '}',
+        '',
+        'int outer(int w) {',
+        '    int m = inner(w);',
+        '    return m * 2;',
+        '}',
+        '',
+        'int main(void) {',
+        '    int result = outer(10);',
+        '    return result;',
+        '}',
+      ],
+      steps: [
+        { kind: 'enter', fn: 'main', line: 10, locals: {}, desc: 'Program starts. main() begins.',
+          next: 'Call outer(10).' },
+        { kind: 'call', fn: 'outer', line: 11, args: { w: 10 }, callerLine: 11,
+          desc: 'main calls outer(10). New frame for outer.',
+          next: 'outer calls inner(w).' },
+        { kind: 'call', fn: 'inner', line: 6, args: { v: 10 }, callerLine: 6,
+          desc: 'outer calls inner(10). Three frames now: main, outer, inner.',
+          next: 'inner computes v + 1 and returns it.' },
+        { kind: 'return', fn: 'inner', line: 2, value: 11, toLine: 6, toVar: 'm',
+          desc: 'inner returns 11. Its frame pops. We are back in outer.',
+          next: 'outer assigns m = 11.' },
+        { kind: 'assign', fn: 'outer', line: 6, name: 'm', value: 11,
+          desc: 'In outer: m = 11.',
+          next: 'outer returns m * 2.' },
+        { kind: 'return', fn: 'outer', line: 7, value: 22, toLine: 11, toVar: 'result',
+          desc: 'outer returns 11 * 2 = 22. Its frame pops. Back in main.',
+          next: 'main assigns result = 22.' },
+        { kind: 'assign', fn: 'main', line: 11, name: 'result', value: 22,
+          desc: 'In main: result = 22.',
+          next: 'main returns result.' },
+        { kind: 'return', fn: 'main', line: 12, value: 22, toLine: null, toVar: null,
+          desc: 'main returns 22. Program ends.',
+          next: 'Scenario complete.' },
+        { kind: 'exit', desc: 'Program finished.' },
+      ],
+      checkpoints: {
+        3: {
+          id: 'sc4-cp1',
+          label: 'Count the frames',
+          question: 'inner has just been called. How many frames are on the call stack right now?',
+          answer: ['3'],
+          normalize: 'int',
+          correctMsg: 'Correct. main, outer, and inner are all alive. inner is on top.',
+          wrongMsg: 'Look at the stack pane. Every function that was called and has not yet returned is on the stack.',
+        },
+        5: {
+          id: 'sc4-cp2',
+          label: 'Predict the next return',
+          question: 'inner has returned. outer is now back on top with m = 11. What value will outer return on the next step?',
+          answer: ['22'],
+          normalize: 'int',
+          correctMsg: 'Correct. outer returns m * 2 = 22.',
+          wrongMsg: 'outer\'s return statement is m * 2. m is 11 now that inner gave it back.',
+        },
+      },
+    },
+
+    {
+      id: 'expr-with-two-calls',
+      title: 'Two calls in one expression',
+      summary: 'int answer = triple(x) + double(y) makes two separate calls. Each pushes, runs, returns.',
+      hint: 'C evaluates each call separately. The return values are then combined.',
+      code: [
+        'int triple(int v) {',
+        '    return v * 3;',
+        '}',
+        '',
+        'int doubleIt(int v) {',
+        '    return v * 2;',
+        '}',
+        '',
+        'int main(void) {',
+        '    int x = 4;',
+        '    int y = 5;',
+        '    int answer = triple(x) + doubleIt(y);',
+        '    return answer;',
+        '}',
+      ],
+      steps: [
+        { kind: 'enter', fn: 'main', line: 9, locals: {}, desc: 'Program starts. main() begins.',
+          next: 'Declare x = 4.' },
+        { kind: 'declare', fn: 'main', line: 10, name: 'x', value: 4,
+          desc: 'x = 4 in main.',
+          next: 'Declare y = 5.' },
+        { kind: 'declare', fn: 'main', line: 11, name: 'y', value: 5,
+          desc: 'y = 5 in main.',
+          next: 'Evaluate the right side: triple(x) is called first.' },
+        { kind: 'call', fn: 'triple', line: 12, args: { v: 4 }, callerLine: 12,
+          desc: 'triple(x) called with v = 4. New frame.',
+          next: 'triple computes v * 3 and returns it.' },
+        { kind: 'return', fn: 'triple', line: 2, value: 12, toLine: 12, toVar: '(pending)',
+          desc: 'triple returns 12. Frame pops. The 12 waits as the left operand of +.',
+          next: 'Now doubleIt(y) is called.' },
+        { kind: 'call', fn: 'doubleIt', line: 12, args: { v: 5 }, callerLine: 12,
+          desc: 'doubleIt(y) called with v = 5. New frame.',
+          next: 'doubleIt computes v * 2 and returns it.' },
+        { kind: 'return', fn: 'doubleIt', line: 6, value: 10, toLine: 12, toVar: '(pending)',
+          desc: 'doubleIt returns 10. Frame pops. Now main can compute 12 + 10.',
+          next: 'main assigns answer = 22.' },
+        { kind: 'assign', fn: 'main', line: 12, name: 'answer', value: 22,
+          desc: 'answer = 12 + 10 = 22 in main.',
+          next: 'main returns answer.' },
+        { kind: 'return', fn: 'main', line: 13, value: 22, toLine: null, toVar: null,
+          desc: 'main returns 22. Program ends.',
+          next: 'Scenario complete.' },
+        { kind: 'exit', desc: 'Program finished.' },
+      ],
+      checkpoints: {
+        4: {
+          id: 'sc5-cp1',
+          label: 'Predict the first return',
+          question: 'triple was called with v = 4. What does it return?',
+          answer: ['12'],
+          normalize: 'int',
+          correctMsg: 'Correct. triple returns v * 3 = 12.',
+          wrongMsg: 'triple\'s body is return v * 3. v is 4.',
+        },
+        5: {
+          id: 'sc5-cp2',
+          label: 'How many frames now?',
+          question: 'triple has returned. We are about to call doubleIt. How many frames are on the stack right now, BEFORE doubleIt is called?',
+          answer: ['1'],
+          normalize: 'int',
+          correctMsg: 'Correct. Only main is alive. triple\'s frame was popped when it returned.',
+          wrongMsg: 'After a function returns, its frame is gone. Only main is left at this moment.',
+        },
+        7: {
+          id: 'sc5-cp3',
+          label: 'Predict the final assignment',
+          question: 'triple returned 12 and doubleIt returned 10. What will answer be after the next line runs?',
+          answer: ['22'],
+          normalize: 'int',
+          correctMsg: 'Correct. answer = 12 + 10 = 22.',
+          wrongMsg: 'The two return values are combined by the + operator.',
+        },
+      },
+    },
+  ];
+
+  // ============================================================
+  // State
+  // ============================================================
+  let scenarioIndex = 0;
+  let stepIndex = 0;           // next step to execute
+  let callStack = [];          // array of frames: {fn, locals: [{name, value, isParam, flashed}], returnedValue?}
+  let history = [];            // snapshots of {stepIndex, callStack, lastDesc, lastNext, scenarioCheckpoints}
+  let consecutiveFails = 0;
+  let runTimer = null;
+  let scenarioComplete = new Array(scenarios.length).fill(false);
+  let checkpointState = {};    // scenarioIndex -> { atIndex -> { answered, correct } }
+  let activeCheckpoint = null; // { atIndex, scenIdx, def }
+
+  for (let i = 0; i < scenarios.length; i++) {
+    checkpointState[i] = {};
+    Object.keys(scenarios[i].checkpoints).forEach(function(k) {
+      checkpointState[i][k] = { answered: false, correct: false };
+    });
+  }
+
+  // ============================================================
+  // Helpers
+  // ============================================================
+  function deepCloneStack(stack) {
+    return stack.map(function(f) {
+      return {
+        fn: f.fn,
+        locals: f.locals.map(function(L) { return { name: L.name, value: L.value, isParam: L.isParam, flashed: false }; }),
+        returnedValue: f.returnedValue,
+        callerLine: f.callerLine,
+        pendingReturn: f.pendingReturn,
+      };
+    });
+  }
+  function snapshot() {
+    history.push({
+      stepIndex: stepIndex,
+      callStack: deepCloneStack(callStack),
+    });
+  }
+  function clearFlashes() {
+    callStack.forEach(function(f) {
+      f.locals.forEach(function(L) { L.flashed = false; });
+    });
+  }
+  function applyStep(step) {
+    clearFlashes();
+    switch (step.kind) {
+      case 'enter': {
+        callStack.push({ fn: step.fn, locals: [], callerLine: null });
+        break;
+      }
+      case 'declare': {
+        const top = callStack[callStack.length - 1];
+        if (!top) break;
+        top.locals.push({ name: step.name, value: step.value, isParam: false, flashed: true });
+        break;
+      }
+      case 'assign': {
+        const top = callStack[callStack.length - 1];
+        if (!top) break;
+        let found = false;
+        for (let i = 0; i < top.locals.length; i++) {
+          if (top.locals[i].name === step.name) {
+            top.locals[i].value = step.value;
+            top.locals[i].flashed = true;
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          top.locals.push({ name: step.name, value: step.value, isParam: false, flashed: true });
+        }
+        break;
+      }
+      case 'call': {
+        const newFrame = {
+          fn: step.fn,
+          locals: Object.keys(step.args).map(function(k) {
+            return { name: k, value: step.args[k], isParam: true, flashed: true };
+          }),
+          callerLine: step.callerLine,
+        };
+        callStack.push(newFrame);
+        break;
+      }
+      case 'return': {
+        callStack.pop();
+        // If the return targets a caller variable, mark for flash on that caller's locals once assign happens
+        // (We do not auto-assign here; an explicit 'assign' step will follow when needed.)
+        break;
+      }
+      case 'exit': {
+        // No state change beyond what already happened
+        break;
+      }
+      case 'no-op':
+      default:
+        break;
+    }
+  }
+
+  function getCheckpoint(scenIdx, atIdx) {
+    const cps = scenarios[scenIdx].checkpoints || {};
+    return cps[atIdx] || null;
+  }
+
+  function isCheckpointAnswered(scenIdx, atIdx) {
+    const cs = checkpointState[scenIdx] || {};
+    const r = cs[atIdx];
+    return !!(r && r.correct);
+  }
+
+  function allCheckpointsAnsweredForScenario(scenIdx) {
+    const cps = scenarios[scenIdx].checkpoints || {};
+    const keys = Object.keys(cps);
+    if (keys.length === 0) return true;
+    for (let i = 0; i < keys.length; i++) {
+      if (!isCheckpointAnswered(scenIdx, keys[i])) return false;
+    }
+    return true;
+  }
+
+  function normalizeAnswer(raw, kind) {
+    const t = (raw || '').trim();
+    if (kind === 'int') {
+      const m = t.match(/^-?\d+$/);
+      return m ? t.replace(/^([-])0+/, '$1').replace(/^0+(\d)/, '$1') : null;
+    }
+    return t.toLowerCase();
+  }
+
+  function answersMatch(userInput, def) {
+    const norm = normalizeAnswer(userInput, def.normalize || 'text');
+    if (norm === null) return false;
+    const allowed = Array.isArray(def.answer) ? def.answer : [def.answer];
+    for (let i = 0; i < allowed.length; i++) {
+      const a = normalizeAnswer(allowed[i], def.normalize || 'text');
+      if (a !== null && a === norm) return true;
+    }
+    return false;
+  }
+
+  // ============================================================
+  // Rendering
+  // ============================================================
+  function syntaxHighlight(line) {
+    // Order matters: comments first (none expected), strings, keywords, types, numbers
+    const KEYWORDS = ['return', 'void', 'if', 'else', 'while', 'for'];
+    const TYPES = ['int', 'double', 'float', 'char', 'short', 'long', 'unsigned'];
+
+    function esc(s) {
+      return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+    // We tokenize a simple way: split on word boundaries while preserving order
+    const out = [];
+    const re = /([A-Za-z_][A-Za-z0-9_]*)|(\d+)|([^A-Za-z0-9_]+)/g;
+    let m;
+    while ((m = re.exec(line)) !== null) {
+      if (m[1] !== undefined) {
+        const w = m[1];
+        if (KEYWORDS.indexOf(w) !== -1) {
+          out.push('<span class="kw">' + esc(w) + '</span>');
+        } else if (TYPES.indexOf(w) !== -1) {
+          out.push('<span class="ty">' + esc(w) + '</span>');
+        } else if (/^[A-Z][A-Z0-9_]*$/.test(w)) {
+          out.push(esc(w));
+        } else {
+          // Looks like a function name if followed by '(' in original (peek ahead is hard; use heuristic by next match)
+          // Simpler: mark identifiers that match common function names below; otherwise plain text.
+          // We will look at the rest of the line for an immediate '(' after this match end.
+          const rest = line.slice(m.index + w.length);
+          if (/^\s*\(/.test(rest)) {
+            out.push('<span class="fn">' + esc(w) + '</span>');
+          } else {
+            out.push(esc(w));
+          }
+        }
+      } else if (m[2] !== undefined) {
+        out.push('<span class="num">' + esc(m[2]) + '</span>');
+      } else {
+        out.push('<span class="pun">' + esc(m[3]) + '</span>');
+      }
+    }
+    return out.join('');
+  }
+
+  function renderCodePane() {
+    const pane = root.querySelector('#cs-code-pane');
+    if (!pane) return;
+    const scen = scenarios[scenarioIndex];
+    const steps = scen.steps;
+    const step = stepIndex < steps.length ? steps[stepIndex] : null;
+    const currentLine = step && step.line ? step.line : null;
+
+    const lines = scen.code;
+    const html = lines.map(function(text, i) {
+      const lineNo = i + 1;
+      const isCurrent = currentLine === lineNo;
+      const marker = isCurrent ? '&gt;' : '&nbsp;';
+      return '<div class="code-row' + (isCurrent ? ' current' : '') + '">' +
+             '<div class="code-marker">' + marker + '</div>' +
+             '<div class="code-line-no">' + lineNo + '</div>' +
+             '<div class="code-text">' + (text.length ? syntaxHighlight(text) : '&nbsp;') + '</div>' +
+             '</div>';
+    }).join('');
+    pane.innerHTML = html;
+  }
+
+  function renderStackPane() {
+    const wrap = root.querySelector('#cs-stack-content');
+    if (!wrap) return;
+    if (callStack.length === 0) {
+      wrap.innerHTML = '<div class="stack-empty">Stack is empty. Press <strong>Step</strong> to call main().</div>';
+      return;
+    }
+    const frames = callStack.map(function(frame, idx) {
+      const isTop = idx === callStack.length - 1;
+      const params = frame.locals.filter(function(L) { return L.isParam; });
+      const locals = frame.locals.filter(function(L) { return !L.isParam; });
+      let inner = '<div class="frame-header">' +
+                  '<div class="frame-name">' + frame.fn + '()</div>' +
+                  '<div class="frame-tag">' + (isTop ? 'top &middot; running' : 'paused') + '</div>' +
+                  '</div>';
+      if (params.length > 0) {
+        inner += '<div class="frame-section">Parameters</div>';
+        params.forEach(function(L) {
+          inner += '<div class="frame-row param' + (L.flashed ? ' flash' : '') + '">' +
+                   '<span class="lbl">' + L.name + '</span>' +
+                   '<span class="val">' + L.value + '</span>' +
+                   '</div>';
+        });
+      }
+      if (locals.length > 0) {
+        inner += '<div class="frame-section">Locals</div>';
+        locals.forEach(function(L) {
+          inner += '<div class="frame-row' + (L.flashed ? ' flash' : '') + '">' +
+                   '<span class="lbl">' + L.name + '</span>' +
+                   '<span class="val">' + L.value + '</span>' +
+                   '</div>';
+        });
+      }
+      if (params.length === 0 && locals.length === 0) {
+        inner += '<div class="frame-row"><span class="lbl" style="color:#9AA5B1;font-style:italic;">no variables yet</span></div>';
+      }
+      return '<div class="frame' + (isTop ? ' top' : '') + '">' + inner + '</div>';
+    }).join('');
+    wrap.innerHTML = '<div class="stack-frames">' + frames + '</div>';
+  }
+
+  function renderStatusLine() {
+    const text = root.querySelector('#cs-status-text');
+    const next = root.querySelector('#cs-next-action');
+    const scen = scenarios[scenarioIndex];
+    const steps = scen.steps;
+
+    if (stepIndex === 0 && callStack.length === 0) {
+      text.innerHTML = 'Ready. Press <strong>Step</strong> to begin.';
+      next.textContent = scen.steps[0] && scen.steps[0].next ? 'Next: ' + scen.steps[0].next.replace(/^./, function(c){return c.toUpperCase();}) : '';
+      return;
+    }
+    if (stepIndex >= steps.length) {
+      text.textContent = 'Program finished.';
+      next.textContent = '';
+      return;
+    }
+
+    const justRanIdx = stepIndex - 1;
+    if (justRanIdx >= 0 && steps[justRanIdx]) {
+      text.textContent = steps[justRanIdx].desc || '';
+    } else {
+      text.textContent = '';
+    }
+    if (steps[stepIndex] && steps[stepIndex].next) {
+      next.textContent = 'Next: ' + steps[stepIndex].next;
+    } else {
+      next.textContent = '';
+    }
+  }
+
+  function renderControls() {
+    const stepBtn = root.querySelector('#cs-step-btn');
+    const runBtn = root.querySelector('#cs-run-btn');
+    const backBtn = root.querySelector('#cs-back-btn');
+    const scen = scenarios[scenarioIndex];
+    const atEnd = stepIndex >= scen.steps.length;
+
+    // If there is an active checkpoint, Step and Run are locked
+    const blocked = !!activeCheckpoint;
+
+    stepBtn.disabled = atEnd || blocked;
+    runBtn.disabled = atEnd || blocked || !!runTimer;
+    backBtn.disabled = history.length === 0;
+
+    if (consecutiveFails >= 2 && activeCheckpoint) {
+      stepBtn.classList.remove('pulse');
+    } else {
+      stepBtn.classList.remove('pulse');
+    }
+  }
+
+  function renderTaskCard() {
+    const scen = scenarios[scenarioIndex];
+    const label = root.querySelector('#cs-task-label');
+    const text = root.querySelector('#cs-task-text');
+    const hint = root.querySelector('#cs-task-hint');
+    const card = root.querySelector('#cs-task-card');
+
+    if (scenarioComplete[scenarioIndex]) {
+      card.classList.add('complete');
+      label.textContent = 'Scenario complete';
+      text.textContent = 'You answered every checkpoint for "' + scen.title + '". Pick the next scenario above, or Reset to step through this one again.';
+      hint.style.display = 'none';
+    } else {
+      card.classList.remove('complete');
+      label.textContent = 'Predict, then step';
+      text.textContent = scen.summary;
+      hint.style.display = 'block';
+      hint.textContent = scen.hint;
+    }
+  }
+
+  function renderSectionHeader() {
+    const h = root.querySelector('#cs-section-header');
+    if (h) h.textContent = 'Scenario ' + (scenarioIndex + 1) + ' \u00B7 ' + scenarios[scenarioIndex].title;
+  }
+
+  function renderProgress() {
+    const fill = root.querySelector('#cs-progress-fill');
+    const label = root.querySelector('#cs-progress-label');
+    const doneCount = scenarioComplete.filter(Boolean).length;
+    const pct = (doneCount / scenarios.length) * 100;
+    if (fill) fill.style.width = pct + '%';
+    if (label) label.textContent = 'Scenarios complete: ' + doneCount + ' of ' + scenarios.length;
+  }
+
+  function renderScenarioBar() {
+    const bar = root.querySelector('#cs-scenario-bar');
+    if (!bar) return;
+    bar.innerHTML = scenarios.map(function(s, i) {
+      const cls = 'scenario-chip' + (i === scenarioIndex ? ' active' : '') + (scenarioComplete[i] ? ' done' : '');
+      const check = scenarioComplete[i] ? '<span class="chip-check">&#10003;</span>' : '';
+      return '<button type="button" class="' + cls + '" data-idx="' + i + '">' + check + (i + 1) + '. ' + s.title + '</button>';
+    }).join('');
+    bar.querySelectorAll('.scenario-chip').forEach(function(b) {
+      b.addEventListener('click', function() {
+        const idx = parseInt(b.getAttribute('data-idx'), 10);
+        if (!isNaN(idx) && idx !== scenarioIndex) loadScenario(idx);
+      });
+    });
+  }
+
+  function renderCheckpoint() {
+    const cp = root.querySelector('#cs-checkpoint');
+    const lbl = root.querySelector('#cs-checkpoint-label');
+    const q = root.querySelector('#cs-checkpoint-question');
+    const input = root.querySelector('#cs-checkpoint-input');
+    const btn = root.querySelector('#cs-checkpoint-btn');
+    const fb = root.querySelector('#cs-checkpoint-feedback');
+
+    if (!activeCheckpoint) {
+      cp.style.display = 'none';
+      cp.classList.remove('locked-good');
+      input.value = '';
+      input.disabled = false;
+      btn.disabled = false;
+      fb.textContent = '';
+      fb.className = 'checkpoint-feedback';
+      return;
+    }
+    cp.style.display = 'block';
+    cp.classList.remove('locked-good');
+    const def = activeCheckpoint.def;
+    lbl.textContent = def.label || 'Checkpoint';
+    q.innerHTML = def.question;
+    input.value = '';
+    input.disabled = false;
+    btn.disabled = false;
+    fb.textContent = '';
+    fb.className = 'checkpoint-feedback';
+    setTimeout(function() { input.focus(); }, 30);
+  }
+
+  function renderCompletionGate() {
+    const allDone = scenarioComplete.every(Boolean);
+    const area = root.querySelector('#cs-completion-area');
+    if (allDone) {
+      cs210RenderCompletion(area);
+    } else if (area && !root.querySelector('#cs210-completion-overlay')) {
+      // If no overlay exists, allow re-rendering after partial reset
+      // Do nothing; keep area clean
+    }
+  }
+
+  function renderAll() {
+    renderSectionHeader();
+    renderProgress();
+    renderScenarioBar();
+    renderTaskCard();
+    renderCodePane();
+    renderStackPane();
+    renderStatusLine();
+    renderCheckpoint();
+    renderControls();
+    renderCompletionGate();
+  }
+
+  // ============================================================
+  // Checkpoint flow
+  // ============================================================
+  function maybeOpenCheckpoint() {
+    // Open checkpoint that should be answered BEFORE executing the step at stepIndex
+    const scen = scenarios[scenarioIndex];
+    const cps = scen.checkpoints || {};
+    const def = cps[stepIndex];
+    if (def && !isCheckpointAnswered(scenarioIndex, stepIndex)) {
+      activeCheckpoint = { atIndex: stepIndex, scenIdx: scenarioIndex, def: def };
+      return true;
+    }
+    activeCheckpoint = null;
+    return false;
+  }
+
+  function onCheckpointSubmit() {
+    if (!activeCheckpoint) return;
+    const input = root.querySelector('#cs-checkpoint-input');
+    const fb = root.querySelector('#cs-checkpoint-feedback');
+    const cp = root.querySelector('#cs-checkpoint');
+    const btn = root.querySelector('#cs-checkpoint-btn');
+    const def = activeCheckpoint.def;
+    const val = input.value;
+    const ok = answersMatch(val, def);
+    if (ok) {
+      checkpointState[activeCheckpoint.scenIdx][activeCheckpoint.atIndex] = { answered: true, correct: true };
+      fb.textContent = def.correctMsg;
+      fb.className = 'checkpoint-feedback ok';
+      cp.classList.add('locked-good');
+      input.disabled = true;
+      btn.disabled = true;
+      consecutiveFails = 0;
+      // After a brief pause, dismiss the checkpoint and unlock controls
+      setTimeout(function() {
+        activeCheckpoint = null;
+        // Mark scenario complete if all checkpoints satisfied
+        if (allCheckpointsAnsweredForScenario(scenarioIndex)) {
+          scenarioComplete[scenarioIndex] = true;
+        }
+        renderAll();
+      }, 800);
+    } else {
+      checkpointState[activeCheckpoint.scenIdx][activeCheckpoint.atIndex] = { answered: true, correct: false };
+      fb.textContent = def.wrongMsg;
+      fb.className = 'checkpoint-feedback err';
+      consecutiveFails++;
+    }
+  }
+
+  // ============================================================
+  // Step/run/back/reset
+  // ============================================================
+  function doStep() {
+    if (activeCheckpoint) return;
+    const scen = scenarios[scenarioIndex];
+    if (stepIndex >= scen.steps.length) return;
+
+    // If a checkpoint is due at this stepIndex, open it before executing
+    if (maybeOpenCheckpoint()) {
+      renderAll();
+      return;
+    }
+
+    snapshot();
+    const step = scen.steps[stepIndex];
+    applyStep(step);
+    stepIndex++;
+    renderAll();
+  }
+
+  function doRun() {
+    if (activeCheckpoint) return;
+    if (runTimer) return;
+    function tick() {
+      const scen = scenarios[scenarioIndex];
+      if (stepIndex >= scen.steps.length) { stopRun(); return; }
+      if (maybeOpenCheckpoint()) {
+        stopRun();
+        renderAll();
+        return;
+      }
+      snapshot();
+      const step = scen.steps[stepIndex];
+      applyStep(step);
+      stepIndex++;
+      renderAll();
+      if (stepIndex < scenarios[scenarioIndex].steps.length) {
+        runTimer = setTimeout(tick, 600);
+      } else {
+        stopRun();
+      }
+    }
+    runTimer = setTimeout(tick, 50);
+    renderControls();
+  }
+  function stopRun() {
+    if (runTimer) { clearTimeout(runTimer); runTimer = null; }
+    renderControls();
+  }
+
+  function doBack() {
+    if (activeCheckpoint) {
+      // Dismiss the checkpoint without marking it answered; cadet must still answer next time they reach it
+      activeCheckpoint = null;
+    }
+    if (history.length === 0) return;
+    const snap = history.pop();
+    stepIndex = snap.stepIndex;
+    callStack = snap.callStack;
+    consecutiveFails = 0;
+    renderAll();
+  }
+
+  function doReset() {
+    stopRun();
+    stepIndex = 0;
+    callStack = [];
+    history = [];
+    activeCheckpoint = null;
+    consecutiveFails = 0;
+    // Do NOT clear scenarioComplete or checkpoint answers; cadets keep their progress
+    renderAll();
+  }
+
+  function loadScenario(idx) {
+    if (idx < 0 || idx >= scenarios.length) return;
+    stopRun();
+    scenarioIndex = idx;
+    stepIndex = 0;
+    callStack = [];
+    history = [];
+    activeCheckpoint = null;
+    consecutiveFails = 0;
+    renderAll();
+  }
+
+  // ============================================================
+  // Wire up
+  // ============================================================
+  root.querySelector('#cs-step-btn').addEventListener('click', doStep);
+  root.querySelector('#cs-run-btn').addEventListener('click', doRun);
+  root.querySelector('#cs-back-btn').addEventListener('click', doBack);
+  root.querySelector('#cs-reset-btn').addEventListener('click', doReset);
+  root.querySelector('#cs-checkpoint-btn').addEventListener('click', onCheckpointSubmit);
+  root.querySelector('#cs-checkpoint-input').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const btn = root.querySelector('#cs-checkpoint-btn');
+      if (!btn.disabled) btn.click();
+    }
+  });
+
+  // Probe for QA
+  window.__cs210StackProbe = {
+    getStepIndex: function() { return stepIndex; },
+    getScenarioIndex: function() { return scenarioIndex; },
+    getCallStackDepth: function() { return callStack.length; },
+    getScenarios: function() { return scenarios; },
+    getCheckpointState: function() { return JSON.parse(JSON.stringify(checkpointState)); },
+    getActiveCheckpoint: function() { return activeCheckpoint ? { atIndex: activeCheckpoint.atIndex, scenIdx: activeCheckpoint.scenIdx } : null; },
+    getScenarioComplete: function() { return scenarioComplete.slice(); },
+  };
+
+  // Initial render
+  loadScenario(0);
+})();
+</script>
+
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0;">Functions Self-Check</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Eight questions covering everything in this lesson. You need 6 of 8 (70%) to pass. The score card at the end gives you a completion code to enter on the Blackboard Lesson 6 test.</p>
+
+      <!-- ============================================================
+     CS210 Lesson 6 - Functions Quiz Widget
+     Card/slide flow: one question per card, Submit + Next/Back.
+     Score card at the end with per-question recap and completion code.
+     Two-salt code pattern: _completed if >= 70%, _incomplete otherwise.
+     ============================================================ -->
+<style>
+.cs210-fnq * { box-sizing: border-box; }
+.cs210-fnq {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-fnq h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-fnq .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+
+/* Dot progress indicator */
+.cs210-fnq .dots {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+.cs210-fnq .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #E5E7EB;
+  border: 1px solid #C7CFD9;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.cs210-fnq .dot.current {
+  background: #003087;
+  border-color: #00205B;
+  transform: scale(1.25);
+}
+.cs210-fnq .dot.correct {
+  background: #2E7D32;
+  border-color: #1B5E20;
+}
+.cs210-fnq .dot.incorrect {
+  background: #B8002F;
+  border-color: #6B0000;
+}
+.cs210-fnq .dot.score {
+  width: 16px;
+  height: 12px;
+  border-radius: 3px;
+  background: #F0B92C;
+  border-color: #B88800;
+}
+
+/* Card */
+.cs210-fnq .card {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 6px;
+  padding: 36px 40px;
+  margin-bottom: 14px;
+  min-height: 380px;
+  display: flex;
+  flex-direction: column;
+}
+.cs210-fnq .card.answered.correct { border-left: 4px solid #2E7D32; }
+.cs210-fnq .card.answered.incorrect { border-left: 4px solid #B8002F; }
+
+.cs210-fnq .q-label {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.cs210-fnq .q-text {
+  font-size: 17px;
+  margin-bottom: 22px;
+  color: #1a1a1a;
+}
+.cs210-fnq .q-text code {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-family: Consolas, monospace;
+  font-size: 15px;
+  color: #00205B;
+}
+
+/* Code blocks inside question text (e.g. gcc error output) */
+.cs210-fnq .q-text pre.terminal {
+  background: #1E2A3A;
+  color: #E8EDF5;
+  padding: 14px 18px;
+  border-radius: 4px;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.55;
+  overflow-x: auto;
+  white-space: pre;
+  margin: 12px 0;
+}
+.cs210-fnq .q-text pre.terminal .prompt { color: #7FB3D5; }
+.cs210-fnq .q-text pre.terminal .warn { color: #F0B92C; }
+.cs210-fnq .q-text pre.terminal .err { color: #F47A7A; }
+.cs210-fnq .q-text pre.terminal .dim { color: #9AA5B1; }
+.cs210-fnq .q-text pre.codeblock {
+  background: #F8FAFC;
+  border: 1px solid #D0D5DD;
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13.5px;
+  line-height: 1.6;
+  overflow-x: auto;
+  white-space: pre;
+  margin: 12px 0;
+  color: #1a1a1a;
+}
+
+/* Options for multiple choice */
+.cs210-fnq .options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.cs210-fnq .option {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px 16px;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 15px;
+  background: #ffffff;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.cs210-fnq .option:hover:not(.disabled) {
+  background: #F5F7FA;
+  border-color: #003087;
+}
+.cs210-fnq .option.disabled { cursor: default; }
+.cs210-fnq .option input[type="radio"] {
+  margin-right: 12px;
+  margin-top: 3px;
+  accent-color: #003087;
+}
+.cs210-fnq .option.selected {
+  border-color: #003087;
+  background: #F0F4FA;
+}
+.cs210-fnq .option.reveal-correct {
+  border-color: #2E7D32;
+  background: #E6F4EA;
+  font-weight: 600;
+}
+.cs210-fnq .option.incorrect {
+  border-color: #B8002F;
+  background: #FCE8E8;
+}
+.cs210-fnq .option code {
+  background: rgba(0,0,0,0.04);
+  padding: 0 4px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13.5px;
+  color: #00205B;
+}
+
+/* Text input */
+.cs210-fnq .text-input-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.cs210-fnq .text-input-row input {
+  flex: 1;
+  max-width: 480px;
+  padding: 12px 14px;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  font-family: Consolas, monospace;
+  font-size: 16px;
+  color: #1a1a1a;
+}
+.cs210-fnq .text-input-row input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-fnq .text-input-row input.correct {
+  border-color: #2E7D32;
+  background: #E6F4EA;
+}
+.cs210-fnq .text-input-row input.incorrect {
+  border-color: #B8002F;
+  background: #FCE8E8;
+}
+
+/* Feedback */
+.cs210-fnq .feedback {
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-size: 14.5px;
+  margin-bottom: 4px;
+}
+.cs210-fnq .feedback.correct {
+  background: #E6F4EA;
+  border-left: 3px solid #2E7D32;
+  color: #1B5E20;
+}
+.cs210-fnq .feedback.incorrect {
+  background: #FCE8E8;
+  border-left: 3px solid #B8002F;
+  color: #6B0000;
+}
+.cs210-fnq .feedback strong { color: inherit; }
+.cs210-fnq .feedback code {
+  background: rgba(255, 255, 255, 0.7);
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13.5px;
+}
+
+.cs210-fnq .spacer { flex: 1; }
+
+.cs210-fnq .nav-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  gap: 10px;
+}
+.cs210-fnq .nav-btn {
+  padding: 10px 18px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+  transition: background 0.15s ease;
+}
+.cs210-fnq .nav-btn.back {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  color: #00205B;
+}
+.cs210-fnq .nav-btn.back:hover:not(:disabled) { background: #F5F7FA; }
+.cs210-fnq .nav-btn.primary {
+  background: #003087;
+  border: 1px solid #00205B;
+  color: #ffffff;
+}
+.cs210-fnq .nav-btn.primary:hover:not(:disabled) { background: #00205B; }
+.cs210-fnq .nav-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.cs210-fnq .nav-position {
+  font-size: 13px;
+  color: #6B7280;
+  font-weight: 500;
+}
+
+/* Score card */
+.cs210-fnq .score-card { text-align: center; }
+.cs210-fnq .score-big {
+  font-size: 52px;
+  font-weight: 700;
+  color: #00205B;
+  margin: 4px 0 0 0;
+  line-height: 1;
+}
+.cs210-fnq .score-card.full-correct .score-big { color: #1B5E20; }
+.cs210-fnq .score-label {
+  font-size: 13px;
+  color: #6B7280;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin-bottom: 14px;
+}
+.cs210-fnq .score-message {
+  font-size: 16px;
+  color: #1a1a1a;
+  margin-bottom: 22px;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.cs210-fnq .score-message.good-job {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1B5E20;
+  margin-bottom: 12px;
+}
+.cs210-fnq .recap {
+  text-align: left;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid #E5E7EB;
+}
+.cs210-fnq .recap-title {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.cs210-fnq .recap-item {
+  display: flex;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #F0F2F5;
+  font-size: 14px;
+}
+.cs210-fnq .recap-item:last-child { border-bottom: none; }
+.cs210-fnq .recap-icon {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+}
+.cs210-fnq .recap-icon.correct { background: #2E7D32; }
+.cs210-fnq .recap-icon.incorrect { background: #B8002F; }
+.cs210-fnq .recap-body { flex: 1; }
+.cs210-fnq .recap-question { color: #1a1a1a; margin-bottom: 4px; }
+.cs210-fnq .recap-question code {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  color: #00205B;
+}
+.cs210-fnq .recap-explanation {
+  font-size: 13px;
+  color: #4A5568;
+  font-style: italic;
+}
+.cs210-fnq .recap-explanation code {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-style: normal;
+  font-size: 12.5px;
+  color: #00205B;
+}
+
+.cs210-fnq .reset-row { margin-top: 22px; text-align: center; }
+.cs210-fnq .reset-btn {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  padding: 10px 22px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  color: #00205B;
+  font-family: inherit;
+  font-weight: 600;
+}
+.cs210-fnq .reset-btn:hover { background: #F5F7FA; }
+
+.cs210-fnq .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #4A5568;
+  margin-top: 18px;
+}
+.cs210-fnq .help-note strong { color: #00205B; }
+
+/* Name modal (matches widget pattern) */
+.cs210-fnq .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.cs210-fnq .name-modal {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-fnq .name-modal h2 {
+  color: #00205B;
+  font-size: 20px;
+  margin: 0 0 10px 0;
+}
+.cs210-fnq .name-modal p {
+  color: #4A5568;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+.cs210-fnq .name-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-fnq .name-modal input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-fnq .name-modal-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-fnq .name-modal-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-fnq .name-modal-btn:not(:disabled):hover { background: #00205B; }
+
+/* Completion code block on the score card */
+.cs210-fnq .score-completion {
+  margin-top: 22px;
+  padding: 20px 24px;
+  border-radius: 6px;
+  text-align: left;
+  border: 2px solid #2E7D32;
+  background: #ffffff;
+}
+.cs210-fnq .score-completion.incomplete {
+  border-color: #B88800;
+  background: #FFFCF5;
+}
+.cs210-fnq .score-completion .cs-heading {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1B5E20;
+  margin-bottom: 4px;
+}
+.cs210-fnq .score-completion.incomplete .cs-heading { color: #6B5300; }
+.cs210-fnq .score-completion .cs-sub {
+  font-size: 13px;
+  color: #4A5568;
+  margin-bottom: 12px;
+}
+.cs210-fnq .score-completion .cs-name-line {
+  font-size: 14px;
+  color: #1a1a1a;
+  margin-bottom: 12px;
+}
+.cs210-fnq .score-completion .cs-name-line strong { color: #00205B; }
+.cs210-fnq .score-completion .cs-code-block {
+  background: #F0F4FA;
+  border: 1px solid #003087;
+  border-radius: 4px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+.cs210-fnq .score-completion.incomplete .cs-code-block {
+  border-color: #B88800;
+  background: #FFF8E1;
+}
+.cs210-fnq .score-completion .cs-code-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #4A5568;
+  margin-bottom: 4px;
+}
+.cs210-fnq .score-completion .cs-code-value {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 26px;
+  font-weight: 700;
+  color: #00205B;
+  letter-spacing: 3px;
+}
+.cs210-fnq .score-completion .cs-copy-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-fnq .score-completion .cs-copy-btn:hover { background: #00205B; }
+.cs210-fnq .score-completion .cs-copy-btn.copied { background: #2E7D32; }
+.cs210-fnq .score-completion .cs-timestamp {
+  font-size: 12.5px;
+  color: #6B7280;
+  margin-bottom: 12px;
+}
+.cs210-fnq .score-completion .cs-reminder {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 10px 14px;
+  border-radius: 3px;
+  font-size: 13.5px;
+  color: #6B5300;
+  line-height: 1.5;
+}
+.cs210-fnq .score-completion .cs-reminder strong { color: #4A3A00; }
+</style>
+
+<div class="cs210-fnq">
+
+<div class="name-modal-backdrop" id="fnq-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear with your completion code on the score card so you can include it in your screenshot for the Blackboard reflection quiz.</p>
+    <input type="text" id="fnq-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="fnq-cadet-name-btn" disabled>Start the quiz</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 6 &middot; Functions Self-Check</h1>
+<div class="subtitle">Eight questions covering function prototypes, parameters vs arguments, return values, const parameters, the compilation phases, and how locals behave when a function returns. You need at least 6 of 8 (70%) for a passing completion code.</div>
+
+<div class="dots" id="fnq-dots"></div>
+
+<div id="fnq-card-area"></div>
+
+<div class="help-note">
+  <strong>How this works:</strong> One question per card. Pick or type your answer and click Submit. The feedback appears, then click Next to move on. Answers are locked once submitted, so think before you submit. When you finish all eight, you get a score, a recap, and a completion code.
+</div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-fnq');
+  if (!root) return;
+
+  // ============================================================
+  // Completion code utilities (two-salt pattern)
+  // ============================================================
+  const CS210_SALT_PASS = "lesson06_functions_quiz_completed";
+  const CS210_SALT_FAIL = "lesson06_functions_quiz_incomplete";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const PASSING_FRACTION = 0.70;
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE_PASS = cs210CodeFromSalt(CS210_SALT_PASS);
+  const CS210_CODE_FAIL = cs210CodeFromSalt(CS210_SALT_FAIL);
+  let cs210CadetName = '';
+
+  function cs210FallbackCopy(text) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e) {}
+  }
+
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#fnq-name-modal-backdrop');
+    const input = root.querySelector('#fnq-cadet-name-input');
+    const btn = root.querySelector('#fnq-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored) input.value = stored;
+    } catch (e) {}
+    function updateBtn() { btn.disabled = input.value.trim().length < 2; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', function() {
+      const name = input.value.trim();
+      if (name.length < 2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+    });
+    setTimeout(function() { input.focus(); }, 50);
+  })();
+
+  // ============================================================
+  // Questions
+  // ============================================================
+  const questions = [
+    {
+      id: 'q1',
+      type: 'choice',
+      text: 'Why does C require a function prototype before a function is called?',
+      options: [
+        'To make the program compile faster.',
+        'So the compiler knows the function\'s return type and parameter types at the call site.',
+        'To document the function for other programmers.',
+        'C does not require prototypes; they are optional.',
+      ],
+      correct: 1,
+      correctFeedback: 'Yes. C is a single-pass compiler in this sense: when it sees a call, it needs to know the function\'s signature so it can check the types and emit the right code. The prototype provides that.',
+      incorrectFeedback: 'The correct answer is <strong>So the compiler knows the function\'s return type and parameter types at the call site.</strong> When the compiler hits a call, it has not seen the full definition yet (it may be later in the file or another file). The prototype tells the compiler the signature so it can type-check the call.',
+      shortLabel: 'Why C needs function prototypes',
+    },
+    {
+      id: 'q2',
+      type: 'text',
+      text: 'Write the prototype line for a function named <code>area</code> that takes two <code>double</code> parameters and returns a <code>double</code>. Parameter names are not required. End with a semicolon.',
+      correct: [
+        'double area(double, double);',
+        'double area(double a, double b);',
+        'double area(double x, double y);',
+        'double area(double w, double h);',
+        'double area(double width, double height);',
+      ],
+      normalize: function(s) {
+        // Lower-case, collapse whitespace, strip spaces around punctuation
+        let t = s.toLowerCase().trim();
+        t = t.replace(/\s+/g, ' ');
+        t = t.replace(/\s*([(),;])\s*/g, '$1');
+        t = t.replace(/\s+$/, '');
+        // Re-insert single spaces in canonical places: after commas inside parens
+        // Compare ignoring spaces entirely between tokens
+        t = t.replace(/\s+/g, '');
+        return t;
+      },
+      placeholder: 'double area(...);',
+      correctFeedback: 'Right. Return type, function name, then parameter types in parentheses. Parameter names are optional in the prototype.',
+      incorrectFeedback: 'A correct prototype is <code>double area(double, double);</code> Names like <code>double area(double w, double h);</code> also work. The required parts are the return type, the function name, the parameter types in parentheses, and the trailing semicolon.',
+      shortLabel: 'Prototype for area(double, double) -> double',
+    },
+    {
+      id: 'q3',
+      type: 'choice',
+      text: 'What is the difference between a <em>parameter</em> and an <em>argument</em>?',
+      options: [
+        'They mean the same thing; the terms are interchangeable.',
+        'A parameter is the name in the function definition; an argument is the value passed in at the call site.',
+        'A parameter is passed by value; an argument is passed by reference.',
+        'A parameter is what the function returns; an argument is what it accepts.',
+      ],
+      correct: 1,
+      correctFeedback: 'Exactly. In <code>int add(int a, int b) { ... }</code>, <code>a</code> and <code>b</code> are parameters. In <code>add(3, 4);</code>, the values 3 and 4 are arguments. Same idea, different sides of the call.',
+      incorrectFeedback: 'The correct answer is <strong>A parameter is the name in the function definition; an argument is the value passed in at the call site.</strong> The two terms get used loosely in conversation but the formal distinction is the one above.',
+      shortLabel: 'Parameter vs argument',
+    },
+    {
+      id: 'q4',
+      type: 'choice',
+      text: 'You compile a file that has this call to <code>compute_total</code> but you forgot to write its prototype. The compiler prints:<pre class="terminal"><span class="prompt">$</span> gcc lab.c -o lab\nlab.c: In function &lsquo;main&rsquo;:\nlab.c:8:18: <span class="warn">warning:</span> implicit declaration of function &lsquo;compute_total&rsquo; [-Wimplicit-function-declaration]\n    8 |     int total = compute_total(scores, n);\n      |                 ^~~~~~~~~~~~~</pre>What is the compiler telling you?',
+      options: [
+        'The function <code>compute_total</code> does not exist anywhere and needs to be written.',
+        'There is no prototype for <code>compute_total</code> visible at the call site; the compiler is guessing its signature.',
+        'The arguments passed to <code>compute_total</code> are the wrong types.',
+        'The file <code>lab.c</code> has a syntax error on line 8.',
+      ],
+      correct: 1,
+      correctFeedback: 'Yes. "Implicit declaration" means the compiler hit a call to a function it has never seen a prototype for. It assumes a default signature and warns you. The fix is to add the prototype before the call.',
+      incorrectFeedback: 'The correct answer is <strong>There is no prototype for <code>compute_total</code> visible at the call site; the compiler is guessing its signature.</strong> "Implicit declaration" specifically means the compiler had to invent a signature because no prototype was visible. The function may or may not exist; the warning is about the missing prototype, not about whether the function is defined somewhere.',
+      shortLabel: 'Reading "implicit declaration" warning',
+    },
+    {
+      id: 'q5',
+      type: 'text',
+      text: 'What does this program print? Type just the number.<pre class="codeblock">int twice(int x) {\n    return x * 2;\n}\n\nint main(void) {\n    int a = 5;\n    int b = twice(a) + twice(3);\n    printf("%d\\n", b);\n    return 0;\n}</pre>',
+      correct: ['16'],
+      normalize: function(s) { return s.trim(); },
+      placeholder: 'e.g. 42',
+      correctFeedback: 'Correct. <code>twice(5)</code> returns 10. <code>twice(3)</code> returns 6. <code>10 + 6 = 16</code>. Each call gets its own frame, runs, and returns its value into the expression.',
+      incorrectFeedback: 'The correct answer is <code>16</code>. <code>twice(5)</code> is 10, <code>twice(3)</code> is 6. The two calls happen separately, each in its own frame; their return values are added: <code>10 + 6 = 16</code>.',
+      shortLabel: 'Predict output of two function calls in one expression',
+    },
+    {
+      id: 'q6',
+      type: 'choice',
+      text: 'What does <code>const</code> mean on a function parameter, like in <code>double area(const double radius)</code>?',
+      options: [
+        'The function will run faster because the value is in a register.',
+        'The caller cannot pass a non-constant variable to this function.',
+        'The function promises not to modify that parameter inside its body.',
+        'The parameter is automatically initialized to zero.',
+      ],
+      correct: 2,
+      correctFeedback: 'Right. <code>const</code> on a parameter is a promise the function makes: "I will not assign a new value to this parameter inside my body." It also lets the compiler catch the mistake if the body accidentally tries.',
+      incorrectFeedback: 'The correct answer is <strong>The function promises not to modify that parameter inside its body.</strong> <code>const</code> on a parameter is about what the function will or will not do to the parameter, not about performance, the caller, or initialization.',
+      shortLabel: 'What const on a parameter means',
+    },
+    {
+      id: 'q7',
+      type: 'choice',
+      text: 'Which is the correct order of the compilation phases in C?',
+      options: [
+        'compile &rarr; preprocess &rarr; assemble &rarr; link',
+        'preprocess &rarr; compile &rarr; assemble &rarr; link',
+        'preprocess &rarr; assemble &rarr; compile &rarr; link',
+        'link &rarr; compile &rarr; assemble &rarr; preprocess',
+      ],
+      correct: 1,
+      correctFeedback: 'Correct. Preprocess expands <code>#include</code> and macros. Compile turns C into assembly. Assemble turns assembly into object code. Link combines object code with libraries into an executable.',
+      incorrectFeedback: 'The correct answer is <strong>preprocess &rarr; compile &rarr; assemble &rarr; link</strong>. Each phase produces input for the next: text in, executable out. You will see this again next lesson when we introduce <code>make</code>.',
+      shortLabel: 'Order of compilation phases',
+    },
+    {
+      id: 'q8',
+      type: 'choice',
+      text: 'A function declares a local variable, computes with it, and returns a value. What happens to that local variable when the function returns?',
+      options: [
+        'It keeps its value until the program ends.',
+        'It is moved to the calling function and renamed.',
+        'It goes away. The function\'s frame is removed from the stack and its locals go with it.',
+        'It becomes a global variable.',
+      ],
+      correct: 2,
+      correctFeedback: 'Yes. Locals live in the function\'s stack frame. When the function returns, the frame is gone, and so are the locals. Only the return value is passed back.',
+      incorrectFeedback: 'The correct answer is <strong>It goes away. The function\'s frame is removed from the stack and its locals go with it.</strong> The whole point of the call stack is automatic cleanup: when a function returns, its frame is popped and everything inside it disappears. This is exactly what the stack widget showed.',
+      shortLabel: 'What happens to locals when a function returns',
+    },
+  ];
+
+  const state = questions.map(() => ({ answered: false, correct: false, choice: null, value: '' }));
+  let currentIndex = 0;
+
+  const cardArea = root.querySelector('#fnq-card-area');
+  const dotsArea = root.querySelector('#fnq-dots');
+
+  function renderDots() {
+    dotsArea.innerHTML = '';
+    for (let i = 0; i < questions.length; i++) {
+      const d = document.createElement('div');
+      d.className = 'dot';
+      if (i === currentIndex && currentIndex < questions.length) d.classList.add('current');
+      else if (state[i].answered) d.classList.add(state[i].correct ? 'correct' : 'incorrect');
+      dotsArea.appendChild(d);
+    }
+    const scoreDot = document.createElement('div');
+    scoreDot.className = 'dot score';
+    if (currentIndex === questions.length) scoreDot.classList.add('current');
+    dotsArea.appendChild(scoreDot);
+  }
+
+  function hasAnswer(i) {
+    const q = questions[i];
+    if (q.type === 'choice') return state[i].choice !== null;
+    return state[i].value && state[i].value.trim().length > 0;
+  }
+
+  function submitAnswer(i) {
+    if (state[i].answered) return;
+    if (!hasAnswer(i)) return;
+    const q = questions[i];
+    let correct = false;
+    if (q.type === 'choice') {
+      correct = (state[i].choice === q.correct);
+    } else {
+      const norm = q.normalize ? q.normalize(state[i].value) : state[i].value.trim();
+      const accepted = q.correct.map(function(c) { return q.normalize ? q.normalize(c) : c.trim(); });
+      correct = accepted.indexOf(norm) !== -1;
+    }
+    state[i].answered = true;
+    state[i].correct = correct;
+    render();
+  }
+
+  function buildQuestionCard(i) {
+    const q = questions[i];
+    const card = document.createElement('div');
+    card.className = 'card';
+    if (state[i].answered) {
+      card.classList.add('answered');
+      card.classList.add(state[i].correct ? 'correct' : 'incorrect');
+    }
+
+    const label = document.createElement('div');
+    label.className = 'q-label';
+    label.textContent = 'Question ' + (i + 1) + ' of ' + questions.length;
+    card.appendChild(label);
+
+    const text = document.createElement('div');
+    text.className = 'q-text';
+    text.innerHTML = q.text;
+    card.appendChild(text);
+
+    if (q.type === 'choice') {
+      const opts = document.createElement('div');
+      opts.className = 'options';
+      q.options.forEach(function(optText, j) {
+        const opt = document.createElement('label');
+        opt.className = 'option';
+        if (state[i].answered) opt.classList.add('disabled');
+        if (state[i].choice === j) opt.classList.add('selected');
+        if (state[i].answered) {
+          if (j === q.correct) opt.classList.add('reveal-correct');
+          if (state[i].choice === j && j !== q.correct) opt.classList.add('incorrect');
+        }
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = q.id;
+        radio.value = j;
+        radio.disabled = state[i].answered;
+        if (state[i].choice === j) radio.checked = true;
+        radio.addEventListener('change', function() {
+          if (state[i].answered) return;
+          state[i].choice = j;
+          render();
+        });
+        opt.appendChild(radio);
+        const span = document.createElement('span');
+        span.innerHTML = optText;
+        opt.appendChild(span);
+        opts.appendChild(opt);
+      });
+      card.appendChild(opts);
+    } else {
+      const row = document.createElement('div');
+      row.className = 'text-input-row';
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.placeholder = q.placeholder || '';
+      input.value = state[i].value;
+      input.disabled = state[i].answered;
+      if (state[i].answered) {
+        input.classList.add(state[i].correct ? 'correct' : 'incorrect');
+      }
+      input.addEventListener('input', function(e) {
+        state[i].value = e.target.value;
+        const submitBtn = card.querySelector('.nav-btn.primary');
+        if (submitBtn) submitBtn.disabled = !hasAnswer(i);
+      });
+      input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !state[i].answered) {
+          e.preventDefault();
+          submitAnswer(i);
+        }
+      });
+      row.appendChild(input);
+      card.appendChild(row);
+      if (!state[i].answered) {
+        setTimeout(function() { input.focus(); }, 50);
+      }
+    }
+
+    if (state[i].answered) {
+      const fb = document.createElement('div');
+      fb.className = 'feedback ' + (state[i].correct ? 'correct' : 'incorrect');
+      fb.innerHTML = (state[i].correct ? '<strong>Correct.</strong> ' : '<strong>Not quite.</strong> ') +
+                     (state[i].correct ? q.correctFeedback : q.incorrectFeedback);
+      card.appendChild(fb);
+    }
+
+    const spacer = document.createElement('div');
+    spacer.className = 'spacer';
+    card.appendChild(spacer);
+
+    const nav = document.createElement('div');
+    nav.className = 'nav-row';
+
+    const backBtn = document.createElement('button');
+    backBtn.className = 'nav-btn back';
+    backBtn.innerHTML = '&larr; Back';
+    backBtn.disabled = (i === 0);
+    backBtn.addEventListener('click', function() {
+      if (i > 0) { currentIndex--; render(); }
+    });
+    nav.appendChild(backBtn);
+
+    const positionLabel = document.createElement('div');
+    positionLabel.className = 'nav-position';
+    positionLabel.textContent = (i + 1) + ' / ' + questions.length;
+    nav.appendChild(positionLabel);
+
+    if (!state[i].answered) {
+      const submitBtn = document.createElement('button');
+      submitBtn.className = 'nav-btn primary';
+      submitBtn.textContent = 'Submit';
+      submitBtn.disabled = !hasAnswer(i);
+      submitBtn.addEventListener('click', function() { submitAnswer(i); });
+      nav.appendChild(submitBtn);
+    } else {
+      const nextBtn = document.createElement('button');
+      nextBtn.className = 'nav-btn primary';
+      nextBtn.innerHTML = (i === questions.length - 1) ? 'See score &rarr;' : 'Next &rarr;';
+      nextBtn.addEventListener('click', function() { currentIndex++; render(); });
+      nav.appendChild(nextBtn);
+    }
+
+    card.appendChild(nav);
+    return card;
+  }
+
+  function buildScoreCard() {
+    const card = document.createElement('div');
+    card.className = 'card score-card';
+    const correctCount = state.filter(function(s) { return s.correct; }).length;
+    const passed = (correctCount / questions.length) >= PASSING_FRACTION;
+    if (correctCount === questions.length) card.classList.add('full-correct');
+
+    const label = document.createElement('div');
+    label.className = 'q-label';
+    label.textContent = 'Quiz complete';
+    card.appendChild(label);
+
+    const msg = document.createElement('div');
+    if (correctCount === questions.length) {
+      msg.className = 'score-message good-job';
+      msg.textContent = 'Perfect score. Excellent work!';
+    } else if (correctCount >= 6) {
+      msg.className = 'score-message good-job';
+      msg.textContent = 'Good job!';
+    } else if (correctCount >= 4) {
+      msg.className = 'score-message good-job';
+      msg.style.color = '#6B5300';
+      msg.textContent = 'Almost there.';
+    } else {
+      msg.className = 'score-message good-job';
+      msg.style.color = '#6B0000';
+      msg.textContent = 'Let\u2019s review.';
+    }
+    card.appendChild(msg);
+
+    const scoreBig = document.createElement('div');
+    scoreBig.className = 'score-big';
+    scoreBig.textContent = correctCount + ' / ' + questions.length;
+    card.appendChild(scoreBig);
+
+    const scoreLabel = document.createElement('div');
+    scoreLabel.className = 'score-label';
+    scoreLabel.textContent = 'questions correct';
+    card.appendChild(scoreLabel);
+
+    const detail = document.createElement('div');
+    detail.className = 'score-message';
+    if (correctCount === questions.length) {
+      detail.textContent = 'You have the function model down. The stack walkthrough and Lab 06 will build on this.';
+    } else if (correctCount >= 6) {
+      detail.textContent = 'You passed. Review the questions you missed below; the stack walkthrough will reinforce the call-and-return model.';
+    } else if (correctCount >= 4) {
+      detail.textContent = 'You did not pass yet (need 6 of 8). Re-read Beej-C Chapter 4, work through the stack walkthrough, then retake this quiz.';
+    } else {
+      detail.textContent = 'Time to slow down. Re-read Beej-C Chapter 4 and step through the call stack walkthrough. Schedule EI if anything is still unclear after that.';
+    }
+    card.appendChild(detail);
+
+    // Completion code block
+    const completion = document.createElement('div');
+    completion.className = 'score-completion' + (passed ? '' : ' incomplete');
+    const safeName = (cs210CadetName || 'Cadet').replace(/[<>&"']/g, function(c) {
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+    const now = new Date();
+    const ts = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const codeShown = passed ? CS210_CODE_PASS : CS210_CODE_FAIL;
+    const heading = passed ? 'Completion code (passed)' : 'Completion code (not yet passing)';
+    const subText = passed
+      ? 'You met the 70% threshold. Use this code on the Blackboard reflection quiz.'
+      : 'This code records that you completed the quiz without reaching 70%. The Blackboard quiz will record partial credit; the instructor can see whether the code is the passing or non-passing version.';
+    completion.innerHTML =
+      '<div class="cs-heading">' + heading + '</div>' +
+      '<div class="cs-sub">' + subText + '</div>' +
+      '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+      '<div class="cs-code-block">' +
+        '<div><div class="cs-code-label">Completion code</div>' +
+        '<div class="cs-code-value" id="fnq-code-value">' + codeShown + '</div></div>' +
+        '<button class="cs-copy-btn" id="fnq-copy-btn" type="button">Copy code</button>' +
+      '</div>' +
+      '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+      '<div class="cs-reminder">' +
+        '<strong>Next step:</strong> Open the Lesson 6 test in Blackboard. Enter this code and attach a screenshot of this score card.' +
+      '</div>';
+    card.appendChild(completion);
+
+    const recap = document.createElement('div');
+    recap.className = 'recap';
+    const recapTitle = document.createElement('div');
+    recapTitle.className = 'recap-title';
+    recapTitle.textContent = 'Question recap';
+    recap.appendChild(recapTitle);
+
+    state.forEach(function(s, i) {
+      const item = document.createElement('div');
+      item.className = 'recap-item';
+      const icon = document.createElement('div');
+      icon.className = 'recap-icon ' + (s.correct ? 'correct' : 'incorrect');
+      icon.innerHTML = s.correct ? '&#10003;' : '&#10007;';
+      item.appendChild(icon);
+      const body = document.createElement('div');
+      body.className = 'recap-body';
+      const q = questions[i];
+      const qLine = document.createElement('div');
+      qLine.className = 'recap-question';
+      qLine.innerHTML = '<strong>Q' + (i + 1) + '.</strong> ' + q.shortLabel;
+      body.appendChild(qLine);
+      if (!s.correct) {
+        const exp = document.createElement('div');
+        exp.className = 'recap-explanation';
+        exp.innerHTML = q.incorrectFeedback;
+        body.appendChild(exp);
+      }
+      item.appendChild(body);
+      recap.appendChild(item);
+    });
+    card.appendChild(recap);
+
+    const resetRow = document.createElement('div');
+    resetRow.className = 'reset-row';
+    const resetBtn = document.createElement('button');
+    resetBtn.className = 'reset-btn';
+    resetBtn.textContent = 'Take the quiz again';
+    resetBtn.addEventListener('click', reset);
+    resetRow.appendChild(resetBtn);
+    card.appendChild(resetRow);
+
+    const nav = document.createElement('div');
+    nav.className = 'nav-row';
+    const backBtn = document.createElement('button');
+    backBtn.className = 'nav-btn back';
+    backBtn.innerHTML = '&larr; Review questions';
+    backBtn.addEventListener('click', function() {
+      currentIndex = questions.length - 1;
+      render();
+    });
+    nav.appendChild(backBtn);
+    const spacer = document.createElement('div');
+    spacer.style.flex = '1';
+    nav.appendChild(spacer);
+    card.appendChild(nav);
+
+    // Wire copy button after the card is in the DOM
+    setTimeout(function() {
+      const copyBtn = root.querySelector('#fnq-copy-btn');
+      if (copyBtn) {
+        copyBtn.addEventListener('click', function() {
+          const text = codeShown;
+          const ok = function() {
+            copyBtn.textContent = 'Copied';
+            copyBtn.classList.add('copied');
+            setTimeout(function() {
+              copyBtn.textContent = 'Copy code';
+              copyBtn.classList.remove('copied');
+            }, 1500);
+          };
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(ok, function() { cs210FallbackCopy(text); ok(); });
+          } else { cs210FallbackCopy(text); ok(); }
+        });
+      }
+    }, 0);
+
+    return card;
+  }
+
+  function render() {
+    renderDots();
+    cardArea.innerHTML = '';
+    if (currentIndex >= questions.length) {
+      cardArea.appendChild(buildScoreCard());
+    } else {
+      cardArea.appendChild(buildQuestionCard(currentIndex));
+    }
+  }
+
+  function reset() {
+    state.forEach(function(s) { s.answered = false; s.correct = false; s.choice = null; s.value = ''; });
+    currentIndex = 0;
+    render();
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (!root.contains(document.activeElement)) return;
+    if (document.activeElement && document.activeElement.tagName === 'INPUT' && document.activeElement.type === 'text') return;
+    if (e.key === 'ArrowLeft' && currentIndex > 0) {
+      currentIndex--;
+      render();
+    } else if (e.key === 'ArrowRight') {
+      if (currentIndex >= questions.length) return;
+      if (state[currentIndex].answered) {
+        currentIndex++;
+        render();
+      }
+    }
+  });
+
+  // Probe for QA
+  window.__cs210FnqProbe = {
+    getState: function() { return JSON.parse(JSON.stringify(state)); },
+    getCurrentIndex: function() { return currentIndex; },
+    getQuestions: function() { return questions.map(function(q) { return { id: q.id, type: q.type, correct: q.correct, correctVal: Array.isArray(q.correct) ? q.correct[0] : (q.type === 'choice' ? q.correct : null) }; }); },
+    getCodes: function() { return { pass: CS210_CODE_PASS, fail: CS210_CODE_FAIL }; },
+    submitFor: function(i, value) {
+      const q = questions[i];
+      if (q.type === 'choice') state[i].choice = (value === 'correct') ? q.correct : ((q.correct + 1) % q.options.length);
+      else state[i].value = (value === 'correct') ? (Array.isArray(q.correct) ? q.correct[0] : q.correct) : 'WRONG_ANSWER_DELIBERATE';
+      submitAnswer(i);
+    },
+  };
+
+  render();
+})();
+</script>
+
+
+    </div>
+  </details>
+
+  <!-- ===================== 6. AFTER CLASS ===================== -->
+  <details id="after-class" style="margin-bottom: 24px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      6. After Class
+    </summary>
+    <div style="padding: 18px 22px;">
+      <ul style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Finish Lab 06.1 and Lab 06.2 if you did not complete them in class. Submit each through its GitHub Classroom assignment before Lesson 7.</li>
+        <li style="margin-bottom: 6px;">Read MTBE (<em>Modern C for Absolute Beginners</em>) "Getting Started" through the chapter on Variables in preparation for Lesson 7.</li>
+        <li style="margin-bottom: 6px;">Replay any scenario in the call stack walkthrough. Use the Back button to step backward through a return and see the frame come back. The mental model pays off in Lesson 11 (recursion) and Lesson 14 (pointers).</li>
+        <li style="margin-bottom: 0;">Heads up: Quiz 2 at Lesson 7 covers Lessons 5 and 6 together.</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== HELP NOTE ===================== -->
+  <div style="background: #F5F7FA; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 3px; font-size: 13.5px; color: #4A5568;">
+    <strong style="color: #00205B;">Need help?</strong> Schedule EI with your instructor. Bring a specific scenario from the walkthrough, a specific compiler error message, or a specific line of your lab code. Specific questions get unstuck quickly.
+  </div>
+
+</div>

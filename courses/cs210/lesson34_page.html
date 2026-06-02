@@ -1,0 +1,2035 @@
+<!-- ============================================================
+     CS210 - Lesson 34
+     Bitwise Operators I
+     Self-contained: all CSS inline. Native <details> for collapsing.
+     Two walkthrough widgets embedded inline in section 5.
+     Paste into Blackboard Ultra via Document -> Add HTML block.
+     ============================================================ -->
+
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 980px; margin: 0 auto; line-height: 1.6;">
+
+  <!-- ===================== LIGHT HEADER ===================== -->
+  <div style="border-left: 5px solid #003087; padding: 8px 0 8px 18px; margin-bottom: 24px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 2px;">CS210 &middot; Block 4 &middot; Lesson 34</div>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 600; color: #00205B;">Bitwise Operators I</h1>
+    <div style="font-size: 14px; color: #4A5568; margin-top: 4px;">Bitwise operators &middot; Two's complement &middot; Shifts &middot; Set / clear / toggle / test a bit</div>
+  </div>
+
+  <!-- ===================== AT A GLANCE ===================== -->
+  <div style="background: #F5F7FA; border-left: 4px solid #B5B7BA; padding: 14px 18px; margin-bottom: 22px; font-size: 14px;">
+    <strong style="color: #00205B;">At a glance:</strong> Down to the level of individual bits. You learn the six bitwise operators, the rule the machine uses to represent negative numbers (two's complement), and the four moves that turn those operators into tools: setting, clearing, toggling, and testing a single bit. Two walkthroughs in Section 5 build the intuition; the lab applies the four moves to a festival wristband. Class opens with Quiz 10, so the in-class time is tighter than usual.
+  </div>
+
+  <!-- ===================== TABLE OF CONTENTS ===================== -->
+  <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 20px; margin-bottom: 24px; border-radius: 3px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Contents</div>
+    <ol style="margin: 0; padding-left: 22px; font-size: 14px;">
+      <li style="margin-bottom: 4px;"><a href="#objectives" style="color: #003087; text-decoration: none;">Lesson Objectives</a></li>
+      <li style="margin-bottom: 4px;"><a href="#readings" style="color: #003087; text-decoration: none;">Assigned Readings</a></li>
+      <li style="margin-bottom: 4px;"><a href="#pre-class" style="color: #003087; text-decoration: none;">Pre-Class Work</a></li>
+      <li style="margin-bottom: 4px;"><a href="#materials" style="color: #003087; text-decoration: none;">Lesson Materials and Overview</a></li>
+      <li style="margin-bottom: 4px;"><a href="#in-class" style="color: #003087; text-decoration: none;">In-Class Work</a></li>
+      <li style="margin-bottom: 0;"><a href="#after-class" style="color: #003087; text-decoration: none;">After Class</a></li>
+    </ol>
+  </div>
+
+  <!-- ===================== 1. OBJECTIVES ===================== -->
+  <details id="objectives" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      1. Lesson Objectives
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 10px 0; font-style: italic;">By the end of this lesson, cadets will be able to:</p>
+      <ol style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Apply bitwise AND, OR, XOR, NOT, and shift operators in C expressions. <span style="color: #6B7280; font-size: 12px;">(Outcome 1)</span></li>
+        <li style="margin-bottom: 6px;">Explain how integers are represented in two's complement. <span style="color: #6B7280; font-size: 12px;">(Outcome 1)</span></li>
+        <li style="margin-bottom: 0;">Implement basic bit patterns to set, clear, toggle, and test individual bits. <span style="color: #6B7280; font-size: 12px;">(Outcome 1)</span></li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 2. READINGS ===================== -->
+  <details id="readings" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      2. Assigned Readings
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 12px 0;">Complete before class. These set the vocabulary we will use.</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <thead>
+          <tr style="background: #E8EDF5; color: #00205B;">
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 130px;">Source</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9;">Sections</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 220px;">Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;"><a href="https://beej.us/guide/bgc/" style="color: #003087; text-decoration: underline;">Beej-C</a></td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Chapter 24 (Bitwise Operations)</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">The six operators and how each one works on bits</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 9px 12px;">King, <em>C Programming: A Modern Approach</em></td>
+            <td style="padding: 9px 12px;">Chapter 20 (Low-Level Programming), sections on bitwise operators</td>
+            <td style="padding: 9px 12px; color: #4A5568;">Optional deeper dive into shifts and bit manipulation</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <!-- ===================== 3. PRE-CLASS WORK ===================== -->
+  <details id="pre-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      3. Pre-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 18px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #6B5300; font-size: 14px; margin-bottom: 4px;">Do this first</div>
+        <div style="font-size: 14px; color: #5A4B00;">Class opens with Quiz 10 (Recursion II and III) at the start of the period. Budget time to review that material as well as the new reading. The bitwise content moves fast once the quiz is done.</div>
+      </div>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 0 0 10px 0;">Pre-Class Checklist</h3>
+
+      <!-- Step 1: Reading -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">1</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Read Beej-C Chapter 24 (Bitwise Operations)</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">Get familiar with the six operators and what each one does to the bits:</div>
+            <ul style="font-size: 13.5px; margin: 0 0 6px 0; padding-left: 20px;">
+              <li style="margin-bottom: 3px;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;</code> AND, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">|</code> OR, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">^</code> XOR, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">~</code> NOT</li>
+              <li style="margin-bottom: 3px;">Left shift <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&lt;&lt;</code> and right shift <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&gt;&gt;</code></li>
+              <li style="margin-bottom: 0;">Note the difference between bitwise <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;</code> and logical <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;&amp;</code></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Review for Quiz 10 -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">2</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Review Recursion II and III for Quiz 10</div>
+            <div style="font-size: 14px;">Quiz 10 is the final quiz of the course and is given at the start of this lesson. It covers Lessons 32 and 33: recursion on dynamic structures, tracing recursive calls, and the tradeoffs between iteration and recursion. Review your notes and labs from those lessons.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Skim widgets -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 8px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">3</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Skim the In-Class section below</div>
+            <div style="font-size: 14px;">You will see two interactive walkthroughs: one on two's complement, one on the bitwise operators. No need to use them yet; just know they are there.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ===================== 4. LESSON MATERIALS AND OVERVIEW ===================== -->
+  <details id="materials" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      4. Lesson Materials and Overview
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 18px 0;">Back in Lesson 2 you saw that the same bits read differently as signed and unsigned. This lesson goes underneath that: the rule the machine uses to build negative numbers, and the operators that let you read and change bits one at a time. The reference material below covers what you will see in lecture and use in both walkthroughs.</p>
+
+      <!-- Subsection navigation -->
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 18px; margin-bottom: 22px; border-radius: 3px;">
+        <div style="font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">Jump to</div>
+        <div style="font-size: 13.5px;">
+          <a href="#slides" style="color: #003087; text-decoration: none; margin-right: 14px;">Slides</a>
+          <a href="#why-bits" style="color: #003087; text-decoration: none; margin-right: 14px;">Why bits</a>
+          <a href="#operators" style="color: #003087; text-decoration: none; margin-right: 14px;">The six operators</a>
+          <a href="#twos" style="color: #003087; text-decoration: none; margin-right: 14px;">Two's complement</a>
+          <a href="#idioms" style="color: #003087; text-decoration: none; margin-right: 14px;">The four idioms</a>
+          <a href="#standard" style="color: #003087; text-decoration: none;">Coding standard</a>
+        </div>
+      </div>
+
+      <!-- Slides -->
+      <h3 id="slides" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0; scroll-margin-top: 16px;">Slides</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">The Lesson 34 deck covers the six operators, two's complement, the shifts, and the four single-bit idioms. The slides are the spine of the in-class lecture; the two walkthroughs are where you practice each idea hands-on.</p>
+
+      <!-- EDIT ME: replace href="#" with the SharePoint link to the Lesson 34 slide deck PDF -->
+      <p style="margin: 0 0 18px 0;">
+        <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 10px 20px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 14px;">Open Lesson 34 slides &rarr;</a>
+        <span style="display: inline-block; margin-left: 10px; font-size: 12.5px; color: #6B7280;">replace href with your SharePoint link</span>
+      </p>
+
+      <!-- Why bits -->
+      <h3 id="why-bits" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Why work at the bit level</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Most of the time you treat an integer as a single number. Sometimes it is more useful to treat it as a row of 16 or 32 independent switches. A single integer can track which permissions a user has, which options are turned on, or which sensors reported in, one bit per flag. Bitwise operators are how you read and flip those switches without disturbing the others.</p>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">This lesson is the fundamentals: the operators and the four basic moves. Lesson 35 builds on it with multi-bit masks and packing several values into one integer. Get the single-bit moves solid here and the next lesson is mostly review with bigger masks.</p>
+
+      <!-- The six operators -->
+      <h3 id="operators" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">The six operators</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Five take two operands; <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">~</code> takes one. They work bit by bit, position by position.</p>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 14px;">
+        <thead>
+          <tr style="background: #00205B; color: #ffffff;">
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 90px;">Operator</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 110px;">Name</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600;">A result bit is 1 when...</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace;">&amp;</td><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">AND</td><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">both input bits are 1</td></tr>
+          <tr style="background: #F8FAFC;"><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace;">|</td><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">OR</td><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">either input bit is 1</td></tr>
+          <tr><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace;">^</td><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">XOR</td><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">the two input bits differ</td></tr>
+          <tr style="background: #F8FAFC;"><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace;">~</td><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">NOT</td><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">the single input bit is 0 (it flips every bit)</td></tr>
+          <tr><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace;">&lt;&lt;</td><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">left shift</td><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">a bit slid into this position from the right (zeros fill in)</td></tr>
+          <tr style="background: #F8FAFC;"><td style="padding: 8px 12px; font-family: Consolas, monospace;">&gt;&gt;</td><td style="padding: 8px 12px;">right shift</td><td style="padding: 8px 12px;">a bit slid into this position from the left (low bits fall off)</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><strong style="color: #00205B;">Watch the doubles.</strong> <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;</code> and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;&amp;</code> are different operators. Single <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;</code> combines bits; double <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;&amp;</code> is the logical AND that produces true or false. Same for <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">|</code> versus <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">||</code>. Using the wrong one is a common and quiet bug.</p>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;"><strong style="color: #00205B;">Shifts as multiply and divide.</strong> On an unsigned value, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">x &lt;&lt; n</code> multiplies by 2<sup>n</sup> and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">x &gt;&gt; n</code> divides by 2<sup>n</sup> (dropping the remainder), as long as nothing important falls off the end. We work in <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">unsigned short</code> in this lesson so the right shift is well defined; on signed values the behavior of <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&gt;&gt;</code> is not guaranteed.</p>
+
+      <!-- Two's complement -->
+      <h3 id="twos" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Two's complement</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Two's complement is the rule almost every machine uses to represent signed integers. The headline: to negate a number, invert every bit and add one. That is the entire rule.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #6B7280;">// start with 6 in a 16-bit short</span><br>
+        6&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= 0000000000000110<br>
+        <span style="color: #6B7280;">// step 1: invert every bit (~)</span><br>
+        ~6&nbsp;&nbsp;&nbsp;&nbsp;= 1111111111111001&nbsp;&nbsp;<span style="color: #6B7280;">// this alone reads as -7</span><br>
+        <span style="color: #6B7280;">// step 2: add 1</span><br>
+        ~6 + 1 = 1111111111111010 = <span style="color: #7FD17F;">-6</span>
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><strong style="color: #00205B;">The sign bit is a weight, not a flag.</strong> In a 16-bit signed value the top bit does not just mean negative; it carries the weight -2<sup>15</sup> = -32768. Every other bit adds its usual positive value. So <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">1111111111111111</code> is -32768 + 32767 = -1, and the all-ones pattern is always -1 in a signed type.</p>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;"><strong style="color: #00205B;">The range is lopsided.</strong> A <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">short</code> runs from -32768 to 32767. There is one more negative value than positive because zero takes one of the non-negative slots. That is why negating the most negative number gives you back the most negative number: its positive twin does not exist. The two's complement walkthrough in Section 5 lets you watch all of this happen bit by bit.</p>
+
+      <!-- The four idioms -->
+      <h3 id="idioms" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">The four single-bit idioms</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Almost everything you do with bits comes down to four moves on one bit at position <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">n</code>. Each one builds a single-bit mask with <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">(1 &lt;&lt; n)</code> and combines it with the value. Memorize these four; the lab is built on them.</p>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 18px;">
+        <thead>
+          <tr style="background: #00205B; color: #ffffff;">
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 90px;">Move</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 180px;">Expression</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600;">Why it works</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Set</td><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">value | (1 &lt;&lt; n)</td><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">OR with a 1 forces that bit on; OR with the 0s elsewhere leaves them alone</td></tr>
+          <tr style="background: #F8FAFC;"><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Clear</td><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">value &amp; ~(1 &lt;&lt; n)</td><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">the mask is all 1s except bit n; AND forces only that bit off</td></tr>
+          <tr><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Toggle</td><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">value ^ (1 &lt;&lt; n)</td><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">XOR with a 1 flips that bit; XOR with the 0s elsewhere leaves them alone</td></tr>
+          <tr style="background: #F8FAFC;"><td style="padding: 8px 12px;">Test</td><td style="padding: 8px 12px; font-family: Consolas, monospace; font-size: 13px;">(value &gt;&gt; n) &amp; 1</td><td style="padding: 8px 12px; color: #4A5568;">slide bit n down to position 0, then mask it off; result is 1 if set, 0 if not</td></tr>
+        </tbody>
+      </table>
+
+      <!-- Coding standard -->
+      <h3 id="standard" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Coding standard for this lab</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">This lesson does not introduce new DFCS C Programming Standard rules, but the lab is a good place to keep the naming rules sharp. The perk flags are <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">#define</code> constants in SCREAMING_SNAKE_CASE (&sect;5.6), the functions and variables are snake_case (&sect;5.1, &sect;5.2), and naming each perk with a <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">#define</code> instead of a bare number is exactly the rule against magic numbers (&sect;7.1). The full standard is in the course Resources section.</p>
+
+    </div>
+  </details>
+
+  <!-- ===================== 5. IN-CLASS WORK ===================== -->
+  <details id="in-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      5. In-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 16px 0;">Class opens with Quiz 10 (Recursion II and III). After the quiz, work through both walkthroughs and then the lab. Use the checklist to track your progress.</p>
+
+      <ul style="list-style: none; padding: 0; margin: 0 0 24px 0; font-size: 14.5px;">
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Work through the two's complement walkthrough below.</strong>
+          <span style="color: #4A5568;">Nine guided tasks: negate a number by hand, see the sign bit as a weight, and watch the range run lopsided. About 15 minutes.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Work through the bit operations playground.</strong>
+          <span style="color: #4A5568;">Twelve guided tasks across the six operators and the four single-bit idioms. About 20 minutes.</span>
+        </li>
+        <!-- EDIT ME: replace href="#" below with the GitHub Classroom invite link for the Lesson 34 lab -->
+        <li style="margin-bottom: 0; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Complete the lab: Festival Wristband Perks.</strong>
+          <span style="color: #4A5568;">Implement set, clear, toggle, test, and count on a wristband stored in one <code style="background: #F0F2F5; padding: 1px 4px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12px;">unsigned short</code>. Auto-graded through GitHub Classroom; accept the assignment with the <a href="#" target="_blank" rel="noopener" style="color: #003087;">GitHub Classroom invite</a>. Worth 2 points.</span>
+        </li>
+      </ul>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 18px 0 10px 0;">Two's Complement Walkthrough</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Nine tasks across four sections. Build a negative number by hand, see why the high bit is a negative weight, and watch the range run one slot further negative than positive. When you finish, copy the completion code for the Lesson 34 reflection.</p>
+
+<!-- ============================================================
+     CS210 Lesson 34 - Two's Complement Walkthrough Widget
+     Adapted from the Lesson 2 binary widget. Native HTML/CSS + scoped JS.
+     Teaches the negation mechanism (invert + add 1), the sign bit as a
+     negative weight, and range asymmetry. 16-bit short / unsigned short.
+     ============================================================ -->
+<style>
+.cs210-tw * { box-sizing: border-box; }
+.cs210-tw {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-tw h1 { color: #00205B; font-size: 24px; margin: 0 0 6px 0; }
+.cs210-tw .subtitle { color: #4A5568; font-size: 14px; margin-bottom: 22px; }
+.cs210-tw .progress-bar {
+  background: #E5E7EB; border-radius: 3px; height: 8px;
+  overflow: hidden; margin-bottom: 6px;
+}
+.cs210-tw .progress-fill { background: #003087; height: 100%; transition: width 0.3s ease; }
+.cs210-tw .progress-label { font-size: 12px; color: #6B7280; margin-bottom: 18px; }
+.cs210-tw .section-header {
+  background: #E8EDF5; color: #00205B; padding: 8px 14px; border-radius: 3px;
+  font-size: 13px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; margin-bottom: 10px;
+}
+.cs210-tw .task-card {
+  background: #FFF8E1; border-left: 4px solid #F0B92C;
+  padding: 14px 18px; margin-bottom: 14px; border-radius: 3px;
+}
+.cs210-tw .task-card.complete { background: #E6F4EA; border-left-color: #2E7D32; }
+.cs210-tw .task-label {
+  font-size: 12px; letter-spacing: 1.5px; color: #6B5300;
+  text-transform: uppercase; font-weight: 600; margin-bottom: 4px;
+}
+.cs210-tw .task-card.complete .task-label { color: #1B5E20; }
+.cs210-tw .task-text { font-size: 15px; color: #1a1a1a; }
+.cs210-tw .task-hint { font-size: 12.5px; color: #6B7280; margin-top: 6px; font-style: italic; }
+
+.cs210-tw .panes {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 12px;
+}
+@media (max-width: 760px) { .cs210-tw .panes { grid-template-columns: 1fr; } }
+.cs210-tw .terminal {
+  background: #1E2A3A; color: #E8EDF5;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13.5px; line-height: 1.5; border-radius: 4px;
+  padding: 14px 18px; min-height: 380px; max-height: 480px;
+  overflow-y: auto; white-space: pre-wrap; word-break: break-word;
+}
+.cs210-tw .terminal .prompt { color: #7FB3D5; }
+.cs210-tw .terminal .typed { color: #FFFFFF; }
+.cs210-tw .terminal .out { color: #B5BEC8; }
+.cs210-tw .terminal .note { color: #F0B92C; }
+.cs210-tw .terminal .err { color: #F47A7A; }
+.cs210-tw .terminal .ok { color: #7FD17F; }
+.cs210-tw .terminal .dim { color: #6B7280; }
+
+.cs210-tw .bit-pane {
+  background: #ffffff; border: 1px solid #D0D5DD; border-radius: 4px;
+  padding: 14px 16px; min-height: 380px; max-height: 480px; overflow-y: auto;
+}
+.cs210-tw .bit-pane-header {
+  font-size: 11px; letter-spacing: 1.5px; color: #6B7280;
+  text-transform: uppercase; font-weight: 600; margin-bottom: 12px;
+  padding-bottom: 8px; border-bottom: 1px solid #E5E7EB;
+}
+.cs210-tw .empty {
+  color: #6B7280; font-style: italic; font-size: 13px;
+  text-align: center; padding: 80px 10px;
+}
+
+.cs210-tw .var-card {
+  background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 4px;
+  padding: 12px 14px; margin-bottom: 12px;
+}
+.cs210-tw .var-decl {
+  font-family: Consolas, monospace; font-size: 13px;
+  color: #00205B; font-weight: 600; margin-bottom: 6px;
+}
+.cs210-tw .bit-grid {
+  display: grid; grid-template-columns: repeat(8, 1fr);
+  gap: 2px; margin-top: 8px; margin-bottom: 4px;
+}
+.cs210-tw .bit-grid.wide-16 { grid-template-columns: repeat(16, 1fr); }
+.cs210-tw .bit-cell {
+  background: #E8EDF5; border: 1px solid #C7CFD9; text-align: center;
+  font-family: Consolas, monospace; font-size: 15px; font-weight: 700;
+  color: #6B7280; padding: 6px 0; border-radius: 2px;
+  transition: background 0.3s ease, color 0.3s ease, transform 0.3s ease;
+}
+.cs210-tw .bit-cell.on { background: #003087; color: #ffffff; border-color: #00205B; }
+.cs210-tw .bit-cell.sign-bit { border-color: #B8002F; border-width: 2px; }
+.cs210-tw .bit-cell.flipped { animation: cs210-tw-flip 0.8s ease-out; }
+@keyframes cs210-tw-flip {
+  0%   { transform: scale(1); background: #F0B92C; color: #1a1a1a; box-shadow: 0 0 0 0 rgba(240,185,44,0.7); }
+  50%  { transform: scale(1.15); background: #F0B92C; color: #1a1a1a; box-shadow: 0 0 0 8px rgba(240,185,44,0); }
+  100% { transform: scale(1); }
+}
+.cs210-tw .bit-positions {
+  display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px;
+  font-family: Consolas, monospace; font-size: 9px; color: #6B7280;
+  text-align: center; margin-bottom: 4px;
+}
+.cs210-tw .bit-positions.wide-16 { grid-template-columns: repeat(16, 1fr); }
+.cs210-tw .bit-pos { padding: 2px 0; }
+.cs210-tw .bit-pos.sign { color: #B8002F; font-weight: 700; }
+.cs210-tw .interp-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  margin-top: 10px; padding-top: 10px; border-top: 1px dashed #D0D5DD;
+}
+.cs210-tw .interp-cell { text-align: center; font-size: 12px; color: #6B7280; }
+.cs210-tw .interp-cell .lbl {
+  font-size: 10px; letter-spacing: 0.8px; text-transform: uppercase;
+  color: #6B7280; margin-bottom: 2px;
+}
+.cs210-tw .interp-cell .val {
+  font-family: Consolas, monospace; font-size: 16px; font-weight: 700; color: #00205B;
+}
+.cs210-tw .interp-cell .val.warn { color: #B8002F; }
+.cs210-tw .hex-line {
+  font-family: Consolas, monospace; font-size: 11px; color: #6B7280;
+  margin-top: 4px; text-align: center;
+}
+
+/* Negation step card */
+.cs210-tw .arith-card {
+  background: #ffffff; border: 2px solid #003087; border-radius: 4px;
+  padding: 14px; margin-bottom: 12px;
+}
+.cs210-tw .arith-title {
+  font-family: Consolas, monospace; font-size: 14px; color: #00205B;
+  font-weight: 600; margin-bottom: 10px; text-align: center;
+}
+.cs210-tw .arith-step {
+  font-size: 11px; letter-spacing: 0.8px; text-transform: uppercase;
+  color: #6B7280; margin: 12px 0 4px 0; font-weight: 600;
+}
+.cs210-tw .arith-result {
+  text-align: center; margin-top: 12px; padding-top: 10px;
+  border-top: 1px dashed #D0D5DD;
+}
+.cs210-tw .arith-result .answer {
+  font-family: Consolas, monospace; font-size: 22px; font-weight: 700; color: #00205B;
+}
+.cs210-tw .arith-result .answer.warn { color: #B8002F; }
+.cs210-tw .arith-result .answer.ok   { color: #2E7D32; }
+.cs210-tw .arith-result .label {
+  font-size: 11px; color: #6B7280; text-transform: uppercase;
+  letter-spacing: 0.8px; margin-bottom: 4px;
+}
+
+.cs210-tw .input-row {
+  display: flex; background: #1E2A3A; border-radius: 4px;
+  padding: 8px 14px; margin-bottom: 14px; border: 1px solid #003087;
+}
+.cs210-tw .input-prompt {
+  color: #7FB3D5; font-family: Consolas, monospace; font-size: 14px;
+  margin-right: 8px; align-self: center; white-space: nowrap;
+}
+.cs210-tw .input-row input {
+  flex: 1; background: transparent; color: #FFFFFF; border: none; outline: none;
+  font-family: Consolas, monospace; font-size: 14px; padding: 4px 0;
+}
+.cs210-tw .controls { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+.cs210-tw .btn {
+  background: #ffffff; border: 1px solid #C7CFD9; padding: 6px 14px;
+  border-radius: 3px; font-size: 13px; cursor: pointer; color: #00205B;
+  font-family: inherit; transition: box-shadow 0.2s ease;
+}
+.cs210-tw .btn:hover { background: #F5F7FA; }
+@keyframes cs210-tw-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(240, 185, 44, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0); }
+}
+.cs210-tw .btn.pulse {
+  background: #FFF8E1; border-color: #F0B92C; color: #6B5300;
+  font-weight: 600; animation: cs210-tw-pulse 1.5s infinite;
+}
+.cs210-tw .help-note {
+  background: #F5F7FA; border: 1px solid #D0D5DD; padding: 12px 16px;
+  border-radius: 3px; font-size: 13px; color: #4A5568; margin-top: 12px;
+}
+.cs210-tw .help-note strong { color: #00205B; }
+/* Name modal overlay */
+.cs210-tw .name-modal-backdrop {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex; align-items: center; justify-content: center; z-index: 9999;
+}
+.cs210-tw .name-modal {
+  background: #ffffff; border-radius: 6px; padding: 28px 32px;
+  max-width: 440px; width: 90%; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-tw .name-modal h2 { color: #00205B; font-size: 20px; margin: 0 0 10px 0; }
+.cs210-tw .name-modal p { color: #4A5568; font-size: 14px; line-height: 1.5; margin: 0 0 16px 0; }
+.cs210-tw .name-modal input {
+  width: 100%; padding: 10px 12px; font-size: 15px; border: 1px solid #CBD5E0;
+  border-radius: 4px; margin-bottom: 14px; font-family: inherit;
+}
+.cs210-tw .name-modal input:focus {
+  outline: none; border-color: #003087; box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-tw .name-modal-btn {
+  background: #003087; color: #ffffff; border: none; padding: 10px 20px;
+  border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.cs210-tw .name-modal-btn:disabled { background: #A0AEC0; cursor: not-allowed; }
+.cs210-tw .name-modal-btn:not(:disabled):hover { background: #00205B; }
+/* Completion screen */
+.cs210-tw .completion-screen {
+  background: #ffffff; border: 2px solid #2E7D32; border-radius: 6px;
+  padding: 24px 28px; margin-top: 16px;
+}
+.cs210-tw .completion-screen .cs-heading { color: #1B5E20; font-size: 20px; font-weight: 600; margin: 0 0 6px 0; }
+.cs210-tw .completion-screen .cs-name-line { font-size: 15px; color: #1a1a1a; margin-bottom: 16px; }
+.cs210-tw .completion-screen .cs-name-line strong { color: #00205B; }
+.cs210-tw .completion-screen .cs-code-block {
+  background: #F0F4FA; border: 1px solid #003087; border-radius: 4px;
+  padding: 16px 20px; display: flex; align-items: center;
+  justify-content: space-between; gap: 16px; margin-bottom: 14px;
+}
+.cs210-tw .completion-screen .cs-code-label {
+  font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px;
+  color: #4A5568; margin-bottom: 4px;
+}
+.cs210-tw .completion-screen .cs-code-value {
+  font-family: 'Consolas', 'Courier New', monospace; font-size: 28px;
+  font-weight: 700; color: #00205B; letter-spacing: 3px;
+}
+.cs210-tw .completion-screen .cs-copy-btn {
+  background: #003087; color: #ffffff; border: none; padding: 8px 14px;
+  border-radius: 3px; font-size: 13px; cursor: pointer; font-family: inherit;
+}
+.cs210-tw .completion-screen .cs-copy-btn:hover { background: #00205B; }
+.cs210-tw .completion-screen .cs-copy-btn.copied { background: #2E7D32; }
+.cs210-tw .completion-screen .cs-timestamp { font-size: 13px; color: #6B7280; margin-bottom: 18px; }
+.cs210-tw .completion-screen .cs-reminder {
+  background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 12px 16px;
+  border-radius: 3px; font-size: 14px; color: #6B5300; line-height: 1.5;
+}
+.cs210-tw .completion-screen .cs-reminder strong { color: #4A3A00; }
+</style>
+
+<div class="cs210-tw">
+
+<div class="name-modal-backdrop" id="tw-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Lesson 34 reflection.</p>
+    <input type="text" id="tw-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="tw-cadet-name-btn" disabled>Start the walkthrough</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 34 &middot; Two's Complement Walkthrough</h1>
+<div class="subtitle">In Lesson 2 you saw that the same bits read differently as signed and unsigned. Now see the mechanism behind it: how a negative number is built (invert, then add one), why the high bit acts as a negative weight, and why the range is lopsided. Type the C statement or expression each task asks for; the right pane shows the bits.</div>
+
+<div class="progress-bar"><div class="progress-fill" id="tw-progress-fill" style="width: 0%;"></div></div>
+<div class="progress-label" id="tw-progress-label">Task 0 of 9</div>
+
+<div class="section-header" id="tw-section-header">Section 1: The sign bit as a weight</div>
+
+<div class="task-card" id="tw-task-card">
+  <div class="task-label" id="tw-task-label">Current task</div>
+  <div class="task-text" id="tw-task-text">Loading...</div>
+  <div class="task-hint" id="tw-task-hint"></div>
+</div>
+
+<div class="panes">
+  <div class="terminal" id="tw-terminal"></div>
+  <div class="bit-pane">
+    <div class="bit-pane-header">Binary view</div>
+    <div id="tw-area">
+      <div class="empty">Nothing yet.<br>Type a declaration on the left.</div>
+    </div>
+  </div>
+</div>
+
+<div class="input-row">
+  <span class="input-prompt">bits&gt;</span>
+  <input type="text" id="tw-input" autocomplete="off" spellcheck="false" placeholder="follow the task above">
+</div>
+
+<div class="controls">
+  <button class="btn" id="tw-hint-btn">Show hint</button>
+  <button class="btn" id="tw-reset-btn">Reset</button>
+  <button class="btn" id="tw-mode-btn">Switch to free mode</button>
+</div>
+
+<div class="help-note">
+  <strong>How this works:</strong> Declare a <code>short</code> or <code>unsigned short</code> to see its 16-bit pattern, plus how it reads as signed and unsigned. You can also negate by hand: type <code>~x</code> to invert every bit (one's complement), or <code>~x + 1</code> to finish the negation. The sign bit (the highest bit of a signed type) is outlined in red.
+</div>
+
+<div id="tw-completion-area"></div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-tw');
+  if (!root) return;
+
+  // ============================================================
+  // CS210 widget completion utilities (FNV-1a -> 6-char code)
+  // ============================================================
+  const CS210_SALT = "lesson34_twoscomplement_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#tw-name-modal-backdrop');
+    const input = root.querySelector('#tw-cadet-name-input');
+    const btn = root.querySelector('#tw-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length >= 2) {
+        cs210CadetName = stored.trim();
+        backdrop.style.display = 'none';
+        return;
+      }
+    } catch (e) {}
+    function updateBtn() { btn.disabled = input.value.trim().length < 2; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', function() {
+      const name = input.value.trim();
+      if (name.length < 2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+      const siblings = document.querySelectorAll(
+        '#bw-name-modal-backdrop, #bitops-name-modal-backdrop, #ptrmath-name-modal-backdrop, #duality-name-modal-backdrop'
+      );
+      siblings.forEach(function(m) { m.style.display = 'none'; });
+      const cli = root.querySelector('#tw-input');
+      if (cli) cli.focus();
+    });
+    setTimeout(function() { input.focus(); }, 50);
+  })();
+
+  function cs210RenderCompletion(area) {
+    if (!area) return;
+    if (root.querySelector('#tw-cs210-completion-overlay')) return;
+    const now = new Date();
+    const ts = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const safeName = (cs210CadetName || 'Cadet').replace(/[<>&"']/g, function(c) {
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+    area.innerHTML =
+      '<div class="completion-screen">' +
+        '<div class="cs-heading">Walkthrough complete</div>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value">' + CS210_CODE + '</div></div>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+      '</div>';
+    const overlay = document.createElement('div');
+    overlay.id = 'tw-cs210-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.style.background = 'rgba(27, 94, 32, 0.55)';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">Walkthrough complete</h2>' +
+        '<p>Take a screenshot of this box. You will need the code and a visual of this screen for the Lesson 34 reflection.</p>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value" id="tw-cs-code-value">' + CS210_CODE + '</div></div>' +
+          '<button class="cs-copy-btn" id="tw-cs-copy-btn" type="button">Copy code</button>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+        '<div class="cs-reminder" style="margin-bottom:14px;">' +
+          '<strong>Next step:</strong> Open the Lesson 34 reflection in Blackboard. Enter this code, answer the reflection prompt, and attach your screenshot.' +
+        '</div>' +
+        '<button class="name-modal-btn" id="tw-cs-overlay-close" type="button" style="background:#2E7D32;">Got it &mdash; close this</button>' +
+      '</div>';
+    root.appendChild(overlay);
+    const closeBtn = overlay.querySelector('#tw-cs-overlay-close');
+    if (closeBtn) closeBtn.addEventListener('click', function() { overlay.style.display = 'none'; });
+    const copyBtn = overlay.querySelector('#tw-cs-copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function() {
+        const text = CS210_CODE;
+        const ok = function() {
+          copyBtn.textContent = 'Copied';
+          copyBtn.classList.add('copied');
+          setTimeout(function() { copyBtn.textContent = 'Copy code'; copyBtn.classList.remove('copied'); }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(ok, function() { cs210FallbackCopy(text); ok(); });
+        } else { cs210FallbackCopy(text); ok(); }
+      });
+    }
+  }
+  function cs210FallbackCopy(text) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e) {}
+  }
+
+  // ============================================================
+  // Type metadata (16-bit only for Lesson 34)
+  // ============================================================
+  const TYPES = {
+    "short":          { size: 2, signed: true,  min: -32768n, max: 32767n },
+    "unsigned short": { size: 2, signed: false, min: 0n,      max: 65535n },
+  };
+  const TYPE_LIST = Object.keys(TYPES).sort((a,b) => b.length - a.length);
+
+  // ============================================================
+  // State
+  // ============================================================
+  const variables = []; // {type, name, unsignedBits, rawValue, wrapped}
+  let lastResult = null; // expression result card payload
+  let currentTaskIndex = 0;
+  let consecutiveFails = 0;
+  let mode = "walkthrough";
+  let lastFlipped = new Set();
+
+  // ============================================================
+  // Encode/decode
+  // ============================================================
+  function encodeInt(value, size) {
+    let n = BigInt(value);
+    const bits = BigInt(size * 8);
+    const mask = (1n << bits);
+    return ((n % mask) + mask) % mask;
+  }
+  function decodeSigned(u, size) {
+    const bits = BigInt(size * 8);
+    const signBit = 1n << (bits - 1n);
+    if (u & signBit) return u - (1n << bits);
+    return u;
+  }
+  function bitsFromUnsigned(u, size) {
+    const bits = [];
+    for (let i = size * 8 - 1; i >= 0; i--) bits.push(Number((u >> BigInt(i)) & 1n));
+    return bits;
+  }
+  function toHex(u, size) { return "0x" + u.toString(16).toUpperCase().padStart(size * 2, "0"); }
+  function flippedBitIndices(prev, curr, size) {
+    if (prev === null) return new Set();
+    const out = new Set();
+    for (let i = 0; i < size * 8; i++) {
+      const pb = Number((prev >> BigInt(i)) & 1n);
+      const cb = Number((curr >> BigInt(i)) & 1n);
+      if (pb !== cb) out.add(size * 8 - 1 - i);
+    }
+    return out;
+  }
+
+  // ============================================================
+  // Parsers
+  // ============================================================
+  function tryParseDecl(line) {
+    const trimmed = line.trim().replace(/;?\s*$/, "");
+    let matched = null, matchLen = 0;
+    for (const t of TYPE_LIST) {
+      const re = new RegExp("^(" + t.replace(/ /g, "\\s+") + ")\\b");
+      const m = trimmed.match(re);
+      if (m) { matched = t; matchLen = m[1].length; break; }
+    }
+    if (!matched) return null;
+    const rest = trimmed.substring(matchLen).trim();
+    const m = rest.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(-?\d+)\s*$/);
+    if (!m) return { type: matched, error: "expected: <type> <name> = <value>;" };
+    return { kind: "decl", type: matched, name: m[1], value: BigInt(m[2]), rawValue: m[2] };
+  }
+  function tryParseExpr(line) {
+    const t = line.trim().replace(/;?\s*$/, "");
+    let m = t.match(/^~\s*([A-Za-z_]\w*)\s*\+\s*1$/);   // ~x + 1
+    if (m) return { kind: "expr", op: "negate", name: m[1] };
+    m = t.match(/^~\s*([A-Za-z_]\w*)$/);                // ~x
+    if (m) return { kind: "expr", op: "invert", name: m[1] };
+    return null;
+  }
+
+  // ============================================================
+  // Evaluators
+  // ============================================================
+  function evalDecl(parsed) {
+    if (!parsed.name) throw new Error(parsed.error || "missing variable name");
+    const meta = TYPES[parsed.type];
+    const unsignedBits = encodeInt(parsed.value, meta.size);
+    const existingIdx = variables.findIndex(v => v.name === parsed.name);
+    let prevBits = null;
+    if (existingIdx !== -1) prevBits = variables[existingIdx].unsignedBits;
+    const v = {
+      type: parsed.type, name: parsed.name, rawValue: parsed.rawValue, unsignedBits,
+      wrapped: (meta.signed && parsed.value !== decodeSigned(unsignedBits, meta.size))
+            || (!meta.signed && (parsed.value < 0n || parsed.value > meta.max)),
+    };
+    lastResult = null;
+    if (existingIdx !== -1) {
+      variables[existingIdx] = v;
+      lastFlipped = flippedBitIndices(prevBits, unsignedBits, meta.size);
+    } else {
+      variables.push(v);
+      lastFlipped = new Set();
+    }
+    return { kind: "var-added", variable: v, overwrite: existingIdx !== -1 };
+  }
+  function evalExpr(parsed) {
+    const v = variables.find(x => x.name === parsed.name);
+    if (!v) throw new Error("'" + parsed.name + "' is not declared yet. Declare it first, e.g. short " + parsed.name + " = 6;");
+    const meta = TYPES[v.type];
+    const size = meta.size;
+    const mask = (1n << BigInt(size * 8)) - 1n;
+    const startBits = v.unsignedBits;
+    const invBits = (~startBits) & mask;
+    let resultBits, title, steps;
+    if (parsed.op === "invert") {
+      resultBits = invBits;
+      title = "~" + v.name;
+      steps = [
+        { label: "start: " + v.name, bits: startBits, flipped: new Set() },
+        { label: "~" + v.name + " (every bit flipped)", bits: invBits, flipped: flippedBitIndices(startBits, invBits, size) },
+      ];
+    } else { // negate
+      resultBits = (invBits + 1n) & mask;
+      title = "~" + v.name + " + 1";
+      steps = [
+        { label: "start: " + v.name, bits: startBits, flipped: new Set() },
+        { label: "step 1 - invert (~" + v.name + ")", bits: invBits, flipped: flippedBitIndices(startBits, invBits, size) },
+        { label: "step 2 - add 1", bits: resultBits, flipped: flippedBitIndices(invBits, resultBits, size) },
+      ];
+    }
+    lastResult = {
+      op: parsed.op, type: v.type, size, title, steps, resultBits,
+      signedVal: decodeSigned(resultBits, size).toString(),
+      unsignedVal: resultBits.toString(),
+      sourceName: v.name,
+    };
+    lastFlipped = new Set();
+    return { kind: "expr-done", result: lastResult };
+  }
+
+  // ============================================================
+  // Dispatcher
+  // ============================================================
+  function runCommand(line) {
+    const t = line.trim();
+    if (!t) return null;
+    const lower = t.toLowerCase().replace(/;?$/, "");
+    if (lower === "clear" || lower === "reset") {
+      variables.length = 0; lastResult = null; lastFlipped = new Set();
+      return { kind: "cleared" };
+    }
+    if (lower === "help" || lower === "?") return { kind: "help" };
+    if (lower === "list") return { kind: "list" };
+
+    const d = tryParseDecl(t);
+    if (d && d.kind === "decl") return evalDecl(d);
+    if (d && d.error) throw new Error(d.error);
+
+    const e = tryParseExpr(t);
+    if (e) return evalExpr(e);
+
+    // Friendly nudges
+    if (/&&|\|\|/.test(t)) throw new Error("This widget is about two's complement, not logic. Try ~x or ~x + 1 to negate, or declare a short.");
+    if (/[&|^]/.test(t)) throw new Error("Bitwise AND/OR/XOR come in the next widget. Here, use ~x and ~x + 1 to build a negative number.");
+    if (/<<|>>/.test(t)) throw new Error("Shifts come in the next widget. Here, use ~x and ~x + 1.");
+    if (/^(ls|cd|pwd|cat|echo|mkdir|rm|mv|cp)\b/.test(t)) throw new Error("not a shell. Type a declaration like: short x = 6;");
+    throw new Error("couldn't parse '" + t + "'. Try a declaration (short x = 6;) or an expression (~x, ~x + 1).");
+  }
+
+  // ============================================================
+  // Terminal output
+  // ============================================================
+  const terminalEl = root.querySelector('#tw-terminal');
+  function termWrite(text, cls) {
+    const span = document.createElement('span');
+    if (cls) span.className = cls;
+    span.textContent = text;
+    terminalEl.appendChild(span);
+  }
+  function termLine(text, cls) {
+    termWrite(text, cls);
+    terminalEl.appendChild(document.createElement('br'));
+    terminalEl.scrollTop = terminalEl.scrollHeight;
+  }
+  function echoCommand(cmd) { termWrite('bits> ', 'prompt'); termLine(cmd, 'typed'); }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" })[c]);
+  }
+
+  // ============================================================
+  // Bit pane rendering
+  // ============================================================
+  const areaEl = root.querySelector('#tw-area');
+
+  function renderBitGrid(unsignedBits, size, flippedSet, signed) {
+    const bits = bitsFromUnsigned(unsignedBits, size);
+    const wide = size > 1;
+    let positions = '<div class="bit-positions' + (wide ? ' wide-16' : '') + '">';
+    for (let i = 0; i < size * 8; i++) {
+      const power = size * 8 - 1 - i;
+      const isSign = signed && power === size * 8 - 1;
+      const label = isSign ? "sign" : ("2^" + power);
+      positions += '<div class="bit-pos' + (isSign ? ' sign' : '') + '">' + label + '</div>';
+    }
+    positions += '</div>';
+    let grid = '<div class="bit-grid' + (wide ? ' wide-16' : '') + '">';
+    for (let i = 0; i < bits.length; i++) {
+      const b = bits[i];
+      const power = size * 8 - 1 - i;
+      const isSign = signed && power === size * 8 - 1;
+      const isFlipped = flippedSet && flippedSet.has(i);
+      const cls = ['bit-cell'];
+      if (b === 1) cls.push('on');
+      if (isSign) cls.push('sign-bit');
+      if (isFlipped) cls.push('flipped');
+      grid += '<div class="' + cls.join(' ') + '">' + b + '</div>';
+    }
+    grid += '</div>';
+    return positions + grid;
+  }
+
+  function renderVarCard(v, isLatest) {
+    const meta = TYPES[v.type];
+    const unsignedDisp = v.unsignedBits.toString();
+    const signedDisp = decodeSigned(v.unsignedBits, meta.size).toString();
+    const hexDisp = toHex(v.unsignedBits, meta.size);
+    const flippedSet = isLatest ? lastFlipped : null;
+    const decl = v.type + ' ' + v.name + ' = ' + v.rawValue + ';';
+    let interp = '<div class="interp-grid">';
+    if (meta.signed) {
+      interp += '<div class="interp-cell"><div class="lbl">as signed</div><div class="val' + (signedDisp !== v.rawValue && v.wrapped ? ' warn' : '') + '">' + signedDisp + '</div></div>';
+      interp += '<div class="interp-cell"><div class="lbl">as unsigned</div><div class="val">' + unsignedDisp + '</div></div>';
+    } else {
+      interp += '<div class="interp-cell"><div class="lbl">as unsigned</div><div class="val">' + unsignedDisp + '</div></div>';
+      interp += '<div class="interp-cell"><div class="lbl">as signed</div><div class="val">' + signedDisp + '</div></div>';
+    }
+    interp += '</div>';
+    return '<div class="var-card">' +
+           '<div class="var-decl">' + escapeHtml(decl) + '</div>' +
+           renderBitGrid(v.unsignedBits, meta.size, flippedSet, meta.signed) +
+           '<div class="hex-line">hex: ' + hexDisp + '</div>' + interp + '</div>';
+  }
+
+  function renderResultCard(r) {
+    let html = '<div class="arith-card"><div class="arith-title">' + escapeHtml(r.title) + '</div>';
+    for (const st of r.steps) {
+      html += '<div class="arith-step">' + escapeHtml(st.label) + '</div>';
+      html += renderBitGrid(st.bits, r.size, st.flipped, TYPES[r.type].signed);
+    }
+    const cls = (r.op === "negate") ? "ok" : "";
+    html += '<div class="arith-result">' +
+            '<div class="label">reads as signed</div>' +
+            '<div class="answer ' + cls + '">' + r.signedVal + '</div>' +
+            '<div class="label" style="margin-top:6px;">reads as unsigned: ' + r.unsignedVal + '</div>' +
+            '</div>';
+    html += '</div>';
+    return html;
+  }
+
+  function isPaneAtBottom(c) { if (!c) return true; return c.scrollHeight - c.scrollTop - c.clientHeight < 40; }
+  function scrollPaneToBottom(c) { if (c) c.scrollTop = c.scrollHeight; }
+  function renderArea() {
+    const pane = areaEl.closest('.bit-pane');
+    const wasAtBottom = isPaneAtBottom(pane);
+    if (variables.length === 0 && !lastResult) {
+      areaEl.innerHTML = '<div class="empty">Nothing yet.<br>Type a declaration on the left.</div>';
+      return;
+    }
+    let html = '';
+    for (let i = 0; i < variables.length; i++) {
+      html += renderVarCard(variables[i], i === variables.length - 1 && !lastResult);
+    }
+    if (lastResult) html += renderResultCard(lastResult);
+    areaEl.innerHTML = html;
+    if (wasAtBottom) scrollPaneToBottom(pane);
+  }
+
+  // ============================================================
+  // Tasks
+  // ============================================================
+  function diagDecl(cmd, expected) {
+    const trimmed = cmd.trim();
+    const noSemi = new RegExp("^\\s*" + expected.type.replace(/ /g, "\\s+") + "\\s+" + expected.name + "\\s*=\\s*" + expected.value + "\\s*$");
+    if (noSemi.test(trimmed)) return "Almost. Don't forget the semicolon at the end.";
+    const m = trimmed.match(/^\s*([a-z][a-z ]*?)\s+([A-Za-z_]\w*)\s*=\s*(-?\d+)\s*;?\s*$/i);
+    if (m) {
+      const userType = m[1].trim().replace(/\s+/g, " "), userName = m[2], userVal = m[3];
+      if (userName !== expected.name && userType === expected.type) return "Close. Check the variable name. The task wants '" + expected.name + "'.";
+      if (userType !== expected.type && userName === expected.name) return "Close. Check the type. The task wants '" + expected.type + "'.";
+      if (userVal !== expected.value && userType === expected.type && userName === expected.name) return "Close. Check the value. The task wants '" + expected.value + "'.";
+    }
+    return null;
+  }
+
+  const tasks = [
+    // Section 1: The sign bit as a weight
+    {
+      section: 'Section 1: The sign bit as a weight',
+      label: 'Task 1 of 9',
+      text: 'Declare a short named x with value 42. See where 42 lands in 16 bits.',
+      hint: 'short x = 42;',
+      match: (cmd) => /^\s*short\s+x\s*=\s*42\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diagDecl(cmd, { type: "short", name: "x", value: "42" }),
+      note: '42 = 0000000000101010. The sign bit (red, position 2^15) is 0, so this reads as positive. For positive values, the bits look exactly like plain binary: 32 + 8 + 2 = 42.',
+    },
+    {
+      label: 'Task 2 of 9',
+      text: 'Now declare a short named x with value -42. Same magnitude, but watch how different the pattern is.',
+      hint: 'short x = -42;',
+      match: (cmd) => /^\s*short\s+x\s*=\s*-42\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diagDecl(cmd, { type: "short", name: "x", value: "-42" }),
+      note: '-42 = 1111111111010110. The sign bit is now 1, and almost everything flipped. This is NOT "42 with a minus sign stuck on." It is a specific bit pattern the machine builds with a rule. The next section shows that rule.',
+    },
+    // Section 2: The negation rule (invert + add 1)
+    {
+      section: 'Section 2: Negation = invert, then add 1',
+      label: 'Task 3 of 9',
+      text: 'Start clean. Declare a short named x with value 6.',
+      hint: 'short x = 6;',
+      match: (cmd) => /^\s*short\s+x\s*=\s*6\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diagDecl(cmd, { type: "short", name: "x", value: "6" }),
+      note: '6 = 0000000000000110. Now we will turn this into -6 by hand, in two steps.',
+    },
+    {
+      label: 'Task 4 of 9',
+      text: 'Invert every bit of x. Type ~x (that is the bitwise NOT operator).',
+      hint: '~x',
+      match: (cmd) => /^\s*~\s*x\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        if (/^\s*~\s*[A-Za-z_]\w*\s*\+\s*1\s*;?\s*$/.test(cmd)) return "One step at a time. This task is just ~x. The + 1 comes next.";
+        return null;
+      },
+      note: 'Every bit flipped: 1111111111111001. This is the ones complement of 6. On its own it reads as -7 (so close to -6, but one off). Inverting alone is not negation; we need one more step.',
+    },
+    {
+      label: 'Task 5 of 9',
+      text: 'Finish the negation. Type ~x + 1 to add one to the inverted pattern.',
+      hint: '~x + 1',
+      match: (cmd) => /^\s*~\s*x\s*\+\s*1\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        if (/^\s*~\s*x\s*;?\s*$/.test(cmd)) return "That is just the invert step again. Add the + 1 this time: ~x + 1.";
+        return null;
+      },
+      note: 'Invert, then add 1, gives 1111111111111010 = -6. That is the entire rule for negation in two\'s complement: -x is the same as ~x + 1. The machine has no separate "make negative" circuit; it reuses inversion and addition.',
+    },
+    // Section 3: Why the high bit is a negative weight
+    {
+      section: 'Section 3: The high bit carries a negative weight',
+      label: 'Task 6 of 9',
+      text: 'Declare a short named x with value -1. The all-ones pattern is worth understanding.',
+      hint: 'short x = -1;',
+      match: (cmd) => /^\s*short\s+x\s*=\s*-1\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diagDecl(cmd, { type: "short", name: "x", value: "-1" }),
+      note: '-1 = 1111111111111111, every bit set. Here is why that equals -1: the sign bit is not just a flag, it has weight -32768. Add the rest: -32768 + 16384 + 8192 + ... + 1 = -32768 + 32767 = -1. The high bit pulls down; the others push up.',
+    },
+    {
+      label: 'Task 7 of 9',
+      text: 'Declare a short named x with value -32768. This is the most negative short.',
+      hint: 'short x = -32768;',
+      match: (cmd) => /^\s*short\s+x\s*=\s*-32768\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diagDecl(cmd, { type: "short", name: "x", value: "-32768" }),
+      note: '-32768 = 1000000000000000. Only the sign bit is set, and its weight is exactly -32768. The most negative number has the simplest pattern. Notice: try to negate this with ~x + 1 and you get -32768 back, because +32768 will not fit. That is the asymmetry we look at next.',
+    },
+    // Section 4: Range asymmetry
+    {
+      section: 'Section 4: The lopsided range',
+      label: 'Task 8 of 9',
+      text: 'Declare a short named x with value 32767. This is the largest positive short.',
+      hint: 'short x = 32767;',
+      match: (cmd) => /^\s*short\s+x\s*=\s*32767\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diagDecl(cmd, { type: "short", name: "x", value: "32767" }),
+      note: '32767 = 0111111111111111. The sign bit is 0 and every other bit is set. This is the top of the positive range. A short holds -32768 to 32767.',
+    },
+    {
+      label: 'Task 9 of 9',
+      text: 'Now push one past the top. Declare a short named x with value 32768.',
+      hint: 'short x = 32768;',
+      match: (cmd) => /^\s*short\s+x\s*=\s*32768\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diagDecl(cmd, { type: "short", name: "x", value: "32768" }),
+      note: '32768 will not fit, so it wraps to -32768 (1000000000000000). The range is asymmetric: there are 65536 bit patterns, zero takes one of the "positive" slots, so the negative side reaches one further than the positive side. This is why -INT_MIN is a real bug in C, not a curiosity.',
+    },
+  ];
+
+  // ============================================================
+  // Walkthrough controller
+  // ============================================================
+  function checkTask(rawCmd) {
+    if (mode === "free" || currentTaskIndex >= tasks.length) return null;
+    const t = tasks[currentTaskIndex];
+    if (t.match(rawCmd)) {
+      process(rawCmd);
+      if (t.note) { termLine('', 'out'); termLine('  ' + t.note, 'note'); }
+      currentTaskIndex++;
+      consecutiveFails = 0;
+      hideHintPulse();
+      renderTask();
+      if (currentTaskIndex >= tasks.length) {
+        setMode("free");
+        termLine('', 'out');
+        termLine('  Two\'s complement walkthrough complete. Free mode unlocked.', 'note');
+      }
+      return true;
+    } else {
+      echoCommand(rawCmd);
+      const diag = (t.diagnose && t.diagnose(rawCmd)) || null;
+      if (diag) termLine('  ' + diag, 'err');
+      else termLine("  Not what this task is asking for. Look at the task card above, or click 'Show hint'.", 'err');
+      consecutiveFails++;
+      if (consecutiveFails >= 2) showHintPulse();
+      return false;
+    }
+  }
+  function renderTask() {
+    const fill = root.querySelector('#tw-progress-fill');
+    const label = root.querySelector('#tw-progress-label');
+    const card = root.querySelector('#tw-task-card');
+    const labelEl = root.querySelector('#tw-task-label');
+    const textEl = root.querySelector('#tw-task-text');
+    const hintEl = root.querySelector('#tw-task-hint');
+    const sectionEl = root.querySelector('#tw-section-header');
+    const completionArea = root.querySelector('#tw-completion-area');
+    const pct = (currentTaskIndex / tasks.length) * 100;
+    fill.style.width = pct + '%';
+    label.textContent = 'Task ' + Math.min(currentTaskIndex + 1, tasks.length) + ' of ' + tasks.length;
+    if (currentTaskIndex >= tasks.length) {
+      card.className = 'task-card complete';
+      labelEl.textContent = 'Complete';
+      textEl.textContent = "You built a negative number by hand (invert, then add one), saw the sign bit act as a negative weight, and watched the range run one slot further negative than positive. That is two's complement. The next widget puts these operators to work.";
+      hintEl.textContent = '';
+      fill.style.width = '100%';
+      label.textContent = 'All tasks complete';
+      sectionEl.textContent = 'All done';
+      completionArea.innerHTML = '';
+      cs210RenderCompletion(completionArea);
+      return;
+    }
+    completionArea.innerHTML = '';
+    card.className = 'task-card';
+    const t = tasks[currentTaskIndex];
+    if (t.section) sectionEl.textContent = t.section;
+    labelEl.textContent = t.label;
+    textEl.textContent = t.text;
+    hintEl.textContent = '';
+  }
+  function showHint() {
+    if (currentTaskIndex >= tasks.length) return;
+    const t = tasks[currentTaskIndex];
+    root.querySelector('#tw-task-hint').textContent = 'Hint: ' + (t.hint || '');
+    hideHintPulse();
+  }
+  function showHintPulse() { root.querySelector('#tw-hint-btn').classList.add('pulse'); }
+  function hideHintPulse() { root.querySelector('#tw-hint-btn').classList.remove('pulse'); }
+
+  function reset() {
+    variables.length = 0; lastResult = null; lastFlipped = new Set();
+    currentTaskIndex = 0; consecutiveFails = 0;
+    hideHintPulse(); setMode("walkthrough");
+    terminalEl.innerHTML = '';
+    termLine('Welcome to the two\'s complement walkthrough.', 'dim');
+    termLine('Follow the task card above. Declarations and expressions use real C syntax.', 'dim');
+    termLine('', 'out');
+    renderArea(); renderTask();
+  }
+
+  function setMode(newMode) {
+    mode = newMode;
+    const btn = root.querySelector('#tw-mode-btn');
+    if (mode === "free") {
+      btn.textContent = 'Return to walkthrough';
+      btn.style.background = '#E6F4EA'; btn.style.borderColor = '#2E7D32'; btn.style.color = '#1B5E20';
+      root.querySelector('#tw-input').placeholder = 'free mode: declare a short, or try ~x, ~x + 1';
+    } else {
+      btn.textContent = 'Switch to free mode';
+      btn.style.background = ''; btn.style.borderColor = ''; btn.style.color = '';
+      root.querySelector('#tw-input').placeholder = 'follow the task above';
+    }
+  }
+
+  function process(line) {
+    echoCommand(line);
+    try {
+      const r = runCommand(line);
+      if (!r) return;
+      if (r.kind === "var-added") {
+        const v = r.variable, meta = TYPES[v.type];
+        const signedDisp = decodeSigned(v.unsignedBits, meta.size).toString();
+        if (r.overwrite) termLine('  ' + v.type + ' ' + v.name + ' updated to ' + v.rawValue, 'out');
+        else termLine('  ' + v.type + ' ' + v.name + ' = ' + v.rawValue, 'out');
+        if (v.wrapped) termLine('  note: ' + v.rawValue + ' does not fit in ' + v.type + '. Stored as signed: ' + signedDisp + ', unsigned: ' + v.unsignedBits + '.', 'err');
+      } else if (r.kind === "expr-done") {
+        const rr = r.result;
+        termLine('  ' + rr.title + ' = ' + rr.signedVal + ' (signed), ' + rr.unsignedVal + ' (unsigned)', 'out');
+      } else if (r.kind === "cleared") {
+        termLine('  memory cleared', 'out');
+      } else if (r.kind === "list") {
+        if (variables.length === 0) termLine('  no variables', 'out');
+        else for (const v of variables) {
+          const meta = TYPES[v.type];
+          termLine('    ' + v.type + ' ' + v.name + ' = ' + decodeSigned(v.unsignedBits, meta.size).toString() + ' (unsigned: ' + v.unsignedBits + ')', 'out');
+        }
+      } else if (r.kind === "help") {
+        termLine('  declarations: short x = 6;   unsigned short u = 6;', 'out');
+        termLine('  negation:     ~x    (invert all bits)', 'out');
+        termLine('                ~x + 1 (invert, then add 1 = negate)', 'out');
+        termLine('  meta:         clear  list  help', 'out');
+      }
+      renderArea();
+    } catch (e) {
+      termLine('  error: ' + e.message, 'err');
+    }
+  }
+
+  // ============================================================
+  // Input wiring
+  // ============================================================
+  const inputEl = root.querySelector('#tw-input');
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const v = inputEl.value;
+      inputEl.value = '';
+      if (!v.trim()) return;
+      if (mode === "walkthrough") checkTask(v);
+      else process(v);
+    }
+  });
+  root.querySelector('#tw-hint-btn').addEventListener('click', showHint);
+  root.querySelector('#tw-reset-btn').addEventListener('click', reset);
+  root.querySelector('#tw-mode-btn').addEventListener('click', () => {
+    if (mode === "walkthrough") { setMode("free"); termLine('', 'out'); termLine('  Free mode. Declarations and ~x, ~x + 1 all run.', 'note'); }
+    else { setMode("walkthrough"); termLine('', 'out'); termLine('  Walkthrough mode. Follow the task card above.', 'note'); }
+  });
+
+  reset();
+})();
+</script>
+
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 32px 0 10px 0;">Bit Operations Playground</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Twelve tasks across three sections. Run each of the six operators, then build the four single-bit idioms (set, clear, toggle, test) yourself. When you finish, copy the completion code for the Lesson 34 reflection.</p>
+
+<!-- ============================================================
+     CS210 Lesson 34 - Bit Operations Playground Widget
+     Adapted from the Lesson 2 binary widget; new two-operand layout
+     and shift animation. Native HTML/CSS + scoped JS.
+     Operators: & | ^ ~ << >> on 16-bit unsigned short values.
+     Idioms: set / clear / toggle / test a single bit.
+     ============================================================ -->
+<style>
+.cs210-bitops * { box-sizing: border-box; }
+.cs210-bitops {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a; line-height: 1.55; max-width: 980px;
+  margin: 0 auto; padding: 20px; background: #ffffff; position: relative;
+}
+.cs210-bitops h1 { color: #00205B; font-size: 24px; margin: 0 0 6px 0; }
+.cs210-bitops .subtitle { color: #4A5568; font-size: 14px; margin-bottom: 22px; }
+.cs210-bitops .progress-bar { background: #E5E7EB; border-radius: 3px; height: 8px; overflow: hidden; margin-bottom: 6px; }
+.cs210-bitops .progress-fill { background: #003087; height: 100%; transition: width 0.3s ease; }
+.cs210-bitops .progress-label { font-size: 12px; color: #6B7280; margin-bottom: 18px; }
+.cs210-bitops .section-header {
+  background: #E8EDF5; color: #00205B; padding: 8px 14px; border-radius: 3px;
+  font-size: 13px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px;
+}
+.cs210-bitops .task-card { background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 14px; border-radius: 3px; }
+.cs210-bitops .task-card.complete { background: #E6F4EA; border-left-color: #2E7D32; }
+.cs210-bitops .task-label { font-size: 12px; letter-spacing: 1.5px; color: #6B5300; text-transform: uppercase; font-weight: 600; margin-bottom: 4px; }
+.cs210-bitops .task-card.complete .task-label { color: #1B5E20; }
+.cs210-bitops .task-text { font-size: 15px; color: #1a1a1a; }
+.cs210-bitops .task-hint { font-size: 12.5px; color: #6B7280; margin-top: 6px; font-style: italic; }
+
+.cs210-bitops .panes { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 12px; }
+@media (max-width: 760px) { .cs210-bitops .panes { grid-template-columns: 1fr; } }
+.cs210-bitops .terminal {
+  background: #1E2A3A; color: #E8EDF5; font-family: Consolas, 'Courier New', monospace;
+  font-size: 13.5px; line-height: 1.5; border-radius: 4px; padding: 14px 18px;
+  min-height: 420px; max-height: 520px; overflow-y: auto; white-space: pre-wrap; word-break: break-word;
+}
+.cs210-bitops .terminal .prompt { color: #7FB3D5; }
+.cs210-bitops .terminal .typed { color: #FFFFFF; }
+.cs210-bitops .terminal .out { color: #B5BEC8; }
+.cs210-bitops .terminal .note { color: #F0B92C; }
+.cs210-bitops .terminal .err { color: #F47A7A; }
+.cs210-bitops .terminal .ok { color: #7FD17F; }
+.cs210-bitops .terminal .dim { color: #6B7280; }
+
+.cs210-bitops .bit-pane {
+  background: #ffffff; border: 1px solid #D0D5DD; border-radius: 4px; padding: 14px 16px;
+  min-height: 420px; max-height: 520px; overflow-y: auto;
+}
+.cs210-bitops .bit-pane-header {
+  font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase;
+  font-weight: 600; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #E5E7EB;
+}
+.cs210-bitops .empty { color: #6B7280; font-style: italic; font-size: 13px; text-align: center; padding: 90px 10px; }
+
+/* declared-variable chips */
+.cs210-bitops .var-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.cs210-bitops .var-chip {
+  background: #F0F4FA; border: 1px solid #C7D2E0; border-radius: 3px;
+  padding: 3px 9px; font-family: Consolas, monospace; font-size: 12px; color: #00205B;
+}
+.cs210-bitops .var-chip .cv { color: #6B7280; }
+
+/* operation card */
+.cs210-bitops .op-card { background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 4px; padding: 14px; }
+.cs210-bitops .op-expr {
+  font-family: Consolas, monospace; font-size: 14px; color: #00205B; font-weight: 600;
+  text-align: center; margin-bottom: 12px;
+}
+.cs210-bitops .op-operand { margin-bottom: 8px; }
+.cs210-bitops .op-lbl {
+  font-size: 11px; letter-spacing: 0.6px; color: #6B7280; text-transform: uppercase;
+  font-weight: 600; margin-bottom: 4px; font-family: Consolas, monospace;
+}
+.cs210-bitops .op-badge {
+  text-align: center; font-family: Consolas, monospace; font-weight: 700;
+  font-size: 15px; color: #6B5300; background: #FFF3CD; border: 1px solid #F0B92C;
+  border-radius: 3px; padding: 2px 0; margin: 4px 0;
+}
+.cs210-bitops .op-divider { border-top: 2px solid #003087; margin: 10px 0 8px 0; }
+.cs210-bitops .op-operand.result .op-lbl { color: #1B5E20; }
+
+.cs210-bitops .bit-grid { display: grid; grid-template-columns: repeat(16, 1fr); gap: 2px; margin-top: 4px; margin-bottom: 2px; }
+.cs210-bitops .bit-positions { display: grid; grid-template-columns: repeat(16, 1fr); gap: 2px; font-family: Consolas, monospace; font-size: 8.5px; color: #6B7280; text-align: center; margin-bottom: 3px; }
+.cs210-bitops .bit-pos { padding: 1px 0; }
+.cs210-bitops .bit-cell {
+  background: #E8EDF5; border: 1px solid #C7CFD9; text-align: center;
+  font-family: Consolas, monospace; font-size: 14px; font-weight: 700; color: #6B7280;
+  padding: 5px 0; border-radius: 2px;
+  transition: background 0.3s ease, color 0.3s ease, transform 0.3s ease;
+}
+.cs210-bitops .bit-cell.on { background: #003087; color: #ffffff; border-color: #00205B; }
+.cs210-bitops .bit-cell.changed { animation: cs210-bitops-flip 0.8s ease-out; }
+@keyframes cs210-bitops-flip {
+  0%   { transform: scale(1); background: #F0B92C; color: #1a1a1a; box-shadow: 0 0 0 0 rgba(240,185,44,0.7); }
+  50%  { transform: scale(1.18); background: #F0B92C; color: #1a1a1a; box-shadow: 0 0 0 8px rgba(240,185,44,0); }
+  100% { transform: scale(1); }
+}
+.cs210-bitops .bit-cell.slid { animation: cs210-bitops-slide 0.6s ease-out; }
+@keyframes cs210-bitops-slide {
+  0%   { transform: translateX(-6px); opacity: 0.3; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+.cs210-bitops .val-readout { font-family: Consolas, monospace; font-size: 12px; color: #4A5568; text-align: center; margin-top: 2px; }
+.cs210-bitops .val-readout .big { font-size: 18px; font-weight: 700; color: #1B5E20; }
+
+.cs210-bitops .input-row { display: flex; background: #1E2A3A; border-radius: 4px; padding: 8px 14px; margin-bottom: 14px; border: 1px solid #003087; }
+.cs210-bitops .input-prompt { color: #7FB3D5; font-family: Consolas, monospace; font-size: 14px; margin-right: 8px; align-self: center; white-space: nowrap; }
+.cs210-bitops .input-row input { flex: 1; background: transparent; color: #FFFFFF; border: none; outline: none; font-family: Consolas, monospace; font-size: 14px; padding: 4px 0; }
+.cs210-bitops .controls { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+.cs210-bitops .btn { background: #ffffff; border: 1px solid #C7CFD9; padding: 6px 14px; border-radius: 3px; font-size: 13px; cursor: pointer; color: #00205B; font-family: inherit; transition: box-shadow 0.2s ease; }
+.cs210-bitops .btn:hover { background: #F5F7FA; }
+@keyframes cs210-bitops-pulse { 0% { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(240, 185, 44, 0); } 100% { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0); } }
+.cs210-bitops .btn.pulse { background: #FFF8E1; border-color: #F0B92C; color: #6B5300; font-weight: 600; animation: cs210-bitops-pulse 1.5s infinite; }
+.cs210-bitops .help-note { background: #F5F7FA; border: 1px solid #D0D5DD; padding: 12px 16px; border-radius: 3px; font-size: 13px; color: #4A5568; margin-top: 12px; }
+.cs210-bitops .help-note strong { color: #00205B; }
+.cs210-bitops .help-note code { background: #E8EDF5; padding: 1px 4px; border-radius: 2px; font-family: Consolas, monospace; }
+
+/* Name modal */
+.cs210-bitops .name-modal-backdrop { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 32, 91, 0.55); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+.cs210-bitops .name-modal { background: #ffffff; border-radius: 6px; padding: 28px 32px; max-width: 440px; width: 90%; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25); font-family: 'Segoe UI', Arial, sans-serif; }
+.cs210-bitops .name-modal h2 { color: #00205B; font-size: 20px; margin: 0 0 10px 0; }
+.cs210-bitops .name-modal p { color: #4A5568; font-size: 14px; line-height: 1.5; margin: 0 0 16px 0; }
+.cs210-bitops .name-modal input { width: 100%; padding: 10px 12px; font-size: 15px; border: 1px solid #CBD5E0; border-radius: 4px; margin-bottom: 14px; font-family: inherit; }
+.cs210-bitops .name-modal input:focus { outline: none; border-color: #003087; box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15); }
+.cs210-bitops .name-modal-btn { background: #003087; color: #ffffff; border: none; padding: 10px 20px; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.cs210-bitops .name-modal-btn:disabled { background: #A0AEC0; cursor: not-allowed; }
+.cs210-bitops .name-modal-btn:not(:disabled):hover { background: #00205B; }
+/* Completion */
+.cs210-bitops .completion-screen { background: #ffffff; border: 2px solid #2E7D32; border-radius: 6px; padding: 24px 28px; margin-top: 16px; }
+.cs210-bitops .completion-screen .cs-heading { color: #1B5E20; font-size: 20px; font-weight: 600; margin: 0 0 6px 0; }
+.cs210-bitops .completion-screen .cs-name-line { font-size: 15px; color: #1a1a1a; margin-bottom: 16px; }
+.cs210-bitops .completion-screen .cs-name-line strong { color: #00205B; }
+.cs210-bitops .completion-screen .cs-code-block { background: #F0F4FA; border: 1px solid #003087; border-radius: 4px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+.cs210-bitops .completion-screen .cs-code-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: #4A5568; margin-bottom: 4px; }
+.cs210-bitops .completion-screen .cs-code-value { font-family: 'Consolas', 'Courier New', monospace; font-size: 28px; font-weight: 700; color: #00205B; letter-spacing: 3px; }
+.cs210-bitops .completion-screen .cs-copy-btn { background: #003087; color: #ffffff; border: none; padding: 8px 14px; border-radius: 3px; font-size: 13px; cursor: pointer; font-family: inherit; }
+.cs210-bitops .completion-screen .cs-copy-btn:hover { background: #00205B; }
+.cs210-bitops .completion-screen .cs-copy-btn.copied { background: #2E7D32; }
+.cs210-bitops .completion-screen .cs-timestamp { font-size: 13px; color: #6B7280; margin-bottom: 18px; }
+.cs210-bitops .completion-screen .cs-reminder { background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 12px 16px; border-radius: 3px; font-size: 14px; color: #6B5300; line-height: 1.5; }
+.cs210-bitops .completion-screen .cs-reminder strong { color: #4A3A00; }
+</style>
+
+<div class="cs210-bitops">
+
+<div class="name-modal-backdrop" id="bitops-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Lesson 34 reflection.</p>
+    <input type="text" id="bitops-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="bitops-cadet-name-btn" disabled>Start the walkthrough</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 34 &middot; Bit Operations Playground</h1>
+<div class="subtitle">Six operators, one bit at a time. Declare an <code>unsigned short</code>, then combine values with AND, OR, XOR, NOT, and the two shifts. The right pane shows both operands and the result, bit for bit. The last section drills the four moves you will use constantly: set, clear, toggle, and test a single bit.</div>
+
+<div class="progress-bar"><div class="progress-fill" id="bitops-progress-fill" style="width: 0%;"></div></div>
+<div class="progress-label" id="bitops-progress-label">Task 0 of 12</div>
+
+<div class="section-header" id="bitops-section-header">Section 1: AND, OR, XOR</div>
+
+<div class="task-card" id="bitops-task-card">
+  <div class="task-label" id="bitops-task-label">Current task</div>
+  <div class="task-text" id="bitops-task-text">Loading...</div>
+  <div class="task-hint" id="bitops-task-hint"></div>
+</div>
+
+<div class="panes">
+  <div class="terminal" id="bitops-terminal"></div>
+  <div class="bit-pane">
+    <div class="bit-pane-header">Operation view</div>
+    <div id="bitops-area">
+      <div class="empty">Nothing yet.<br>Declare an unsigned short on the left.</div>
+    </div>
+  </div>
+</div>
+
+<div class="input-row">
+  <span class="input-prompt">bits&gt;</span>
+  <input type="text" id="bitops-input" autocomplete="off" spellcheck="false" placeholder="follow the task above">
+</div>
+
+<div class="controls">
+  <button class="btn" id="bitops-hint-btn">Show hint</button>
+  <button class="btn" id="bitops-reset-btn">Reset</button>
+  <button class="btn" id="bitops-mode-btn">Switch to free mode</button>
+</div>
+
+<div class="help-note">
+  <strong>How this works:</strong> Declare variables like <code>unsigned short x = 42;</code>, then type an expression. Operators: <code>&amp;</code> AND, <code>|</code> OR, <code>^</code> XOR, <code>~</code> NOT, <code>&lt;&lt;</code> left shift, <code>&gt;&gt;</code> right shift. You can combine them: <code>x | (1 &lt;&lt; 3)</code>. Operands can be variables or numbers. All values are 16-bit unsigned.
+</div>
+
+<div id="bitops-completion-area"></div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-bitops');
+  if (!root) return;
+
+  // ============================================================
+  // Completion utilities (FNV-1a -> 6-char code)
+  // ============================================================
+  const CS210_SALT = "lesson34_bitops_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0; }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt), h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n); let out = '';
+    for (let i = 0; i < 6; i++) { out += CS210_ALPHABET[Number(pool & 31n)]; pool >>= 5n; }
+    return out;
+  }
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#bitops-name-modal-backdrop');
+    const input = root.querySelector('#bitops-cadet-name-input');
+    const btn = root.querySelector('#bitops-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length >= 2) { cs210CadetName = stored.trim(); backdrop.style.display = 'none'; return; }
+    } catch (e) {}
+    function updateBtn() { btn.disabled = input.value.trim().length < 2; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', function(e) { if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); } });
+    btn.addEventListener('click', function() {
+      const name = input.value.trim(); if (name.length < 2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+      const siblings = document.querySelectorAll('#bw-name-modal-backdrop, #tw-name-modal-backdrop, #ptrmath-name-modal-backdrop, #duality-name-modal-backdrop');
+      siblings.forEach(function(m) { m.style.display = 'none'; });
+      const cli = root.querySelector('#bitops-input'); if (cli) cli.focus();
+    });
+    setTimeout(function() { input.focus(); }, 50);
+  })();
+
+  function cs210RenderCompletion(area) {
+    if (!area) return;
+    if (root.querySelector('#bitops-cs210-completion-overlay')) return;
+    const now = new Date();
+    const ts = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const safeName = (cs210CadetName || 'Cadet').replace(/[<>&"']/g, function(c) { return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c]; });
+    area.innerHTML =
+      '<div class="completion-screen">' +
+        '<div class="cs-heading">Walkthrough complete</div>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block"><div><div class="cs-code-label">Completion code</div><div class="cs-code-value">' + CS210_CODE + '</div></div></div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+      '</div>';
+    const overlay = document.createElement('div');
+    overlay.id = 'bitops-cs210-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.style.background = 'rgba(27, 94, 32, 0.55)';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">Walkthrough complete</h2>' +
+        '<p>Take a screenshot of this box. You will need the code and a visual of this screen for the Lesson 34 reflection.</p>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block"><div><div class="cs-code-label">Completion code</div><div class="cs-code-value" id="bitops-cs-code-value">' + CS210_CODE + '</div></div><button class="cs-copy-btn" id="bitops-cs-copy-btn" type="button">Copy code</button></div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+        '<div class="cs-reminder" style="margin-bottom:14px;"><strong>Next step:</strong> Open the Lesson 34 reflection in Blackboard. Enter this code, answer the reflection prompt, and attach your screenshot.</div>' +
+        '<button class="name-modal-btn" id="bitops-cs-overlay-close" type="button" style="background:#2E7D32;">Got it &mdash; close this</button>' +
+      '</div>';
+    root.appendChild(overlay);
+    const closeBtn = overlay.querySelector('#bitops-cs-overlay-close');
+    if (closeBtn) closeBtn.addEventListener('click', function() { overlay.style.display = 'none'; });
+    const copyBtn = overlay.querySelector('#bitops-cs-copy-btn');
+    if (copyBtn) copyBtn.addEventListener('click', function() {
+      const text = CS210_CODE;
+      const ok = function() { copyBtn.textContent = 'Copied'; copyBtn.classList.add('copied'); setTimeout(function() { copyBtn.textContent = 'Copy code'; copyBtn.classList.remove('copied'); }, 1500); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(ok, function() { cs210FallbackCopy(text); ok(); });
+      else { cs210FallbackCopy(text); ok(); }
+    });
+  }
+  function cs210FallbackCopy(text) {
+    try { const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); } catch (e) {}
+  }
+
+  // ============================================================
+  // 16-bit unsigned model
+  // ============================================================
+  const SIZE = 2;
+  const NBITS = SIZE * 8;            // 16
+  const MASK = (1n << BigInt(NBITS)) - 1n;
+  function bitsFromUnsigned(u) { const a = []; for (let i = NBITS - 1; i >= 0; i--) a.push(Number((u >> BigInt(i)) & 1n)); return a; }
+  function toHex(u) { return "0x" + u.toString(16).toUpperCase().padStart(SIZE * 2, "0"); }
+  function changedIndices(prev, curr) {
+    const out = new Set();
+    for (let i = 0; i < NBITS; i++) { if (((prev >> BigInt(i)) & 1n) !== ((curr >> BigInt(i)) & 1n)) out.add(NBITS - 1 - i); }
+    return out;
+  }
+
+  // ============================================================
+  // State
+  // ============================================================
+  const vars = {};            // name -> BigInt (16-bit unsigned)
+  let lastOp = null;          // {expr, leftVal, rightVal, opSymbol, opKind, resultVal, shiftAmount}
+  let currentTaskIndex = 0;
+  let consecutiveFails = 0;
+  let mode = "walkthrough";
+
+  // ============================================================
+  // Tokenizer + precedence-climbing evaluator
+  // grammar (C precedence): ~ (unary) > << >> > & > ^ > |
+  // operands: integer literal (dec or 0x), variable name, ( expr )
+  // ============================================================
+  function tokenize(s) {
+    const toks = []; let i = 0;
+    while (i < s.length) {
+      const c = s[i];
+      if (/\s/.test(c)) { i++; continue; }
+      if (c === '<' && s[i+1] === '<') { toks.push({t:'op', v:'<<'}); i += 2; continue; }
+      if (c === '>' && s[i+1] === '>') { toks.push({t:'op', v:'>>'}); i += 2; continue; }
+      if (c === '&' && s[i+1] === '&') throw new Error("'&&' is logical AND (true/false). For bitwise AND use a single '&'.");
+      if (c === '|' && s[i+1] === '|') throw new Error("'||' is logical OR (true/false). For bitwise OR use a single '|'.");
+      if ('&|^~()'.indexOf(c) !== -1) { toks.push({t:'op', v:c}); i++; continue; }
+      if (/[0-9]/.test(c)) {
+        let j = i;
+        if (c === '0' && (s[i+1] === 'x' || s[i+1] === 'X')) { j = i + 2; while (j < s.length && /[0-9a-fA-F]/.test(s[j])) j++; toks.push({t:'num', v:BigInt(s.slice(i,j))}); i = j; continue; }
+        while (j < s.length && /[0-9]/.test(s[j])) j++;
+        toks.push({t:'num', v:BigInt(s.slice(i,j))}); i = j; continue;
+      }
+      if (/[A-Za-z_]/.test(c)) { let j = i; while (j < s.length && /[A-Za-z0-9_]/.test(s[j])) j++; toks.push({t:'id', v:s.slice(i,j)}); i = j; continue; }
+      throw new Error("unexpected character '" + c + "'");
+    }
+    return toks;
+  }
+
+  // Parser produces an AST; each node also carries a computed 16-bit value.
+  function parseExpr(toks) {
+    let pos = 0;
+    const peek = () => toks[pos];
+    const next = () => toks[pos++];
+    const PREC = { '|':1, '^':2, '&':3, '<<':4, '>>':4 };
+
+    function parsePrimary() {
+      const tk = peek();
+      if (!tk) throw new Error("expression ended early");
+      if (tk.t === 'op' && tk.v === '~') { next(); const operand = parseUnary(); return { kind:'unop', op:'~', operand, value: (~operand.value) & MASK }; }
+      if (tk.t === 'op' && tk.v === '(') {
+        next(); const e = parseBin(0);
+        const close = next(); if (!close || close.v !== ')') throw new Error("missing ')'");
+        return e;
+      }
+      if (tk.t === 'num') { next(); return { kind:'lit', value: tk.v & MASK, raw: tk.v }; }
+      if (tk.t === 'id') {
+        next();
+        if (!(tk.v in vars)) throw new Error("'" + tk.v + "' is not declared. Declare it first, e.g. unsigned short " + tk.v + " = 5;");
+        return { kind:'var', name: tk.v, value: vars[tk.v] };
+      }
+      throw new Error("expected a number, variable, or '('");
+    }
+    function parseUnary() {
+      const tk = peek();
+      if (tk && tk.t === 'op' && tk.v === '~') { next(); const operand = parseUnary(); return { kind:'unop', op:'~', operand, value: (~operand.value) & MASK }; }
+      return parsePrimary();
+    }
+    function parseBin(minPrec) {
+      let left = parseUnary();
+      while (true) {
+        const tk = peek();
+        if (!tk || tk.t !== 'op' || !(tk.v in PREC)) break;
+        const prec = PREC[tk.v];
+        if (prec < minPrec) break;
+        next();
+        const right = parseBin(prec + 1);
+        let value;
+        if (tk.v === '&') value = (left.value & right.value) & MASK;
+        else if (tk.v === '|') value = (left.value | right.value) & MASK;
+        else if (tk.v === '^') value = (left.value ^ right.value) & MASK;
+        else if (tk.v === '<<') value = (left.value << right.value) & MASK;
+        else if (tk.v === '>>') value = (left.value >> right.value) & MASK;  // unsigned: logical shift
+        left = { kind:'binop', op: tk.v, left, right, value };
+      }
+      return left;
+    }
+    const ast = parseBin(0);
+    if (pos < toks.length) throw new Error("unexpected trailing input near '" + (toks[pos].v) + "'");
+    return ast;
+  }
+
+  function nodeText(n) {
+    if (n.kind === 'lit') return n.raw.toString();
+    if (n.kind === 'var') return n.name;
+    if (n.kind === 'unop') return '~' + nodeText(n.operand);
+    if (n.kind === 'binop') return '(' + nodeText(n.left) + ' ' + n.op + ' ' + nodeText(n.right) + ')';
+    return '?';
+  }
+
+  // ============================================================
+  // Parsers: declaration vs expression
+  // ============================================================
+  function tryParseDecl(line) {
+    const trimmed = line.trim().replace(/;?\s*$/, "");
+    const m = trimmed.match(/^unsigned\s+short\s+([A-Za-z_]\w*)\s*=\s*(0[xX][0-9a-fA-F]+|\d+)\s*$/);
+    if (!m) {
+      if (/^unsigned\s+short\b/.test(trimmed)) return { error: "expected: unsigned short <name> = <value>;" };
+      return null;
+    }
+    return { kind:'decl', name: m[1], value: (BigInt(m[2]) & MASK), raw: m[2] };
+  }
+
+  // ============================================================
+  // Dispatcher
+  // ============================================================
+  function runCommand(line) {
+    const t = line.trim();
+    if (!t) return null;
+    const lower = t.toLowerCase().replace(/;?$/, "");
+    if (lower === "clear" || lower === "reset") { for (const k in vars) delete vars[k]; lastOp = null; return { kind:"cleared" }; }
+    if (lower === "help" || lower === "?") return { kind:"help" };
+    if (lower === "list") return { kind:"list" };
+
+    const d = tryParseDecl(t);
+    if (d && d.kind === 'decl') {
+      const prev = (d.name in vars) ? vars[d.name] : null;
+      vars[d.name] = d.value; lastOp = null;
+      return { kind:"var-added", name: d.name, value: d.value, overwrite: prev !== null };
+    }
+    if (d && d.error) throw new Error(d.error);
+
+    // Otherwise treat as an expression
+    const cleaned = t.replace(/;?\s*$/, "");
+    const toks = tokenize(cleaned);
+    if (toks.length === 0) return null;
+    const ast = parseExpr(toks);
+    lastOp = buildOpView(ast, cleaned);
+    return { kind:"expr-done", ast, expr: cleaned };
+  }
+
+  function buildOpView(ast, exprText) {
+    // Visualize the TOP node of the AST.
+    if (ast.kind === 'binop') {
+      const isShift = (ast.op === '<<' || ast.op === '>>');
+      return {
+        exprText, opKind: isShift ? 'shift' : 'binary', opSymbol: ast.op,
+        leftVal: ast.left.value, leftText: nodeText(ast.left),
+        rightVal: ast.right.value, rightText: nodeText(ast.right),
+        resultVal: ast.value, shiftAmount: isShift ? Number(ast.right.value) : null,
+      };
+    }
+    if (ast.kind === 'unop') {
+      return { exprText, opKind: 'unary', opSymbol: '~', leftVal: ast.operand.value, leftText: nodeText(ast.operand), resultVal: ast.value };
+    }
+    // bare literal or variable
+    return { exprText, opKind: 'value', resultVal: ast.value };
+  }
+
+  // ============================================================
+  // Terminal output
+  // ============================================================
+  const terminalEl = root.querySelector('#bitops-terminal');
+  function termWrite(text, cls) { const s = document.createElement('span'); if (cls) s.className = cls; s.textContent = text; terminalEl.appendChild(s); }
+  function termLine(text, cls) { termWrite(text, cls); terminalEl.appendChild(document.createElement('br')); terminalEl.scrollTop = terminalEl.scrollHeight; }
+  function echoCommand(cmd) { termWrite('bits> ', 'prompt'); termLine(cmd, 'typed'); }
+  function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" })[c]); }
+
+  // ============================================================
+  // Rendering
+  // ============================================================
+  const areaEl = root.querySelector('#bitops-area');
+
+  function renderPositions() {
+    let html = '<div class="bit-positions">';
+    for (let i = 0; i < NBITS; i++) { const power = NBITS - 1 - i; html += '<div class="bit-pos">' + power + '</div>'; }
+    return html + '</div>';
+  }
+  function renderGrid(u, changedSet, slid) {
+    const bits = bitsFromUnsigned(u);
+    let grid = '<div class="bit-grid">';
+    for (let i = 0; i < bits.length; i++) {
+      const cls = ['bit-cell'];
+      if (bits[i] === 1) cls.push('on');
+      if (changedSet && changedSet.has(i)) cls.push('changed');
+      if (slid) cls.push('slid');
+      grid += '<div class="' + cls.join(' ') + '">' + bits[i] + '</div>';
+    }
+    return grid + '</div>';
+  }
+  function operandBlock(label, val, changedSet, slid, isResult) {
+    return '<div class="op-operand' + (isResult ? ' result' : '') + '">' +
+      '<div class="op-lbl">' + escapeHtml(label) + '</div>' +
+      renderPositions() + renderGrid(val, changedSet, slid) + '</div>';
+  }
+
+  function renderChips() {
+    const names = Object.keys(vars);
+    if (names.length === 0) return '';
+    let html = '<div class="var-chips">';
+    for (const n of names) html += '<span class="var-chip">' + escapeHtml(n) + ' = ' + vars[n].toString() + ' <span class="cv">(' + toHex(vars[n]) + ')</span></span>';
+    return html + '</div>';
+  }
+
+  function renderArea() {
+    const pane = areaEl.closest('.bit-pane');
+    const atBottom = pane ? (pane.scrollHeight - pane.scrollTop - pane.clientHeight < 40) : true;
+    if (Object.keys(vars).length === 0 && !lastOp) {
+      areaEl.innerHTML = '<div class="empty">Nothing yet.<br>Declare an unsigned short on the left.</div>';
+      return;
+    }
+    let html = renderChips();
+    if (lastOp) {
+      const op = lastOp;
+      html += '<div class="op-card"><div class="op-expr">' + escapeHtml(op.exprText) + '</div>';
+      if (op.opKind === 'binary') {
+        html += operandBlock(op.leftText + '  =  ' + op.leftVal, op.leftVal, null, false, false);
+        html += '<div class="op-badge">' + (op.opSymbol === '&' ? 'AND  &amp;' : op.opSymbol === '|' ? 'OR  |' : 'XOR  ^') + '</div>';
+        html += operandBlock(op.rightText + '  =  ' + op.rightVal, op.rightVal, null, false, false);
+        html += '<div class="op-divider"></div>';
+        html += operandBlock('result  =  ' + op.resultVal, op.resultVal, changedIndices(op.leftVal, op.resultVal), false, true);
+      } else if (op.opKind === 'shift') {
+        html += operandBlock(op.leftText + '  =  ' + op.leftVal, op.leftVal, null, false, false);
+        html += '<div class="op-badge">' + (op.opSymbol === '<<' ? 'LEFT SHIFT  &lt;&lt; ' : 'RIGHT SHIFT  &gt;&gt; ') + op.shiftAmount + '</div>';
+        html += '<div class="op-divider"></div>';
+        html += operandBlock('result  =  ' + op.resultVal, op.resultVal, null, true, true);
+      } else if (op.opKind === 'unary') {
+        html += operandBlock(op.leftText + '  =  ' + op.leftVal, op.leftVal, null, false, false);
+        html += '<div class="op-badge">NOT  ~</div>';
+        html += '<div class="op-divider"></div>';
+        html += operandBlock('result  =  ' + op.resultVal, op.resultVal, changedIndices(op.leftVal, op.resultVal), false, true);
+      } else {
+        html += operandBlock('value  =  ' + op.resultVal, op.resultVal, null, false, true);
+      }
+      html += '<div class="val-readout"><span class="big">' + op.resultVal + '</span>  (' + toHex(op.resultVal) + ')</div>';
+      html += '</div>';
+    }
+    areaEl.innerHTML = html;
+    if (atBottom && pane) pane.scrollTop = pane.scrollHeight;
+  }
+
+  // ============================================================
+  // Tasks
+  // ============================================================
+  const tasks = [
+    // Section 1: AND OR XOR
+    {
+      section: 'Section 1: AND, OR, XOR',
+      label: 'Task 1 of 12',
+      text: 'Declare unsigned short x = 42. We will use it as the left operand for a while.',
+      hint: 'unsigned short x = 42;',
+      match: (c) => /^\s*unsigned\s+short\s+x\s*=\s*42\s*;?\s*$/.test(c),
+      note: '42 = 0000000000101010. Bits set at positions 5, 3, and 1 (32 + 8 + 2). Keep an eye on those.',
+    },
+    {
+      label: 'Task 2 of 12',
+      text: 'Declare unsigned short mask = 24. This is the right operand.',
+      hint: 'unsigned short mask = 24;',
+      match: (c) => /^\s*unsigned\s+short\s+mask\s*=\s*24\s*;?\s*$/.test(c),
+      note: '24 = 0000000000011000. Bits set at positions 4 and 3. Only position 3 overlaps with x.',
+    },
+    {
+      label: 'Task 3 of 12',
+      text: 'Compute x & mask. AND keeps a bit only where BOTH operands have a 1.',
+      hint: 'x & mask',
+      match: (c) => /^\s*x\s*&\s*mask\s*;?\s*$/.test(c),
+      note: 'Result = 8 (bit 3 only). AND is a filter: the result has a 1 only where both inputs did. Everywhere else, zero. This is how you test or extract bits.',
+    },
+    {
+      label: 'Task 4 of 12',
+      text: 'Compute x | mask. OR keeps a bit where EITHER operand has a 1.',
+      hint: 'x | mask',
+      match: (c) => /^\s*x\s*\|\s*mask\s*;?\s*$/.test(c),
+      note: 'Result = 58. OR merges: every bit set in either input is set in the result. This is how you turn bits ON without disturbing the others.',
+    },
+    {
+      label: 'Task 5 of 12',
+      text: 'Compute x ^ mask. XOR sets a bit where the operands DIFFER.',
+      hint: 'x ^ mask',
+      match: (c) => /^\s*x\s*\^\s*mask\s*;?\s*$/.test(c),
+      note: 'Result = 50. XOR is a difference detector: 1 where the two inputs disagree, 0 where they agree. Bit 3 was set in both, so it cancels to 0. This is how you flip bits.',
+    },
+    // Section 2: NOT and shifts
+    {
+      section: 'Section 2: NOT and the shifts',
+      label: 'Task 6 of 12',
+      text: 'Compute ~x. NOT flips every bit.',
+      hint: '~x',
+      match: (c) => /^\s*~\s*x\s*;?\s*$/.test(c),
+      note: 'Every one of the 16 bits flipped. ~42 as an unsigned short is 65493. NOT is the only one-operand operator here; it has no mask, it just inverts.',
+    },
+    {
+      label: 'Task 7 of 12',
+      text: 'Compute x << 2. Left shift slides every bit two places toward the high end.',
+      hint: 'x << 2',
+      match: (c) => /^\s*x\s*<<\s*2\s*;?\s*$/.test(c),
+      note: 'Result = 168. Each bit moved left by 2, zeros filled in on the right. Left-shifting by n multiplies by 2^n (42 * 4 = 168), as long as nothing falls off the top.',
+    },
+    {
+      label: 'Task 8 of 12',
+      text: 'Compute x >> 2. Right shift slides every bit two places toward the low end.',
+      hint: 'x >> 2',
+      match: (c) => /^\s*x\s*>>\s*2\s*;?\s*$/.test(c),
+      note: 'Result = 10. Each bit moved right by 2; the two low bits fell off and were lost. On an unsigned value, right-shift by n is integer division by 2^n (42 / 4 = 10, remainder discarded). On signed values the behavior of >> is not guaranteed, which is one reason we use unsigned here.',
+    },
+    // Section 3: the four idioms
+    {
+      section: 'Section 3: set / clear / toggle / test one bit',
+      label: 'Task 9 of 12',
+      text: 'SET bit 0 of x. Build a mask with 1 << 0 and OR it in: x | (1 << 0).',
+      hint: 'x | (1 << 0)',
+      match: (c) => /^\s*x\s*\|\s*\(\s*1\s*<<\s*0\s*\)\s*;?\s*$/.test(c),
+      note: 'Result = 43. 1 << 0 is a mask with only bit 0 set. OR-ing it forces bit 0 to 1 and leaves every other bit alone. Pattern to memorize: SET bit n is value | (1 << n).',
+    },
+    {
+      label: 'Task 10 of 12',
+      text: 'CLEAR bit 1 of x. Build 1 << 1, invert it, and AND: x & ~(1 << 1).',
+      hint: 'x & ~(1 << 1)',
+      match: (c) => /^\s*x\s*&\s*~\s*\(\s*1\s*<<\s*1\s*\)\s*;?\s*$/.test(c),
+      note: 'Result = 40. ~(1 << 1) is all ones except bit 1. AND-ing forces bit 1 to 0 and leaves the rest. Pattern: CLEAR bit n is value & ~(1 << n).',
+    },
+    {
+      label: 'Task 11 of 12',
+      text: 'TOGGLE bit 3 of x. XOR with a single-bit mask: x ^ (1 << 3).',
+      hint: 'x ^ (1 << 3)',
+      match: (c) => /^\s*x\s*\^\s*\(\s*1\s*<<\s*3\s*\)\s*;?\s*$/.test(c),
+      note: 'Result = 34. Bit 3 was set in x, so XOR flipped it off. Run it again and it flips back on. Pattern: TOGGLE bit n is value ^ (1 << n).',
+    },
+    {
+      label: 'Task 12 of 12',
+      text: 'TEST bit 5 of x. Shift it down to position 0 and mask: (x >> 5) & 1.',
+      hint: '(x >> 5) & 1',
+      match: (c) => /^\s*\(\s*x\s*>>\s*5\s*\)\s*&\s*1\s*;?\s*$/.test(c),
+      note: 'Result = 1, so bit 5 is set (x is 42, and 32 is the 2^5 place). Shifting right by n moves bit n into position 0, then & 1 isolates it. Pattern: TEST bit n is (value >> n) & 1, which is nonzero when the bit is set.',
+    },
+  ];
+
+  // ============================================================
+  // Walkthrough controller
+  // ============================================================
+  function checkTask(rawCmd) {
+    if (mode === "free" || currentTaskIndex >= tasks.length) return null;
+    const t = tasks[currentTaskIndex];
+    if (t.match(rawCmd)) {
+      process(rawCmd);
+      if (t.note) { termLine('', 'out'); termLine('  ' + t.note, 'note'); }
+      currentTaskIndex++; consecutiveFails = 0; hideHintPulse(); renderTask();
+      if (currentTaskIndex >= tasks.length) { setMode("free"); termLine('', 'out'); termLine('  Bit operations walkthrough complete. Free mode unlocked.', 'note'); }
+      return true;
+    } else {
+      echoCommand(rawCmd);
+      termLine("  Not what this task is asking for. Look at the task card above, or click 'Show hint'.", 'err');
+      consecutiveFails++;
+      if (consecutiveFails >= 2) showHintPulse();
+      return false;
+    }
+  }
+  function renderTask() {
+    const fill = root.querySelector('#bitops-progress-fill');
+    const label = root.querySelector('#bitops-progress-label');
+    const card = root.querySelector('#bitops-task-card');
+    const labelEl = root.querySelector('#bitops-task-label');
+    const textEl = root.querySelector('#bitops-task-text');
+    const hintEl = root.querySelector('#bitops-task-hint');
+    const sectionEl = root.querySelector('#bitops-section-header');
+    const completionArea = root.querySelector('#bitops-completion-area');
+    const pct = (currentTaskIndex / tasks.length) * 100;
+    fill.style.width = pct + '%';
+    label.textContent = 'Task ' + Math.min(currentTaskIndex + 1, tasks.length) + ' of ' + tasks.length;
+    if (currentTaskIndex >= tasks.length) {
+      card.className = 'task-card complete';
+      labelEl.textContent = 'Complete';
+      textEl.textContent = "You ran all six operators and built the four single-bit idioms by hand: set with |, clear with & ~, toggle with ^, test with >> then &. Those four show up everywhere from permissions to hardware registers. The lab puts them to work on a festival wristband.";
+      hintEl.textContent = '';
+      fill.style.width = '100%';
+      label.textContent = 'All tasks complete';
+      sectionEl.textContent = 'All done';
+      completionArea.innerHTML = '';
+      cs210RenderCompletion(completionArea);
+      return;
+    }
+    completionArea.innerHTML = '';
+    card.className = 'task-card';
+    const t = tasks[currentTaskIndex];
+    if (t.section) sectionEl.textContent = t.section;
+    labelEl.textContent = t.label;
+    textEl.textContent = t.text;
+    hintEl.textContent = '';
+  }
+  function showHint() { if (currentTaskIndex >= tasks.length) return; root.querySelector('#bitops-task-hint').textContent = 'Hint: ' + (tasks[currentTaskIndex].hint || ''); hideHintPulse(); }
+  function showHintPulse() { root.querySelector('#bitops-hint-btn').classList.add('pulse'); }
+  function hideHintPulse() { root.querySelector('#bitops-hint-btn').classList.remove('pulse'); }
+
+  function reset() {
+    for (const k in vars) delete vars[k];
+    lastOp = null; currentTaskIndex = 0; consecutiveFails = 0;
+    hideHintPulse(); setMode("walkthrough");
+    terminalEl.innerHTML = '';
+    termLine('Welcome to the bit operations playground.', 'dim');
+    termLine('Follow the task card above. Declarations and expressions use real C syntax.', 'dim');
+    termLine('', 'out');
+    renderArea(); renderTask();
+  }
+
+  function setMode(newMode) {
+    mode = newMode;
+    const btn = root.querySelector('#bitops-mode-btn');
+    if (mode === "free") {
+      btn.textContent = 'Return to walkthrough';
+      btn.style.background = '#E6F4EA'; btn.style.borderColor = '#2E7D32'; btn.style.color = '#1B5E20';
+      root.querySelector('#bitops-input').placeholder = 'free mode: any bitwise expression';
+    } else {
+      btn.textContent = 'Switch to free mode';
+      btn.style.background = ''; btn.style.borderColor = ''; btn.style.color = '';
+      root.querySelector('#bitops-input').placeholder = 'follow the task above';
+    }
+  }
+
+  function process(line) {
+    echoCommand(line);
+    try {
+      const r = runCommand(line);
+      if (!r) return;
+      if (r.kind === "var-added") {
+        termLine('  unsigned short ' + r.name + ' = ' + r.value.toString() + (r.overwrite ? '  (updated)' : ''), 'out');
+      } else if (r.kind === "expr-done") {
+        termLine('  ' + r.expr + ' = ' + lastOp.resultVal.toString() + '  (' + toHex(lastOp.resultVal) + ')', 'out');
+      } else if (r.kind === "cleared") {
+        termLine('  variables cleared', 'out');
+      } else if (r.kind === "list") {
+        const names = Object.keys(vars);
+        if (names.length === 0) termLine('  no variables', 'out');
+        else for (const n of names) termLine('    unsigned short ' + n + ' = ' + vars[n].toString() + ' (' + toHex(vars[n]) + ')', 'out');
+      } else if (r.kind === "help") {
+        termLine('  declare:   unsigned short x = 42;', 'out');
+        termLine('  operators: &  |  ^  ~  <<  >>', 'out');
+        termLine('  combine:   x | (1 << 3)    x & ~(1 << 2)    (x >> 5) & 1', 'out');
+        termLine('  meta:      clear  list  help', 'out');
+      }
+      renderArea();
+    } catch (e) {
+      termLine('  error: ' + e.message, 'err');
+    }
+  }
+
+  // ============================================================
+  // Input wiring
+  // ============================================================
+  const inputEl = root.querySelector('#bitops-input');
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const v = inputEl.value; inputEl.value = '';
+      if (!v.trim()) return;
+      if (mode === "walkthrough") checkTask(v); else process(v);
+    }
+  });
+  root.querySelector('#bitops-hint-btn').addEventListener('click', showHint);
+  root.querySelector('#bitops-reset-btn').addEventListener('click', reset);
+  root.querySelector('#bitops-mode-btn').addEventListener('click', () => {
+    if (mode === "walkthrough") { setMode("free"); termLine('', 'out'); termLine('  Free mode. Any bitwise expression runs.', 'note'); }
+    else { setMode("walkthrough"); termLine('', 'out'); termLine('  Walkthrough mode. Follow the task card above.', 'note'); }
+  });
+
+  reset();
+})();
+</script>
+
+
+    </div>
+  </details>
+
+  <!-- ===================== 6. AFTER CLASS ===================== -->
+  <details id="after-class" style="margin-bottom: 24px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      6. After Class
+    </summary>
+    <div style="padding: 18px 22px;">
+      <ul style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Finish the Festival Wristband lab if you did not complete it in class. Submit through GitHub Classroom.</li>
+        <li style="margin-bottom: 6px;">Complete the Lesson 34 reflection in Blackboard. You will need both walkthrough completion codes and a screenshot of each completion screen.</li>
+        <li style="margin-bottom: 6px;">Team PEX progress check is due around this lesson. Make sure your group has posted its status update.</li>
+        <li style="margin-bottom: 0;">Next lesson extends this into applied bitwise work: masks that touch several bits at once and packing multiple values into one integer. Lesson 35 reading is the provided supplementary notes.</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== HELP NOTE ===================== -->
+  <div style="background: #F5F7FA; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 3px; font-size: 13.5px; color: #4A5568;">
+    <strong style="color: #00205B;">Need help?</strong> Schedule EI with your instructor. Bring your specific code or a screenshot of the bit pattern you do not understand, plus the exact output or error message. Specific questions get unstuck quickly. The course Resources section has the DFCS C Programming Standard and the Git troubleshooting card for self-service reference.
+  </div>
+
+</div>

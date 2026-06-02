@@ -1,0 +1,4276 @@
+<!-- ============================================================
+     CS210 — Lesson 2
+     Variables and Types
+     Self-contained: all CSS inline. Native <details> for collapsing.
+     Cmem walkthrough widget embedded inline in section 5.
+     Paste into Blackboard Ultra via Document → Add HTML block.
+     ============================================================ -->
+
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 980px; margin: 0 auto; line-height: 1.6;">
+
+  <!-- ===================== LIGHT HEADER ===================== -->
+  <div style="border-left: 5px solid #003087; padding: 8px 0 8px 18px; margin-bottom: 24px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 2px;">CS210 &middot; Block 1 &middot; Lesson 2</div>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 600; color: #00205B;">Variables and Types</h1>
+    <div style="font-size: 14px; color: #4A5568; margin-top: 4px;">Declarations &middot; Primitive types &middot; sizeof &middot; Binary review &middot; Integer overflow &middot; Casting</div>
+  </div>
+
+  <!-- ===================== AT A GLANCE ===================== -->
+  <div style="background: #F5F7FA; border-left: 4px solid #B5B7BA; padding: 14px 18px; margin-bottom: 22px; font-size: 14px;">
+    <strong style="color: #00205B;">At a glance:</strong> Your first real C content. You learn what goes between the curly braces: variables, types, the rules that govern how they behave in memory, and the two traps that bite cadets coming from Python. The hands-on practice happens through the cmem walkthrough in Section 5; the lab applies it all to a small aviation calculation.
+  </div>
+
+  <!-- ===================== TABLE OF CONTENTS ===================== -->
+  <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 20px; margin-bottom: 24px; border-radius: 3px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Contents</div>
+    <ol style="margin: 0; padding-left: 22px; font-size: 14px;">
+      <li style="margin-bottom: 4px;"><a href="#objectives" style="color: #003087; text-decoration: none;">Lesson Objectives</a></li>
+      <li style="margin-bottom: 4px;"><a href="#readings" style="color: #003087; text-decoration: none;">Assigned Readings</a></li>
+      <li style="margin-bottom: 4px;"><a href="#pre-class" style="color: #003087; text-decoration: none;">Pre-Class Work</a></li>
+      <li style="margin-bottom: 4px;"><a href="#materials" style="color: #003087; text-decoration: none;">Lesson Materials and Overview</a></li>
+      <li style="margin-bottom: 4px;"><a href="#in-class" style="color: #003087; text-decoration: none;">In-Class Work</a></li>
+      <li style="margin-bottom: 0;"><a href="#after-class" style="color: #003087; text-decoration: none;">After Class</a></li>
+    </ol>
+  </div>
+
+  <!-- ===================== 1. OBJECTIVES ===================== -->
+  <details id="objectives" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      1. Lesson Objectives
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 10px 0; font-style: italic;">By the end of this lesson, cadets will be able to:</p>
+      <ol style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Declare and initialize variables of C's primitive types. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+        <li style="margin-bottom: 6px;">Determine the size of a type using <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">sizeof</code>. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+        <li style="margin-bottom: 6px;">Predict and avoid integer overflow in arithmetic operations. <span style="color: #6B7280; font-size: 12px;">(Outcomes 1, 3)</span></li>
+        <li style="margin-bottom: 0;">Apply explicit and implicit type casting in expressions. <span style="color: #6B7280; font-size: 12px;">(Outcome 1)</span></li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 2. READINGS ===================== -->
+  <details id="readings" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      2. Assigned Readings
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 12px 0;">Complete before class. These set the vocabulary we will use.</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <thead>
+          <tr style="background: #E8EDF5; color: #00205B;">
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 130px;">Source</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9;">Sections</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 220px;">Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;"><a href="https://beej.us/guide/bgc/" style="color: #003087; text-decoration: underline;">Beej-C</a></td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Chapter 3 (Variables and Statements)</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Declarations, types, and basic statements</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 9px 12px;">King, <em>C Programming: A Modern Approach</em></td>
+            <td style="padding: 9px 12px;">Chapter 7 (Basic Types)</td>
+            <td style="padding: 9px 12px; color: #4A5568;">Optional deeper dive into sizes and ranges</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <!-- ===================== 3. PRE-CLASS WORK ===================== -->
+  <details id="pre-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      3. Pre-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 18px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #6B5300; font-size: 14px; margin-bottom: 4px;">Do this first</div>
+        <div style="font-size: 14px; color: #5A4B00;">Plan on 30 to 45 minutes for the reading and the toolchain check. Most of the learning happens during the in-class walkthrough; come ready to type.</div>
+      </div>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 0 0 10px 0;">Pre-Class Checklist</h3>
+
+      <!-- Step 1: Reading -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">1</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Read Beej-C Chapter 3</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">Skim if you are confident from CS110 Python. Read closely if any of these terms feel unfamiliar:</div>
+            <ul style="font-size: 13.5px; margin: 0 0 6px 0; padding-left: 20px;">
+              <li style="margin-bottom: 3px;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">int</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">char</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">float</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">double</code></li>
+              <li style="margin-bottom: 3px;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">sizeof</code> operator</li>
+              <li style="margin-bottom: 3px;">Format specifier (<code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">%d</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">%f</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">%c</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">%lu</code>)</li>
+              <li style="margin-bottom: 0;">Integer overflow, casting</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Toolchain verify -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">2</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Verify your toolchain still works</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">Open WSL, navigate to your Lesson 1 hello.c, recompile, and run.</div>
+            <div style="font-size: 13px; color: #00205B; font-weight: 600; margin-bottom: 4px;">Run:</div>
+            <div style="background: #1E2A3A; color: #E8EDF5; padding: 10px 14px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.5;">
+              <span style="color: #7FB3D5;">$</span> cd ~/lesson01-starter<br>
+              <span style="color: #7FB3D5;">$</span> gcc hello.c -o hello<br>
+              <span style="color: #7FB3D5;">$</span> ./hello
+            </div>
+            <div style="font-size: 13.5px; color: #4A5568; margin-top: 8px;">If anything broke since Lesson 1, schedule EI before class. Setup problems will block today's lab.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Skim widget -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 8px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">3</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Skim the In-Class section below</div>
+            <div style="font-size: 14px;">You will see an interactive cmem walkthrough widget. No need to use it yet; just know it is there and what it looks like.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ===================== 4. LESSON MATERIALS AND OVERVIEW ===================== -->
+  <details id="materials" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      4. Lesson Materials and Overview
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 18px 0;">Today is the first lesson where C diverges from Python in ways that bite you. The setup matters: Python and C both have variables, but C variables are a different beast. The reference material below covers the concepts you will see in lecture and use in the cmem walkthrough.</p>
+
+      <!-- Subsection navigation -->
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 18px; margin-bottom: 22px; border-radius: 3px;">
+        <div style="font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">Jump to</div>
+        <div style="font-size: 13.5px;">
+          <a href="#slides" style="color: #003087; text-decoration: none; margin-right: 14px;">Slides</a>
+          <a href="#python-vs-c" style="color: #003087; text-decoration: none; margin-right: 14px;">Python vs C</a>
+          <a href="#naming" style="color: #003087; text-decoration: none; margin-right: 14px;">Naming</a>
+          <a href="#primitive-types" style="color: #003087; text-decoration: none; margin-right: 14px;">Primitive Types</a>
+          <a href="#format-specifiers" style="color: #003087; text-decoration: none; margin-right: 14px;">Format Specifiers</a>
+          <a href="#binary" style="color: #003087; text-decoration: none; margin-right: 14px;">Binary Review</a>
+          <a href="#overflow" style="color: #003087; text-decoration: none; margin-right: 14px;">Integer Overflow</a>
+          <a href="#casting" style="color: #003087; text-decoration: none;">Casting</a>
+        </div>
+      </div>
+
+      <!-- Slides -->
+      <h3 id="slides" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0; scroll-margin-top: 16px;">Slides</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">The Lesson 2 deck covers declarations, types, sizeof, the overflow trap, the division trap, and casts. The slides are the spine of the in-class lecture; the cmem walkthrough is where you practice each concept hands-on.</p>
+
+      <!-- =========================================================
+           EDIT ME: Lesson 2 slide deck link
+           Replace href="#" below with the SharePoint share URL once the
+           deck is published. Leave target="_blank" and rel="noopener".
+           ========================================================= -->
+      <p style="margin: 0 0 18px 0;">
+        <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 10px 20px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 14px;">Open Lesson 2 slides &rarr;</a>
+      </p>
+
+      <!-- Python vs C -->
+      <h3 id="python-vs-c" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Python vs C: the type contract</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">In Python you wrote <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">x = 5</code> and the interpreter figured out the type for you. In C you write <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">int x = 5;</code> and you and the compiler enter into a contract. You promise the variable is an int; the compiler reserves exactly 4 bytes and interprets those bits as an integer forever after.</p>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">The trade is real. In return for the discipline, C runs faster, uses less memory, and lets you reason about exactly what is happening at the machine level. That precision is also what makes the overflow trap and the division trap possible. The compiler trusts you; if you lie to it about the value, it stores the wrong bits without complaint.</p>
+
+      <!-- Naming -->
+      <h3 id="naming" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Naming things in C</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">C uses <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">snake_case</code> for variables and functions and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">SCREAMING_SNAKE_CASE</code> for constants and macros. Variables get descriptive names, one per line, initialized on declaration. The DFCS C Programming Standard formalizes this in <strong>&sect;5.1</strong> (variable naming) and <strong>&sect;5.4 / &sect;5.6</strong> (constants and macros). The full standard lives in the course Resources section; you will see it referenced again whenever a new style rule becomes teachable.</p>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">Concretely: <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">int altitude_ft = 15000;</code> not <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">int a = 15000;</code> and not <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">int altitudeFt = 15000;</code>. This is how the C standard library, POSIX, and the Linux kernel write code; CS210 expects the same.</p>
+
+      <!-- Primitive types -->
+      <h3 id="primitive-types" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Primitive types and their sizes</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">These are the sizes on the cs210 lab machines (64-bit Linux, gcc). The C standard only guarantees minimum sizes; on other platforms these can differ.</p>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 18px;">
+        <thead>
+          <tr style="background: #00205B; color: #ffffff;">
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 180px;">Type</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 80px;">Size</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600;">Range or notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">char</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">1 byte</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Single character. Stored as a small integer (ASCII code).</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">short</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">2 bytes</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">-32,768 to 32,767</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">unsigned short</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">2 bytes</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">0 to 65,535</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">int</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">4 bytes</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">About &plusmn;2.1 billion. Your default whole-number type.</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">long</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">8 bytes</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">About &plusmn;9.2 quintillion</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">float</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">4 bytes</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">IEEE 754 single precision. ~7 decimal digits of precision.</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; font-family: Consolas, monospace; font-size: 13px;">double</td>
+            <td style="padding: 8px 12px;">8 bytes</td>
+            <td style="padding: 8px 12px;">IEEE 754 double precision. ~15 decimal digits.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Format specifiers -->
+      <h3 id="format-specifiers" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Format specifiers</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">When you print a value with <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">printf</code>, you tell it how to interpret the bits with a format specifier. The wrong specifier prints garbage. CS210 builds with <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">-Wall -Werror</code>, so a format-specifier mismatch is a build failure, not a warning. Read the message and fix the specifier.</p>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 18px;">
+        <thead>
+          <tr style="background: #00205B; color: #ffffff;">
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 100px;">Specifier</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 150px;">For type</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600;">Example</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace;">%d</td><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">int</td><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">printf("%d\n", 42);</td></tr>
+          <tr style="background: #F8FAFC;"><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace;">%f</td><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">float, double</td><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">printf("%f\n", 3.14);</td></tr>
+          <tr><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace;">%.1f</td><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">float, double (1 decimal)</td><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">printf("%.1f\n", 3.14);</td></tr>
+          <tr style="background: #F8FAFC;"><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace;">%c</td><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">char (as letter)</td><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">printf("%c\n", 'A');</td></tr>
+          <tr><td style="padding: 8px 12px; font-family: Consolas, monospace;">%lu</td><td style="padding: 8px 12px;">size_t (sizeof results)</td><td style="padding: 8px 12px; font-family: Consolas, monospace; font-size: 13px;">printf("%lu\n", sizeof(int));</td></tr>
+        </tbody>
+      </table>
+
+      <!-- Binary review -->
+      <h3 id="binary" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Binary review</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">You saw binary in CS110. Here is a quick refresher because today&#x2019;s overflow trap and the binary walkthrough in Section 5 both rely on it. If this all feels familiar, skip ahead; if it feels rusty, take three minutes and read.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><strong style="color: #00205B;">Bits and bit positions.</strong> A bit is a single 0 or 1. Each position in a binary number represents a power of 2, starting from the right at 2<sup>0</sup> = 1.</p>
+
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 16px; border-radius: 3px; font-family: Consolas, monospace; font-size: 14px; margin-bottom: 14px;">
+        <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; text-align: center; font-size: 11px; color: #6B7280; margin-bottom: 4px;">
+          <div>128</div><div>64</div><div>32</div><div>16</div><div>8</div><div>4</div><div>2</div><div>1</div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; text-align: center; font-weight: 700; color: #00205B;">
+          <div>0</div><div>0</div><div>1</div><div>0</div><div>1</div><div>0</div><div>1</div><div>0</div>
+        </div>
+        <div style="margin-top: 8px; font-size: 13px; color: #4A5568;">00101010 = 32 + 8 + 2 = <strong>42</strong></div>
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><strong style="color: #00205B;">Decimal to binary.</strong> To convert a decimal number to binary, find the largest power of 2 that fits, subtract it, repeat. For 42: 32 fits (42 - 32 = 10), then 8 fits (10 - 8 = 2), then 2 fits (2 - 2 = 0). Bits set at positions 5, 3, and 1, so 00101010.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><strong style="color: #00205B;">Binary to decimal.</strong> Add up the position values of the bits that are set. 01110 has bits set at positions 3, 2, and 1: 8 + 4 + 2 = 14.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><strong style="color: #00205B;">Bytes and bits.</strong> 1 byte = 8 bits. So a 4-byte int is 32 bits, a 2-byte short is 16 bits, and an 8-byte double is 64 bits. <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">sizeof</code> reports bytes; multiply by 8 to get bits.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><strong style="color: #00205B;">Signed vs unsigned.</strong> The same bit pattern means different things depending on the type. <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">unsigned short</code> reads all sixteen bits as a positive number (0 to 65,535). <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">short</code> uses two&#x2019;s complement: the top bit is the sign (0 positive, 1 negative), and the range is -32,768 to 32,767. So the bit pattern 1111111111111111 is 65,535 as unsigned and -1 as signed. The bits do not change; the type tells the compiler how to interpret them.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">All of this becomes hands-on in the binary walkthrough in Section 5. You can also test yourself with the self-check quiz before class.</p>
+
+      <!-- Integer overflow -->
+      <h3 id="overflow" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Integer overflow</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">When you store a value larger than a type can hold, the bits wrap around. The compiler does not warn you. The classic example:</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">short</span> s = <span style="color: #B5CEA8;">40000</span>;<br>
+        <span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"%d\n"</span>, s);&nbsp;&nbsp;<span style="color: #6B7280;">// prints -25536, not 40000</span>
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">A <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">short</code> can hold -32,768 to 32,767. You asked it to hold 40,000; the bit pattern that gets stored is interpreted as -25,536. The cmem walkthrough in Section 5 lets you watch this happen.</p>
+
+      <!-- Casting -->
+      <h3 id="casting" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Casting and the division trap</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Two ways types convert in C: implicit (the compiler does it automatically when types differ) and explicit (you write <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">(type)</code> in front of a value). The most common reason to cast explicitly is to fix the integer division trap.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">int</span> a = <span style="color: #B5CEA8;">5</span> / <span style="color: #B5CEA8;">2</span>;<br>
+        <span style="color: #6B7280;">// a is 2, not 2.5</span><br><br>
+        <span style="color: #569CD6;">float</span> b = (<span style="color: #569CD6;">float</span>)<span style="color: #B5CEA8;">5</span> / <span style="color: #B5CEA8;">2</span>;<br>
+        <span style="color: #6B7280;">// b is 2.5</span>
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">Rule of thumb: if both operands of <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">/</code> are integer types, C performs integer division and truncates the decimal. To get a fractional result, at least one operand must be float or double, which usually means casting one of them.</p>
+
+    </div>
+  </details>
+
+  <!-- ===================== 5. IN-CLASS WORK ===================== -->
+  <details id="in-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      5. In-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 16px 0;">Four things to do in class. Use the checklist to track your progress.</p>
+
+      <ul style="list-style: none; padding: 0; margin: 0 0 24px 0; font-size: 14.5px;">
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Work through the cmem walkthrough below.</strong>
+          <span style="color: #4A5568;">Twelve guided tasks covering declarations, types, overflow, and casts. About 25 minutes.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Work through the binary &amp; overflow walkthrough.</strong>
+          <span style="color: #4A5568;">Ten guided tasks that move from decimal to binary, signed vs unsigned, then watch initialization overflow happen bit by bit. About 20 minutes.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Take the binary review self-check.</strong>
+          <span style="color: #4A5568;">Eight quick questions covering bit positions, conversions, sizeof, signed vs unsigned, and overflow. About 10 minutes.</span>
+        </li>
+        <li style="margin-bottom: 0; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Complete Lab 02: Altitude and Temperature.</strong>
+          <span style="color: #4A5568;">Auto-graded through GitHub Classroom. Full instructions in the lab repo.</span>
+          <!-- =========================================================
+               EDIT ME: Lab 02 GitHub Classroom assignment link
+               Replace href="#" with the classroom.github.com/a/... invite
+               URL once the assignment is published.
+               ========================================================= -->
+          <div style="margin-top: 8px; margin-left: 28px;">
+            <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 6px 14px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 13px;">Accept Lab 02 on GitHub Classroom &rarr;</a>
+          </div>
+        </li>
+      </ul>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 18px 0 10px 0;">cmem Walkthrough</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Twelve tasks across four sections. Type each C statement at the prompt. The terminal shows what cmem did; the right pane shows current memory state.</p>
+
+<!-- ============================================================
+     CS210 Lesson 2 - cmem Walkthrough Widget
+     Template-aligned style. Native HTML/CSS + scoped JS.
+     Paste as a block; runs anywhere the parent page allows <script>.
+     ============================================================ -->
+<style>
+.cs210-cmem * { box-sizing: border-box; }
+.cs210-cmem {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-cmem h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-cmem .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 22px;
+}
+.cs210-cmem .progress-bar {
+  background: #E5E7EB;
+  border-radius: 3px;
+  height: 8px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.cs210-cmem .progress-fill {
+  background: #003087;
+  height: 100%;
+  transition: width 0.3s ease;
+}
+.cs210-cmem .progress-label {
+  font-size: 12px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-cmem .section-header {
+  background: #E8EDF5;
+  color: #00205B;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.cs210-cmem .task-card {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  border-radius: 3px;
+}
+.cs210-cmem .task-card.complete {
+  background: #E6F4EA;
+  border-left-color: #2E7D32;
+}
+.cs210-cmem .task-label {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B5300;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.cs210-cmem .task-card.complete .task-label {
+  color: #1B5E20;
+}
+.cs210-cmem .task-text {
+  font-size: 15px;
+  color: #1a1a1a;
+}
+.cs210-cmem .task-hint {
+  font-size: 12.5px;
+  color: #6B7280;
+  margin-top: 6px;
+  font-style: italic;
+}
+
+/* Two-pane area: terminal left, memory right */
+.cs210-cmem .panes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+@media (max-width: 760px) {
+  .cs210-cmem .panes { grid-template-columns: 1fr; }
+}
+.cs210-cmem .terminal {
+  background: #1E2A3A;
+  color: #E8EDF5;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13.5px;
+  line-height: 1.5;
+  border-radius: 4px;
+  padding: 14px 18px;
+  min-height: 360px;
+  max-height: 420px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.cs210-cmem .terminal .prompt { color: #7FB3D5; }
+.cs210-cmem .terminal .typed { color: #FFFFFF; }
+.cs210-cmem .terminal .out { color: #B5BEC8; }
+.cs210-cmem .terminal .note { color: #F0B92C; }
+.cs210-cmem .terminal .err { color: #F47A7A; }
+.cs210-cmem .terminal .ok { color: #7FD17F; }
+.cs210-cmem .terminal .dim { color: #6B7280; }
+
+.cs210-cmem .memory-pane {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  padding: 14px 16px;
+  min-height: 360px;
+  max-height: 420px;
+  overflow-y: auto;
+}
+.cs210-cmem .memory-pane-header {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #E5E7EB;
+}
+.cs210-cmem .memory-empty {
+  color: #6B7280;
+  font-style: italic;
+  font-size: 13px;
+  text-align: center;
+  padding: 80px 10px;
+}
+.cs210-cmem .var-card {
+  background: #F8FAFC;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+.cs210-cmem .var-decl {
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  color: #00205B;
+  font-weight: 600;
+  margin-bottom: 4px;
+  word-break: break-all;
+}
+.cs210-cmem .var-meta {
+  font-size: 11px;
+  color: #6B7280;
+  font-family: Consolas, monospace;
+  margin-bottom: 6px;
+}
+.cs210-cmem .bytes {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+.cs210-cmem .byte {
+  background: #E8EDF5;
+  border: 1px solid #C7CFD9;
+  border-radius: 2px;
+  padding: 3px 5px;
+  text-align: center;
+  font-family: Consolas, monospace;
+  font-size: 11px;
+  min-width: 40px;
+}
+.cs210-cmem .byte .h { display: block; font-weight: 700; color: #00205B; }
+.cs210-cmem .byte .b { display: block; font-size: 9px; color: #6B7280; margin-top: 1px; letter-spacing: 0.4px; }
+.cs210-cmem .interp {
+  font-size: 11.5px;
+  color: #4A5568;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed #D0D5DD;
+}
+.cs210-cmem .interp .warn { color: #B8002F; font-weight: 600; }
+
+/* Result cards for sizeof/cast/division (non-variable results) */
+.cs210-cmem .result-card {
+  background: #ffffff;
+  border: 2px solid #003087;
+  border-radius: 4px;
+  padding: 12px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+.cs210-cmem .result-expr {
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  color: #6B7280;
+  margin-bottom: 6px;
+}
+.cs210-cmem .result-value {
+  font-family: Consolas, monospace;
+  font-size: 28px;
+  color: #003087;
+  font-weight: 700;
+}
+.cs210-cmem .result-value.warn { color: #B8002F; }
+.cs210-cmem .result-value.ok   { color: #2E7D32; }
+.cs210-cmem .result-value small {
+  font-size: 13px;
+  color: #6B7280;
+  font-weight: 400;
+  margin-left: 4px;
+}
+.cs210-cmem .size-blocks {
+  display: flex;
+  gap: 3px;
+  justify-content: center;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.cs210-cmem .size-blocks .blk {
+  width: 14px;
+  height: 14px;
+  background: #003087;
+  border-radius: 2px;
+}
+
+.cs210-cmem .input-row {
+  display: flex;
+  background: #1E2A3A;
+  border-radius: 4px;
+  padding: 8px 14px;
+  margin-bottom: 14px;
+  border: 1px solid #003087;
+}
+.cs210-cmem .input-prompt {
+  color: #7FB3D5;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  margin-right: 8px;
+  align-self: center;
+  white-space: nowrap;
+}
+.cs210-cmem .input-row input {
+  flex: 1;
+  background: transparent;
+  color: #FFFFFF;
+  border: none;
+  outline: none;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  padding: 4px 0;
+}
+.cs210-cmem .controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.cs210-cmem .btn {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  padding: 6px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #00205B;
+  font-family: inherit;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.cs210-cmem .btn:hover { background: #F5F7FA; }
+@keyframes cs210-cmem-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(240, 185, 44, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0); }
+}
+.cs210-cmem .btn.pulse {
+  background: #FFF8E1;
+  border-color: #F0B92C;
+  color: #6B5300;
+  font-weight: 600;
+  animation: cs210-cmem-pulse 1.5s infinite;
+}
+.cs210-cmem .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #4A5568;
+  margin-top: 12px;
+}
+.cs210-cmem .help-note strong { color: #00205B; }
+.cs210-cmem .completion {
+  background: #E6F4EA;
+  border: 1px solid #2E7D32;
+  color: #1B5E20;
+  padding: 16px 20px;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 15px;
+  margin-top: 12px;
+}
+/* Name modal overlay */
+.cs210-cmem .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.cs210-cmem .name-modal {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-cmem .name-modal h2 {
+  color: #00205B;
+  font-size: 20px;
+  margin: 0 0 10px 0;
+}
+.cs210-cmem .name-modal p {
+  color: #4A5568;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+.cs210-cmem .name-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-cmem .name-modal input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-cmem .name-modal-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-cmem .name-modal-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-cmem .name-modal-btn:not(:disabled):hover {
+  background: #00205B;
+}
+/* Completion screen */
+.cs210-cmem .completion-screen {
+  background: #ffffff;
+  border: 2px solid #2E7D32;
+  border-radius: 6px;
+  padding: 24px 28px;
+  margin-top: 16px;
+}
+.cs210-cmem .completion-screen .cs-heading {
+  color: #1B5E20;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 6px 0;
+}
+.cs210-cmem .completion-screen .cs-subheading {
+  color: #4A5568;
+  font-size: 14px;
+  margin: 0 0 18px 0;
+}
+.cs210-cmem .completion-screen .cs-name-line {
+  font-size: 15px;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+}
+.cs210-cmem .completion-screen .cs-name-line strong {
+  color: #00205B;
+}
+.cs210-cmem .completion-screen .cs-code-block {
+  background: #F0F4FA;
+  border: 1px solid #003087;
+  border-radius: 4px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.cs210-cmem .completion-screen .cs-code-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #4A5568;
+  margin-bottom: 4px;
+}
+.cs210-cmem .completion-screen .cs-code-value {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 28px;
+  font-weight: 700;
+  color: #00205B;
+  letter-spacing: 3px;
+}
+.cs210-cmem .completion-screen .cs-copy-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-cmem .completion-screen .cs-copy-btn:hover {
+  background: #00205B;
+}
+.cs210-cmem .completion-screen .cs-copy-btn.copied {
+  background: #2E7D32;
+}
+.cs210-cmem .completion-screen .cs-timestamp {
+  font-size: 13px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-cmem .completion-screen .cs-reminder {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 14px;
+  color: #6B5300;
+  line-height: 1.5;
+}
+.cs210-cmem .completion-screen .cs-reminder strong {
+  color: #4A3A00;
+}
+</style>
+
+<div class="cs210-cmem">
+
+<div class="name-modal-backdrop" id="name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Blackboard reflection quiz.</p>
+    <input type="text" id="cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="cadet-name-btn" disabled>Start the walkthrough</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 2 &middot; cmem Memory Walkthrough</h1>
+<div class="subtitle">A guided tour through declarations, types, overflow, and casts. Type each C statement on the input line. The terminal shows what cmem did; the right pane shows current memory.</div>
+
+<div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width: 0%;"></div></div>
+<div class="progress-label" id="progress-label">Task 0 of 12</div>
+
+<div class="section-header" id="section-header">Section 1: Your first declaration</div>
+
+<div class="task-card" id="task-card">
+  <div class="task-label" id="task-label">Current task</div>
+  <div class="task-text" id="task-text">Loading...</div>
+  <div class="task-hint" id="task-hint"></div>
+</div>
+
+<div class="panes">
+  <div class="terminal" id="terminal"></div>
+  <div class="memory-pane">
+    <div class="memory-pane-header">Memory</div>
+    <div id="memory-area">
+      <div class="memory-empty">No variables yet.<br>Type a declaration on the left.</div>
+    </div>
+  </div>
+</div>
+
+<div class="input-row">
+  <span class="input-prompt">cmem&gt;</span>
+  <input type="text" id="cli-input" autocomplete="off" spellcheck="false" placeholder="try: int x = 42;">
+</div>
+
+<div class="controls">
+  <button class="btn" id="hint-btn">Show hint</button>
+  <button class="btn" id="reset-btn">Reset</button>
+  <button class="btn" id="mode-btn">Switch to free mode</button>
+</div>
+
+<div class="help-note">
+  <strong>How this works:</strong> This is not a Linux terminal. It is a teaching tool that simulates what C declarations do in memory. The task card tells you what to type next; only the expected command will advance the walkthrough so the memory state stays predictable. Mistype twice and the hint button will pulse. After the walkthrough completes, free mode unlocks automatically so you can experiment.
+</div>
+
+<div id="completion-area"></div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-cmem');
+  if (!root) return;
+
+  // ============================================================
+  // CS210 widget completion utilities
+  // Salt -> deterministic 6-char code via FNV-1a.
+  // Alphabet excludes 0, 1, O, I (uppercase only output).
+  // ============================================================
+  const CS210_SALT = "lesson02_cmem_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  // Name-modal gating: widget stays blocked until name entered.
+  // Pre-fill from localStorage if available, but still require explicit Start.
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#name-modal-backdrop');
+    const input = root.querySelector('#cadet-name-input');
+    const btn = root.querySelector('#cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length >= 2) {
+        // Already entered (likely on the same page in another widget, or in a
+        // previous visit). Adopt it and skip the modal.
+        cs210CadetName = stored.trim();
+        backdrop.style.display = 'none';
+        return;
+      }
+    } catch (e) { /* localStorage may be disabled */ }
+
+    function updateBtn() {
+      btn.disabled = input.value.trim().length < 2;
+    }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', function() {
+      const name = input.value.trim();
+      if (name.length < 2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+      const cli = root.querySelector('#cli-input');
+      if (cli) cli.focus();
+    });
+    setTimeout(function() { input.focus(); }, 50);
+  })();
+
+  function cs210RenderCompletion(area) {
+    if (!area) return;
+    if (root.querySelector('#cs210-completion-overlay')) return; // already shown
+    const now = new Date();
+    const ts = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const safeName = (cs210CadetName || 'Cadet').replace(/[<>&"']/g, function(c) {
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+    // Inline footer (kept so screenshot of widget body still has the code)
+    area.innerHTML =
+      '<div class="completion-screen">' +
+        '<div class="cs-heading">Walkthrough complete</div>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value">' + CS210_CODE + '</div></div>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+      '</div>';
+    // Overlay (the unmissable version)
+    const overlay = document.createElement('div');
+    overlay.id = 'cs210-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.style.background = 'rgba(27, 94, 32, 0.55)';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">Walkthrough complete</h2>' +
+        '<p>Take a screenshot of this box. You will need the code and a visual of this screen for the Blackboard reflection quiz.</p>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value" id="cs-code-value">' + CS210_CODE + '</div></div>' +
+          '<button class="cs-copy-btn" id="cs-copy-btn" type="button">Copy code</button>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+        '<div class="cs-reminder" style="margin-bottom:14px;">' +
+          '<strong>Next step:</strong> Open the Lesson 2 reflection quiz in Blackboard. Enter this code, answer the reflection prompt, and attach your screenshot.' +
+        '</div>' +
+        '<button class="name-modal-btn" id="cs-overlay-close" type="button" style="background:#2E7D32;">Got it &mdash; close this</button>' +
+      '</div>';
+    root.appendChild(overlay);
+    const closeBtn = overlay.querySelector('#cs-overlay-close');
+    if (closeBtn) closeBtn.addEventListener('click', function() { overlay.style.display = 'none'; });
+    const copyBtn = overlay.querySelector('#cs-copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function() {
+        const text = CS210_CODE;
+        const ok = function() {
+          copyBtn.textContent = 'Copied';
+          copyBtn.classList.add('copied');
+          setTimeout(function() {
+            copyBtn.textContent = 'Copy code';
+            copyBtn.classList.remove('copied');
+          }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(ok, function() {
+            // Fallback below
+            cs210FallbackCopy(text); ok();
+          });
+        } else {
+          cs210FallbackCopy(text); ok();
+        }
+      });
+    }
+  }
+  function cs210FallbackCopy(text) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e) { /* nothing else to do */ }
+  }
+
+  // ============================================================
+  // Type metadata (64-bit Linux gcc)
+  // ============================================================
+  const TYPES = {
+    "char":            { size: 1, signed: true,  category: "int",   min: -128n, max: 127n },
+    "signed char":     { size: 1, signed: true,  category: "int",   min: -128n, max: 127n },
+    "unsigned char":   { size: 1, signed: false, category: "int",   min: 0n,    max: 255n },
+    "short":           { size: 2, signed: true,  category: "int",   min: -32768n, max: 32767n },
+    "unsigned short":  { size: 2, signed: false, category: "int",   min: 0n,    max: 65535n },
+    "int":             { size: 4, signed: true,  category: "int",   min: -2147483648n, max: 2147483647n },
+    "unsigned int":    { size: 4, signed: false, category: "int",   min: 0n,    max: 4294967295n },
+    "long":            { size: 8, signed: true,  category: "int",   min: -9223372036854775808n, max: 9223372036854775807n },
+    "unsigned long":   { size: 8, signed: false, category: "int",   min: 0n,    max: 18446744073709551615n },
+    "float":           { size: 4, signed: true,  category: "float" },
+    "double":          { size: 8, signed: true,  category: "float" },
+  };
+  const TYPE_LIST = Object.keys(TYPES).sort((a,b) => b.length - a.length);
+
+  // ============================================================
+  // State
+  // ============================================================
+  const variables = []; // {type, name, bytes, address, originalInput, storedDisplay, wrapped}
+  let nextAddr = 0x7ffe5a201040n;
+  let currentTaskIndex = 0;
+  let consecutiveFails = 0;
+  let lastResult = null;     // last non-variable result (sizeof, cast, division)
+  let mode = "walkthrough";  // "walkthrough" or "free"
+
+  // ============================================================
+  // Encoding helpers
+  // ============================================================
+  function encodeInt(value, size) {
+    let n = BigInt(value);
+    const bits = BigInt(size * 8);
+    const mask = (1n << bits);
+    let stored = ((n % mask) + mask) % mask;
+    const bytes = [];
+    for (let i = 0; i < size; i++) {
+      bytes.push(Number(stored & 0xffn));
+      stored >>= 8n;
+    }
+    return bytes;
+  }
+  function decodeInt(bytes, signed) {
+    let n = 0n;
+    for (let i = bytes.length - 1; i >= 0; i--) n = (n << 8n) | BigInt(bytes[i]);
+    if (signed) {
+      const bits = BigInt(bytes.length * 8);
+      const sb = 1n << (bits - 1n);
+      if (n & sb) n -= (1n << bits);
+    }
+    return n;
+  }
+  function encodeFloat(value, size) {
+    const buf = new ArrayBuffer(size);
+    const view = new DataView(buf);
+    if (size === 4) view.setFloat32(0, Number(value), true);
+    else view.setFloat64(0, Number(value), true);
+    const bytes = [];
+    for (let i = 0; i < size; i++) bytes.push(view.getUint8(i));
+    return bytes;
+  }
+  function decodeFloat(bytes) {
+    const buf = new ArrayBuffer(bytes.length);
+    const view = new DataView(buf);
+    for (let i = 0; i < bytes.length; i++) view.setUint8(i, bytes[i]);
+    return bytes.length === 4 ? view.getFloat32(0, true) : view.getFloat64(0, true);
+  }
+  function byteHex(b) { return "0x" + b.toString(16).padStart(2, "0").toUpperCase(); }
+  function byteBin(b) { return b.toString(2).padStart(8, "0"); }
+  function formatFloat(v) {
+    if (!isFinite(v)) return String(v);
+    return Number(v).toFixed(6).replace(/\.?0+$/, m => m.startsWith(".") ? "" : m) || "0";
+  }
+  function alignAddr(addr, size) {
+    const a = BigInt(Math.min(size, 8));
+    const rem = addr % a;
+    return rem === 0n ? addr : addr + (a - rem);
+  }
+  function isFloatLiteral(s) { return /\.|[fF]$/.test(s); }
+
+  // ============================================================
+  // Value parser
+  // ============================================================
+  function parseValue(typeName, rawVal) {
+    const meta = TYPES[typeName];
+    rawVal = String(rawVal).trim();
+    if (meta.category === "float") {
+      const v = parseFloat(rawVal.replace(/[fF]$/, ""));
+      if (isNaN(v)) throw new Error("not a valid float: " + rawVal);
+      return { kind: "float", value: v };
+    }
+    const cl = rawVal.match(/^'(.)'$/);
+    if (cl) return { kind: "int", value: BigInt(cl[1].charCodeAt(0)), isCharLit: true, char: cl[1] };
+    if (typeName === "char" && rawVal.length === 1 && /^[A-Za-z]$/.test(rawVal)) {
+      return { kind: "int", value: BigInt(rawVal.charCodeAt(0)), isCharLit: true, char: rawVal };
+    }
+    if (/^-?0x[0-9a-fA-F]+$/i.test(rawVal)) return { kind: "int", value: BigInt(rawVal) };
+    if (/^-?\d+$/.test(rawVal)) return { kind: "int", value: BigInt(rawVal) };
+    if (/^-?\d+\.\d+f?$/.test(rawVal)) {
+      throw new Error("'" + typeName + "' is an integer type but '" + rawVal + "' has a decimal. Drop the decimal or use float/double.");
+    }
+    throw new Error("not a valid value for " + typeName + ": " + rawVal);
+  }
+
+  // ============================================================
+  // Parsers
+  // ============================================================
+  function tryParseDecl(line) {
+    const trimmed = line.trim().replace(/;?\s*$/, "");
+    let matched = null, matchLen = 0;
+    for (const t of TYPE_LIST) {
+      const re = new RegExp("^(" + t.replace(/ /g, "\\s+") + ")\\b");
+      const m = trimmed.match(re);
+      if (m) { matched = t; matchLen = m[1].length; break; }
+    }
+    if (!matched) return null;
+    const rest = trimmed.substring(matchLen).trim();
+    const m = rest.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*(?:=\s*(.+))?$/);
+    if (!m) return { type: matched, error: "expected a variable name after '" + matched + "'" };
+    return { type: matched, name: m[1], value: m[2] || null };
+  }
+  function tryParseSizeof(line) {
+    const t = line.trim().replace(/;?\s*$/, "");
+    const m = t.match(/^sizeof\s*\(\s*(.+?)\s*\)$/) || t.match(/^sizeof\s+(.+)$/);
+    if (!m) return null;
+    return { arg: m[1].trim() };
+  }
+  function tryParseCast(line) {
+    const t = line.trim().replace(/;?\s*$/, "");
+    const typesAlt = TYPE_LIST.map(x => x.replace(/ /g, "\\s+")).join("|");
+    const re = new RegExp("^\\(\\s*(" + typesAlt + ")\\s*\\)\\s*(.+)$");
+    const m = t.match(re);
+    if (!m) return null;
+    return { type: m[1].replace(/\s+/g, " "), exprStr: m[2].trim() };
+  }
+  function tryParseDivision(line) {
+    const t = line.trim().replace(/;?\s*$/, "");
+    const m = t.match(/^(-?\d+(?:\.\d+f?)?)\s*\/\s*(-?\d+(?:\.\d+f?)?)$/);
+    if (!m) return null;
+    return { lhs: m[1], rhs: m[2] };
+  }
+
+  // ============================================================
+  // Evaluators
+  // ============================================================
+  function evalDecl(parsed) {
+    if (!parsed.name) throw new Error(parsed.error || "missing variable name");
+    const existingIdx = variables.findIndex(v => v.name === parsed.name);
+    const isOverwrite = existingIdx !== -1;
+    const meta = TYPES[parsed.type];
+    let bytes, storedDisplay, wrapped = false, originalShown;
+    if (parsed.value === null) {
+      const seed = Number((isOverwrite ? variables[existingIdx].address : nextAddr) & 0xffffn);
+      bytes = [];
+      for (let i = 0; i < meta.size; i++) bytes.push((seed * 31 + i * 17) & 0xff);
+      storedDisplay = meta.category === "float"
+        ? formatFloat(decodeFloat(bytes))
+        : decodeInt(bytes, meta.signed).toString();
+      originalShown = "(uninitialized)";
+    } else {
+      const pv = parseValue(parsed.type, parsed.value);
+      if (pv.kind === "float") {
+        bytes = encodeFloat(pv.value, meta.size);
+        storedDisplay = formatFloat(decodeFloat(bytes));
+        originalShown = parsed.value;
+      } else {
+        bytes = encodeInt(pv.value, meta.size);
+        const stored = decodeInt(bytes, meta.signed);
+        wrapped = stored !== pv.value;
+        storedDisplay = pv.isCharLit
+          ? (stored >= 32n && stored < 127n
+              ? "'" + String.fromCharCode(Number(stored)) + "' (" + stored + ")"
+              : stored.toString())
+          : stored.toString();
+        originalShown = pv.isCharLit ? "'" + pv.char + "'" : parsed.value;
+      }
+    }
+    let v;
+    if (isOverwrite) {
+      // Keep existing address. Replace type, bytes, value in place.
+      const existing = variables[existingIdx];
+      v = {
+        type: parsed.type, name: parsed.name, bytes,
+        address: existing.address, originalInput: originalShown,
+        storedDisplay, wrapped, isUninit: parsed.value === null,
+      };
+      variables[existingIdx] = v;
+    } else {
+      nextAddr = alignAddr(nextAddr, meta.size);
+      v = {
+        type: parsed.type, name: parsed.name, bytes,
+        address: nextAddr, originalInput: originalShown,
+        storedDisplay, wrapped, isUninit: parsed.value === null,
+      };
+      nextAddr += BigInt(meta.size);
+      variables.push(v);
+    }
+    lastResult = null;
+    return { kind: "var-added", variable: v, overwrite: isOverwrite };
+  }
+  function evalSizeof(parsed) {
+    const arg = parsed.arg;
+    let typeName = null;
+    for (const t of TYPE_LIST) {
+      if (arg.replace(/\s+/g, " ") === t) { typeName = t; break; }
+    }
+    if (typeName) {
+      const r = { kind: "sizeof", expr: "sizeof(" + typeName + ")", size: TYPES[typeName].size };
+      lastResult = r;
+      return r;
+    }
+    const v = variables.find(x => x.name === arg);
+    if (v) {
+      const r = { kind: "sizeof", expr: "sizeof(" + arg + ")", size: TYPES[v.type].size, viaVar: v };
+      lastResult = r;
+      return r;
+    }
+    throw new Error("sizeof: '" + arg + "' is not a known type or variable.");
+  }
+  function evalCast(parsed) {
+    const { type, exprStr } = parsed;
+    const meta = TYPES[type];
+
+    // division-with-cast: (T)num / num
+    const divM = exprStr.match(/^(-?\d+(?:\.\d+f?)?)\s*\/\s*(-?\d+(?:\.\d+f?)?)$/);
+    if (divM) {
+      const lhsRaw = divM[1], rhsRaw = divM[2];
+      const lhsVal = parseFloat(lhsRaw);
+      const rhsVal = parseFloat(rhsRaw);
+      let castedLhs, result, resultType;
+      if (meta.category === "float") {
+        castedLhs = lhsVal;
+        result = castedLhs / rhsVal;
+        resultType = type;
+      } else {
+        castedLhs = Math.trunc(lhsVal);
+        if (isFloatLiteral(rhsRaw)) { result = castedLhs / rhsVal; resultType = "double"; }
+        else { result = Math.trunc(castedLhs / rhsVal); resultType = "int"; }
+      }
+      const r = { kind: "cast-div", original: "(" + type + ")" + lhsRaw + " / " + rhsRaw, castedLhs, rhsVal, result, resultType, castType: type };
+      lastResult = r;
+      return r;
+    }
+
+    // plain cast: (T)num
+    const valM = exprStr.match(/^\(?\s*(-?\d+(?:\.\d+f?)?)\s*\)?$/);
+    if (!valM) throw new Error("couldn't parse '" + exprStr + "' as a number to cast.");
+    const numRaw = valM[1];
+    const isFloat = isFloatLiteral(numRaw);
+    const numVal = parseFloat(numRaw);
+
+    let sourceType, sourceBytes, sourceDisplay, destBytes, destDisplay;
+    if (isFloat) {
+      sourceType = "double";
+      sourceBytes = encodeFloat(numVal, 8);
+      sourceDisplay = formatFloat(numVal);
+    } else {
+      sourceType = "int";
+      sourceBytes = encodeInt(BigInt(numRaw), 4);
+      sourceDisplay = numRaw;
+    }
+    if (meta.category === "float") {
+      destBytes = encodeFloat(numVal, meta.size);
+      destDisplay = formatFloat(decodeFloat(destBytes));
+    } else {
+      const intVal = Math.trunc(numVal);
+      destBytes = encodeInt(BigInt(intVal), meta.size);
+      destDisplay = decodeInt(destBytes, meta.signed).toString();
+    }
+    const r = {
+      kind: "cast", expr: "(" + type + ")" + numRaw,
+      sourceType, sourceBytes, sourceDisplay,
+      destType: type, destBytes, destDisplay,
+      isFloatToInt: isFloat && meta.category === "int",
+    };
+    lastResult = r;
+    return r;
+  }
+  function evalDivision(parsed) {
+    const lhsRaw = parsed.lhs, rhsRaw = parsed.rhs;
+    const a = parseFloat(lhsRaw), b = parseFloat(rhsRaw);
+    if (b === 0) throw new Error("division by zero");
+    const lhsIsFloat = isFloatLiteral(lhsRaw);
+    const rhsIsFloat = isFloatLiteral(rhsRaw);
+    if (lhsIsFloat || rhsIsFloat) {
+      const r = { kind: "div-float", lhs: lhsRaw, rhs: rhsRaw, result: formatFloat(a / b) };
+      lastResult = r;
+      return r;
+    }
+    const intResult = Math.trunc(a / b);
+    const exact = a / b;
+    const r = { kind: "div-int", lhs: lhsRaw, rhs: rhsRaw, result: intResult, exact, trap: intResult !== exact };
+    lastResult = r;
+    return r;
+  }
+
+  // ============================================================
+  // Dispatcher
+  // ============================================================
+  function runCommand(line) {
+    const t = line.trim();
+    if (!t) return null;
+    const lower = t.toLowerCase().replace(/;?$/, "");
+
+    if (lower === "clear" || lower === "reset") {
+      variables.length = 0;
+      nextAddr = 0x7ffe5a201040n;
+      lastResult = null;
+      return { kind: "cleared" };
+    }
+    if (lower === "list") {
+      return { kind: "list" };
+    }
+    if (lower === "help" || lower === "?") {
+      return { kind: "help" };
+    }
+
+    const sz = tryParseSizeof(t);
+    if (sz) return evalSizeof(sz);
+
+    const c = tryParseCast(t);
+    if (c) return evalCast(c);
+
+    const d = tryParseDecl(t);
+    if (d && d.type && d.name) return evalDecl(d);
+    if (d && d.error) throw new Error(d.error);
+
+    const div = tryParseDivision(t);
+    if (div) return evalDivision(div);
+
+    // Shell-command-like guess to give a useful hint
+    if (/^(ls|cd|pwd|cat|echo|mkdir|rm|mv|cp)\b/.test(t)) {
+      throw new Error("cmem is not a shell. Type C statements like: int x = 42;");
+    }
+    throw new Error("couldn't parse '" + t + "'. Type a C declaration like int x = 42;");
+  }
+
+  // ============================================================
+  // Terminal output
+  // ============================================================
+  const terminalEl = root.querySelector('#terminal');
+  function termWrite(text, cls) {
+    const span = document.createElement('span');
+    if (cls) span.className = cls;
+    span.textContent = text;
+    terminalEl.appendChild(span);
+  }
+  function termLine(text, cls) {
+    termWrite(text, cls);
+    terminalEl.appendChild(document.createElement('br'));
+    terminalEl.scrollTop = terminalEl.scrollHeight;
+  }
+  function echoCommand(cmd) {
+    termWrite('cmem> ', 'prompt');
+    termLine(cmd, 'typed');
+  }
+
+  // ============================================================
+  // Memory pane rendering
+  // ============================================================
+  const memEl = root.querySelector('#memory-area');
+  function renderVarCard(v) {
+    const meta = TYPES[v.type];
+    const bytesHtml = v.bytes.map(b => {
+      return '<div class="byte"><span class="h">' + byteHex(b) + '</span><span class="b">' + byteBin(b) + '</span></div>';
+    }).join('');
+    const decl = v.isUninit ? (v.type + ' ' + v.name + ';') : (v.type + ' ' + v.name + ' = ' + v.originalInput + ';');
+    let interpExtra = '';
+    if (v.wrapped) interpExtra = ' <span class="warn">(overflow! bits wrapped)</span>';
+    if (v.isUninit) interpExtra = ' <span class="warn">(garbage; do not trust)</span>';
+    return '<div class="var-card">' +
+           '<div class="var-decl">' + escapeHtml(decl) + '</div>' +
+           '<div class="var-meta">@ 0x' + v.address.toString(16) + ' &nbsp; size: ' + meta.size + 'B</div>' +
+           '<div class="bytes">' + bytesHtml + '</div>' +
+           '<div class="interp">stored: <strong>' + escapeHtml(v.storedDisplay) + '</strong>' + interpExtra + '</div>' +
+           '</div>';
+  }
+  function renderSizeofCard(r) {
+    const blocks = Array(r.size).fill('<div class="blk"></div>').join('');
+    return '<div class="result-card">' +
+           '<div class="result-expr">' + escapeHtml(r.expr) + '</div>' +
+           '<div class="result-value">' + r.size + '<small>byte' + (r.size !== 1 ? 's' : '') + '</small></div>' +
+           '<div class="size-blocks">' + blocks + '</div>' +
+           '</div>';
+  }
+  function renderCastCard(r) {
+    const srcBytes = r.sourceBytes.map(b => '<div class="byte"><span class="h">' + byteHex(b) + '</span><span class="b">' + byteBin(b) + '</span></div>').join('');
+    const dstBytes = r.destBytes.map(b => '<div class="byte"><span class="h">' + byteHex(b) + '</span><span class="b">' + byteBin(b) + '</span></div>').join('');
+    return '<div class="result-card" style="text-align: left;">' +
+           '<div class="result-expr" style="text-align: center; font-weight: 600; color: #00205B; font-size: 14px; margin-bottom: 10px;">cast: ' + escapeHtml(r.expr) + '</div>' +
+           '<div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center;">' +
+             '<div style="text-align: center;"><div style="font-size: 10px; color: #6B7280; text-transform: uppercase; letter-spacing: 0.8px;">' + r.sourceType + '</div>' +
+             '<div style="font-family: Consolas, monospace; font-size: 16px; font-weight: 700; color: #00205B;">' + escapeHtml(r.sourceDisplay) + '</div>' +
+             '<div class="bytes" style="justify-content: center; margin-top: 4px;">' + srcBytes + '</div></div>' +
+             '<div style="font-size: 22px; color: #003087; font-weight: 700;">&rarr;</div>' +
+             '<div style="text-align: center;"><div style="font-size: 10px; color: #6B7280; text-transform: uppercase; letter-spacing: 0.8px;">' + r.destType + '</div>' +
+             '<div style="font-family: Consolas, monospace; font-size: 16px; font-weight: 700; color: #003087;">' + escapeHtml(r.destDisplay) + '</div>' +
+             '<div class="bytes" style="justify-content: center; margin-top: 4px;">' + dstBytes + '</div></div>' +
+           '</div>' +
+           '</div>';
+  }
+  function renderCastDivCard(r) {
+    return '<div class="result-card">' +
+           '<div class="result-expr">' + escapeHtml(r.original) + '</div>' +
+           '<div style="font-size: 12px; color: #4A5568; margin-bottom: 8px;">cast ' + escapeHtml(r.original.split(' / ')[0]) + ' &rarr; ' + r.castedLhs + ', then &divide; ' + r.rhsVal + '</div>' +
+           '<div class="result-value ok">' + (Number.isInteger(r.result) ? r.result : Number(r.result).toFixed(2)) + '</div>' +
+           '</div>';
+  }
+  function renderDivisionCard(r) {
+    const cls = r.kind === "div-int" ? (r.trap ? "warn" : "") : "ok";
+    let note = '';
+    if (r.kind === "div-int" && r.trap) {
+      note = '<div style="font-size: 11.5px; color: #B8002F; margin-top: 6px; font-style: italic;">integer division trap. exact result was ' + r.exact + '.</div>';
+    }
+    return '<div class="result-card">' +
+           '<div class="result-expr">' + r.lhs + ' / ' + r.rhs + ' (' + (r.kind === "div-int" ? "both ints" : "float division") + ')</div>' +
+           '<div class="result-value ' + cls + '">' + r.result + '</div>' +
+           note +
+           '</div>';
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" })[c]);
+  }
+  // Returns true if the pane is currently scrolled near the bottom (within 40px).
+  function isPaneAtBottom(scrollContainer) {
+    if (!scrollContainer) return true;
+    return scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight < 40;
+  }
+  function scrollPaneToBottom(scrollContainer) {
+    if (!scrollContainer) return;
+    scrollContainer.scrollTop = scrollContainer.scrollHeight;
+  }
+  function renderMemory() {
+    // The scrollable container is the .memory-pane wrapper around memEl.
+    const pane = memEl.closest('.memory-pane');
+    const wasAtBottom = isPaneAtBottom(pane);
+    if (variables.length === 0 && !lastResult) {
+      memEl.innerHTML = '<div class="memory-empty">No variables yet.<br>Type a declaration on the left.</div>';
+      return;
+    }
+    let html = '';
+    for (const v of variables) html += renderVarCard(v);
+    if (lastResult) {
+      if (lastResult.kind === "sizeof")    html += renderSizeofCard(lastResult);
+      else if (lastResult.kind === "cast") html += renderCastCard(lastResult);
+      else if (lastResult.kind === "cast-div") html += renderCastDivCard(lastResult);
+      else if (lastResult.kind === "div-int" || lastResult.kind === "div-float") html += renderDivisionCard(lastResult);
+    }
+    memEl.innerHTML = html;
+    if (wasAtBottom) scrollPaneToBottom(pane);
+  }
+
+  // ============================================================
+  // Tasks
+  // ============================================================
+  // Diagnose helpers — return a specific feedback string for near-misses,
+  // or null to indicate "totally unrelated; show generic message"
+  function diagDecl(cmd, expected) {
+    // expected: {type, name, value}
+    const trimmed = cmd.trim();
+    // Did they get the type, name, and value all right except for the semicolon?
+    const noSemi = new RegExp(
+      "^\\s*" + expected.type.replace(/ /g, "\\s+") + "\\s+" +
+      expected.name + "\\s*=\\s*" + escapeRegex(expected.value) + "\\s*$"
+    );
+    if (noSemi.test(trimmed)) return "Almost. Don't forget the semicolon at the end.";
+    // Try to detect right type+name but wrong value, or right type+value but wrong name, etc.
+    const typeRe = new RegExp("^\\s*" + expected.type.replace(/ /g, "\\s+") + "\\b");
+    const matchedType = typeRe.test(trimmed);
+    // Try parsing as any declaration to see what type+name+value they gave
+    const anyDeclRe = /^\s*([a-z][a-z ]*?)\s+([A-Za-z_]\w*)\s*(?:=\s*(.+?))?\s*;?\s*$/i;
+    const m = trimmed.match(anyDeclRe);
+    if (m) {
+      const userType = m[1].trim().replace(/\s+/g, " ");
+      const userName = m[2];
+      const userVal = (m[3] || "").trim();
+      if (userName !== expected.name && userType === expected.type)
+        return "Close. Check the variable name. The task wants '" + expected.name + "'.";
+      if (userType !== expected.type && userName === expected.name)
+        return "Close. Check the type. The task wants '" + expected.type + "'.";
+      if (userVal !== "" && userVal !== expected.value && userType === expected.type && userName === expected.name)
+        return "Close. Check the value. The task wants '" + expected.value + "'.";
+    }
+    return null;
+  }
+  function diagExpr(cmd, expectedExpr) {
+    // For expression tasks (no semicolon required), just check if it's close
+    const stripped = cmd.trim().replace(/\s+/g, "").replace(/;$/, "");
+    const targetStripped = expectedExpr.replace(/\s+/g, "");
+    if (stripped === targetStripped) return null; // would have matched, weird
+    return null;
+  }
+  function escapeRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+
+  const tasks = [
+    // --- Section 1: Your first declaration ---
+    {
+      section: 'Section 1: Your first declaration',
+      label: 'Task 1 of 12',
+      text: 'Declare an int named x with value 42. End the line with a semicolon.',
+      hint: 'int x = 42;',
+      match: (cmd) => /^\s*int\s+x\s*=\s*42\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diagDecl(cmd, { type: "int", name: "x", value: "42" }),
+      note: 'x lives at a fixed address and takes 4 bytes. The bytes 0x2A 0x00 0x00 0x00 are 42 in little-endian (lowest byte first).'
+    },
+    {
+      label: 'Task 2 of 12',
+      text: 'Ask cmem how big x is in memory. Use the sizeof operator.',
+      hint: 'sizeof(x)',
+      match: (cmd) => /^\s*sizeof\s*(\(\s*x\s*\)|\s+x)\s*;?\s*$/.test(cmd) || /^\s*sizeof\s*\(\s*int\s*\)\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^\s*sizeof\b/i.test(t) && !/sizeof\s*(\(\s*(x|int)\s*\)|\s+(x|int))/i.test(t))
+          return "Close. sizeof needs a type or variable in parentheses, like sizeof(x).";
+        return null;
+      },
+      note: 'sizeof returns the number of bytes a variable or type takes up. Every int on the cs210 lab machines is 4 bytes.'
+    },
+    {
+      label: 'Task 3 of 12',
+      text: 'Declare a second int named y with value 100. The compiler will place it right after x in memory.',
+      hint: 'int y = 100;',
+      match: (cmd) => /^\s*int\s+y\s*=\s*100\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diagDecl(cmd, { type: "int", name: "y", value: "100" }),
+      note: 'y sits right after x in memory. The compiler packed them adjacently. Both ints, both 4 bytes.'
+    },
+
+    // --- Section 2: Different types ---
+    {
+      section: 'Section 2: Different types',
+      label: 'Task 4 of 12',
+      text: "Declare a char named letter holding the capital letter A. Use single quotes around the A.",
+      hint: "char letter = 'A';",
+      match: (cmd) => /^\s*char\s+letter\s*=\s*'A'\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^\s*char\s+letter\s*=\s*'A'\s*$/.test(t)) return "Almost. Don't forget the semicolon at the end.";
+        if (/^\s*char\s+letter\s*=\s*A\s*;?\s*$/.test(t)) return "Close. The character literal A needs single quotes: 'A'.";
+        if (/^\s*char\s+letter\s*=\s*"A"\s*;?\s*$/.test(t)) return "Close. Use single quotes 'A' for a char, not double quotes (those make strings).";
+        return diagDecl(cmd, { type: "char", name: "letter", value: "'A'" });
+      },
+      note: "char is 1 byte. Capital A is ASCII 65, which is 0x41 in hex. C stores the number; printf with %c shows it as the letter."
+    },
+    {
+      label: 'Task 5 of 12',
+      text: 'Declare a float named pi with value 3.14.',
+      hint: 'float pi = 3.14;',
+      match: (cmd) => /^\s*float\s+pi\s*=\s*3\.14f?\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^\s*float\s+pi\s*=\s*3\.14f?\s*$/.test(t)) return "Almost. Don't forget the semicolon at the end.";
+        return diagDecl(cmd, { type: "float", name: "pi", value: "3.14" });
+      },
+      note: 'float is 4 bytes like int, but the bit pattern is wildly different. That is IEEE 754: 1 sign bit, 8 exponent bits, 23 mantissa bits. We will come back to this in Lesson 38.'
+    },
+    {
+      label: 'Task 6 of 12',
+      text: 'Declare a double named big with value 0.1.',
+      hint: 'double big = 0.1;',
+      match: (cmd) => /^\s*double\s+big\s*=\s*0\.1\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^\s*double\s+big\s*=\s*0\.1\s*$/.test(t)) return "Almost. Don't forget the semicolon at the end.";
+        return diagDecl(cmd, { type: "double", name: "big", value: "0.1" });
+      },
+      note: 'double is 8 bytes. Look at the bytes: 0x9A 0x99 0x99 0x99 0x99 0x99 0xB9 0x3F. That repeating pattern is 0.1 trying (and failing) to represent exactly in binary. This is why 0.1 + 0.2 is not 0.3 in most languages.'
+    },
+
+    // --- Section 3: The overflow trap ---
+    {
+      section: 'Section 3: The overflow trap',
+      label: 'Task 7 of 12',
+      text: 'Declare a short named s with value 40000. Watch what gets stored.',
+      hint: 'short s = 40000;',
+      match: (cmd) => /^\s*short\s+s\s*=\s*40000\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^\s*short\s+s\s*=\s*40000\s*$/.test(t)) return "Almost. Don't forget the semicolon at the end.";
+        return diagDecl(cmd, { type: "short", name: "s", value: "40000" });
+      },
+      note: 'OVERFLOW! short can only hold -32,768 to 32,767. You asked for 40,000; the bits get stored anyway, but a signed short reads them as -25,536. The compiler did not warn you. This is the kind of bug that takes hours to find in real code.'
+    },
+    {
+      label: 'Task 8 of 12',
+      text: 'Now declare an unsigned short named u with value 40000. Same value, different type.',
+      hint: 'unsigned short u = 40000;',
+      match: (cmd) => /^\s*unsigned\s+short\s+u\s*=\s*40000\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^\s*unsigned\s+short\s+u\s*=\s*40000\s*$/.test(t)) return "Almost. Don't forget the semicolon at the end.";
+        return diagDecl(cmd, { type: "unsigned short", name: "u", value: "40000" });
+      },
+      note: 'Same bits but a different interpretation. unsigned short goes 0 to 65,535, so 40,000 fits. The bytes did not change; the meaning did. Signedness is metadata the compiler tracks for you.'
+    },
+
+    // --- Section 4: Casts and the division trap ---
+    {
+      section: 'Section 4: Casts and the division trap',
+      label: 'Task 9 of 12',
+      text: 'Compute 5 divided by 2 using integer division. Just type the expression (no semicolon needed for a bare expression).',
+      hint: '5 / 2',
+      match: (cmd) => /^\s*5\s*\/\s*2\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => null,
+      note: 'TRAP! Both operands are integers, so C uses integer division and truncates the decimal. The exact answer is 2.5, but C stored 2.'
+    },
+    {
+      label: 'Task 10 of 12',
+      text: 'Fix the trap with one explicit cast. Cast the 5 to a float, then divide by 2.',
+      hint: '(float)5 / 2',
+      match: (cmd) => /^\s*\(\s*float\s*\)\s*5\s*\/\s*2\s*;?\s*$/.test(cmd) ||
+                     /^\s*\(\s*double\s*\)\s*5\s*\/\s*2\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^\s*\(\s*int\s*\)\s*5\s*\/\s*2\s*;?\s*$/.test(t))
+          return "Close. (int)5 is still an int. Cast to float (or double) instead.";
+        if (/^\s*5\s*\/\s*\(\s*float\s*\)\s*2\s*;?\s*$/.test(t))
+          return "That would work in real C, but for this task put the cast on the 5: (float)5 / 2.";
+        return null;
+      },
+      note: 'One cast does the job. (float)5 becomes 5.0; then 5.0 / 2 uses floating-point division because at least one operand is float. Result: 2.5.'
+    },
+    {
+      label: 'Task 11 of 12',
+      text: 'Cast the integer 300 to a char. See what survives.',
+      hint: '(char)300',
+      match: (cmd) => /^\s*\(\s*char\s*\)\s*300\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => null,
+      note: 'char is 1 byte and can only hold 256 distinct values. 300 = 0x12C; only the low byte (0x2C = 44) fits. The high bits got chopped off. Casting to a smaller type is not free.'
+    },
+    {
+      label: 'Task 12 of 12',
+      text: 'Clean up. Clear all the variables from memory.',
+      hint: 'clear',
+      match: (cmd) => /^\s*(clear|reset)\s*;?\s*$/i.test(cmd),
+      diagnose: (cmd) => null,
+      note: 'All variables removed. cmem starts fresh. After this task, free mode unlocks so you can experiment.'
+    },
+  ];
+
+  // ============================================================
+  // Walkthrough controller
+  // ============================================================
+  // Returns true if the command matched the current task and was executed.
+  // Returns false if the command was rejected (in walkthrough mode).
+  function checkTask(rawCmd) {
+    if (mode === "free" || currentTaskIndex >= tasks.length) return null; // free mode: caller handles
+    const t = tasks[currentTaskIndex];
+    if (t.match(rawCmd)) {
+      // Run the command, then advance.
+      process(rawCmd);
+      if (t.note) {
+        termLine('', 'out');
+        termLine('  ' + t.note, 'note');
+      }
+      currentTaskIndex++;
+      consecutiveFails = 0;
+      hideHintPulse();
+      renderTask();
+      // If walkthrough complete, auto-unlock free mode
+      if (currentTaskIndex >= tasks.length) {
+        setMode("free");
+        termLine('', 'out');
+        termLine('  Walkthrough complete. Free mode unlocked. Type any C declaration to keep exploring.', 'note');
+      }
+      return true;
+    } else {
+      // Mismatch: echo the command but do NOT run it. Show diagnostic feedback.
+      echoCommand(rawCmd);
+      const diag = (t.diagnose && t.diagnose(rawCmd)) || null;
+      if (diag) {
+        termLine('  ' + diag, 'err');
+      } else {
+        termLine("  Not what this task is asking for. Look at the task card above, or click 'Show hint'.", 'err');
+      }
+      consecutiveFails++;
+      if (consecutiveFails >= 2) showHintPulse();
+      return false;
+    }
+  }
+  function renderTask() {
+    const fill = root.querySelector('#progress-fill');
+    const label = root.querySelector('#progress-label');
+    const card = root.querySelector('#task-card');
+    const labelEl = root.querySelector('#task-label');
+    const textEl = root.querySelector('#task-text');
+    const hintEl = root.querySelector('#task-hint');
+    const sectionEl = root.querySelector('#section-header');
+    const completionArea = root.querySelector('#completion-area');
+
+    const pct = (currentTaskIndex / tasks.length) * 100;
+    fill.style.width = pct + '%';
+    label.textContent = 'Task ' + Math.min(currentTaskIndex + 1, tasks.length) + ' of ' + tasks.length;
+
+    if (currentTaskIndex >= tasks.length) {
+      card.className = 'task-card complete';
+      labelEl.textContent = 'Complete';
+      textEl.textContent = "You worked through every key concept of Lesson 2: declarations, types, sizes, overflow, division traps, and casts. You're ready for Lab 02.";
+      hintEl.textContent = '';
+      fill.style.width = '100%';
+      label.textContent = 'All tasks complete';
+      sectionEl.textContent = 'All done';
+      completionArea.innerHTML = '';
+      cs210RenderCompletion(completionArea);
+      return;
+    }
+
+    completionArea.innerHTML = '';
+    card.className = 'task-card';
+    const t = tasks[currentTaskIndex];
+    if (t.section) sectionEl.textContent = t.section;
+    labelEl.textContent = t.label;
+    textEl.textContent = t.text;
+    hintEl.textContent = '';
+  }
+  function showHint() {
+    if (currentTaskIndex >= tasks.length) return;
+    const t = tasks[currentTaskIndex];
+    root.querySelector('#task-hint').textContent = 'Hint: ' + (t.hint || '');
+    hideHintPulse();
+  }
+  function showHintPulse() { root.querySelector('#hint-btn').classList.add('pulse'); }
+  function hideHintPulse() { root.querySelector('#hint-btn').classList.remove('pulse'); }
+
+  function reset() {
+    variables.length = 0;
+    nextAddr = 0x7ffe5a201040n;
+    lastResult = null;
+    currentTaskIndex = 0;
+    consecutiveFails = 0;
+    hideHintPulse();
+    setMode("walkthrough");
+    terminalEl.innerHTML = '';
+    termLine('Welcome to the cmem walkthrough.', 'dim');
+    termLine('Follow the task card above. Type C statements at the prompt.', 'dim');
+    termLine('', 'out');
+    renderMemory();
+    renderTask();
+  }
+
+  // ============================================================
+  // Run a command and report results
+  // ============================================================
+  function process(line) {
+    echoCommand(line);
+    try {
+      const r = runCommand(line);
+      if (!r) return;
+      if (r.kind === "var-added") {
+        const v = r.variable;
+        termLine('  ' + v.type + ' ' + v.name + ' at 0x' + v.address.toString(16) + ', ' + TYPES[v.type].size + ' bytes', 'out');
+        if (v.wrapped) termLine('  warning: value overflowed; stored as ' + v.storedDisplay, 'err');
+      } else if (r.kind === "sizeof") {
+        termLine('  ' + r.size, 'out');
+      } else if (r.kind === "cast") {
+        termLine('  ' + r.destDisplay + ' (' + r.destType + ')', 'out');
+      } else if (r.kind === "cast-div") {
+        termLine('  ' + (Number.isInteger(r.result) ? r.result : Number(r.result).toFixed(4).replace(/\.?0+$/, m => m.startsWith(".") ? "" : m)), 'out');
+      } else if (r.kind === "div-int") {
+        termLine('  ' + r.result + (r.trap ? '  (exact: ' + r.exact + ')' : ''), r.trap ? 'err' : 'out');
+      } else if (r.kind === "div-float") {
+        termLine('  ' + r.result, 'out');
+      } else if (r.kind === "cleared") {
+        termLine('  memory cleared', 'out');
+      } else if (r.kind === "list") {
+        if (variables.length === 0) termLine('  no variables', 'out');
+        else {
+          termLine('  ' + variables.length + ' variable(s):', 'out');
+          for (const v of variables) termLine('    ' + v.type + ' ' + v.name + ' = ' + v.storedDisplay, 'out');
+        }
+      } else if (r.kind === "help") {
+        termLine('  declarations: int x = 42;  float pi = 3.14;  char c = \'A\';', 'out');
+        termLine('  sizeof:       sizeof(int)  sizeof(x)', 'out');
+        termLine('  casts:        (char)300  (float)5 / 2', 'out');
+        termLine('  division:     5 / 2   5.0 / 2', 'out');
+        termLine('  meta:         clear  list  help', 'out');
+      }
+      renderMemory();
+    } catch (e) {
+      termLine('  error: ' + e.message, 'err');
+    }
+  }
+
+  // ============================================================
+  // Mode toggle
+  // ============================================================
+  function setMode(newMode) {
+    mode = newMode;
+    const btn = root.querySelector('#mode-btn');
+    if (mode === "free") {
+      btn.textContent = 'Return to walkthrough';
+      btn.style.background = '#E6F4EA';
+      btn.style.borderColor = '#2E7D32';
+      btn.style.color = '#1B5E20';
+      const placeholderInput = root.querySelector('#cli-input');
+      placeholderInput.placeholder = 'free mode: type any C statement';
+    } else {
+      btn.textContent = 'Switch to free mode';
+      btn.style.background = '';
+      btn.style.borderColor = '';
+      btn.style.color = '';
+      const placeholderInput = root.querySelector('#cli-input');
+      placeholderInput.placeholder = 'follow the task above';
+    }
+  }
+
+  // ============================================================
+  // Input wiring
+  // ============================================================
+  const inputEl = root.querySelector('#cli-input');
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const v = inputEl.value;
+      inputEl.value = '';
+      if (!v.trim()) return;
+      if (mode === "walkthrough") {
+        // checkTask runs the command iff it matches; otherwise echoes + diagnoses
+        checkTask(v);
+      } else {
+        // Free mode: run anything cmem can parse
+        process(v);
+      }
+    }
+  });
+  root.querySelector('#hint-btn').addEventListener('click', showHint);
+  root.querySelector('#reset-btn').addEventListener('click', reset);
+  root.querySelector('#mode-btn').addEventListener('click', () => {
+    if (mode === "walkthrough") {
+      setMode("free");
+      termLine('', 'out');
+      termLine('  Free mode. Type any C declaration, sizeof, cast, or division.', 'note');
+    } else {
+      setMode("walkthrough");
+      termLine('', 'out');
+      termLine('  Walkthrough mode. Follow the task card above.', 'note');
+    }
+  });
+
+  // Boot
+  reset();
+})();
+</script>
+
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 32px 0 10px 0;">Binary &amp; Overflow Walkthrough</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Ten tasks across four sections. See what numbers actually look like in binary, why signed and unsigned interpret the same bits differently, and what happens when you store a value that does not fit in its type.</p>
+
+<!-- ============================================================
+     CS210 Lesson 2 - Binary & Overflow Walkthrough Widget
+     Template-aligned style. Native HTML/CSS + scoped JS.
+     ============================================================ -->
+<style>
+.cs210-binw * { box-sizing: border-box; }
+.cs210-binw {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-binw h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-binw .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 22px;
+}
+.cs210-binw .progress-bar {
+  background: #E5E7EB;
+  border-radius: 3px;
+  height: 8px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.cs210-binw .progress-fill {
+  background: #003087;
+  height: 100%;
+  transition: width 0.3s ease;
+}
+.cs210-binw .progress-label {
+  font-size: 12px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-binw .section-header {
+  background: #E8EDF5;
+  color: #00205B;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.cs210-binw .task-card {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  border-radius: 3px;
+}
+.cs210-binw .task-card.complete {
+  background: #E6F4EA;
+  border-left-color: #2E7D32;
+}
+.cs210-binw .task-label {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B5300;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.cs210-binw .task-card.complete .task-label { color: #1B5E20; }
+.cs210-binw .task-text { font-size: 15px; color: #1a1a1a; }
+.cs210-binw .task-hint {
+  font-size: 12.5px; color: #6B7280; margin-top: 6px; font-style: italic;
+}
+
+.cs210-binw .panes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+@media (max-width: 760px) {
+  .cs210-binw .panes { grid-template-columns: 1fr; }
+}
+.cs210-binw .terminal {
+  background: #1E2A3A;
+  color: #E8EDF5;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13.5px;
+  line-height: 1.5;
+  border-radius: 4px;
+  padding: 14px 18px;
+  min-height: 380px;
+  max-height: 480px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.cs210-binw .terminal .prompt { color: #7FB3D5; }
+.cs210-binw .terminal .typed { color: #FFFFFF; }
+.cs210-binw .terminal .out { color: #B5BEC8; }
+.cs210-binw .terminal .note { color: #F0B92C; }
+.cs210-binw .terminal .err { color: #F47A7A; }
+.cs210-binw .terminal .ok { color: #7FD17F; }
+.cs210-binw .terminal .dim { color: #6B7280; }
+
+.cs210-binw .bit-pane {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  padding: 14px 16px;
+  min-height: 380px;
+  max-height: 480px;
+  overflow-y: auto;
+}
+.cs210-binw .bit-pane-header {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #E5E7EB;
+}
+.cs210-binw .empty {
+  color: #6B7280; font-style: italic; font-size: 13px;
+  text-align: center; padding: 80px 10px;
+}
+
+/* Variable card with bit grid */
+.cs210-binw .var-card {
+  background: #F8FAFC;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+.cs210-binw .var-decl {
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  color: #00205B;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.cs210-binw .bit-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 2px;
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+.cs210-binw .bit-grid.wide-16 {
+  grid-template-columns: repeat(16, 1fr);
+}
+.cs210-binw .bit-cell {
+  background: #E8EDF5;
+  border: 1px solid #C7CFD9;
+  text-align: center;
+  font-family: Consolas, monospace;
+  font-size: 16px;
+  font-weight: 700;
+  color: #6B7280;
+  padding: 6px 0;
+  border-radius: 2px;
+  transition: background 0.3s ease, color 0.3s ease, transform 0.3s ease;
+}
+.cs210-binw .bit-cell.on {
+  background: #003087;
+  color: #ffffff;
+  border-color: #00205B;
+}
+.cs210-binw .bit-cell.sign-bit {
+  border-color: #B8002F;
+  border-width: 2px;
+}
+.cs210-binw .bit-cell.flipped {
+  animation: cs210-binw-flip 0.8s ease-out;
+}
+@keyframes cs210-binw-flip {
+  0%   { transform: scale(1); background: #F0B92C; color: #1a1a1a; box-shadow: 0 0 0 0 rgba(240,185,44,0.7); }
+  50%  { transform: scale(1.15); background: #F0B92C; color: #1a1a1a; box-shadow: 0 0 0 8px rgba(240,185,44,0); }
+  100% { transform: scale(1); }
+}
+.cs210-binw .bit-positions {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 2px;
+  font-family: Consolas, monospace;
+  font-size: 9px;
+  color: #6B7280;
+  text-align: center;
+  margin-bottom: 4px;
+}
+.cs210-binw .bit-positions.wide-16 {
+  grid-template-columns: repeat(16, 1fr);
+}
+.cs210-binw .bit-pos {
+  padding: 2px 0;
+}
+.cs210-binw .bit-pos.sign {
+  color: #B8002F;
+  font-weight: 700;
+}
+.cs210-binw .interp-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #D0D5DD;
+}
+.cs210-binw .interp-cell {
+  text-align: center;
+  font-size: 12px;
+  color: #6B7280;
+}
+.cs210-binw .interp-cell .lbl {
+  font-size: 10px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #6B7280;
+  margin-bottom: 2px;
+}
+.cs210-binw .interp-cell .val {
+  font-family: Consolas, monospace;
+  font-size: 16px;
+  font-weight: 700;
+  color: #00205B;
+}
+.cs210-binw .interp-cell .val.warn { color: #B8002F; }
+.cs210-binw .hex-line {
+  font-family: Consolas, monospace;
+  font-size: 11px;
+  color: #6B7280;
+  margin-top: 4px;
+  text-align: center;
+}
+
+/* Arithmetic result card */
+.cs210-binw .arith-card {
+  background: #ffffff;
+  border: 2px solid #003087;
+  border-radius: 4px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.cs210-binw .arith-title {
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  color: #00205B;
+  font-weight: 600;
+  margin-bottom: 10px;
+  text-align: center;
+}
+.cs210-binw .arith-step {
+  font-size: 11px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #6B7280;
+  margin: 10px 0 4px 0;
+  font-weight: 600;
+}
+.cs210-binw .arith-result {
+  text-align: center;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed #D0D5DD;
+}
+.cs210-binw .arith-result .answer {
+  font-family: Consolas, monospace;
+  font-size: 22px;
+  font-weight: 700;
+}
+.cs210-binw .arith-result .answer.warn { color: #B8002F; }
+.cs210-binw .arith-result .answer.ok   { color: #2E7D32; }
+.cs210-binw .arith-result .label {
+  font-size: 11px;
+  color: #6B7280;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 4px;
+}
+
+.cs210-binw .input-row {
+  display: flex;
+  background: #1E2A3A;
+  border-radius: 4px;
+  padding: 8px 14px;
+  margin-bottom: 14px;
+  border: 1px solid #003087;
+}
+.cs210-binw .input-prompt {
+  color: #7FB3D5;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  margin-right: 8px;
+  align-self: center;
+  white-space: nowrap;
+}
+.cs210-binw .input-row input {
+  flex: 1;
+  background: transparent;
+  color: #FFFFFF;
+  border: none;
+  outline: none;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  padding: 4px 0;
+}
+.cs210-binw .controls {
+  display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap;
+}
+.cs210-binw .btn {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  padding: 6px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #00205B;
+  font-family: inherit;
+  transition: box-shadow 0.2s ease;
+}
+.cs210-binw .btn:hover { background: #F5F7FA; }
+@keyframes cs210-binw-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(240, 185, 44, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0); }
+}
+.cs210-binw .btn.pulse {
+  background: #FFF8E1;
+  border-color: #F0B92C;
+  color: #6B5300;
+  font-weight: 600;
+  animation: cs210-binw-pulse 1.5s infinite;
+}
+.cs210-binw .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #4A5568;
+  margin-top: 12px;
+}
+.cs210-binw .help-note strong { color: #00205B; }
+.cs210-binw .completion {
+  background: #E6F4EA;
+  border: 1px solid #2E7D32;
+  color: #1B5E20;
+  padding: 16px 20px;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 15px;
+  margin-top: 12px;
+}
+/* Name modal overlay */
+.cs210-binw .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.cs210-binw .name-modal {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-binw .name-modal h2 {
+  color: #00205B;
+  font-size: 20px;
+  margin: 0 0 10px 0;
+}
+.cs210-binw .name-modal p {
+  color: #4A5568;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+.cs210-binw .name-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-binw .name-modal input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-binw .name-modal-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-binw .name-modal-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-binw .name-modal-btn:not(:disabled):hover {
+  background: #00205B;
+}
+/* Completion screen */
+.cs210-binw .completion-screen {
+  background: #ffffff;
+  border: 2px solid #2E7D32;
+  border-radius: 6px;
+  padding: 24px 28px;
+  margin-top: 16px;
+}
+.cs210-binw .completion-screen .cs-heading {
+  color: #1B5E20;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 6px 0;
+}
+.cs210-binw .completion-screen .cs-subheading {
+  color: #4A5568;
+  font-size: 14px;
+  margin: 0 0 18px 0;
+}
+.cs210-binw .completion-screen .cs-name-line {
+  font-size: 15px;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+}
+.cs210-binw .completion-screen .cs-name-line strong {
+  color: #00205B;
+}
+.cs210-binw .completion-screen .cs-code-block {
+  background: #F0F4FA;
+  border: 1px solid #003087;
+  border-radius: 4px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.cs210-binw .completion-screen .cs-code-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #4A5568;
+  margin-bottom: 4px;
+}
+.cs210-binw .completion-screen .cs-code-value {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 28px;
+  font-weight: 700;
+  color: #00205B;
+  letter-spacing: 3px;
+}
+.cs210-binw .completion-screen .cs-copy-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-binw .completion-screen .cs-copy-btn:hover {
+  background: #00205B;
+}
+.cs210-binw .completion-screen .cs-copy-btn.copied {
+  background: #2E7D32;
+}
+.cs210-binw .completion-screen .cs-timestamp {
+  font-size: 13px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-binw .completion-screen .cs-reminder {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 14px;
+  color: #6B5300;
+  line-height: 1.5;
+}
+.cs210-binw .completion-screen .cs-reminder strong {
+  color: #4A3A00;
+}
+</style>
+
+<div class="cs210-binw">
+
+<div class="name-modal-backdrop" id="bw-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Blackboard reflection quiz.</p>
+    <input type="text" id="bw-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="bw-cadet-name-btn" disabled>Start the walkthrough</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 2 &middot; Binary &amp; Overflow Walkthrough</h1>
+<div class="subtitle">Watch numbers become bits. Watch what happens when you push past a type's edge. Type the C statement the task asks for; the right pane shows the bit pattern.</div>
+
+<div class="progress-bar"><div class="progress-fill" id="bw-progress-fill" style="width: 0%;"></div></div>
+<div class="progress-label" id="bw-progress-label">Task 0 of 10</div>
+
+<div class="section-header" id="bw-section-header">Section 1: Decimal to binary</div>
+
+<div class="task-card" id="bw-task-card">
+  <div class="task-label" id="bw-task-label">Current task</div>
+  <div class="task-text" id="bw-task-text">Loading...</div>
+  <div class="task-hint" id="bw-task-hint"></div>
+</div>
+
+<div class="panes">
+  <div class="terminal" id="bw-terminal"></div>
+  <div class="bit-pane">
+    <div class="bit-pane-header">Binary view</div>
+    <div id="bw-area">
+      <div class="empty">No variables yet.<br>Type a declaration on the left.</div>
+    </div>
+  </div>
+</div>
+
+<div class="input-row">
+  <span class="input-prompt">bits&gt;</span>
+  <input type="text" id="bw-input" autocomplete="off" spellcheck="false" placeholder="follow the task above">
+</div>
+
+<div class="controls">
+  <button class="btn" id="bw-hint-btn">Show hint</button>
+  <button class="btn" id="bw-reset-btn">Reset</button>
+  <button class="btn" id="bw-mode-btn">Switch to free mode</button>
+</div>
+
+<div class="help-note">
+  <strong>How this works:</strong> Each declaration shows the bit grid for that value, plus how it reads as signed and as unsigned (when both make sense for the type). Sign bits (the highest bit in a signed type) are outlined in red. Watch for the overflow warning when a value does not fit in its type.
+</div>
+
+<div id="bw-completion-area"></div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-binw');
+  if (!root) return;
+
+  // ============================================================
+  // CS210 widget completion utilities
+  // Salt -> deterministic 6-char code via FNV-1a.
+  // Alphabet excludes 0, 1, O, I (uppercase only output).
+  // ============================================================
+  const CS210_SALT = "lesson02_binary_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  // Name-modal gating
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#bw-name-modal-backdrop');
+    const input = root.querySelector('#bw-cadet-name-input');
+    const btn = root.querySelector('#bw-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length >= 2) {
+        // Already entered (likely on the same page in another widget, or in a
+        // previous visit). Adopt it and skip the modal.
+        cs210CadetName = stored.trim();
+        backdrop.style.display = 'none';
+        return;
+      }
+    } catch (e) {}
+
+    function updateBtn() {
+      btn.disabled = input.value.trim().length < 2;
+    }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', function() {
+      const name = input.value.trim();
+      if (name.length < 2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+      const cli = root.querySelector('#bw-input');
+      if (cli) cli.focus();
+    });
+    setTimeout(function() { input.focus(); }, 50);
+  })();
+
+  function cs210RenderCompletion(area) {
+    if (!area) return;
+    if (root.querySelector('#bw-cs210-completion-overlay')) return;
+    const now = new Date();
+    const ts = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const safeName = (cs210CadetName || 'Cadet').replace(/[<>&"']/g, function(c) {
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+    area.innerHTML =
+      '<div class="completion-screen">' +
+        '<div class="cs-heading">Walkthrough complete</div>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value">' + CS210_CODE + '</div></div>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+      '</div>';
+    const overlay = document.createElement('div');
+    overlay.id = 'bw-cs210-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.style.background = 'rgba(27, 94, 32, 0.55)';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">Walkthrough complete</h2>' +
+        '<p>Take a screenshot of this box. You will need the code and a visual of this screen for the Blackboard reflection quiz.</p>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value" id="bw-cs-code-value">' + CS210_CODE + '</div></div>' +
+          '<button class="cs-copy-btn" id="bw-cs-copy-btn" type="button">Copy code</button>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+        '<div class="cs-reminder" style="margin-bottom:14px;">' +
+          '<strong>Next step:</strong> Open the Lesson 2 reflection quiz in Blackboard. Enter this code, answer the reflection prompt, and attach your screenshot.' +
+        '</div>' +
+        '<button class="name-modal-btn" id="bw-cs-overlay-close" type="button" style="background:#2E7D32;">Got it &mdash; close this</button>' +
+      '</div>';
+    root.appendChild(overlay);
+    const closeBtn = overlay.querySelector('#bw-cs-overlay-close');
+    if (closeBtn) closeBtn.addEventListener('click', function() { overlay.style.display = 'none'; });
+    const copyBtn = overlay.querySelector('#bw-cs-copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function() {
+        const text = CS210_CODE;
+        const ok = function() {
+          copyBtn.textContent = 'Copied';
+          copyBtn.classList.add('copied');
+          setTimeout(function() {
+            copyBtn.textContent = 'Copy code';
+            copyBtn.classList.remove('copied');
+          }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(ok, function() {
+            cs210FallbackCopy(text); ok();
+          });
+        } else {
+          cs210FallbackCopy(text); ok();
+        }
+      });
+    }
+  }
+  function cs210FallbackCopy(text) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e) {}
+  }
+
+  // ============================================================
+  // Type metadata
+  // ============================================================
+  const TYPES = {
+    "signed char":    { size: 1, signed: true,  min: -128n, max: 127n },
+    "unsigned char":  { size: 1, signed: false, min: 0n,    max: 255n },
+    "char":           { size: 1, signed: true,  min: -128n, max: 127n },
+    "short":          { size: 2, signed: true,  min: -32768n, max: 32767n },
+    "unsigned short": { size: 2, signed: false, min: 0n,      max: 65535n },
+  };
+  const TYPE_LIST = Object.keys(TYPES).sort((a,b) => b.length - a.length);
+
+  // ============================================================
+  // State
+  // ============================================================
+  const variables = []; // {type, name, value: BigInt, displayValue}
+  let currentTaskIndex = 0;
+  let consecutiveFails = 0;
+  let mode = "walkthrough";
+  let lastFlipped = new Set(); // bit indices that flipped in the last operation
+
+  // ============================================================
+  // Encode/decode
+  // ============================================================
+  function encodeInt(value, size, signed) {
+    let n = BigInt(value);
+    const bits = BigInt(size * 8);
+    const mask = (1n << bits);
+    let stored = ((n % mask) + mask) % mask;
+    return stored;
+  }
+  function decodeSigned(unsignedBigInt, size) {
+    const bits = BigInt(size * 8);
+    const signBit = 1n << (bits - 1n);
+    if (unsignedBigInt & signBit) return unsignedBigInt - (1n << bits);
+    return unsignedBigInt;
+  }
+  function bitsFromUnsigned(u, size) {
+    // Returns array of 0/1 length size*8, MSB first
+    const bits = [];
+    for (let i = size * 8 - 1; i >= 0; i--) {
+      bits.push(Number((u >> BigInt(i)) & 1n));
+    }
+    return bits;
+  }
+  function toHex(u, size) {
+    return "0x" + u.toString(16).toUpperCase().padStart(size * 2, "0");
+  }
+
+  // ============================================================
+  // Parsers
+  // ============================================================
+  function tryParseDecl(line) {
+    const trimmed = line.trim().replace(/;?\s*$/, "");
+    let matched = null, matchLen = 0;
+    for (const t of TYPE_LIST) {
+      const re = new RegExp("^(" + t.replace(/ /g, "\\s+") + ")\\b");
+      const m = trimmed.match(re);
+      if (m) { matched = t; matchLen = m[1].length; break; }
+    }
+    if (!matched) return null;
+    const rest = trimmed.substring(matchLen).trim();
+    const m = rest.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(-?\d+)\s*$/);
+    if (!m) return { type: matched, error: "expected: <type> <name> = <value>;" };
+    return { type: matched, name: m[1], value: BigInt(m[2]), rawValue: m[2] };
+  }
+
+  // ============================================================
+  // Evaluators
+  // ============================================================
+  function evalDecl(parsed) {
+    if (!parsed.name) throw new Error(parsed.error || "missing variable name");
+    const meta = TYPES[parsed.type];
+    const unsignedBits = encodeInt(parsed.value, meta.size, meta.signed);
+    const existingIdx = variables.findIndex(v => v.name === parsed.name);
+    let prevBits = null;
+    if (existingIdx !== -1) prevBits = variables[existingIdx].unsignedBits;
+    const v = {
+      type: parsed.type,
+      name: parsed.name,
+      requestedValue: parsed.value,
+      rawValue: parsed.rawValue,
+      unsignedBits,
+      wrapped: parsed.value !== decodeSigned(unsignedBits, meta.size) && meta.signed
+            || (!meta.signed && (parsed.value < 0n || parsed.value > meta.max)),
+    };
+    if (existingIdx !== -1) {
+      variables[existingIdx] = v;
+      lastFlipped = flippedBitIndices(prevBits, unsignedBits, meta.size);
+    } else {
+      variables.push(v);
+      lastFlipped = new Set();
+    }
+    return { kind: "var-added", variable: v, overwrite: existingIdx !== -1 };
+  }
+  function flippedBitIndices(prev, curr, size) {
+    if (prev === null) return new Set();
+    const out = new Set();
+    for (let i = 0; i < size * 8; i++) {
+      const pb = Number((prev >> BigInt(i)) & 1n);
+      const cb = Number((curr >> BigInt(i)) & 1n);
+      if (pb !== cb) out.add(size * 8 - 1 - i); // MSB-indexed
+    }
+    return out;
+  }
+
+  // ============================================================
+  // Dispatcher
+  // ============================================================
+  function runCommand(line) {
+    const t = line.trim();
+    if (!t) return null;
+    const lower = t.toLowerCase().replace(/;?$/, "");
+    if (lower === "clear" || lower === "reset") {
+      variables.length = 0;
+      lastFlipped = new Set();
+      return { kind: "cleared" };
+    }
+    if (lower === "help" || lower === "?") return { kind: "help" };
+    if (lower === "list") return { kind: "list" };
+
+    const d = tryParseDecl(t);
+    if (d && d.type && d.name) return evalDecl(d);
+    if (d && d.error) throw new Error(d.error);
+
+    // Detect arithmetic attempts and redirect to Lesson 3
+    if (/^[A-Za-z_]\w*\s*[+\-]\s*-?\d+\s*;?\s*$/.test(t) || /^-?\d+\s*[+\-]\s*-?\d+\s*;?\s*$/.test(t)) {
+      throw new Error("Arithmetic operators come in Lesson 3. For now, try storing too-big values directly: short s = 40000;");
+    }
+
+    if (/^(ls|cd|pwd|cat|echo|mkdir|rm|mv|cp)\b/.test(t)) {
+      throw new Error("not a shell. Type a declaration like: unsigned short x = 5;");
+    }
+    throw new Error("couldn't parse '" + t + "'. Try a declaration like: unsigned short x = 5;");
+  }
+
+  // ============================================================
+  // Terminal output
+  // ============================================================
+  const terminalEl = root.querySelector('#bw-terminal');
+  function termWrite(text, cls) {
+    const span = document.createElement('span');
+    if (cls) span.className = cls;
+    span.textContent = text;
+    terminalEl.appendChild(span);
+  }
+  function termLine(text, cls) {
+    termWrite(text, cls);
+    terminalEl.appendChild(document.createElement('br'));
+    terminalEl.scrollTop = terminalEl.scrollHeight;
+  }
+  function echoCommand(cmd) {
+    termWrite('bits> ', 'prompt');
+    termLine(cmd, 'typed');
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" })[c]);
+  }
+
+  // ============================================================
+  // Bit pane rendering
+  // ============================================================
+  const areaEl = root.querySelector('#bw-area');
+
+  function renderBitGrid(unsignedBits, size, flippedSet, signed) {
+    const bits = bitsFromUnsigned(unsignedBits, size);
+    const wide = size > 1;
+    let positions = '<div class="bit-positions' + (wide ? ' wide-16' : '') + '">';
+    for (let i = 0; i < size * 8; i++) {
+      const power = size * 8 - 1 - i;
+      const isSign = signed && power === size * 8 - 1;
+      const label = isSign ? "sign" : ("2^" + power);
+      positions += '<div class="bit-pos' + (isSign ? ' sign' : '') + '">' + label + '</div>';
+    }
+    positions += '</div>';
+
+    let grid = '<div class="bit-grid' + (wide ? ' wide-16' : '') + '">';
+    for (let i = 0; i < bits.length; i++) {
+      const b = bits[i];
+      const power = size * 8 - 1 - i;
+      const isSign = signed && power === size * 8 - 1;
+      const isFlipped = flippedSet && flippedSet.has(i);
+      const cls = ['bit-cell'];
+      if (b === 1) cls.push('on');
+      if (isSign) cls.push('sign-bit');
+      if (isFlipped) cls.push('flipped');
+      grid += '<div class="' + cls.join(' ') + '">' + b + '</div>';
+    }
+    grid += '</div>';
+    return positions + grid;
+  }
+
+  function renderVarCard(v, isLatest) {
+    const meta = TYPES[v.type];
+    const unsignedDisp = v.unsignedBits.toString();
+    const signedDisp = decodeSigned(v.unsignedBits, meta.size).toString();
+    const hexDisp = toHex(v.unsignedBits, meta.size);
+    const flippedSet = isLatest ? lastFlipped : null;
+    const decl = v.type + ' ' + v.name + ' = ' + v.rawValue + ';';
+
+    let interp = '<div class="interp-grid">';
+    if (meta.signed) {
+      interp += '<div class="interp-cell"><div class="lbl">as signed</div><div class="val' + (signedDisp !== v.rawValue && v.wrapped ? ' warn' : '') + '">' + signedDisp + '</div></div>';
+      interp += '<div class="interp-cell"><div class="lbl">as unsigned</div><div class="val">' + unsignedDisp + '</div></div>';
+    } else {
+      interp += '<div class="interp-cell"><div class="lbl">as unsigned</div><div class="val">' + unsignedDisp + '</div></div>';
+      interp += '<div class="interp-cell"><div class="lbl">as signed</div><div class="val">' + signedDisp + '</div></div>';
+    }
+    interp += '</div>';
+
+    return '<div class="var-card">' +
+           '<div class="var-decl">' + escapeHtml(decl) + '</div>' +
+           renderBitGrid(v.unsignedBits, meta.size, flippedSet, meta.signed) +
+           '<div class="hex-line">hex: ' + hexDisp + '</div>' +
+           interp +
+           '</div>';
+  }
+
+  function isPaneAtBottom(scrollContainer) {
+    if (!scrollContainer) return true;
+    return scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight < 40;
+  }
+  function scrollPaneToBottom(scrollContainer) {
+    if (!scrollContainer) return;
+    scrollContainer.scrollTop = scrollContainer.scrollHeight;
+  }
+  function renderArea() {
+    // The scrollable container is the .bit-pane wrapper around areaEl.
+    const pane = areaEl.closest('.bit-pane');
+    const wasAtBottom = isPaneAtBottom(pane);
+    if (variables.length === 0) {
+      areaEl.innerHTML = '<div class="empty">No variables yet.<br>Type a declaration on the left.</div>';
+      return;
+    }
+    let html = '';
+    for (let i = 0; i < variables.length; i++) {
+      const isLatest = (i === variables.length - 1);
+      html += renderVarCard(variables[i], isLatest);
+    }
+    areaEl.innerHTML = html;
+    if (wasAtBottom) scrollPaneToBottom(pane);
+  }
+
+  // ============================================================
+  // Tasks
+  // ============================================================
+  function diagDecl(cmd, expected) {
+    const trimmed = cmd.trim();
+    const noSemi = new RegExp(
+      "^\\s*" + expected.type.replace(/ /g, "\\s+") + "\\s+" +
+      expected.name + "\\s*=\\s*" + expected.value + "\\s*$"
+    );
+    if (noSemi.test(trimmed)) return "Almost. Don't forget the semicolon at the end.";
+    const anyDeclRe = /^\s*([a-z][a-z ]*?)\s+([A-Za-z_]\w*)\s*=\s*(-?\d+)\s*;?\s*$/i;
+    const m = trimmed.match(anyDeclRe);
+    if (m) {
+      const userType = m[1].trim().replace(/\s+/g, " ");
+      const userName = m[2];
+      const userVal = m[3];
+      if (userName !== expected.name && userType === expected.type)
+        return "Close. Check the variable name. The task wants '" + expected.name + "'.";
+      if (userType !== expected.type && userName === expected.name)
+        return "Close. Check the type. The task wants '" + expected.type + "'.";
+      if (userVal !== expected.value && userType === expected.type && userName === expected.name)
+        return "Close. Check the value. The task wants '" + expected.value + "'.";
+    }
+    return null;
+  }
+
+  const tasks = [
+    // Section 1: Decimal to binary
+    {
+      section: 'Section 1: Decimal to binary',
+      label: 'Task 1 of 10',
+      text: 'Declare an unsigned short named x with value 5. See what 5 looks like in 16 bits.',
+      hint: 'unsigned short x = 5;',
+      match: (cmd) => /^\s*unsigned\s+short\s+x\s*=\s*5\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diagDecl(cmd, { type: "unsigned short", name: "x", value: "5" }),
+      note: '5 in binary is 00000000 00000101. Read right to left: the 1s are at positions 2 and 0 (4 + 1 = 5). The eight upper bits are all 0 because 5 is small enough to fit in just one byte.',
+    },
+    {
+      label: 'Task 2 of 10',
+      text: 'Declare an unsigned short named y with value 300. See what happens when a number needs more than one byte.',
+      hint: 'unsigned short y = 300;',
+      match: (cmd) => /^\s*unsigned\s+short\s+y\s*=\s*300\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diagDecl(cmd, { type: "unsigned short", name: "y", value: "300" }),
+      note: '300 = 00000001 00101100. Bits at positions 8, 5, 3, and 2: 256 + 32 + 8 + 4 = 300. Notice the second byte is now in play. This is why we need more than 8 bits for numbers above 255.',
+    },
+
+    // Section 2: Same bits, two meanings
+    {
+      section: 'Section 2: Same bits, two meanings',
+      label: 'Task 3 of 10',
+      text: 'Declare an unsigned short named u with value 65535. This is the largest value an unsigned short can hold.',
+      hint: 'unsigned short u = 65535;',
+      match: (cmd) => /^\s*unsigned\s+short\s+u\s*=\s*65535\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diagDecl(cmd, { type: "unsigned short", name: "u", value: "65535" }),
+      note: '65,535 = 11111111 11111111. All sixteen bits are set. This is the maximum value an unsigned short can hold (sum of all powers of 2 from 0 to 15).',
+    },
+    {
+      label: 'Task 4 of 10',
+      text: 'Now declare a short named s with value -1. Watch what bit pattern -1 produces.',
+      hint: 'short s = -1;',
+      match: (cmd) => /^\s*short\s+s\s*=\s*-1\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diagDecl(cmd, { type: "short", name: "s", value: "-1" }),
+      note: 'Look at u and s side by side. Identical bit patterns (all 1s), but s reads as -1 and u reads as 65,535. This is two\'s complement: the same sixteen bits can mean two different things depending on whether the type is signed or unsigned. The compiler tracks which, not the bits.',
+    },
+
+    // Section 3: Edges of the range
+    {
+      section: 'Section 3: Edges of the range',
+      label: 'Task 5 of 10',
+      text: 'Declare a short named s with value 32767. This is the maximum a short can hold.',
+      hint: 'short s = 32767;',
+      match: (cmd) => /^\s*short\s+s\s*=\s*32767\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diagDecl(cmd, { type: "short", name: "s", value: "32767" }),
+      note: '32,767 = 01111111 11111111. The sign bit (outlined in red) is 0, meaning positive. All lower bits are set. s is now at the top of its range. Tomorrow in Lesson 3 we will see what happens when you add 1; for now, watch what happens when we try to put a too-big value in.',
+    },
+    {
+      label: 'Task 6 of 10',
+      text: 'Declare a short named s with value -32768. This is the minimum a short can hold.',
+      hint: 'short s = -32768;',
+      match: (cmd) => /^\s*short\s+s\s*=\s*-32768\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diagDecl(cmd, { type: "short", name: "s", value: "-32768" }),
+      note: '-32,768 = 10000000 00000000. The sign bit is 1 (negative), and everything else is 0. The most negative number has the simplest bit pattern. This is a quirk of two\'s complement: the negative range goes one further than the positive range.',
+    },
+
+    // Section 4: Initialization overflow
+    {
+      section: 'Section 4: Initialization overflow',
+      label: 'Task 7 of 10',
+      text: 'Declare a short named s with value 40000. 40,000 is bigger than the max of 32,767. Watch what gets stored.',
+      hint: 'short s = 40000;',
+      match: (cmd) => /^\s*short\s+s\s*=\s*40000\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diagDecl(cmd, { type: "short", name: "s", value: "40000" }),
+      note: 'OVERFLOW at initialization. You asked for 40,000, but short can only hold -32,768 to 32,767. The compiler still wrote the bit pattern for 40,000, but a signed short reads those same bits as -25,536. The compiler did not warn you. The bits are right; the meaning is wrong.',
+    },
+    {
+      label: 'Task 8 of 10',
+      text: 'Now try one past the max. Declare a short named s with value 32768. Just one over the edge.',
+      hint: 'short s = 32768;',
+      match: (cmd) => /^\s*short\s+s\s*=\s*32768\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diagDecl(cmd, { type: "short", name: "s", value: "32768" }),
+      note: '32,768 = 10000000 00000000. Same bit pattern as -32,768 from Task 6. Going one past the max wraps you to the min. This is what makes overflow so dangerous in real code: it is silent and the value you get is plausible-looking (just negative instead of positive). Tomorrow you will see this same effect through arithmetic.',
+    },
+    {
+      label: 'Task 9 of 10',
+      text: 'Now overflow the other direction. Declare an unsigned short named u with value -1. Unsigned cannot be negative; what bits actually get stored?',
+      hint: 'unsigned short u = -1;',
+      match: (cmd) => /^\s*unsigned\s+short\s+u\s*=\s*-1\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diagDecl(cmd, { type: "unsigned short", name: "u", value: "-1" }),
+      note: 'u becomes 65,535 (all 1s). Storing -1 in an unsigned type wraps around to the max value. This is sometimes used on purpose to get "all bits set" in a single line, but more often it shows up as a bug when a negative value sneaks into an unsigned variable.',
+    },
+    {
+      label: 'Task 10 of 10',
+      text: 'Last one. Declare an unsigned short named u with value 65536. Just one past the unsigned max of 65,535.',
+      hint: 'unsigned short u = 65536;',
+      match: (cmd) => /^\s*unsigned\s+short\s+u\s*=\s*65536\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diagDecl(cmd, { type: "unsigned short", name: "u", value: "65536" }),
+      note: '65,536 wraps to 0. The bit pattern for 65,536 is 17 bits, but unsigned short is only sixteen. The compiler keeps the low sixteen bits (all zeros) and drops the high one. Unsigned overflow wraps to 0; signed overflow wraps to the most negative value. Same mechanism (bits that do not fit get discarded), different consequence based on how the type interprets the remaining bits.',
+    },
+  ];
+
+  // ============================================================
+  // Walkthrough controller
+  // ============================================================
+  function checkTask(rawCmd) {
+    if (mode === "free" || currentTaskIndex >= tasks.length) return null;
+    const t = tasks[currentTaskIndex];
+    if (t.match(rawCmd)) {
+      process(rawCmd);
+      if (t.note) {
+        termLine('', 'out');
+        termLine('  ' + t.note, 'note');
+      }
+      currentTaskIndex++;
+      consecutiveFails = 0;
+      hideHintPulse();
+      renderTask();
+      if (currentTaskIndex >= tasks.length) {
+        setMode("free");
+        termLine('', 'out');
+        termLine('  Binary walkthrough complete. Free mode unlocked.', 'note');
+      }
+      return true;
+    } else {
+      echoCommand(rawCmd);
+      const diag = (t.diagnose && t.diagnose(rawCmd)) || null;
+      if (diag) termLine('  ' + diag, 'err');
+      else termLine("  Not what this task is asking for. Look at the task card above, or click 'Show hint'.", 'err');
+      consecutiveFails++;
+      if (consecutiveFails >= 2) showHintPulse();
+      return false;
+    }
+  }
+  function renderTask() {
+    const fill = root.querySelector('#bw-progress-fill');
+    const label = root.querySelector('#bw-progress-label');
+    const card = root.querySelector('#bw-task-card');
+    const labelEl = root.querySelector('#bw-task-label');
+    const textEl = root.querySelector('#bw-task-text');
+    const hintEl = root.querySelector('#bw-task-hint');
+    const sectionEl = root.querySelector('#bw-section-header');
+    const completionArea = root.querySelector('#bw-completion-area');
+
+    const pct = (currentTaskIndex / tasks.length) * 100;
+    fill.style.width = pct + '%';
+    label.textContent = 'Task ' + Math.min(currentTaskIndex + 1, tasks.length) + ' of ' + tasks.length;
+
+    if (currentTaskIndex >= tasks.length) {
+      card.className = 'task-card complete';
+      labelEl.textContent = 'Complete';
+      textEl.textContent = "You watched bits become numbers, watched signed and unsigned interpret the same bits differently, and watched overflow ripple across the bytes. You now have the mental model for the trap that Lab 02 will test.";
+      hintEl.textContent = '';
+      fill.style.width = '100%';
+      label.textContent = 'All tasks complete';
+      sectionEl.textContent = 'All done';
+      completionArea.innerHTML = '';
+      cs210RenderCompletion(completionArea);
+      return;
+    }
+    completionArea.innerHTML = '';
+    card.className = 'task-card';
+    const t = tasks[currentTaskIndex];
+    if (t.section) sectionEl.textContent = t.section;
+    labelEl.textContent = t.label;
+    textEl.textContent = t.text;
+    hintEl.textContent = '';
+  }
+  function showHint() {
+    if (currentTaskIndex >= tasks.length) return;
+    const t = tasks[currentTaskIndex];
+    root.querySelector('#bw-task-hint').textContent = 'Hint: ' + (t.hint || '');
+    hideHintPulse();
+  }
+  function showHintPulse() { root.querySelector('#bw-hint-btn').classList.add('pulse'); }
+  function hideHintPulse() { root.querySelector('#bw-hint-btn').classList.remove('pulse'); }
+
+  function reset() {
+    variables.length = 0;
+    lastFlipped = new Set();
+    currentTaskIndex = 0;
+    consecutiveFails = 0;
+    hideHintPulse();
+    setMode("walkthrough");
+    terminalEl.innerHTML = '';
+    termLine('Welcome to the binary walkthrough.', 'dim');
+    termLine('Follow the task card above. Declarations use real C syntax.', 'dim');
+    termLine('', 'out');
+    renderArea();
+    renderTask();
+  }
+
+  function setMode(newMode) {
+    mode = newMode;
+    const btn = root.querySelector('#bw-mode-btn');
+    if (mode === "free") {
+      btn.textContent = 'Return to walkthrough';
+      btn.style.background = '#E6F4EA';
+      btn.style.borderColor = '#2E7D32';
+      btn.style.color = '#1B5E20';
+      root.querySelector('#bw-input').placeholder = 'free mode: any declaration';
+    } else {
+      btn.textContent = 'Switch to free mode';
+      btn.style.background = '';
+      btn.style.borderColor = '';
+      btn.style.color = '';
+      root.querySelector('#bw-input').placeholder = 'follow the task above';
+    }
+  }
+
+  function process(line) {
+    echoCommand(line);
+    try {
+      const r = runCommand(line);
+      if (!r) return;
+      if (r.kind === "var-added") {
+        const v = r.variable;
+        const meta = TYPES[v.type];
+        const unsignedDisp = v.unsignedBits.toString();
+        const signedDisp = decodeSigned(v.unsignedBits, meta.size).toString();
+        if (r.overwrite) {
+          termLine('  ' + v.type + ' ' + v.name + ' updated to ' + v.rawValue, 'out');
+        } else {
+          termLine('  ' + v.type + ' ' + v.name + ' = ' + v.rawValue, 'out');
+        }
+        if (v.wrapped) {
+          termLine('  note: ' + v.rawValue + ' does not fit in ' + v.type + '. Stored as signed: ' + signedDisp + ', unsigned: ' + unsignedDisp + '.', 'err');
+        }
+      } else if (r.kind === "cleared") {
+        termLine('  memory cleared', 'out');
+      } else if (r.kind === "list") {
+        if (variables.length === 0) termLine('  no variables', 'out');
+        else {
+          for (const v of variables) {
+            const meta = TYPES[v.type];
+            const signedDisp = decodeSigned(v.unsignedBits, meta.size).toString();
+            termLine('    ' + v.type + ' ' + v.name + ' = ' + signedDisp + ' (unsigned: ' + v.unsignedBits + ')', 'out');
+          }
+        }
+      } else if (r.kind === "help") {
+        termLine('  declarations: unsigned short x = 5;   short s = -1;', 'out');
+        termLine('  types:        char, short, unsigned short, signed char, unsigned char', 'out');
+        termLine('  meta:         clear  list  help', 'out');
+        termLine('  note:         arithmetic operators come in Lesson 3', 'out');
+      }
+      renderArea();
+    } catch (e) {
+      termLine('  error: ' + e.message, 'err');
+    }
+  }
+
+  // ============================================================
+  // Input wiring
+  // ============================================================
+  const inputEl = root.querySelector('#bw-input');
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const v = inputEl.value;
+      inputEl.value = '';
+      if (!v.trim()) return;
+      if (mode === "walkthrough") {
+        checkTask(v);
+      } else {
+        process(v);
+      }
+    }
+  });
+  root.querySelector('#bw-hint-btn').addEventListener('click', showHint);
+  root.querySelector('#bw-reset-btn').addEventListener('click', reset);
+  root.querySelector('#bw-mode-btn').addEventListener('click', () => {
+    if (mode === "walkthrough") {
+      setMode("free");
+      termLine('', 'out');
+      termLine('  Free mode. Any declaration runs.', 'note');
+    } else {
+      setMode("walkthrough");
+      termLine('', 'out');
+      termLine('  Walkthrough mode. Follow the task card above.', 'note');
+    }
+  });
+
+  reset();
+})();
+</script>
+
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 32px 0 10px 0;">Binary Review Self-Check</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Eight questions. Most are quick. Answer each one and click Check to see how you did. The final summary tells you whether you are ready to move on or whether you should revisit the binary refresher first.</p>
+
+<!-- ============================================================
+     CS210 Lesson 2 - Binary Review Self-Check Quiz
+     Card/slide flow: one question per card, Submit + Next/Back.
+     Score card at the end with per-question recap.
+     ============================================================ -->
+<style>
+.cs210-quiz * { box-sizing: border-box; }
+.cs210-quiz {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-quiz h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-quiz .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+
+/* Dot progress indicator */
+.cs210-quiz .dots {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+.cs210-quiz .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #E5E7EB;
+  border: 1px solid #C7CFD9;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.cs210-quiz .dot.current {
+  background: #003087;
+  border-color: #00205B;
+  transform: scale(1.25);
+}
+.cs210-quiz .dot.correct {
+  background: #2E7D32;
+  border-color: #1B5E20;
+}
+.cs210-quiz .dot.incorrect {
+  background: #B8002F;
+  border-color: #6B0000;
+}
+.cs210-quiz .dot.score {
+  width: 16px;
+  height: 12px;
+  border-radius: 3px;
+  background: #F0B92C;
+  border-color: #B88800;
+}
+
+/* Card */
+.cs210-quiz .card {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 6px;
+  padding: 36px 40px;
+  margin-bottom: 14px;
+  min-height: 380px;
+  display: flex;
+  flex-direction: column;
+}
+.cs210-quiz .card.answered.correct {
+  border-left: 4px solid #2E7D32;
+}
+.cs210-quiz .card.answered.incorrect {
+  border-left: 4px solid #B8002F;
+}
+
+.cs210-quiz .q-label {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.cs210-quiz .q-text {
+  font-size: 17px;
+  margin-bottom: 22px;
+  color: #1a1a1a;
+}
+.cs210-quiz .q-text code {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-family: Consolas, monospace;
+  font-size: 15px;
+  color: #00205B;
+}
+
+/* Options for multiple choice */
+.cs210-quiz .options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.cs210-quiz .option {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 15px;
+  background: #ffffff;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.cs210-quiz .option:hover:not(.disabled) {
+  background: #F5F7FA;
+  border-color: #003087;
+}
+.cs210-quiz .option.disabled {
+  cursor: default;
+}
+.cs210-quiz .option input[type="radio"] {
+  margin-right: 12px;
+  accent-color: #003087;
+}
+.cs210-quiz .option.selected {
+  border-color: #003087;
+  background: #F0F4FA;
+}
+.cs210-quiz .option.reveal-correct {
+  border-color: #2E7D32;
+  background: #E6F4EA;
+  font-weight: 600;
+}
+.cs210-quiz .option.incorrect {
+  border-color: #B8002F;
+  background: #FCE8E8;
+}
+
+/* Text input */
+.cs210-quiz .text-input-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.cs210-quiz .text-input-row input {
+  flex: 1;
+  max-width: 320px;
+  padding: 12px 14px;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  font-family: Consolas, monospace;
+  font-size: 16px;
+  color: #1a1a1a;
+}
+.cs210-quiz .text-input-row input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-quiz .text-input-row input.correct {
+  border-color: #2E7D32;
+  background: #E6F4EA;
+}
+.cs210-quiz .text-input-row input.incorrect {
+  border-color: #B8002F;
+  background: #FCE8E8;
+}
+
+/* Feedback */
+.cs210-quiz .feedback {
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-size: 14.5px;
+  margin-bottom: 4px;
+}
+.cs210-quiz .feedback.correct {
+  background: #E6F4EA;
+  border-left: 3px solid #2E7D32;
+  color: #1B5E20;
+}
+.cs210-quiz .feedback.incorrect {
+  background: #FCE8E8;
+  border-left: 3px solid #B8002F;
+  color: #6B0000;
+}
+.cs210-quiz .feedback strong { color: inherit; }
+.cs210-quiz .feedback code {
+  background: rgba(255, 255, 255, 0.7);
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13.5px;
+}
+
+/* Spacer pushes nav to the bottom of the card */
+.cs210-quiz .spacer { flex: 1; }
+
+/* Navigation row */
+.cs210-quiz .nav-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  gap: 10px;
+}
+.cs210-quiz .nav-btn {
+  padding: 10px 18px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+  transition: background 0.15s ease;
+}
+.cs210-quiz .nav-btn.back {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  color: #00205B;
+}
+.cs210-quiz .nav-btn.back:hover:not(:disabled) { background: #F5F7FA; }
+.cs210-quiz .nav-btn.primary {
+  background: #003087;
+  border: 1px solid #00205B;
+  color: #ffffff;
+}
+.cs210-quiz .nav-btn.primary:hover:not(:disabled) { background: #00205B; }
+.cs210-quiz .nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.cs210-quiz .nav-position {
+  font-size: 13px;
+  color: #6B7280;
+  font-weight: 500;
+}
+
+/* Score card */
+.cs210-quiz .score-card {
+  text-align: center;
+}
+.cs210-quiz .score-big {
+  font-size: 52px;
+  font-weight: 700;
+  color: #00205B;
+  margin: 4px 0 0 0;
+  line-height: 1;
+}
+.cs210-quiz .score-card.full-correct .score-big { color: #1B5E20; }
+.cs210-quiz .score-label {
+  font-size: 13px;
+  color: #6B7280;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin-bottom: 14px;
+}
+.cs210-quiz .score-message {
+  font-size: 16px;
+  color: #1a1a1a;
+  margin-bottom: 22px;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.cs210-quiz .score-message.good-job {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1B5E20;
+  margin-bottom: 12px;
+}
+.cs210-quiz .recap {
+  text-align: left;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid #E5E7EB;
+}
+.cs210-quiz .recap-title {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.cs210-quiz .recap-item {
+  display: flex;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #F0F2F5;
+  font-size: 14px;
+}
+.cs210-quiz .recap-item:last-child { border-bottom: none; }
+.cs210-quiz .recap-icon {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+}
+.cs210-quiz .recap-icon.correct { background: #2E7D32; }
+.cs210-quiz .recap-icon.incorrect { background: #B8002F; }
+.cs210-quiz .recap-body { flex: 1; }
+.cs210-quiz .recap-question { color: #1a1a1a; margin-bottom: 4px; }
+.cs210-quiz .recap-question code {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  color: #00205B;
+}
+.cs210-quiz .recap-explanation {
+  font-size: 13px;
+  color: #4A5568;
+  font-style: italic;
+}
+.cs210-quiz .recap-explanation code {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-style: normal;
+  font-size: 12.5px;
+  color: #00205B;
+}
+
+.cs210-quiz .reset-row {
+  margin-top: 22px;
+  text-align: center;
+}
+.cs210-quiz .reset-btn {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  padding: 10px 22px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  color: #00205B;
+  font-family: inherit;
+  font-weight: 600;
+}
+.cs210-quiz .reset-btn:hover { background: #F5F7FA; }
+
+.cs210-quiz .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #4A5568;
+  margin-top: 18px;
+}
+.cs210-quiz .help-note strong { color: #00205B; }
+
+/* Name modal overlay */
+.cs210-quiz .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.cs210-quiz .name-modal {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-quiz .name-modal h2 {
+  color: #00205B;
+  font-size: 20px;
+  margin: 0 0 10px 0;
+}
+.cs210-quiz .name-modal p {
+  color: #4A5568;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+.cs210-quiz .name-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-quiz .name-modal input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-quiz .name-modal-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-quiz .name-modal-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-quiz .name-modal-btn:not(:disabled):hover {
+  background: #00205B;
+}
+
+/* Completion screen (inline footer in score card) */
+.cs210-quiz .completion-screen {
+  background: #ffffff;
+  border: 2px solid #2E7D32;
+  border-radius: 6px;
+  padding: 20px 24px;
+  margin-top: 18px;
+}
+.cs210-quiz .completion-screen.incomplete {
+  border-color: #B88800;
+}
+.cs210-quiz .completion-screen .cs-heading {
+  color: #1B5E20;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 6px 0;
+}
+.cs210-quiz .completion-screen.incomplete .cs-heading {
+  color: #6B5300;
+}
+.cs210-quiz .completion-screen .cs-name-line {
+  font-size: 15px;
+  color: #1a1a1a;
+  margin-bottom: 14px;
+}
+.cs210-quiz .completion-screen .cs-name-line strong {
+  color: #00205B;
+}
+.cs210-quiz .completion-screen .cs-code-block {
+  background: #F0F4FA;
+  border: 1px solid #003087;
+  border-radius: 4px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+.cs210-quiz .completion-screen.incomplete .cs-code-block {
+  background: #FFF8E1;
+  border-color: #B88800;
+}
+.cs210-quiz .completion-screen .cs-code-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #4A5568;
+  margin-bottom: 4px;
+}
+.cs210-quiz .completion-screen .cs-code-value {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 26px;
+  font-weight: 700;
+  color: #00205B;
+  letter-spacing: 3px;
+}
+.cs210-quiz .completion-screen.incomplete .cs-code-value {
+  color: #6B5300;
+}
+.cs210-quiz .completion-screen .cs-timestamp {
+  font-size: 13px;
+  color: #6B7280;
+}
+</style>
+
+<div class="cs210-quiz">
+
+<div class="name-modal-backdrop" id="q-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Blackboard reflection quiz.</p>
+    <input type="text" id="cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="cadet-name-btn" disabled>Start the quiz</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 2 &middot; Binary Review Self-Check</h1>
+<div class="subtitle">Eight questions covering decimal to binary conversion, signed vs unsigned interpretation, sizeof, type ranges, and overflow. Answer each one, submit, and move forward.</div>
+
+<div class="dots" id="quiz-dots"></div>
+
+<div id="quiz-card-area"></div>
+
+<div class="help-note">
+  <strong>How this works:</strong> One question per card. Pick or type your answer and click Submit. The feedback appears, then click Next to move on. Answers are locked once submitted, so think before you submit. When you finish all eight, you get a score and a recap.
+</div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-quiz');
+  if (!root) return;
+
+  // ============================================================
+  // CS210 widget completion utilities
+  // Two salts: one for passing (>=70%), one for non-passing.
+  // The code that lands in Blackboard tells the instructor which.
+  // FNV-1a -> 6-char base-32 code over an unambiguous alphabet.
+  // ============================================================
+  const CS210_SALT_PASS = "lesson02_quiz_completed";
+  const CS210_SALT_FAIL = "lesson02_quiz_incomplete";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE_PASS = cs210CodeFromSalt(CS210_SALT_PASS);
+  const CS210_CODE_FAIL = cs210CodeFromSalt(CS210_SALT_FAIL);
+  let cs210CadetName = '';
+
+  // Name-modal gating: quiz stays blocked until name entered.
+  // Pre-fill from localStorage (shared key with the other Lesson 2 widgets).
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#q-name-modal-backdrop');
+    const input = root.querySelector('#cadet-name-input');
+    const btn = root.querySelector('#cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length >= 2) {
+        // Already entered (likely on the same page in another widget, or in a
+        // previous visit). Adopt it and skip the modal.
+        cs210CadetName = stored.trim();
+        backdrop.style.display = 'none';
+        return;
+      }
+    } catch (e) { /* localStorage may be disabled */ }
+
+    function updateBtn() {
+      btn.disabled = input.value.trim().length < 2;
+    }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', function() {
+      const name = input.value.trim();
+      if (name.length < 2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+    });
+    setTimeout(function() { input.focus(); }, 50);
+  })();
+
+  function cs210EscapeName(s) {
+    return (s || 'Cadet').replace(/[<>&"']/g, function(c) {
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+  }
+
+  function cs210RenderCompletion(card, passed) {
+    // Idempotent: re-running the score card (e.g., after "Take quiz again"
+    // is undone) should not stack multiple overlays.
+    const existingOverlay = root.querySelector('#cs210-completion-overlay');
+    if (existingOverlay) existingOverlay.remove();
+
+    const code = passed ? CS210_CODE_PASS : CS210_CODE_FAIL;
+    const now = new Date();
+    const ts = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const safeName = cs210EscapeName(cs210CadetName);
+    const accent = passed ? '#2E7D32' : '#B88800';
+    const accentDark = passed ? '#1B5E20' : '#6B5300';
+    const overlayBg = passed ? 'rgba(27, 94, 32, 0.55)' : 'rgba(184, 136, 0, 0.55)';
+    const heading = passed ? 'Quiz complete \u2014 you passed' : 'Quiz complete \u2014 below the passing mark';
+    const introCopy = passed
+      ? 'Take a screenshot of this box. You will need the code and a visual of this screen for the Blackboard reflection quiz.'
+      : 'You scored below 70%, so this is the non-passing code. Enter it in Blackboard so credit for taking the quiz lands, then review the Lesson Materials and re-take the quiz to earn the passing code.';
+    const reminderCopy = passed
+      ? '<strong>Next step:</strong> Open the Lesson 2 reflection quiz in Blackboard. Enter this code, answer the reflection prompt, and attach your screenshot.'
+      : '<strong>Next step:</strong> Enter this code in Blackboard so the attempt is recorded, then re-take the quiz. The passing code is different and will land you full credit on the widget question.';
+
+    // Inline footer in the score card so a screenshot of the widget body
+    // still captures the code even if the overlay gets dismissed first.
+    const footer = document.createElement('div');
+    footer.className = 'completion-screen' + (passed ? '' : ' incomplete');
+    footer.innerHTML =
+      '<div class="cs-heading">' + heading + '</div>' +
+      '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+      '<div class="cs-code-block">' +
+        '<div><div class="cs-code-label">' + (passed ? 'Completion code' : 'Non-passing code') + '</div>' +
+        '<div class="cs-code-value">' + code + '</div></div>' +
+      '</div>' +
+      '<div class="cs-timestamp">Completed: ' + ts + '</div>';
+    card.appendChild(footer);
+
+    // Overlay (the unmissable version)
+    const overlay = document.createElement('div');
+    overlay.id = 'cs210-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.style.background = overlayBg;
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid ' + accent + ';">' +
+        '<h2 style="color:' + accentDark + ';">' + heading + '</h2>' +
+        '<p>' + introCopy + '</p>' +
+        '<div class="cs-name-line" style="font-size:15px;margin-bottom:14px;">Cadet: <strong style="color:#00205B;">' + safeName + '</strong></div>' +
+        '<div style="background:' + (passed ? '#F0F4FA' : '#FFF8E1') + ';border:1px solid ' + accent + ';border-radius:4px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px;">' +
+          '<div><div style="font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:#4A5568;margin-bottom:4px;">' + (passed ? 'Completion code' : 'Non-passing code') + '</div>' +
+          '<div style="font-family:Consolas,monospace;font-size:26px;font-weight:700;color:' + accentDark + ';letter-spacing:3px;" id="cs-code-value">' + code + '</div></div>' +
+          '<button class="cs-copy-btn" id="cs-copy-btn" type="button" style="background:' + accent + ';color:#fff;border:none;padding:8px 14px;border-radius:3px;font-size:13px;cursor:pointer;font-family:inherit;">Copy code</button>' +
+        '</div>' +
+        '<div style="font-size:13px;color:#6B7280;margin-bottom:14px;">Completed: ' + ts + '</div>' +
+        '<div style="background:#FFF8E1;border-left:4px solid #F0B92C;padding:12px 16px;border-radius:3px;font-size:14px;color:#6B5300;line-height:1.5;margin-bottom:14px;">' +
+          reminderCopy +
+        '</div>' +
+        '<button class="name-modal-btn" id="cs-overlay-close" type="button" style="background:' + accent + ';">Got it &mdash; close this</button>' +
+      '</div>';
+    root.appendChild(overlay);
+
+    const closeBtn = overlay.querySelector('#cs-overlay-close');
+    if (closeBtn) closeBtn.addEventListener('click', function() { overlay.style.display = 'none'; });
+    const copyBtn = overlay.querySelector('#cs-copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function() {
+        const ok = function() {
+          copyBtn.textContent = 'Copied';
+          copyBtn.style.background = '#2E7D32';
+          setTimeout(function() {
+            copyBtn.textContent = 'Copy code';
+            copyBtn.style.background = accent;
+          }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(code).then(ok, function() { cs210FallbackCopy(code); ok(); });
+        } else {
+          cs210FallbackCopy(code); ok();
+        }
+      });
+    }
+  }
+  function cs210FallbackCopy(text) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e) { /* nothing else to do */ }
+  }
+
+  const questions = [
+    {
+      id: 'q1',
+      type: 'text',
+      text: 'Convert the decimal number <code>42</code> to 8-bit binary. Type the eight bits, with no spaces or prefix.',
+      correct: ['00101010', '101010'],
+      normalize: s => s.toLowerCase().replace(/^0b/, '').replace(/\s+/g, ''),
+      placeholder: 'e.g. 00001111',
+      correctFeedback: '42 = 32 + 8 + 2, which lights up bits 5, 3, and 1. The result is 00101010.',
+      incorrectFeedback: 'The correct answer is <code>00101010</code>. 42 = 32 + 8 + 2 (bits 5, 3, and 1).',
+      shortLabel: 'Convert 42 to 8-bit binary',
+    },
+    {
+      id: 'q2',
+      type: 'text',
+      text: 'What is binary <code>01110</code> in decimal? Type just the number.',
+      correct: ['14'],
+      normalize: s => s.trim(),
+      placeholder: 'e.g. 5',
+      correctFeedback: '01110 has bits set at positions 3, 2, and 1, so 8 + 4 + 2 = 14. Leading zeros do not change the value.',
+      incorrectFeedback: 'The correct answer is <code>14</code>. The bits set are at positions 3, 2, and 1: 8 + 4 + 2 = 14.',
+      shortLabel: 'Convert binary 01110 to decimal',
+    },
+    {
+      id: 'q3',
+      type: 'choice',
+      text: 'If <code>sizeof(int)</code> returns <code>4</code> on your machine, how many bits is an int?',
+      options: ['4', '8', '16', '32'],
+      correct: 3,
+      correctFeedback: 'Exactly. sizeof returns bytes, and 1 byte is 8 bits. 4 bytes is 32 bits.',
+      incorrectFeedback: 'The correct answer is <strong>32</strong>. sizeof reports the size in bytes. To get bits, multiply by 8. 4 bytes &times; 8 bits/byte = 32 bits.',
+      shortLabel: 'sizeof(int) = 4 bytes is how many bits',
+    },
+    {
+      id: 'q4',
+      type: 'choice',
+      text: 'The bit pattern <code>1111111111111111</code> is stored in a 2-byte variable. What value does it represent if the variable is declared <code>unsigned short</code>? What if it is declared <code>short</code>?',
+      options: [
+        '65535 unsigned, 65535 signed',
+        '65535 unsigned, -1 signed',
+        '32767 unsigned, -1 signed',
+        '32768 unsigned, -32768 signed',
+      ],
+      correct: 1,
+      correctFeedback: 'Correct. The bits are identical; the type is what tells the compiler how to interpret them. Unsigned reads all sixteen bits as a magnitude (65,535). Signed uses two&#x2019;s complement, where all 1s is -1.',
+      incorrectFeedback: 'The correct answer is <strong>65535 unsigned, -1 signed</strong>. Same bits, different interpretation. Unsigned: the sum of all powers of 2 from 0 to 15 is 65,535. Signed (two&#x2019;s complement): all 1s reads as -1.',
+      shortLabel: 'How sixteen 1s read as unsigned vs signed',
+    },
+    {
+      id: 'q5',
+      type: 'choice',
+      text: 'What is the maximum value an <code>unsigned short</code> can hold?',
+      options: ['32767', '32768', '65535', '65536'],
+      correct: 2,
+      correctFeedback: 'Correct. An unsigned short has 16 bits, so it can hold 2^16 = 65,536 distinct values, from 0 to 65,535.',
+      incorrectFeedback: 'The correct answer is <strong>65535</strong>. An unsigned short has 16 bits and holds 2^16 = 65,536 distinct values, but the range is 0 to 65,535 (zero counts as one of the values).',
+      shortLabel: 'Maximum value of unsigned short',
+    },
+    {
+      id: 'q6',
+      type: 'choice',
+      text: 'You write <code>short s = 40000;</code>. What happens?',
+      options: [
+        'The compiler raises an error and refuses to build.',
+        's gets the value 40000, since short can hold large numbers.',
+        's gets a wrapped value that is not 40000, and the compiler does not warn you.',
+        's gets the value 32767 (clamped to the maximum).',
+      ],
+      correct: 2,
+      correctFeedback: 'Correct. short can only hold -32,768 to 32,767. 40,000 is past the max, so the bits get stored and a signed short reads them as -25,536. This is initialization overflow.',
+      incorrectFeedback: 'The correct answer is <strong>s gets a wrapped value that is not 40000, and the compiler does not warn you</strong>. short tops out at 32,767. 40,000 does not fit. The compiler keeps the bits and you get a plausible-looking but wrong value (-25,536, in this case). This is the silent kind of bug.',
+      shortLabel: 'What happens with short s = 40000',
+    },
+    {
+      id: 'q7',
+      type: 'choice',
+      text: 'Which bit pattern represents -32768 in a <code>short</code> (two&#x2019;s complement)?',
+      options: ['1111111111111111', '1000000000000000', '0000000000000000', '1000000000000001'],
+      correct: 1,
+      correctFeedback: 'Correct. In two&#x2019;s complement, the most negative value has the simplest bit pattern: the sign bit is 1, and everything else is 0.',
+      incorrectFeedback: 'The correct answer is <strong>1000000000000000</strong>. In two&#x2019;s complement, the minimum value has the sign bit set (1) and all other bits zero. All 1s is -1, and all 0s is 0.',
+      shortLabel: 'Bit pattern for -32768 in short',
+    },
+    {
+      id: 'q8',
+      type: 'text',
+      text: 'In an 8-bit value, what decimal value does bit position 6 represent (counting from 0 on the right)?',
+      correct: ['64'],
+      normalize: s => s.trim(),
+      placeholder: 'e.g. 16',
+      correctFeedback: 'Correct. Each bit position holds 2 raised to that position. 2^6 = 64.',
+      incorrectFeedback: 'The correct answer is <code>64</code>. Bit position 6 means 2^6 = 64. The bit positions in an 8-bit value, right to left, are 1, 2, 4, 8, 16, 32, 64, 128.',
+      shortLabel: 'Decimal value of bit position 6',
+    },
+  ];
+
+  const state = questions.map(() => ({ answered: false, correct: false, choice: null, value: '' }));
+  let currentIndex = 0;
+
+  const cardArea = root.querySelector('#quiz-card-area');
+  const dotsArea = root.querySelector('#quiz-dots');
+
+  function renderDots() {
+    dotsArea.innerHTML = '';
+    for (let i = 0; i < questions.length; i++) {
+      const d = document.createElement('div');
+      d.className = 'dot';
+      if (i === currentIndex && currentIndex < questions.length) d.classList.add('current');
+      else if (state[i].answered) d.classList.add(state[i].correct ? 'correct' : 'incorrect');
+      dotsArea.appendChild(d);
+    }
+    const scoreDot = document.createElement('div');
+    scoreDot.className = 'dot score';
+    if (currentIndex === questions.length) scoreDot.classList.add('current');
+    dotsArea.appendChild(scoreDot);
+  }
+
+  function hasAnswer(i) {
+    const q = questions[i];
+    if (q.type === 'choice') return state[i].choice !== null;
+    return state[i].value && state[i].value.trim().length > 0;
+  }
+
+  function submitAnswer(i) {
+    if (state[i].answered) return;
+    if (!hasAnswer(i)) return;
+    const q = questions[i];
+    let correct = false;
+    if (q.type === 'choice') {
+      correct = (state[i].choice === q.correct);
+    } else {
+      const norm = q.normalize ? q.normalize(state[i].value) : state[i].value.trim();
+      correct = q.correct.includes(norm);
+    }
+    state[i].answered = true;
+    state[i].correct = correct;
+    render();
+  }
+
+  function buildQuestionCard(i) {
+    const q = questions[i];
+    const card = document.createElement('div');
+    card.className = 'card';
+    if (state[i].answered) {
+      card.classList.add('answered');
+      card.classList.add(state[i].correct ? 'correct' : 'incorrect');
+    }
+
+    const label = document.createElement('div');
+    label.className = 'q-label';
+    label.textContent = 'Question ' + (i + 1) + ' of ' + questions.length;
+    card.appendChild(label);
+
+    const text = document.createElement('div');
+    text.className = 'q-text';
+    text.innerHTML = q.text;
+    card.appendChild(text);
+
+    if (q.type === 'choice') {
+      const opts = document.createElement('div');
+      opts.className = 'options';
+      q.options.forEach((optText, j) => {
+        const opt = document.createElement('label');
+        opt.className = 'option';
+        if (state[i].answered) opt.classList.add('disabled');
+        if (state[i].choice === j) opt.classList.add('selected');
+        if (state[i].answered) {
+          if (j === q.correct) opt.classList.add('reveal-correct');
+          if (state[i].choice === j && j !== q.correct) opt.classList.add('incorrect');
+        }
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = q.id;
+        radio.value = j;
+        radio.disabled = state[i].answered;
+        if (state[i].choice === j) radio.checked = true;
+        radio.addEventListener('change', () => {
+          if (state[i].answered) return;
+          state[i].choice = j;
+          render();
+        });
+        opt.appendChild(radio);
+        const span = document.createElement('span');
+        span.textContent = optText;
+        opt.appendChild(span);
+        opts.appendChild(opt);
+      });
+      card.appendChild(opts);
+    } else {
+      const row = document.createElement('div');
+      row.className = 'text-input-row';
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.placeholder = q.placeholder || '';
+      input.value = state[i].value;
+      input.disabled = state[i].answered;
+      if (state[i].answered) {
+        input.classList.add(state[i].correct ? 'correct' : 'incorrect');
+      }
+      input.addEventListener('input', (e) => {
+        state[i].value = e.target.value;
+        // Update submit button enabled state without re-rendering (preserves focus)
+        const submitBtn = card.querySelector('.nav-btn.primary');
+        if (submitBtn) submitBtn.disabled = !hasAnswer(i);
+      });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !state[i].answered) {
+          e.preventDefault();
+          submitAnswer(i);
+        }
+      });
+      row.appendChild(input);
+      card.appendChild(row);
+      if (!state[i].answered) {
+        setTimeout(() => input.focus(), 50);
+      }
+    }
+
+    if (state[i].answered) {
+      const fb = document.createElement('div');
+      fb.className = 'feedback ' + (state[i].correct ? 'correct' : 'incorrect');
+      fb.innerHTML = (state[i].correct ? '<strong>Correct.</strong> ' : '<strong>Not quite.</strong> ') +
+                     (state[i].correct ? q.correctFeedback : q.incorrectFeedback);
+      card.appendChild(fb);
+    }
+
+    const spacer = document.createElement('div');
+    spacer.className = 'spacer';
+    card.appendChild(spacer);
+
+    const nav = document.createElement('div');
+    nav.className = 'nav-row';
+
+    const backBtn = document.createElement('button');
+    backBtn.className = 'nav-btn back';
+    backBtn.innerHTML = '&larr; Back';
+    backBtn.disabled = (i === 0);
+    backBtn.addEventListener('click', () => {
+      if (i > 0) { currentIndex--; render(); }
+    });
+    nav.appendChild(backBtn);
+
+    const positionLabel = document.createElement('div');
+    positionLabel.className = 'nav-position';
+    positionLabel.textContent = (i + 1) + ' / ' + questions.length;
+    nav.appendChild(positionLabel);
+
+    if (!state[i].answered) {
+      const submitBtn = document.createElement('button');
+      submitBtn.className = 'nav-btn primary';
+      submitBtn.textContent = 'Submit';
+      submitBtn.disabled = !hasAnswer(i);
+      submitBtn.addEventListener('click', () => submitAnswer(i));
+      nav.appendChild(submitBtn);
+    } else {
+      const nextBtn = document.createElement('button');
+      nextBtn.className = 'nav-btn primary';
+      nextBtn.innerHTML = (i === questions.length - 1) ? 'See score &rarr;' : 'Next &rarr;';
+      nextBtn.addEventListener('click', () => { currentIndex++; render(); });
+      nav.appendChild(nextBtn);
+    }
+
+    card.appendChild(nav);
+    return card;
+  }
+
+  function buildScoreCard() {
+    const card = document.createElement('div');
+    card.className = 'card score-card';
+    const correctCount = state.filter(s => s.correct).length;
+    if (correctCount === questions.length) card.classList.add('full-correct');
+
+    const label = document.createElement('div');
+    label.className = 'q-label';
+    label.textContent = 'Quiz complete';
+    card.appendChild(label);
+
+    const msg = document.createElement('div');
+    if (correctCount === questions.length) {
+      msg.className = 'score-message good-job';
+      msg.textContent = 'Perfect score. Excellent work!';
+    } else if (correctCount >= 6) {
+      msg.className = 'score-message good-job';
+      msg.textContent = 'Good job!';
+    } else if (correctCount >= 4) {
+      msg.className = 'score-message good-job';
+      msg.style.color = '#6B5300';
+      msg.textContent = 'Nice effort.';
+    } else {
+      msg.className = 'score-message good-job';
+      msg.style.color = '#6B0000';
+      msg.textContent = 'Let\u2019s review.';
+    }
+    card.appendChild(msg);
+
+    const scoreBig = document.createElement('div');
+    scoreBig.className = 'score-big';
+    scoreBig.textContent = correctCount + ' / ' + questions.length;
+    card.appendChild(scoreBig);
+
+    const scoreLabel = document.createElement('div');
+    scoreLabel.className = 'score-label';
+    scoreLabel.textContent = 'questions correct';
+    card.appendChild(scoreLabel);
+
+    const detail = document.createElement('div');
+    detail.className = 'score-message';
+    if (correctCount === questions.length) {
+      detail.textContent = 'You have the binary fundamentals down. The cmem and binary walkthroughs and Lab 02 will build on this.';
+    } else if (correctCount >= 6) {
+      detail.textContent = 'Review the questions you missed below before the in-class walkthroughs so the bit patterns make sense.';
+    } else if (correctCount >= 4) {
+      detail.textContent = 'Some gaps to close. Re-read the binary refresher in the Lesson Materials section, then try this quiz again.';
+    } else {
+      detail.textContent = 'Time to slow down and review. Go back to the binary refresher in Lesson Materials. Schedule EI if anything is still unclear after that.';
+    }
+    card.appendChild(detail);
+
+    const recap = document.createElement('div');
+    recap.className = 'recap';
+    const recapTitle = document.createElement('div');
+    recapTitle.className = 'recap-title';
+    recapTitle.textContent = 'Question recap';
+    recap.appendChild(recapTitle);
+
+    state.forEach((s, i) => {
+      const item = document.createElement('div');
+      item.className = 'recap-item';
+      const icon = document.createElement('div');
+      icon.className = 'recap-icon ' + (s.correct ? 'correct' : 'incorrect');
+      icon.textContent = s.correct ? '\u2713' : '\u2717';
+      item.appendChild(icon);
+      const body = document.createElement('div');
+      body.className = 'recap-body';
+      const q = questions[i];
+      const qLine = document.createElement('div');
+      qLine.className = 'recap-question';
+      qLine.innerHTML = '<strong>Q' + (i + 1) + '.</strong> ' + q.shortLabel;
+      body.appendChild(qLine);
+      if (!s.correct) {
+        const exp = document.createElement('div');
+        exp.className = 'recap-explanation';
+        exp.innerHTML = q.incorrectFeedback;
+        body.appendChild(exp);
+      }
+      item.appendChild(body);
+      recap.appendChild(item);
+    });
+    card.appendChild(recap);
+
+    const resetRow = document.createElement('div');
+    resetRow.className = 'reset-row';
+    const resetBtn = document.createElement('button');
+    resetBtn.className = 'reset-btn';
+    resetBtn.textContent = 'Take the quiz again';
+    resetBtn.addEventListener('click', reset);
+    resetRow.appendChild(resetBtn);
+    card.appendChild(resetRow);
+
+    const nav = document.createElement('div');
+    nav.className = 'nav-row';
+    const backBtn = document.createElement('button');
+    backBtn.className = 'nav-btn back';
+    backBtn.innerHTML = '&larr; Review questions';
+    backBtn.addEventListener('click', () => {
+      currentIndex = questions.length - 1;
+      render();
+    });
+    nav.appendChild(backBtn);
+    const spacer = document.createElement('div');
+    spacer.style.flex = '1';
+    nav.appendChild(spacer);
+    card.appendChild(nav);
+
+    // Completion code / non-passing code overlay + inline footer.
+    // Threshold: 6 / 8 = 75% (>= 70% passing rule for CS210 widgets).
+    const passed = correctCount >= 6;
+    cs210RenderCompletion(card, passed);
+
+    return card;
+  }
+
+  function render() {
+    renderDots();
+    cardArea.innerHTML = '';
+    if (currentIndex >= questions.length) {
+      cardArea.appendChild(buildScoreCard());
+    } else {
+      cardArea.appendChild(buildQuestionCard(currentIndex));
+    }
+  }
+
+  function reset() {
+    state.forEach(s => { s.answered = false; s.correct = false; s.choice = null; s.value = ''; });
+    currentIndex = 0;
+    // Clear any lingering completion overlay (e.g., from a previous attempt)
+    const overlay = root.querySelector('#cs210-completion-overlay');
+    if (overlay) overlay.remove();
+    render();
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (!root.contains(document.activeElement)) return;
+    if (document.activeElement && document.activeElement.tagName === 'INPUT' && document.activeElement.type === 'text') return;
+    if (e.key === 'ArrowLeft' && currentIndex > 0) {
+      currentIndex--;
+      render();
+    } else if (e.key === 'ArrowRight') {
+      if (currentIndex >= questions.length) return;
+      if (state[currentIndex].answered) {
+        currentIndex++;
+        render();
+      }
+    }
+  });
+
+  render();
+})();
+</script>
+
+
+    </div>
+  </details>
+
+  <!-- ===================== 6. AFTER CLASS ===================== -->
+  <details id="after-class" style="margin-bottom: 24px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      6. After Class
+    </summary>
+    <div style="padding: 18px 22px;">
+      <ul style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Finish Lab 02 if you did not complete it in class. Submit through GitHub Classroom before Lesson 3.</li>
+        <li style="margin-bottom: 6px;">Read Beej-C Chapter 3 cont. (Operators) for Lesson 3.</li>
+        <li style="margin-bottom: 6px;">Replay either walkthrough on your own. Try different values in free mode. See if you can predict the bytes or bit pattern before you press Enter.</li>
+        <li style="margin-bottom: 0;">Heads up: Quiz 1 at Lesson 4 covers Lessons 2 and 3 together.</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== HELP NOTE ===================== -->
+  <div style="background: #F5F7FA; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 3px; font-size: 13.5px; color: #4A5568;">
+    <strong style="color: #00205B;">Need help?</strong> Schedule EI with your instructor. Bring specific code or specific cmem screenshots, and the exact error message or output you do not understand. Specific questions get unstuck quickly.
+  </div>
+
+</div>

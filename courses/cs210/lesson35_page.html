@@ -1,0 +1,1756 @@
+<!-- ============================================================
+     CS210 - Lesson 35
+     Bitwise Operators II (Applied)
+     Self-contained: all CSS inline. Native <details> for collapsing.
+     Mask & pack walkthrough + bitwise idioms self-check embedded in section 5.
+     Paste into Blackboard Ultra via Document -> Add HTML block.
+     ============================================================ -->
+
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 980px; margin: 0 auto; line-height: 1.6;">
+
+  <!-- ===================== LIGHT HEADER ===================== -->
+  <div style="border-left: 5px solid #003087; padding: 8px 0 8px 18px; margin-bottom: 24px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 2px;">CS210 &middot; Block 4 &middot; Lesson 35</div>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 600; color: #00205B;">Bitwise Operators II (Applied)</h1>
+    <div style="font-size: 14px; color: #4A5568; margin-top: 4px;">Bit masks &middot; Field extraction &middot; Clear-and-set &middot; Packing &middot; Systems and security idioms</div>
+  </div>
+
+  <!-- ===================== AT A GLANCE ===================== -->
+  <div style="background: #F5F7FA; border-left: 4px solid #B5B7BA; padding: 14px 18px; margin-bottom: 22px; font-size: 14px;">
+    <strong style="color: #00205B;">At a glance:</strong> Lesson 34 gave you the bitwise operators; today you put them to work. You will pull a field out of a packed integer, replace one field without disturbing its neighbors, and pack several values into a single word. The running example is RGB565 color, and the lab has you build a full pixel packer. The two interactive widgets in Section 5 are where the masks and shifts become muscle memory.
+  </div>
+
+  <!-- ===================== TABLE OF CONTENTS ===================== -->
+  <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 20px; margin-bottom: 24px; border-radius: 3px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Contents</div>
+    <ol style="margin: 0; padding-left: 22px; font-size: 14px;">
+      <li style="margin-bottom: 4px;"><a href="#objectives" style="color: #003087; text-decoration: none;">Lesson Objectives</a></li>
+      <li style="margin-bottom: 4px;"><a href="#readings" style="color: #003087; text-decoration: none;">Assigned Readings</a></li>
+      <li style="margin-bottom: 4px;"><a href="#pre-class" style="color: #003087; text-decoration: none;">Pre-Class Work</a></li>
+      <li style="margin-bottom: 4px;"><a href="#materials" style="color: #003087; text-decoration: none;">Lesson Materials and Overview</a></li>
+      <li style="margin-bottom: 4px;"><a href="#in-class" style="color: #003087; text-decoration: none;">In-Class Work</a></li>
+      <li style="margin-bottom: 0;"><a href="#after-class" style="color: #003087; text-decoration: none;">After Class</a></li>
+    </ol>
+  </div>
+
+  <!-- ===================== 1. OBJECTIVES ===================== -->
+  <details id="objectives" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      1. Lesson Objectives
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 10px 0; font-style: italic;">By the end of this lesson, cadets will be able to:</p>
+      <ol style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Apply bit masks to extract and modify specific bits within an integer. <span style="color: #6B7280; font-size: 12px;">(Outcome 1)</span></li>
+        <li style="margin-bottom: 6px;">Pack multiple values into a single integer using bit masks and shifts. <span style="color: #6B7280; font-size: 12px;">(Outcomes 1, 2)</span></li>
+        <li style="margin-bottom: 0;">Recognize common bitwise idioms in systems and security contexts. <span style="color: #6B7280; font-size: 12px;">(Outcome 1)</span></li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 2. READINGS ===================== -->
+  <details id="readings" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      2. Assigned Readings
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 12px 0;">Complete before class. The reading for this lesson is a short set of course notes, not a Beej chapter. It pulls the applied techniques together in one place.</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <thead>
+          <tr style="background: #E8EDF5; color: #00205B;">
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 230px;">Source</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9;">What it covers</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <!-- =========================================================
+                 EDIT ME: Lesson 35 notes link
+                 Replace href="#" with the Blackboard item URL for the
+                 "Applied Bitwise Operators" notes (lesson35_notes.html)
+                 once it is posted in this module.
+                 ========================================================= -->
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;"><a href="#" style="color: #003087; text-decoration: underline;">Lesson 35 notes: Applied Bitwise Operators</a></td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Masks, the extract / replace / pack idioms, single-bit flag tricks, the precedence trap, and a note on struct bit-fields. About 10 minutes.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 9px 12px;">Lesson 34 notes (review)</td>
+            <td style="padding: 9px 12px; color: #4A5568;">If the six operators or two&#x2019;s complement feel rusty, skim last lesson&#x2019;s material first.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <!-- ===================== 3. PRE-CLASS WORK ===================== -->
+  <details id="pre-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      3. Pre-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 18px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #6B5300; font-size: 14px; margin-bottom: 4px;">Do this first</div>
+        <div style="font-size: 14px; color: #4A3A00;">Read the Lesson 35 notes. They are short and they map one-to-one onto what you will do in class and in the lab.</div>
+      </div>
+
+      <!-- Step 1: Read -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">1</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Read the Lesson 35 notes</div>
+            <div style="font-size: 14px;">Focus on the three things you do with a field: <strong>extract</strong> (shift, then mask), <strong>replace</strong> (clear, then OR), and <strong>pack</strong> (mask, shift, OR). Those three moves are the whole lesson.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Toolchain verify -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">2</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Confirm your toolchain is ready</div>
+            <div style="font-size: 14px;">You will compile a small multi-file program today. Make sure your gcc and your terminal are working so lab time goes to bit manipulation, not setup.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Skim widget -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 8px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">3</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Skim the In-Class section below</div>
+            <div style="font-size: 14px;">Two interactive widgets are waiting there: a mask &amp; pack walkthrough and a bitwise idioms self-check. No need to use them yet; just know they are there.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ===================== 4. LESSON MATERIALS AND OVERVIEW ===================== -->
+  <details id="materials" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      4. Lesson Materials and Overview
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 18px 0;">Lesson 34 was about what each bitwise operator does to individual bits. Today is about using them together to work with <em>fields</em>: named groups of bits packed inside one integer. The overview below is a quick reference; the full treatment is in the Lesson 35 notes, and the hands-on practice is in Section 5.</p>
+
+      <!-- Subsection navigation -->
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 18px; margin-bottom: 22px; border-radius: 3px;">
+        <div style="font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">Jump to</div>
+        <div style="font-size: 13.5px;">
+          <a href="#slides" style="color: #003087; text-decoration: none; margin-right: 14px;">Slides</a>
+          <a href="#fields" style="color: #003087; text-decoration: none; margin-right: 14px;">Fields and masks</a>
+          <a href="#three-moves" style="color: #003087; text-decoration: none; margin-right: 14px;">The three moves</a>
+          <a href="#idioms" style="color: #003087; text-decoration: none; margin-right: 14px;">Idioms and traps</a>
+          <a href="#standard" style="color: #003087; text-decoration: none;">DFCS standard</a>
+        </div>
+      </div>
+
+      <!-- Slides -->
+      <h3 id="slides" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0; scroll-margin-top: 16px;">Slides</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">The Lesson 35 deck walks through masks, the extract / replace / pack idioms, the RGB565 layout, and the precedence traps. The slides are the spine of the lecture; the widgets are where you practice.</p>
+
+      <!-- =========================================================
+           EDIT ME: Lesson 35 slide deck link
+           Replace href="#" below with the SharePoint share URL once the
+           deck is published. Leave target="_blank" and rel="noopener".
+           ========================================================= -->
+      <p style="margin: 0 0 18px 0;">
+        <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 10px 20px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 14px;">Open Lesson 35 slides &rarr;</a>
+      </p>
+
+      <!-- Fields and masks -->
+      <h3 id="fields" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Fields and masks</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">A <strong>field</strong> is a group of bits inside an integer that means something on its own. RGB565 packs a color into a 16-bit <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">unsigned short</code> as three fields:</p>
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 16px; border-radius: 3px; font-family: Consolas, monospace; font-size: 13px; margin-bottom: 14px; color: #1a1a1a;">
+        bit: &nbsp;15 14 13 12 11 | 10 &nbsp;9 &nbsp;8 &nbsp;7 &nbsp;6 &nbsp;5 | &nbsp;4 &nbsp;3 &nbsp;2 &nbsp;1 &nbsp;0<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\____ red ____/ &nbsp;\_____ green _____/ &nbsp;\___ blue ___/<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;5 bits &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;6 bits &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;5 bits
+      </div>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">A <strong>mask</strong> is an integer whose bits you set deliberately so that <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;</code> or <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">|</code> against it has a known effect. A field mask is the all-ones value for a field width, shifted into the field&#x2019;s position. The green mask, six 1s at bits 10&ndash;5, is <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">0x3F &lt;&lt; 5</code>.</p>
+
+      <!-- The three moves -->
+      <h3 id="three-moves" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">The three moves</h3>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 16px;">
+        <thead>
+          <tr style="background: #00205B; color: #ffffff;">
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 150px;">Move</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 120px;">Pattern</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600;">Green field example</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Extract</td><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">shift, then mask</td><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">(color &gt;&gt; 5) &amp; 0x3F</td></tr>
+          <tr style="background: #F8FAFC;"><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Replace</td><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">clear, then OR</td><td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">(color &amp; ~(0x3F&lt;&lt;5)) | ((g&amp;0x3F)&lt;&lt;5)</td></tr>
+          <tr><td style="padding: 8px 12px;">Pack</td><td style="padding: 8px 12px;">mask, shift, OR</td><td style="padding: 8px 12px; font-family: Consolas, monospace; font-size: 13px;">((r&amp;0x1F)&lt;&lt;11) | ((g&amp;0x3F)&lt;&lt;5) | (b&amp;0x1F)</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Mask each incoming value with its field mask <em>before</em> you shift it into place. That one guard keeps an out-of-range value from spilling into a neighbor field, and the lab&#x2019;s hidden tests check for exactly that habit.</p>
+
+      <!-- Idioms and traps -->
+      <h3 id="idioms" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Idioms and traps</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">When a field is a single bit (a flag), the moves shrink to one-liners: test with <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">flags &amp; m</code>, set with <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">flags |= m</code>, clear with <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">flags &amp;= ~m</code>, toggle with <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">flags ^= m</code>. You will meet these in permission bytes, hardware registers, and protocol headers.</p>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">The trap to remember: bitwise operators have <em>low</em> precedence, and comparison operators outrank <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;</code>. So <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">flags &amp; MASK == 0</code> is parsed as <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">flags &amp; (MASK == 0)</code>, which is almost never what you meant. Always parenthesize: <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">(flags &amp; MASK) == 0</code>. And keep <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;</code> (bitwise) distinct from <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;&amp;</code> (logical).</p>
+
+      <!-- DFCS standard (reinforcement only) -->
+      <h3 id="standard" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">DFCS C Programming Standard</h3>
+      <p style="font-size: 14.5px; margin: 0 0 8px 0;">This lesson introduces no new sections of the DFCS C Programming Standard. The lab reinforces habits you already hold yourself to: the named field constants in <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">color.h</code> keep magic numbers out of your code (<strong>&sect;7.1</strong>), those constants follow the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">SCREAMING_SNAKE_CASE</code> convention for macros (<strong>&sect;5.4 / &sect;5.6</strong>), and your functions and variables stay in <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">snake_case</code> (<strong>&sect;5.1</strong>). As always, the build runs with <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">-Wall -Werror</code>, so a warning is a failure, not a suggestion. The full standard lives in the course Resources section.</p>
+    </div>
+  </details>
+
+  <!-- ===================== 5. IN-CLASS WORK ===================== -->
+  <details id="in-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      5. In-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 16px 0;">Three things to do in class. Use the checklist to track your progress. The two widgets each give you a completion code for the Lesson 35 reflection.</p>
+
+      <ul style="list-style: none; padding: 0; margin: 0 0 24px 0; font-size: 14.5px;">
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Work through the mask &amp; pack walkthrough below.</strong>
+          <span style="color: #4A5568;">Ten guided tasks: extract a field, build a mask, clear and replace a field, then pack three values into one word. About 20 minutes.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Take the bitwise idioms self-check.</strong>
+          <span style="color: #4A5568;">Eight questions on permission bits, packed color, flag registers, and the precedence trap. Score 70 percent or higher for the passing code. About 10 minutes.</span>
+        </li>
+        <li style="margin-bottom: 0; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Complete Lab 35: Pixel Packer (RGB565).</strong>
+          <!-- =========================================================
+               EDIT ME: Lesson 35 GitHub Classroom invite link
+               Replace href="#" with the GitHub Classroom assignment
+               invite URL once it is created.
+               ========================================================= -->
+          <span style="color: #4A5568;">Build the seven RGB565 functions. Auto-graded through <a href="#" target="_blank" rel="noopener" style="color: #003087; text-decoration: underline;">GitHub Classroom</a>; full instructions in the lab repo. Worth 2 points.</span>
+        </li>
+      </ul>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 18px 0 10px 0;">Mask &amp; Pack Walkthrough</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Ten tasks across four sections. Type each expression at the prompt; the right pane shows the color word, the result, and how the fields decode. The variable <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">color</code> is pre-loaded.</p>
+
+<!-- ============================================================
+     CS210 Lesson 35 - Mask & Pack Walkthrough Widget
+     Multi-bit masks, field extraction/modification, and packing.
+     RGB565 color word as the running example.
+     Template-aligned style. Native HTML/CSS + scoped JS.
+     ============================================================ -->
+<style>
+.cs210-mpk * { box-sizing: border-box; }
+.cs210-mpk {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-mpk h1 { color: #00205B; font-size: 24px; margin: 0 0 6px 0; }
+.cs210-mpk .subtitle { color: #4A5568; font-size: 14px; margin-bottom: 22px; }
+.cs210-mpk .progress-bar {
+  background: #E5E7EB; border-radius: 3px; height: 8px;
+  overflow: hidden; margin-bottom: 6px;
+}
+.cs210-mpk .progress-fill { background: #003087; height: 100%; transition: width 0.3s ease; }
+.cs210-mpk .progress-label { font-size: 12px; color: #6B7280; margin-bottom: 18px; }
+.cs210-mpk .section-header {
+  background: #E8EDF5; color: #00205B; padding: 8px 14px; border-radius: 3px;
+  font-size: 13px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; margin-bottom: 10px;
+}
+.cs210-mpk .task-card {
+  background: #FFF8E1; border-left: 4px solid #F0B92C;
+  padding: 14px 18px; margin-bottom: 14px; border-radius: 3px;
+}
+.cs210-mpk .task-card.complete { background: #E6F4EA; border-left-color: #2E7D32; }
+.cs210-mpk .task-label {
+  font-size: 12px; letter-spacing: 1.5px; color: #6B5300;
+  text-transform: uppercase; font-weight: 600; margin-bottom: 4px;
+}
+.cs210-mpk .task-card.complete .task-label { color: #1B5E20; }
+.cs210-mpk .task-text { font-size: 15px; color: #1a1a1a; }
+.cs210-mpk .task-text code {
+  background: #FBEFC6; border: 1px solid #E6D28A; padding: 0 4px;
+  border-radius: 2px; font-family: Consolas, monospace; font-size: 13px; color: #6B5300;
+}
+.cs210-mpk .task-hint { font-size: 12.5px; color: #6B7280; margin-top: 6px; font-style: italic; }
+.cs210-mpk .task-hint code { font-family: Consolas, monospace; }
+
+.cs210-mpk .panes {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 12px;
+}
+@media (max-width: 760px) { .cs210-mpk .panes { grid-template-columns: 1fr; } }
+.cs210-mpk .terminal {
+  background: #1E2A3A; color: #E8EDF5;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13.5px; line-height: 1.5; border-radius: 4px; padding: 14px 18px;
+  min-height: 400px; max-height: 500px; overflow-y: auto;
+  white-space: pre-wrap; word-break: break-word;
+}
+.cs210-mpk .terminal .prompt { color: #7FB3D5; }
+.cs210-mpk .terminal .typed { color: #FFFFFF; }
+.cs210-mpk .terminal .out { color: #B5BEC8; }
+.cs210-mpk .terminal .note { color: #F0B92C; }
+.cs210-mpk .terminal .err { color: #F47A7A; }
+.cs210-mpk .terminal .ok { color: #7FD17F; }
+.cs210-mpk .terminal .dim { color: #6B7280; }
+
+.cs210-mpk .bit-pane {
+  background: #ffffff; border: 1px solid #D0D5DD; border-radius: 4px;
+  padding: 14px 16px; min-height: 400px; max-height: 500px; overflow-y: auto;
+}
+.cs210-mpk .bit-pane-header {
+  font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase;
+  font-weight: 600; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #E5E7EB;
+}
+
+.cs210-mpk .var-card {
+  background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 4px;
+  padding: 12px 14px; margin-bottom: 12px;
+}
+.cs210-mpk .var-decl {
+  font-family: Consolas, monospace; font-size: 13px; color: #00205B;
+  font-weight: 600; margin-bottom: 8px;
+}
+.cs210-mpk .field-legend {
+  display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 8px; font-size: 11px;
+}
+.cs210-mpk .legend-item { display: flex; align-items: center; gap: 5px; color: #4A5568; }
+.cs210-mpk .legend-swatch {
+  width: 12px; height: 12px; border-radius: 2px; border: 1px solid rgba(0,0,0,0.15);
+}
+.cs210-mpk .swatch-red   { background: #E5739B; }
+.cs210-mpk .swatch-green { background: #6FBF73; }
+.cs210-mpk .swatch-blue  { background: #6FA8DC; }
+
+.cs210-mpk .bit-grid {
+  display: grid; grid-template-columns: repeat(16, 1fr); gap: 2px;
+  margin-top: 4px; margin-bottom: 4px;
+}
+.cs210-mpk .bit-cell {
+  border: 1px solid #C7CFD9; text-align: center;
+  font-family: Consolas, monospace; font-size: 14px; font-weight: 700;
+  color: #6B7280; background: #E8EDF5; padding: 6px 0; border-radius: 2px;
+  transition: background 0.3s ease, color 0.3s ease, transform 0.3s ease;
+}
+.cs210-mpk .bit-cell.on { background: #003087; color: #ffffff; border-color: #00205B; }
+.cs210-mpk .bit-cell.field-red   { box-shadow: inset 0 -4px 0 0 #E5739B; }
+.cs210-mpk .bit-cell.field-green { box-shadow: inset 0 -4px 0 0 #6FBF73; }
+.cs210-mpk .bit-cell.field-blue  { box-shadow: inset 0 -4px 0 0 #6FA8DC; }
+.cs210-mpk .bit-cell.dim-field { opacity: 0.32; }
+.cs210-mpk .bit-cell.flipped { animation: cs210-mpk-flip 0.8s ease-out; }
+@keyframes cs210-mpk-flip {
+  0%   { transform: scale(1); background: #F0B92C; color: #1a1a1a; box-shadow: 0 0 0 0 rgba(240,185,44,0.7); }
+  50%  { transform: scale(1.15); background: #F0B92C; color: #1a1a1a; box-shadow: 0 0 0 8px rgba(240,185,44,0); }
+  100% { transform: scale(1); }
+}
+.cs210-mpk .bit-positions {
+  display: grid; grid-template-columns: repeat(16, 1fr); gap: 2px;
+  font-family: Consolas, monospace; font-size: 8.5px; color: #6B7280;
+  text-align: center; margin-bottom: 3px;
+}
+.cs210-mpk .bit-pos { padding: 1px 0; }
+.cs210-mpk .val-line {
+  font-family: Consolas, monospace; font-size: 12px; color: #4A5568;
+  margin-top: 8px; padding-top: 8px; border-top: 1px dashed #D0D5DD;
+}
+.cs210-mpk .val-line .big { font-size: 15px; font-weight: 700; color: #00205B; }
+.cs210-mpk .field-readout {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px;
+}
+.cs210-mpk .field-readout .fr-cell { text-align: center; font-size: 11px; color: #6B7280; }
+.cs210-mpk .field-readout .fr-cell .fr-lbl {
+  font-size: 9.5px; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 2px;
+}
+.cs210-mpk .field-readout .fr-cell .fr-val {
+  font-family: Consolas, monospace; font-size: 15px; font-weight: 700; color: #00205B;
+}
+.cs210-mpk .swatch-preview {
+  width: 100%; height: 26px; border-radius: 3px; border: 1px solid #C7CFD9; margin-top: 8px;
+}
+.cs210-mpk .empty {
+  color: #6B7280; font-style: italic; font-size: 13px; text-align: center; padding: 70px 10px;
+}
+
+.cs210-mpk .input-row {
+  display: flex; background: #1E2A3A; border-radius: 4px; padding: 8px 14px;
+  margin-bottom: 14px; border: 1px solid #003087;
+}
+.cs210-mpk .input-prompt {
+  color: #7FB3D5; font-family: Consolas, monospace; font-size: 14px;
+  margin-right: 8px; align-self: center; white-space: nowrap;
+}
+.cs210-mpk .input-row input {
+  flex: 1; background: transparent; color: #FFFFFF; border: none; outline: none;
+  font-family: Consolas, monospace; font-size: 14px; padding: 4px 0;
+}
+.cs210-mpk .controls { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+.cs210-mpk .btn {
+  background: #ffffff; border: 1px solid #C7CFD9; padding: 6px 14px; border-radius: 3px;
+  font-size: 13px; cursor: pointer; color: #00205B; font-family: inherit;
+  transition: box-shadow 0.2s ease;
+}
+.cs210-mpk .btn:hover { background: #F5F7FA; }
+@keyframes cs210-mpk-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(240, 185, 44, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0); }
+}
+.cs210-mpk .btn.pulse {
+  background: #FFF8E1; border-color: #F0B92C; color: #6B5300; font-weight: 600;
+  animation: cs210-mpk-pulse 1.5s infinite;
+}
+.cs210-mpk .help-note {
+  background: #F5F7FA; border: 1px solid #D0D5DD; padding: 12px 16px; border-radius: 3px;
+  font-size: 13px; color: #4A5568; margin-top: 12px;
+}
+.cs210-mpk .help-note strong { color: #00205B; }
+.cs210-mpk .help-note code {
+  font-family: Consolas, monospace; background: #ffffff; border: 1px solid #D0D5DD;
+  padding: 0 4px; border-radius: 2px; font-size: 12px; color: #00205B;
+}
+
+/* Name modal overlay */
+.cs210-mpk .name-modal-backdrop {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55); display: flex; align-items: center;
+  justify-content: center; z-index: 9999;
+}
+.cs210-mpk .name-modal {
+  background: #ffffff; border-radius: 6px; padding: 28px 32px; max-width: 440px;
+  width: 90%; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-mpk .name-modal h2 { color: #00205B; font-size: 20px; margin: 0 0 10px 0; }
+.cs210-mpk .name-modal p { color: #4A5568; font-size: 14px; line-height: 1.5; margin: 0 0 16px 0; }
+.cs210-mpk .name-modal input {
+  width: 100%; padding: 10px 12px; font-size: 15px; border: 1px solid #CBD5E0;
+  border-radius: 4px; margin-bottom: 14px; font-family: inherit;
+}
+.cs210-mpk .name-modal input:focus {
+  outline: none; border-color: #003087; box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-mpk .name-modal-btn {
+  background: #003087; color: #ffffff; border: none; padding: 10px 20px;
+  border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.cs210-mpk .name-modal-btn:disabled { background: #A0AEC0; cursor: not-allowed; }
+.cs210-mpk .name-modal-btn:not(:disabled):hover { background: #00205B; }
+
+/* Completion screen */
+.cs210-mpk .completion-screen {
+  background: #ffffff; border: 2px solid #2E7D32; border-radius: 6px;
+  padding: 24px 28px; margin-top: 16px;
+}
+.cs210-mpk .completion-screen .cs-heading { color: #1B5E20; font-size: 20px; font-weight: 600; margin: 0 0 6px 0; }
+.cs210-mpk .completion-screen .cs-name-line { font-size: 15px; color: #1a1a1a; margin-bottom: 16px; }
+.cs210-mpk .completion-screen .cs-name-line strong { color: #00205B; }
+.cs210-mpk .completion-screen .cs-code-block {
+  background: #F0F4FA; border: 1px solid #003087; border-radius: 4px;
+  padding: 16px 20px; display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; margin-bottom: 14px;
+}
+.cs210-mpk .completion-screen .cs-code-label {
+  font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: #4A5568; margin-bottom: 4px;
+}
+.cs210-mpk .completion-screen .cs-code-value {
+  font-family: 'Consolas', 'Courier New', monospace; font-size: 28px; font-weight: 700;
+  color: #00205B; letter-spacing: 3px;
+}
+.cs210-mpk .completion-screen .cs-copy-btn {
+  background: #003087; color: #ffffff; border: none; padding: 8px 14px; border-radius: 3px;
+  font-size: 13px; cursor: pointer; font-family: inherit;
+}
+.cs210-mpk .completion-screen .cs-copy-btn:hover { background: #00205B; }
+.cs210-mpk .completion-screen .cs-copy-btn.copied { background: #2E7D32; }
+.cs210-mpk .completion-screen .cs-timestamp { font-size: 13px; color: #6B7280; margin-bottom: 18px; }
+.cs210-mpk .completion-screen .cs-reminder {
+  background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 12px 16px; border-radius: 3px;
+  font-size: 14px; color: #6B5300; line-height: 1.5;
+}
+.cs210-mpk .completion-screen .cs-reminder strong { color: #4A3A00; }
+</style>
+
+<div class="cs210-mpk">
+
+<div class="name-modal-backdrop" id="mpk-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Blackboard reflection.</p>
+    <input type="text" id="mpk-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="mpk-cadet-name-btn" disabled>Start the walkthrough</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 35 &middot; Mask &amp; Pack Walkthrough</h1>
+<div class="subtitle">A 16-bit color word holds three fields at once: red, green, and blue. Type C expressions to pull a field out, clear it, drop a new value in, and pack three values into one integer. The right pane shows the bits and decodes the fields.</div>
+
+<div class="progress-bar"><div class="progress-fill" id="mpk-progress-fill" style="width: 0%;"></div></div>
+<div class="progress-label" id="mpk-progress-label">Task 0 of 10</div>
+
+<div class="section-header" id="mpk-section-header">Section 1: Extract a field</div>
+
+<div class="task-card" id="mpk-task-card">
+  <div class="task-label" id="mpk-task-label">Current task</div>
+  <div class="task-text" id="mpk-task-text">Loading...</div>
+  <div class="task-hint" id="mpk-task-hint"></div>
+</div>
+
+<div class="panes">
+  <div class="terminal" id="mpk-terminal"></div>
+  <div class="bit-pane">
+    <div class="bit-pane-header">Color word &amp; result</div>
+    <div id="mpk-area">
+      <div class="empty">Type an expression on the left.</div>
+    </div>
+  </div>
+</div>
+
+<div class="input-row">
+  <span class="input-prompt">expr&gt;</span>
+  <input type="text" id="mpk-input" autocomplete="off" spellcheck="false" placeholder="follow the task above">
+</div>
+
+<div class="controls">
+  <button class="btn" id="mpk-hint-btn">Show hint</button>
+  <button class="btn" id="mpk-reset-btn">Reset</button>
+  <button class="btn" id="mpk-mode-btn">Switch to free mode</button>
+</div>
+
+<div class="help-note">
+  <strong>RGB565 layout:</strong> a 16-bit <code>unsigned short</code> holds <code>red</code> in the top 5 bits (15&ndash;11), <code>green</code> in the middle 6 bits (10&ndash;5), and <code>blue</code> in the low 5 bits (4&ndash;0). The variable <code>color</code> is pre-loaded. Type any expression using <code>color</code>, numbers (decimal or <code>0x</code> hex), and the operators <code>&amp; | ^ ~ &lt;&lt; &gt;&gt;</code>. Parentheses work. Remember C precedence: shifts bind tighter than <code>&amp;</code>, which binds tighter than <code>|</code>.
+</div>
+
+<div id="mpk-completion-area"></div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-mpk');
+  if (!root) return;
+
+  // ============================================================
+  // Completion utility (FNV-1a -> 6-char code)
+  // ============================================================
+  const CS210_SALT = "lesson35_maskpack_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) { out += CS210_ALPHABET[Number(pool & 31n)]; pool >>= 5n; }
+    return out;
+  }
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#mpk-name-modal-backdrop');
+    const input = root.querySelector('#mpk-cadet-name-input');
+    const btn = root.querySelector('#mpk-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length >= 2) { cs210CadetName = stored.trim(); backdrop.style.display = 'none'; return; }
+    } catch (e) {}
+    function updateBtn() { btn.disabled = input.value.trim().length < 2; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', function(e) { if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); } });
+    btn.addEventListener('click', function() {
+      const name = input.value.trim();
+      if (name.length < 2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+      const siblings = document.querySelectorAll(
+        '#name-modal-backdrop, #bw-name-modal-backdrop, #ptrmath-name-modal-backdrop, #duality-name-modal-backdrop, #idioms-name-modal-backdrop'
+      );
+      siblings.forEach(function(m) { m.style.display = 'none'; });
+      const cli = root.querySelector('#mpk-input');
+      if (cli) cli.focus();
+    });
+    setTimeout(function() { input.focus(); }, 50);
+  })();
+
+  function cs210FallbackCopy(text) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e) {}
+  }
+  function cs210RenderCompletion(area) {
+    if (!area) return;
+    if (root.querySelector('#mpk-cs210-completion-overlay')) return;
+    const now = new Date();
+    const ts = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const safeName = (cs210CadetName || 'Cadet').replace(/[<>&"']/g, function(c) {
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+    area.innerHTML =
+      '<div class="completion-screen">' +
+        '<div class="cs-heading">Walkthrough complete</div>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block"><div><div class="cs-code-label">Completion code</div>' +
+        '<div class="cs-code-value">' + CS210_CODE + '</div></div></div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+      '</div>';
+    const overlay = document.createElement('div');
+    overlay.id = 'mpk-cs210-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.style.background = 'rgba(27, 94, 32, 0.55)';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">Walkthrough complete</h2>' +
+        '<p>Take a screenshot of this box. You will need the code and a visual of this screen for the Blackboard reflection.</p>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block"><div><div class="cs-code-label">Completion code</div>' +
+        '<div class="cs-code-value" id="mpk-cs-code-value">' + CS210_CODE + '</div></div>' +
+        '<button class="cs-copy-btn" id="mpk-cs-copy-btn" type="button">Copy code</button></div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+        '<div class="cs-reminder" style="margin-bottom:14px;">' +
+          '<strong>Next step:</strong> Open the Lesson 35 reflection in Blackboard. Enter this code, answer the reflection prompt, and attach your screenshot.' +
+        '</div>' +
+        '<button class="name-modal-btn" id="mpk-cs-overlay-close" type="button" style="background:#2E7D32;">Got it &mdash; close this</button>' +
+      '</div>';
+    root.appendChild(overlay);
+    const closeBtn = overlay.querySelector('#mpk-cs-overlay-close');
+    if (closeBtn) closeBtn.addEventListener('click', function() { overlay.style.display = 'none'; });
+    const copyBtn = overlay.querySelector('#mpk-cs-copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function() {
+        const text = CS210_CODE;
+        const ok = function() {
+          copyBtn.textContent = 'Copied'; copyBtn.classList.add('copied');
+          setTimeout(function() { copyBtn.textContent = 'Copy code'; copyBtn.classList.remove('copied'); }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(ok, function() { cs210FallbackCopy(text); ok(); });
+        } else { cs210FallbackCopy(text); ok(); }
+      });
+    }
+  }
+
+  // ============================================================
+  // RGB565 field layout
+  // ============================================================
+  const RED_SHIFT = 11, GREEN_SHIFT = 5, BLUE_SHIFT = 0;
+  const RED_MASK = 0x1F, GREEN_MASK = 0x3F, BLUE_MASK = 0x1F;
+  // Pre-loaded color: red=18, green=44, blue=9  ->  0x9589 (38281)
+  const COLOR_VALUE = ((18 & RED_MASK) << RED_SHIFT) | ((44 & GREEN_MASK) << GREEN_SHIFT) | (9 & BLUE_MASK);
+
+  // Which 0-based MSB-first cell index belongs to which field (bit 15 = index 0).
+  function fieldForBit(power) {
+    if (power >= 11) return 'red';
+    if (power >= 5) return 'green';
+    return 'blue';
+  }
+
+  // ============================================================
+  // Expression evaluator (16-bit unsigned, C precedence)
+  //   | (lowest)  <  ^  <  &  <  << >>  <  unary ~ / - (highest)
+  // ============================================================
+  function tokenize(src) {
+    const toks = [];
+    let i = 0;
+    const s = src;
+    while (i < s.length) {
+      const c = s[i];
+      if (/\s/.test(c)) { i++; continue; }
+      if (c === '0' && (s[i+1] === 'x' || s[i+1] === 'X')) {
+        let j = i + 2; let hex = '';
+        while (j < s.length && /[0-9a-fA-F]/.test(s[j])) { hex += s[j]; j++; }
+        if (hex.length === 0) throw new Error("malformed hex literal near '0x'");
+        toks.push({ t: 'num', v: parseInt(hex, 16) }); i = j; continue;
+      }
+      if (/[0-9]/.test(c)) {
+        let j = i; let num = '';
+        while (j < s.length && /[0-9]/.test(s[j])) { num += s[j]; j++; }
+        toks.push({ t: 'num', v: parseInt(num, 10) }); i = j; continue;
+      }
+      if (/[A-Za-z_]/.test(c)) {
+        let j = i; let id = '';
+        while (j < s.length && /[A-Za-z0-9_]/.test(s[j])) { id += s[j]; j++; }
+        toks.push({ t: 'id', v: id }); i = j; continue;
+      }
+      if (c === '<' || c === '>') {
+        if (s[i+1] === c) { toks.push({ t: 'op', v: c + c }); i += 2; continue; }
+        // single < or > used alone: detect logical-comparison misuse
+        if (s[i+1] === '=') { toks.push({ t: 'op', v: c + '=' }); i += 2; continue; }
+        toks.push({ t: 'op', v: c }); i += 1; continue;
+      }
+      if (c === '&' || c === '|') {
+        if (s[i+1] === c) { toks.push({ t: 'op', v: c + c }); i += 2; continue; } // && or ||
+        toks.push({ t: 'op', v: c }); i++; continue;
+      }
+      if (c === '^' || c === '~' || c === '(' || c === ')' || c === '-' || c === '=') {
+        if (c === '=' && s[i+1] === '=') { toks.push({ t: 'op', v: '==' }); i += 2; continue; }
+        toks.push({ t: 'op', v: c }); i++; continue;
+      }
+      throw new Error("unexpected character '" + c + "'");
+    }
+    return toks;
+  }
+
+  function evaluate(src) {
+    const toks = tokenize(src);
+    let pos = 0;
+    function peek() { return toks[pos]; }
+    function next() { return toks[pos++]; }
+    function expect(v) {
+      const tk = next();
+      if (!tk || tk.v !== v) throw new Error("expected '" + v + "'");
+    }
+    function guardLogical(op) {
+      if (op === '&&') throw new Error("that is '&&' (logical AND), not '&' (bitwise AND). For masking you want a single '&'.");
+      if (op === '||') throw new Error("that is '||' (logical OR), not '|' (bitwise OR). For combining fields you want a single '|'.");
+      if (op === '==' || op === '<' || op === '>' || op === '<=' || op === '>=')
+        throw new Error("comparison operator '" + op + "' is not a bitwise operator. Use & | ^ ~ << >> to work on bits.");
+    }
+    // precedence-climbing
+    function parsePrimary() {
+      const tk = peek();
+      if (!tk) throw new Error("unexpected end of expression");
+      if (tk.t === 'op' && tk.v === '(') { next(); const e = parseExpr(0); expect(')'); return e; }
+      if (tk.t === 'op' && tk.v === '~') { next(); return (~parseUnary()) & 0xFFFF; }
+      if (tk.t === 'op' && tk.v === '-') { next(); return (-parseUnary()) & 0xFFFF; }
+      if (tk.t === 'num') { next(); return tk.v & 0xFFFF; }
+      if (tk.t === 'id') {
+        next();
+        if (tk.v === 'color') return COLOR_VALUE & 0xFFFF;
+        throw new Error("unknown name '" + tk.v + "'. The only variable here is 'color'.");
+      }
+      throw new Error("unexpected token '" + tk.v + "'");
+    }
+    function parseUnary() { return parsePrimary(); }
+    // binary precedence table (higher binds tighter)
+    const PREC = { '|': 1, '^': 2, '&': 3, '<<': 4, '>>': 4 };
+    function parseExpr(minPrec) {
+      let left = parseUnary();
+      while (true) {
+        const tk = peek();
+        if (!tk || tk.t !== 'op') break;
+        guardLogical(tk.v);
+        const prec = PREC[tk.v];
+        if (prec === undefined || prec < minPrec) break;
+        next();
+        const right = parseExpr(prec + 1);
+        left = applyOp(tk.v, left, right);
+      }
+      return left;
+    }
+    function applyOp(op, a, b) {
+      let r;
+      switch (op) {
+        case '|': r = a | b; break;
+        case '^': r = a ^ b; break;
+        case '&': r = a & b; break;
+        case '<<': r = a << b; break;
+        case '>>': r = a >>> b; break; // unsigned right shift
+        default: throw new Error("operator '" + op + "' not supported");
+      }
+      return r & 0xFFFF;
+    }
+    const result = parseExpr(0);
+    if (pos < toks.length) throw new Error("unexpected trailing tokens");
+    return result;
+  }
+
+  // ============================================================
+  // State
+  // ============================================================
+  let currentTaskIndex = 0;
+  let consecutiveFails = 0;
+  let mode = "walkthrough";
+  let lastResult = null;        // numeric result of last successful eval
+  let lastHighlightField = null; // 'red'|'green'|'blue'|null
+  let prevResultBits = null;     // for flip animation between results
+
+  // ============================================================
+  // Terminal
+  // ============================================================
+  const terminalEl = root.querySelector('#mpk-terminal');
+  function termWrite(text, cls) {
+    const span = document.createElement('span');
+    if (cls) span.className = cls;
+    span.textContent = text; terminalEl.appendChild(span);
+  }
+  function termLine(text, cls) {
+    termWrite(text, cls); terminalEl.appendChild(document.createElement('br'));
+    terminalEl.scrollTop = terminalEl.scrollHeight;
+  }
+  function echoCommand(cmd) { termWrite('expr> ', 'prompt'); termLine(cmd, 'typed'); }
+
+  // ============================================================
+  // Rendering
+  // ============================================================
+  const areaEl = root.querySelector('#mpk-area');
+  function bitsFromUnsigned(u) {
+    const bits = [];
+    for (let i = 15; i >= 0; i--) bits.push((u >> i) & 1);
+    return bits;
+  }
+  function toHex16(u) { return "0x" + (u & 0xFFFF).toString(16).toUpperCase().padStart(4, "0"); }
+
+  function renderBitGrid(value, opts) {
+    opts = opts || {};
+    const bits = bitsFromUnsigned(value);
+    const showFields = opts.showFields;
+    const highlight = opts.highlight || null;   // field to keep bright, others dimmed
+    const flipFrom = opts.flipFrom || null;     // previous bit array for flip animation
+    let positions = '<div class="bit-positions">';
+    for (let i = 0; i < 16; i++) { positions += '<div class="bit-pos">' + (15 - i) + '</div>'; }
+    positions += '</div>';
+    let grid = '<div class="bit-grid">';
+    for (let i = 0; i < 16; i++) {
+      const power = 15 - i;
+      const field = fieldForBit(power);
+      const cls = ['bit-cell'];
+      if (bits[i] === 1) cls.push('on');
+      if (showFields) cls.push('field-' + field);
+      if (highlight && field !== highlight) cls.push('dim-field');
+      if (flipFrom && flipFrom[i] !== bits[i]) cls.push('flipped');
+      grid += '<div class="' + cls.join(' ') + '">' + bits[i] + '</div>';
+    }
+    grid += '</div>';
+    return positions + grid;
+  }
+
+  function decodeFields(value) {
+    return {
+      r: (value >> RED_SHIFT) & RED_MASK,
+      g: (value >> GREEN_SHIFT) & GREEN_MASK,
+      b: (value >> BLUE_SHIFT) & BLUE_MASK,
+    };
+  }
+  function swatchCss(value) {
+    const f = decodeFields(value);
+    const r8 = Math.round(f.r * 255 / 31);
+    const g8 = Math.round(f.g * 255 / 63);
+    const b8 = Math.round(f.b * 255 / 31);
+    return 'rgb(' + r8 + ',' + g8 + ',' + b8 + ')';
+  }
+
+  function renderArea() {
+    const f = decodeFields(COLOR_VALUE);
+    let html = '';
+    // The color word card (always shown, with field spans)
+    html += '<div class="var-card">' +
+      '<div class="var-decl">unsigned short color = ' + toHex16(COLOR_VALUE) + ';  // ' + COLOR_VALUE + '</div>' +
+      '<div class="field-legend">' +
+        '<span class="legend-item"><span class="legend-swatch swatch-red"></span>red (15&ndash;11)</span>' +
+        '<span class="legend-item"><span class="legend-swatch swatch-green"></span>green (10&ndash;5)</span>' +
+        '<span class="legend-item"><span class="legend-swatch swatch-blue"></span>blue (4&ndash;0)</span>' +
+      '</div>' +
+      renderBitGrid(COLOR_VALUE, { showFields: true }) +
+      '<div class="field-readout">' +
+        '<div class="fr-cell"><div class="fr-lbl">red</div><div class="fr-val">' + f.r + '</div></div>' +
+        '<div class="fr-cell"><div class="fr-lbl">green</div><div class="fr-val">' + f.g + '</div></div>' +
+        '<div class="fr-cell"><div class="fr-lbl">blue</div><div class="fr-val">' + f.b + '</div></div>' +
+      '</div>' +
+      '<div class="swatch-preview" style="background:' + swatchCss(COLOR_VALUE) + ';"></div>' +
+    '</div>';
+
+    // The result card (only after an expression has been evaluated)
+    if (lastResult !== null) {
+      const curBits = bitsFromUnsigned(lastResult);
+      const rf = decodeFields(lastResult);
+      html += '<div class="var-card" style="border-color:#003087;">' +
+        '<div class="var-decl">result = ' + toHex16(lastResult) + ';  // ' + lastResult + '</div>' +
+        renderBitGrid(lastResult, { showFields: true, highlight: lastHighlightField, flipFrom: prevResultBits }) +
+        '<div class="val-line">unsigned value: <span class="big">' + lastResult + '</span> &nbsp; (' + toHex16(lastResult) + ')</div>' +
+        (lastHighlightField ?
+          '<div class="field-readout">' +
+            '<div class="fr-cell"><div class="fr-lbl">red</div><div class="fr-val">' + rf.r + '</div></div>' +
+            '<div class="fr-cell"><div class="fr-lbl">green</div><div class="fr-val">' + rf.g + '</div></div>' +
+            '<div class="fr-cell"><div class="fr-lbl">blue</div><div class="fr-val">' + rf.b + '</div></div>' +
+          '</div>' : '') +
+      '</div>';
+      prevResultBits = curBits;
+    }
+    areaEl.innerHTML = html;
+  }
+
+  // ============================================================
+  // Tasks
+  // ============================================================
+  // Each task: section?, label, text, hint, target (numeric), highlight (field|null),
+  //            requires (array of regexes that the raw expr must satisfy), note.
+  const tasks = [
+    // Section 1: Extract a field
+    {
+      section: 'Section 1: Extract a field',
+      label: 'Task 1 of 10',
+      text: 'Blue lives in the low 5 bits, so no shift is needed. Extract the blue channel: mask color with the 5-bit mask. Type the expression that gives blue.',
+      hint: 'color & 0x1F',
+      target: COLOR_VALUE & 0x1F,
+      highlight: 'blue',
+      requires: [/color/, /&/, /0x1f|31/i],
+      note: 'blue = color & 0x1F. The mask 0x1F is 00011111, five 1s. ANDing keeps only the low five bits and zeroes everything above. Because blue already sits at the bottom, no shift is needed.',
+    },
+    {
+      label: 'Task 2 of 10',
+      text: 'Green sits in the middle (bits 10&ndash;5). First shift it down to the bottom, then mask off the 6 bits. Extract the green channel.',
+      hint: '(color >> 5) & 0x3F',
+      target: (COLOR_VALUE >> GREEN_SHIFT) & GREEN_MASK,
+      highlight: 'green',
+      requires: [/color/, />>/, /5/, /&/, /0x3f|63/i],
+      note: 'green = (color >> 5) & 0x3F. Shift right by 5 to slide the green field down to bit 0, then mask with 0x3F (six 1s) to drop the red bits that are now above it. Shift first, then mask: that is the extract idiom for a field that is not already at the bottom.',
+    },
+    {
+      label: 'Task 3 of 10',
+      text: 'Red is the top field (bits 15&ndash;11). Shift it down by 11 and mask the 5 bits. Extract the red channel.',
+      hint: '(color >> 11) & 0x1F',
+      target: (COLOR_VALUE >> RED_SHIFT) & RED_MASK,
+      highlight: 'red',
+      requires: [/color/, />>/, /11/, /&/, /0x1f|31/i],
+      note: 'red = (color >> 11) & 0x1F. Red is the highest field, so after shifting right by 11 the red bits land at the bottom with nothing above them. The & 0x1F is good defensive habit even when the field is already at the top.',
+    },
+
+    // Section 2: Build a mask, clear a field
+    {
+      section: 'Section 2: Build a mask and clear a field',
+      label: 'Task 4 of 10',
+      text: 'Build the green field mask: the 6-bit mask <code>0x3F</code> shifted up into the green position (bits 10&ndash;5). Type the expression that produces that mask.',
+      hint: '0x3F << 5',
+      target: (0x3F << 5) & 0xFFFF,
+      highlight: null,
+      requires: [/0x3f|63/i, /<</, /5/],
+      note: 'mask = 0x3F << 5 = 0x07E0. A field mask is the all-ones pattern for the field width, shifted up to where the field lives. This mask has 1s exactly over bits 10 through 5 and 0s everywhere else.',
+    },
+    {
+      label: 'Task 5 of 10',
+      text: 'Clear the green field: AND color with the <em>inverse</em> of the green mask. The result keeps red and blue but zeroes green. Type it.',
+      hint: 'color & ~(0x3F << 5)',
+      target: COLOR_VALUE & (~((0x3F << 5)) & 0xFFFF),
+      highlight: 'green',
+      requires: [/color/, /&/, /~/, /0x3f|63/i, /<</, /5/],
+      note: 'cleared = color & ~(0x3F << 5). The ~ flips the field mask into a "keep everything except this field" mask. ANDing with it forces the green bits to 0 and leaves red and blue untouched. Clearing a field is always step one of replacing it.',
+    },
+
+    // Section 3: Modify a field in place
+    {
+      section: 'Section 3: Replace a field in place',
+      label: 'Task 6 of 10',
+      text: 'Set blue to its maximum (all five blue bits on) without disturbing red or green. Clear the blue field, then OR in <code>0x1F</code>. Type the full expression.',
+      hint: '(color & ~0x1F) | 0x1F',
+      target: (COLOR_VALUE & (~0x1F & 0xFFFF)) | 0x1F,
+      highlight: 'blue',
+      requires: [/color/, /&/, /~/, /\|/, /0x1f|31/i],
+      note: 'result = (color & ~0x1F) | 0x1F. Clear-then-OR: AND with ~0x1F to wipe the blue field, then OR the new blue value into place. Because blue sits at the bottom, the new value needs no shift. Red and green are preserved.',
+    },
+    {
+      label: 'Task 7 of 10',
+      text: 'Replace green with the value <code>20</code>. Clear the green field, then OR in 20 shifted into the green position. Type the full expression.',
+      hint: '(color & ~(0x3F << 5)) | (20 << 5)',
+      target: (COLOR_VALUE & (~((0x3F << 5)) & 0xFFFF)) | ((20 & 0x3F) << 5),
+      highlight: 'green',
+      requires: [/color/, /&/, /~/, /0x3f|63/i, /\|/, /20/, /<</, /5/],
+      note: 'result = (color & ~(0x3F << 5)) | (20 << 5). Same clear-then-OR pattern, but the new value must be shifted up by 5 to land in the green field. This is exactly what set_green does in the lab. Notice the parentheses around (20 << 5): without them, C precedence would bite, because | is lower than <<, so it would still work here, but parenthesizing makes intent obvious.',
+    },
+
+    // Section 4: Pack three values into one integer
+    {
+      section: 'Section 4: Pack three values into one word',
+      label: 'Task 8 of 10',
+      text: 'Pack pure magenta: red <code>31</code>, green <code>0</code>, blue <code>31</code>. Shift each value into its field and OR them together. Type the packing expression.',
+      hint: '(31 << 11) | (0 << 5) | 31',
+      target: ((31 & 0x1F) << 11) | ((0 & 0x3F) << 5) | (31 & 0x1F),
+      highlight: null,
+      requires: [/31/, /<</, /11/, /\|/],
+      note: 'magenta = (31 << 11) | (0 << 5) | 31. Packing is the reverse of extracting: shift each field value up to its position, then OR the pieces together into one word. Magenta is full red + full blue + no green.',
+    },
+    {
+      label: 'Task 9 of 10',
+      text: 'Pack a teal: red <code>0</code>, green <code>63</code>, blue <code>20</code>. Type the packing expression.',
+      hint: '(0 << 11) | (63 << 5) | 20',
+      target: ((0 & 0x1F) << 11) | ((63 & 0x3F) << 5) | (20 & 0x1F),
+      highlight: null,
+      requires: [/63/, /<</, /5/, /\|/, /20/],
+      note: 'teal = (0 << 11) | (63 << 5) | 20. Green at its max (63), blue at 20, no red. Each value fits its field width, so nothing bleeds into a neighbor. Compare the result grid to the green and blue spans.',
+    },
+    {
+      label: 'Task 10 of 10',
+      text: 'Last one. Mask each value before shifting so an over-range input can never spill into a neighbor field. Pack red <code>40</code>, green <code>10</code>, blue <code>3</code> defensively: AND each value with its field mask first. Type it.',
+      hint: '((40 & 0x1F) << 11) | ((10 & 0x3F) << 5) | (3 & 0x1F)',
+      target: ((40 & 0x1F) << 11) | ((10 & 0x3F) << 5) | (3 & 0x1F),
+      highlight: null,
+      requires: [/40/, /&/, /0x1f|31/i, /<</, /11/, /10/, /0x3f|63/i, /\|/, /3/],
+      note: 'result = ((40 & 0x1F) << 11) | ((10 & 0x3F) << 5) | (3 & 0x1F). 40 does not fit in 5 bits (max 31), so 40 & 0x1F clamps it to 8 before shifting. Masking each value before it goes in is the safe packing idiom: it guarantees one field can never corrupt another, no matter what a caller passes. The lab autograder checks for exactly this kind of defensive masking.',
+    },
+  ];
+
+  // ============================================================
+  // Controller
+  // ============================================================
+  function runAndShow(raw) {
+    const result = evaluate(raw);   // throws on error
+    lastResult = result;
+    return result;
+  }
+
+  function checkTask(rawCmd) {
+    if (mode === "free" || currentTaskIndex >= tasks.length) return null;
+    const t = tasks[currentTaskIndex];
+    echoCommand(rawCmd);
+    let result;
+    try {
+      result = runAndShow(rawCmd);
+    } catch (e) {
+      termLine('  error: ' + e.message, 'err');
+      consecutiveFails++;
+      if (consecutiveFails >= 2) showHintPulse();
+      return false;
+    }
+    const structureOk = t.requires.every(re => re.test(rawCmd));
+    if (result === t.target && structureOk) {
+      lastHighlightField = t.highlight;
+      termLine('  = ' + result + '   (' + toHex16(result) + ')', 'ok');
+      if (t.note) { termLine('', 'out'); termLine('  ' + t.note, 'note'); }
+      currentTaskIndex++;
+      consecutiveFails = 0;
+      hideHintPulse();
+      renderArea();
+      renderTask();
+      if (currentTaskIndex >= tasks.length) {
+        setMode("free");
+        termLine('', 'out');
+        termLine('  Mask & pack walkthrough complete. Free mode unlocked.', 'note');
+      }
+      return true;
+    } else {
+      // Show what their expression produced, then explain the mismatch.
+      lastHighlightField = null;
+      renderArea();
+      termLine('  = ' + result + '   (' + toHex16(result) + ')', 'out');
+      if (result === t.target && !structureOk) {
+        termLine('  Right value, but build it with masks and shifts on color, not as a bare number.', 'err');
+      } else {
+        termLine('  Not the value this task is asking for. Check the task card, or click \u2018Show hint\u2019.', 'err');
+      }
+      consecutiveFails++;
+      if (consecutiveFails >= 2) showHintPulse();
+      return false;
+    }
+  }
+
+  function freeRun(rawCmd) {
+    echoCommand(rawCmd);
+    try {
+      const result = runAndShow(rawCmd);
+      lastHighlightField = null;
+      termLine('  = ' + result + '   (' + toHex16(result) + ')', 'ok');
+      renderArea();
+    } catch (e) {
+      termLine('  error: ' + e.message, 'err');
+    }
+  }
+
+  function renderTask() {
+    const fill = root.querySelector('#mpk-progress-fill');
+    const label = root.querySelector('#mpk-progress-label');
+    const card = root.querySelector('#mpk-task-card');
+    const labelEl = root.querySelector('#mpk-task-label');
+    const textEl = root.querySelector('#mpk-task-text');
+    const hintEl = root.querySelector('#mpk-task-hint');
+    const sectionEl = root.querySelector('#mpk-section-header');
+    const completionArea = root.querySelector('#mpk-completion-area');
+
+    const pct = (currentTaskIndex / tasks.length) * 100;
+    fill.style.width = pct + '%';
+    label.textContent = 'Task ' + Math.min(currentTaskIndex + 1, tasks.length) + ' of ' + tasks.length;
+
+    if (currentTaskIndex >= tasks.length) {
+      card.className = 'task-card complete';
+      labelEl.textContent = 'Complete';
+      textEl.innerHTML = 'You extracted fields, built masks, cleared and replaced a field in place, and packed three values into one word. That is every move the RGB565 lab asks for.';
+      hintEl.textContent = '';
+      fill.style.width = '100%';
+      label.textContent = 'All tasks complete';
+      sectionEl.textContent = 'All done';
+      completionArea.innerHTML = '';
+      cs210RenderCompletion(completionArea);
+      return;
+    }
+    completionArea.innerHTML = '';
+    card.className = 'task-card';
+    const t = tasks[currentTaskIndex];
+    if (t.section) sectionEl.textContent = t.section;
+    labelEl.textContent = t.label;
+    textEl.innerHTML = t.text;
+    hintEl.textContent = '';
+  }
+
+  function showHint() {
+    if (currentTaskIndex >= tasks.length) return;
+    const t = tasks[currentTaskIndex];
+    root.querySelector('#mpk-task-hint').innerHTML = 'Hint: <code>' + t.hint + '</code>';
+    hideHintPulse();
+  }
+  function showHintPulse() { root.querySelector('#mpk-hint-btn').classList.add('pulse'); }
+  function hideHintPulse() { root.querySelector('#mpk-hint-btn').classList.remove('pulse'); }
+
+  function setMode(newMode) {
+    mode = newMode;
+    const btn = root.querySelector('#mpk-mode-btn');
+    if (mode === "free") {
+      btn.textContent = 'Return to walkthrough';
+      btn.style.background = '#E6F4EA'; btn.style.borderColor = '#2E7D32'; btn.style.color = '#1B5E20';
+      root.querySelector('#mpk-input').placeholder = 'free mode: any expression on color';
+    } else {
+      btn.textContent = 'Switch to free mode';
+      btn.style.background = ''; btn.style.borderColor = ''; btn.style.color = '';
+      root.querySelector('#mpk-input').placeholder = 'follow the task above';
+    }
+  }
+
+  function reset() {
+    currentTaskIndex = 0; consecutiveFails = 0;
+    lastResult = null; lastHighlightField = null; prevResultBits = null;
+    hideHintPulse(); setMode("walkthrough");
+    terminalEl.innerHTML = '';
+    termLine('Mask & pack walkthrough.', 'dim');
+    termLine('color is pre-loaded. Type expressions using color, numbers, and & | ^ ~ << >>.', 'dim');
+    termLine('', 'out');
+    renderArea();
+    renderTask();
+  }
+
+  // ============================================================
+  // Input wiring
+  // ============================================================
+  const inputEl = root.querySelector('#mpk-input');
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const v = inputEl.value; inputEl.value = '';
+      if (!v.trim()) return;
+      if (mode === "walkthrough") checkTask(v); else freeRun(v);
+    }
+  });
+  root.querySelector('#mpk-hint-btn').addEventListener('click', showHint);
+  root.querySelector('#mpk-reset-btn').addEventListener('click', reset);
+  root.querySelector('#mpk-mode-btn').addEventListener('click', () => {
+    if (mode === "walkthrough") {
+      setMode("free"); termLine('', 'out'); termLine('  Free mode. Any expression runs.', 'note');
+    } else {
+      setMode("walkthrough"); termLine('', 'out'); termLine('  Walkthrough mode. Follow the task card above.', 'note');
+    }
+  });
+
+  reset();
+})();
+</script>
+
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 32px 0 10px 0;">Bitwise Idioms Self-Check</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Eight questions on the patterns you meet in real systems and security code. Answer each, submit, and move on. The score card gives you your completion code.</p>
+
+<!-- ============================================================
+     CS210 Lesson 35 - Bitwise Idioms Self-Check Quiz
+     Card/slide flow: one question per card, Submit + Next/Back.
+     Score card at the end with per-question recap.
+     Two-salt completion code: passing (>=70%) vs non-passing.
+     ============================================================ -->
+<style>
+.cs210-idq * { box-sizing: border-box; }
+.cs210-idq {
+  font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; line-height: 1.55;
+  max-width: 980px; margin: 0 auto; padding: 20px; background: #ffffff; position: relative;
+}
+.cs210-idq h1 { color: #00205B; font-size: 24px; margin: 0 0 6px 0; }
+.cs210-idq .subtitle { color: #4A5568; font-size: 14px; margin-bottom: 18px; }
+
+.cs210-idq .dots { display: flex; gap: 8px; justify-content: center; margin-bottom: 18px; flex-wrap: wrap; }
+.cs210-idq .dot {
+  width: 12px; height: 12px; border-radius: 50%; background: #E5E7EB;
+  border: 1px solid #C7CFD9; transition: background 0.2s ease, transform 0.2s ease;
+}
+.cs210-idq .dot.current { background: #003087; border-color: #00205B; transform: scale(1.25); }
+.cs210-idq .dot.correct { background: #2E7D32; border-color: #1B5E20; }
+.cs210-idq .dot.incorrect { background: #B8002F; border-color: #6B0000; }
+.cs210-idq .dot.score { width: 16px; height: 12px; border-radius: 3px; background: #F0B92C; border-color: #B88800; }
+
+.cs210-idq .card {
+  background: #ffffff; border: 1px solid #D0D5DD; border-radius: 6px;
+  padding: 32px 38px; margin-bottom: 14px; min-height: 380px; display: flex; flex-direction: column;
+}
+.cs210-idq .card.answered.correct { border-left: 4px solid #2E7D32; }
+.cs210-idq .card.answered.incorrect { border-left: 4px solid #B8002F; }
+
+.cs210-idq .q-label {
+  font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase;
+  font-weight: 600; margin-bottom: 12px;
+}
+.cs210-idq .q-text { font-size: 16px; margin-bottom: 20px; color: #1a1a1a; }
+.cs210-idq .q-text code {
+  background: #F5F7FA; border: 1px solid #D0D5DD; padding: 1px 6px; border-radius: 3px;
+  font-family: Consolas, monospace; font-size: 14px; color: #00205B;
+}
+.cs210-idq .code-block {
+  background: #1E2A3A; color: #E8EDF5; font-family: Consolas, monospace; font-size: 13.5px;
+  line-height: 1.5; border-radius: 4px; padding: 12px 16px; margin-bottom: 18px; white-space: pre-wrap;
+}
+
+.cs210-idq .options { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
+.cs210-idq .option {
+  display: flex; align-items: center; padding: 12px 16px; border: 1px solid #D0D5DD;
+  border-radius: 4px; cursor: pointer; font-size: 15px; background: #ffffff;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.cs210-idq .option:hover:not(.disabled) { background: #F5F7FA; border-color: #003087; }
+.cs210-idq .option.disabled { cursor: default; }
+.cs210-idq .option input[type="radio"] { margin-right: 12px; accent-color: #003087; }
+.cs210-idq .option.selected { border-color: #003087; background: #F0F4FA; }
+.cs210-idq .option.reveal-correct { border-color: #2E7D32; background: #E6F4EA; font-weight: 600; }
+.cs210-idq .option.incorrect { border-color: #B8002F; background: #FCE8E8; }
+.cs210-idq .option code {
+  font-family: Consolas, monospace; font-size: 13.5px; background: #F0F2F5;
+  padding: 0 4px; border-radius: 2px; color: #00205B;
+}
+
+.cs210-idq .feedback { padding: 12px 16px; border-radius: 4px; font-size: 14.5px; margin-bottom: 4px; }
+.cs210-idq .feedback.correct { background: #E6F4EA; border-left: 3px solid #2E7D32; color: #1B5E20; }
+.cs210-idq .feedback.incorrect { background: #FCE8E8; border-left: 3px solid #B8002F; color: #6B0000; }
+.cs210-idq .feedback code {
+  background: rgba(255, 255, 255, 0.7); padding: 1px 5px; border-radius: 2px;
+  font-family: Consolas, monospace; font-size: 13.5px;
+}
+
+.cs210-idq .spacer { flex: 1; }
+.cs210-idq .nav-row { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; gap: 10px; }
+.cs210-idq .nav-btn { padding: 10px 18px; border-radius: 4px; font-size: 14px; cursor: pointer; font-family: inherit; font-weight: 600; transition: background 0.15s ease; }
+.cs210-idq .nav-btn.back { background: #ffffff; border: 1px solid #C7CFD9; color: #00205B; }
+.cs210-idq .nav-btn.back:hover:not(:disabled) { background: #F5F7FA; }
+.cs210-idq .nav-btn.primary { background: #003087; border: 1px solid #00205B; color: #ffffff; }
+.cs210-idq .nav-btn.primary:hover:not(:disabled) { background: #00205B; }
+.cs210-idq .nav-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.cs210-idq .nav-position { font-size: 13px; color: #6B7280; font-weight: 500; }
+
+.cs210-idq .score-card { text-align: center; }
+.cs210-idq .score-big { font-size: 52px; font-weight: 700; color: #00205B; margin: 4px 0 0 0; line-height: 1; }
+.cs210-idq .score-card.full-correct .score-big { color: #1B5E20; }
+.cs210-idq .score-label { font-size: 13px; color: #6B7280; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 14px; }
+.cs210-idq .score-message { font-size: 16px; color: #1a1a1a; margin-bottom: 22px; max-width: 640px; margin-left: auto; margin-right: auto; }
+.cs210-idq .score-message.good-job { font-size: 22px; font-weight: 700; color: #1B5E20; margin-bottom: 12px; }
+
+.cs210-idq .recap { text-align: left; margin-top: 18px; padding-top: 18px; border-top: 1px solid #E5E7EB; }
+.cs210-idq .recap-title { font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; font-weight: 600; margin-bottom: 10px; }
+.cs210-idq .recap-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid #F0F2F5; font-size: 14px; }
+.cs210-idq .recap-item:last-child { border-bottom: none; }
+.cs210-idq .recap-icon { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #ffffff; }
+.cs210-idq .recap-icon.correct { background: #2E7D32; }
+.cs210-idq .recap-icon.incorrect { background: #B8002F; }
+.cs210-idq .recap-body { flex: 1; }
+.cs210-idq .recap-question { color: #1a1a1a; margin-bottom: 4px; }
+.cs210-idq .recap-explanation { font-size: 13px; color: #4A5568; font-style: italic; }
+.cs210-idq .recap-explanation code { font-family: Consolas, monospace; font-style: normal; background: #F5F7FA; border: 1px solid #D0D5DD; padding: 1px 5px; border-radius: 2px; font-size: 12.5px; color: #00205B; }
+
+.cs210-idq .reset-row { margin-top: 22px; text-align: center; }
+.cs210-idq .reset-btn { background: #ffffff; border: 1px solid #C7CFD9; padding: 10px 22px; border-radius: 4px; font-size: 14px; cursor: pointer; color: #00205B; font-family: inherit; font-weight: 600; }
+.cs210-idq .reset-btn:hover { background: #F5F7FA; }
+
+.cs210-idq .help-note { background: #F5F7FA; border: 1px solid #D0D5DD; padding: 12px 16px; border-radius: 3px; font-size: 13px; color: #4A5568; margin-top: 18px; }
+.cs210-idq .help-note strong { color: #00205B; }
+
+/* Name modal */
+.cs210-idq .name-modal-backdrop {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 32, 91, 0.55);
+  display: flex; align-items: center; justify-content: center; z-index: 9999;
+}
+.cs210-idq .name-modal { background: #ffffff; border-radius: 6px; padding: 28px 32px; max-width: 440px; width: 90%; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25); }
+.cs210-idq .name-modal h2 { color: #00205B; font-size: 20px; margin: 0 0 10px 0; }
+.cs210-idq .name-modal p { color: #4A5568; font-size: 14px; line-height: 1.5; margin: 0 0 16px 0; }
+.cs210-idq .name-modal input { width: 100%; padding: 10px 12px; font-size: 15px; border: 1px solid #CBD5E0; border-radius: 4px; margin-bottom: 14px; font-family: inherit; }
+.cs210-idq .name-modal input:focus { outline: none; border-color: #003087; box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15); }
+.cs210-idq .name-modal-btn { background: #003087; color: #ffffff; border: none; padding: 10px 20px; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.cs210-idq .name-modal-btn:disabled { background: #A0AEC0; cursor: not-allowed; }
+.cs210-idq .name-modal-btn:not(:disabled):hover { background: #00205B; }
+
+/* Completion code block on the score card */
+.cs210-idq .cs-code-block {
+  background: #F0F4FA; border: 1px solid #003087; border-radius: 4px; padding: 16px 20px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  margin: 18px auto 14px auto; max-width: 460px;
+}
+.cs210-idq .cs-code-block.nonpass { border-color: #B88800; background: #FFF8E1; }
+.cs210-idq .cs-code-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: #4A5568; margin-bottom: 4px; text-align: left; }
+.cs210-idq .cs-code-value { font-family: Consolas, monospace; font-size: 28px; font-weight: 700; color: #00205B; letter-spacing: 3px; }
+.cs210-idq .cs-copy-btn { background: #003087; color: #ffffff; border: none; padding: 8px 14px; border-radius: 3px; font-size: 13px; cursor: pointer; font-family: inherit; }
+.cs210-idq .cs-copy-btn:hover { background: #00205B; }
+.cs210-idq .cs-copy-btn.copied { background: #2E7D32; }
+.cs210-idq .cs-reminder { background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 12px 16px; border-radius: 3px; font-size: 14px; color: #6B5300; line-height: 1.5; max-width: 600px; margin: 0 auto 4px auto; text-align: left; }
+.cs210-idq .cs-reminder strong { color: #4A3A00; }
+</style>
+
+<div class="cs210-idq">
+
+<div class="name-modal-backdrop" id="idioms-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear with your completion code on the score card so you can include it in your screenshot for the Blackboard reflection.</p>
+    <input type="text" id="idioms-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="idioms-cadet-name-btn" disabled>Start the quiz</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 35 &middot; Bitwise Idioms Self-Check</h1>
+<div class="subtitle">Eight questions on the bit patterns you meet in real systems and security code: permission bits, packed color, flag registers, and the precedence traps that turn a one-character slip into a silent bug. Answer each, submit, and move forward.</div>
+
+<div class="dots" id="idioms-dots"></div>
+<div id="idioms-card-area"></div>
+
+<div class="help-note">
+  <strong>How this works:</strong> One question per card. Pick your answer and click Submit. Feedback appears, then click Next. Answers lock once submitted, so think before you submit. Score 70 percent or higher to earn the passing completion code for the Lesson 35 reflection.
+</div>
+
+<div id="idioms-completion-area"></div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-idq');
+  if (!root) return;
+
+  // ============================================================
+  // Completion utility (two salts: passing vs non-passing)
+  // ============================================================
+  const SALT_PASS = "lesson35_idioms_completed";
+  const SALT_FAIL = "lesson35_idioms_incomplete";
+  const ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  function fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0; }
+    return h >>> 0;
+  }
+  function codeFromSalt(salt) {
+    const h1 = fnv1a(salt); const h2 = fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n); let out = '';
+    for (let i = 0; i < 6; i++) { out += ALPHABET[Number(pool & 31n)]; pool >>= 5n; }
+    return out;
+  }
+  const CODE_PASS = codeFromSalt(SALT_PASS);
+  const CODE_FAIL = codeFromSalt(SALT_FAIL);
+  const PASS_THRESHOLD = 0.70;
+  let cadetName = '';
+
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#idioms-name-modal-backdrop');
+    const input = root.querySelector('#idioms-cadet-name-input');
+    const btn = root.querySelector('#idioms-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length >= 2) { cadetName = stored.trim(); backdrop.style.display = 'none'; return; }
+    } catch (e) {}
+    function updateBtn() { btn.disabled = input.value.trim().length < 2; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', function(e) { if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); } });
+    btn.addEventListener('click', function() {
+      const name = input.value.trim();
+      if (name.length < 2) return;
+      cadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+      const siblings = document.querySelectorAll('#name-modal-backdrop, #bw-name-modal-backdrop, #mpk-name-modal-backdrop, #ptrmath-name-modal-backdrop, #duality-name-modal-backdrop');
+      siblings.forEach(function(m) { m.style.display = 'none'; });
+    });
+    setTimeout(function() { input.focus(); }, 50);
+  })();
+
+  function fallbackCopy(text) {
+    try {
+      const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+    } catch (e) {}
+  }
+
+  // ============================================================
+  // Questions
+  // ============================================================
+  const questions = [
+    {
+      id: 'q1',
+      text: 'In a Unix-style permission byte, the read/write/execute bits for the owner sit in bits 8&ndash;6 (counting from 0). What does this expression extract?',
+      code: '(mode >> 6) & 0x7',
+      options: [
+        'The full permission byte unchanged',
+        'The owner\u2019s three permission bits (read, write, execute), as a value 0 to 7',
+        'Only the execute bit for the owner',
+        'The group\u2019s three permission bits',
+      ],
+      correct: 1,
+      correctFeedback: 'Shift the owner field down to the bottom (>> 6), then mask the low three bits (& 0x7). That is the extract-a-field idiom: shift, then mask. The result is 0 to 7.',
+      incorrectFeedback: 'The shift <code>>> 6</code> slides the owner field down to bit 0; the mask <code>& 0x7</code> keeps just those three bits. The result is the owner\u2019s rwx bits as a value 0 to 7.',
+      shortLabel: 'What <code>(mode >> 6) & 0x7</code> extracts',
+    },
+    {
+      id: 'q2',
+      text: 'A pixel is stored in RGB565: red in bits 15&ndash;11, green in 10&ndash;5, blue in 4&ndash;0. Which expression extracts the green channel as a value 0 to 63?',
+      options: [
+        '<code>pixel & 0x3F</code>',
+        '<code>(pixel >> 5) &amp; 0x3F</code>',
+        '<code>(pixel &amp; 0x3F) >> 5</code>',
+        '<code>pixel >> 5</code>',
+      ],
+      correct: 1,
+      correctFeedback: 'Green is not at the bottom, so you must shift it down first (>> 5), then mask the six green bits (& 0x3F). Masking before shifting (option 3) would keep the wrong bits; shifting without masking (option 4) leaves red on top.',
+      incorrectFeedback: 'The correct expression is <code>(pixel >> 5) &amp; 0x3F</code>. Shift the green field down to bit 0, then mask its six bits. <code>pixel &amp; 0x3F</code> grabs the blue bits; <code>pixel >> 5</code> leaves the red bits sitting above green.',
+      shortLabel: 'Extract green from an RGB565 pixel',
+    },
+    {
+      id: 'q3',
+      text: 'A status register uses bit 3 as the "error" flag. Which expression is true exactly when the error flag is set?',
+      options: [
+        '<code>flags &amp; 8</code>',
+        '<code>flags &amp; 3</code>',
+        '<code>flags >> 3</code>',
+        '<code>flags | 8</code>',
+      ],
+      correct: 0,
+      correctFeedback: 'Bit 3 has the value 2^3 = 8, so 0x08 is the single-bit mask for it. flags & 8 is nonzero (true) exactly when bit 3 is set. flags | 8 would set the bit, not test it.',
+      incorrectFeedback: 'The correct test is <code>flags &amp; 8</code>. Bit 3 is worth 2^3 = 8. ANDing with that one-bit mask is nonzero only when bit 3 is on. <code>flags | 8</code> sets the bit rather than testing it; <code>&amp; 3</code> tests the wrong bits.',
+      shortLabel: 'Test whether bit 3 (value 8) is set',
+    },
+    {
+      id: 'q4',
+      text: 'You want to turn OFF bit 5 of <code>reg</code> while leaving every other bit alone. Which expression does that?',
+      options: [
+        '<code>reg &amp; (1 &lt;&lt; 5)</code>',
+        '<code>reg | (1 &lt;&lt; 5)</code>',
+        '<code>reg &amp; ~(1 &lt;&lt; 5)</code>',
+        '<code>reg ^ (1 &lt;&lt; 5)</code>',
+      ],
+      correct: 2,
+      correctFeedback: 'Clearing a bit is AND with the inverted mask. ~(1 << 5) is all 1s except a 0 at bit 5, so ANDing forces bit 5 to 0 and preserves the rest. | sets the bit, ^ toggles it, and & without the ~ keeps only that bit.',
+      incorrectFeedback: 'The clear idiom is <code>reg &amp; ~(1 &lt;&lt; 5)</code>. The <code>~</code> turns the single-bit mask into a "keep all but this bit" mask. <code>|</code> sets the bit, <code>^</code> toggles it, and <code>reg &amp; (1 &lt;&lt; 5)</code> throws away every other bit.',
+      shortLabel: 'Clear a single bit, preserve the rest',
+    },
+    {
+      id: 'q5',
+      text: 'This setter is supposed to drop a new 6-bit green value into an RGB565 pixel without disturbing red or blue. One step is missing or wrong. Which version is correct?',
+      code: '// goal: replace the green field (bits 10-5) with g',
+      options: [
+        '<code>pixel | (g &lt;&lt; 5)</code>',
+        '<code>(pixel &amp; ~(0x3F &lt;&lt; 5)) | ((g &amp; 0x3F) &lt;&lt; 5)</code>',
+        '<code>(pixel &amp; (0x3F &lt;&lt; 5)) | (g &lt;&lt; 5)</code>',
+        '<code>pixel &amp; ~(g &lt;&lt; 5)</code>',
+      ],
+      correct: 1,
+      correctFeedback: 'Replace = clear then OR. Clear the green field with & ~(0x3F << 5), then OR in the new value shifted into place. Masking g with 0x3F first stops an over-range value from bleeding into red. Option 1 ORs without clearing (bits can only turn on, never off).',
+      incorrectFeedback: 'The correct version is <code>(pixel &amp; ~(0x3F &lt;&lt; 5)) | ((g &amp; 0x3F) &lt;&lt; 5)</code>. You must clear the field first (<code>&amp; ~mask</code>) or old bits survive; then OR the new value in. <code>pixel | (g &lt;&lt; 5)</code> can only set bits, never clear them, so green never goes down.',
+      shortLabel: 'Correct clear-then-OR field setter',
+    },
+    {
+      id: 'q6',
+      text: 'A classic low-level trick: this expression clears the lowest set bit of <code>x</code> (turns the rightmost 1 into a 0). Which is it?',
+      options: [
+        '<code>x &amp; (x - 1)</code>',
+        '<code>x | (x - 1)</code>',
+        '<code>x ^ (x + 1)</code>',
+        '<code>x &amp; (x + 1)</code>',
+      ],
+      correct: 0,
+      correctFeedback: 'x - 1 flips the lowest set bit and everything below it; ANDing with x clears that lowest set bit and keeps the higher bits. Repeating x = x & (x - 1) is how you count set bits one at a time.',
+      incorrectFeedback: 'The idiom is <code>x &amp; (x - 1)</code>. Subtracting 1 flips the lowest set bit to 0 and the zeros below it to 1; ANDing with the original clears exactly that lowest set bit. It is the core of the population-count loop.',
+      shortLabel: 'Idiom that clears the lowest set bit',
+    },
+    {
+      id: 'q7',
+      text: 'A developer writes <code>if (flags &amp; MASK == 0)</code> to check whether none of the masked bits are set. In C, <code>==</code> binds tighter than <code>&amp;</code>. What does the condition actually compute?',
+      options: [
+        'It works as intended: (flags &amp; MASK) compared to 0',
+        'It computes <code>flags &amp; (MASK == 0)</code>, almost always the wrong thing',
+        'It is a compile error',
+        'It always evaluates to true',
+      ],
+      correct: 1,
+      correctFeedback: 'Because == is higher precedence than &, C reads it as flags & (MASK == 0). MASK == 0 is almost always 0, so the whole thing is flags & 0 = 0 (false) regardless of the flags. The fix is parentheses: (flags & MASK) == 0. This exact bug has shipped in real security code.',
+      incorrectFeedback: 'C parses it as <code>flags &amp; (MASK == 0)</code> because <code>==</code> outranks <code>&amp;</code>. <code>MASK == 0</code> is 0 for any nonzero mask, so the test collapses to <code>flags &amp; 0</code>, always 0. Always parenthesize: <code>(flags &amp; MASK) == 0</code>.',
+      shortLabel: 'Precedence bug in <code>flags &amp; MASK == 0</code>',
+    },
+    {
+      id: 'q8',
+      text: 'Two flags are defined as <code>#define READY 0x01</code> and <code>#define ARMED 0x02</code>. Which expression turns BOTH on in <code>state</code> at once, leaving other bits untouched?',
+      options: [
+        '<code>state = READY &amp; ARMED</code>',
+        '<code>state |= READY | ARMED</code>',
+        '<code>state |= READY &amp;&amp; ARMED</code>',
+        '<code>state = READY | ARMED</code>',
+      ],
+      correct: 1,
+      correctFeedback: 'OR the two single-bit masks together (READY | ARMED = 0x03), then OR that into state with |= so other bits survive. Plain = would wipe the other bits; & combines them wrong; && is logical and yields just 1.',
+      incorrectFeedback: 'The correct line is <code>state |= READY | ARMED</code>. <code>READY | ARMED</code> is the combined mask 0x03; <code>|=</code> sets those bits without clearing the rest. Plain <code>=</code> overwrites everything else; <code>&amp;</code> and <code>&amp;&amp;</code> do not combine flags.',
+      shortLabel: 'Set two flag bits at once',
+    },
+  ];
+
+  const state = questions.map(() => ({ answered: false, correct: false, choice: null }));
+  let currentIndex = 0;
+
+  const cardArea = root.querySelector('#idioms-card-area');
+  const dotsArea = root.querySelector('#idioms-dots');
+
+  function renderDots() {
+    dotsArea.innerHTML = '';
+    for (let i = 0; i < questions.length; i++) {
+      const d = document.createElement('div');
+      d.className = 'dot';
+      if (i === currentIndex && currentIndex < questions.length) d.classList.add('current');
+      else if (state[i].answered) d.classList.add(state[i].correct ? 'correct' : 'incorrect');
+      dotsArea.appendChild(d);
+    }
+    const scoreDot = document.createElement('div');
+    scoreDot.className = 'dot score';
+    if (currentIndex === questions.length) scoreDot.classList.add('current');
+    dotsArea.appendChild(scoreDot);
+  }
+
+  function submitAnswer(i) {
+    if (state[i].answered || state[i].choice === null) return;
+    state[i].answered = true;
+    state[i].correct = (state[i].choice === questions[i].correct);
+    render();
+  }
+
+  function buildQuestionCard(i) {
+    const q = questions[i];
+    const card = document.createElement('div');
+    card.className = 'card';
+    if (state[i].answered) { card.classList.add('answered'); card.classList.add(state[i].correct ? 'correct' : 'incorrect'); }
+
+    const label = document.createElement('div');
+    label.className = 'q-label';
+    label.textContent = 'Question ' + (i + 1) + ' of ' + questions.length;
+    card.appendChild(label);
+
+    const text = document.createElement('div');
+    text.className = 'q-text';
+    text.innerHTML = q.text;
+    card.appendChild(text);
+
+    if (q.code) {
+      const cb = document.createElement('div');
+      cb.className = 'code-block';
+      cb.textContent = q.code;
+      card.appendChild(cb);
+    }
+
+    const opts = document.createElement('div');
+    opts.className = 'options';
+    q.options.forEach((optHtml, j) => {
+      const opt = document.createElement('label');
+      opt.className = 'option';
+      if (state[i].answered) opt.classList.add('disabled');
+      if (state[i].choice === j) opt.classList.add('selected');
+      if (state[i].answered) {
+        if (j === q.correct) opt.classList.add('reveal-correct');
+        if (state[i].choice === j && j !== q.correct) opt.classList.add('incorrect');
+      }
+      const radio = document.createElement('input');
+      radio.type = 'radio'; radio.name = q.id; radio.value = j; radio.disabled = state[i].answered;
+      if (state[i].choice === j) radio.checked = true;
+      radio.addEventListener('change', () => { if (state[i].answered) return; state[i].choice = j; render(); });
+      opt.appendChild(radio);
+      const span = document.createElement('span');
+      span.innerHTML = optHtml;
+      opt.appendChild(span);
+      opts.appendChild(opt);
+    });
+    card.appendChild(opts);
+
+    if (state[i].answered) {
+      const fb = document.createElement('div');
+      fb.className = 'feedback ' + (state[i].correct ? 'correct' : 'incorrect');
+      fb.innerHTML = (state[i].correct ? '<strong>Correct.</strong> ' : '<strong>Not quite.</strong> ') +
+                     (state[i].correct ? q.correctFeedback : q.incorrectFeedback);
+      card.appendChild(fb);
+    }
+
+    const spacer = document.createElement('div'); spacer.className = 'spacer'; card.appendChild(spacer);
+
+    const nav = document.createElement('div');
+    nav.className = 'nav-row';
+    const backBtn = document.createElement('button');
+    backBtn.className = 'nav-btn back'; backBtn.innerHTML = '&larr; Back'; backBtn.disabled = (i === 0);
+    backBtn.addEventListener('click', () => { if (i > 0) { currentIndex--; render(); } });
+    nav.appendChild(backBtn);
+    const positionLabel = document.createElement('div');
+    positionLabel.className = 'nav-position';
+    positionLabel.textContent = (i + 1) + ' / ' + questions.length;
+    nav.appendChild(positionLabel);
+    if (!state[i].answered) {
+      const submitBtn = document.createElement('button');
+      submitBtn.className = 'nav-btn primary'; submitBtn.textContent = 'Submit';
+      submitBtn.disabled = (state[i].choice === null);
+      submitBtn.addEventListener('click', () => submitAnswer(i));
+      nav.appendChild(submitBtn);
+    } else {
+      const nextBtn = document.createElement('button');
+      nextBtn.className = 'nav-btn primary';
+      nextBtn.innerHTML = (i === questions.length - 1) ? 'See score &rarr;' : 'Next &rarr;';
+      nextBtn.addEventListener('click', () => { currentIndex++; render(); });
+      nav.appendChild(nextBtn);
+    }
+    card.appendChild(nav);
+    return card;
+  }
+
+  function renderCompletionBlock(container, passed) {
+    const code = passed ? CODE_PASS : CODE_FAIL;
+    const block = document.createElement('div');
+    block.className = 'cs-code-block' + (passed ? '' : ' nonpass');
+    block.innerHTML =
+      '<div><div class="cs-code-label">Completion code</div>' +
+      '<div class="cs-code-value" id="idioms-cs-code-value">' + code + '</div></div>' +
+      '<button class="cs-copy-btn" id="idioms-cs-copy-btn" type="button">Copy code</button>';
+    container.appendChild(block);
+
+    const reminder = document.createElement('div');
+    reminder.className = 'cs-reminder';
+    reminder.innerHTML = passed
+      ? '<strong>Next step:</strong> Take a screenshot of this card. Enter this code in the Lesson 35 reflection in Blackboard and attach the screenshot.'
+      : '<strong>Below the passing line.</strong> Review the recap, then click "Take the quiz again." You can still record this code, but aim for 70 percent or higher before you submit your reflection.';
+    container.appendChild(reminder);
+
+    const copyBtn = block.querySelector('#idioms-cs-copy-btn');
+    copyBtn.addEventListener('click', function() {
+      const ok = function() { copyBtn.textContent = 'Copied'; copyBtn.classList.add('copied'); setTimeout(function() { copyBtn.textContent = 'Copy code'; copyBtn.classList.remove('copied'); }, 1500); };
+      if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(code).then(ok, function() { fallbackCopy(code); ok(); }); }
+      else { fallbackCopy(code); ok(); }
+    });
+  }
+
+  function buildScoreCard() {
+    const card = document.createElement('div');
+    card.className = 'card score-card';
+    const correctCount = state.filter(s => s.correct).length;
+    const passed = (correctCount / questions.length) >= PASS_THRESHOLD;
+    if (correctCount === questions.length) card.classList.add('full-correct');
+
+    const label = document.createElement('div');
+    label.className = 'q-label'; label.textContent = 'Quiz complete';
+    card.appendChild(label);
+
+    const msg = document.createElement('div');
+    if (correctCount === questions.length) { msg.className = 'score-message good-job'; msg.textContent = 'Perfect score. You read bit patterns like a systems programmer.'; }
+    else if (passed) { msg.className = 'score-message good-job'; msg.textContent = 'Passing. Nice work.'; }
+    else { msg.className = 'score-message good-job'; msg.style.color = '#6B0000'; msg.textContent = 'Below the passing line.'; }
+    card.appendChild(msg);
+
+    const scoreBig = document.createElement('div');
+    scoreBig.className = 'score-big'; scoreBig.textContent = correctCount + ' / ' + questions.length;
+    card.appendChild(scoreBig);
+    const scoreLabel = document.createElement('div');
+    scoreLabel.className = 'score-label'; scoreLabel.textContent = 'questions correct';
+    card.appendChild(scoreLabel);
+
+    const safeName = (cadetName || 'Cadet').replace(/[<>&"']/g, function(c) { return { '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;' }[c]; });
+    const nameLine = document.createElement('div');
+    nameLine.className = 'score-message';
+    nameLine.innerHTML = 'Cadet: <strong style="color:#00205B;">' + safeName + '</strong>';
+    card.appendChild(nameLine);
+
+    renderCompletionBlock(card, passed);
+
+    const recap = document.createElement('div');
+    recap.className = 'recap';
+    const recapTitle = document.createElement('div');
+    recapTitle.className = 'recap-title'; recapTitle.textContent = 'Question recap';
+    recap.appendChild(recapTitle);
+    state.forEach((s, i) => {
+      const item = document.createElement('div'); item.className = 'recap-item';
+      const icon = document.createElement('div'); icon.className = 'recap-icon ' + (s.correct ? 'correct' : 'incorrect');
+      icon.textContent = s.correct ? '\u2713' : '\u2717'; item.appendChild(icon);
+      const body = document.createElement('div'); body.className = 'recap-body';
+      const qLine = document.createElement('div'); qLine.className = 'recap-question';
+      qLine.innerHTML = '<strong>Q' + (i + 1) + '.</strong> ' + questions[i].shortLabel;
+      body.appendChild(qLine);
+      if (!s.correct) { const exp = document.createElement('div'); exp.className = 'recap-explanation'; exp.innerHTML = questions[i].incorrectFeedback; body.appendChild(exp); }
+      item.appendChild(body); recap.appendChild(item);
+    });
+    card.appendChild(recap);
+
+    const resetRow = document.createElement('div'); resetRow.className = 'reset-row';
+    const resetBtn = document.createElement('button'); resetBtn.className = 'reset-btn'; resetBtn.textContent = 'Take the quiz again';
+    resetBtn.addEventListener('click', reset); resetRow.appendChild(resetBtn);
+    card.appendChild(resetRow);
+
+    const nav = document.createElement('div'); nav.className = 'nav-row';
+    const backBtn = document.createElement('button'); backBtn.className = 'nav-btn back'; backBtn.innerHTML = '&larr; Review questions';
+    backBtn.addEventListener('click', () => { currentIndex = questions.length - 1; render(); });
+    nav.appendChild(backBtn);
+    const sp = document.createElement('div'); sp.style.flex = '1'; nav.appendChild(sp);
+    card.appendChild(nav);
+    return card;
+  }
+
+  function render() {
+    renderDots();
+    cardArea.innerHTML = '';
+    if (currentIndex >= questions.length) cardArea.appendChild(buildScoreCard());
+    else cardArea.appendChild(buildQuestionCard(currentIndex));
+  }
+
+  function reset() {
+    state.forEach(s => { s.answered = false; s.correct = false; s.choice = null; });
+    currentIndex = 0; render();
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (!root.contains(document.activeElement) && document.activeElement !== document.body) return;
+    if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+    if (e.key === 'ArrowLeft' && currentIndex > 0) { currentIndex--; render(); }
+    else if (e.key === 'ArrowRight') { if (currentIndex >= questions.length) return; if (state[currentIndex].answered) { currentIndex++; render(); } }
+  });
+
+  render();
+})();
+</script>
+
+
+    </div>
+  </details>
+
+  <!-- ===================== 6. AFTER CLASS ===================== -->
+  <details id="after-class" style="margin-bottom: 24px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      6. After Class
+    </summary>
+    <div style="padding: 18px 22px;">
+      <ul style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Finish Lab 35 if you did not complete it in class. Commit and push through GitHub Classroom before Lesson 36.</li>
+        <li style="margin-bottom: 6px;">Complete the Lesson 35 reflection in Blackboard. Enter both widget completion codes and answer the reflection prompt.</li>
+        <li style="margin-bottom: 6px;">Replay the walkthrough in free mode. Try packing a color of your own, then extract each field back out and confirm you get your inputs.</li>
+        <li style="margin-bottom: 0;">Next up: Lesson 36 introduces function pointers, the last big idea in functional decomposition.</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== HELP NOTE ===================== -->
+  <div style="background: #F5F7FA; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 3px; font-size: 13.5px; color: #4A5568;">
+    <strong style="color: #00205B;">Need help?</strong> Schedule EI with your instructor. Bring the specific expression or function that is not behaving, the value you put in, and the value you got out. A field that comes out wrong is almost always a shift or a mask off by a few bits; print the value in binary and line it up against the layout.
+  </div>
+
+</div>

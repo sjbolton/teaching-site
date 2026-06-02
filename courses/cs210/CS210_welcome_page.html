@@ -1,0 +1,297 @@
+<!-- ============================================================
+     CS210 — Programming Fundamentals
+     Main Content Page (Blackboard Ultra / Original compatible)
+     Self-contained: all CSS inline. No external dependencies.
+     Paste into Blackboard's HTML editor (source view).
+     ============================================================ -->
+
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 1100px; margin: 0 auto; line-height: 1.55;">
+
+  <!-- ===================== HEADER BANNER ===================== -->
+  <div style="background: linear-gradient(135deg, #003087 0%, #00205B 100%); color: #ffffff; padding: 32px 36px; border-radius: 6px 6px 0 0; border-bottom: 4px solid #B5B7BA;">
+    <div style="font-size: 13px; letter-spacing: 2px; color: #B5B7BA; text-transform: uppercase; margin-bottom: 6px;">United States Air Force Academy &middot; Department of Computer and Cyber Sciences</div>
+    <h1 style="margin: 0 0 8px 0; font-size: 34px; font-weight: 600; letter-spacing: 0.5px;">CS210 &middot; Programming Fundamentals</h1>
+    <div style="font-size: 16px; color: #DCE3F0;">Fall 2026 &middot; Course Director: Maj Sarah Bolton</div>
+  </div>
+
+  <!-- ===================== WELCOME ===================== -->
+  <div style="background: #ffffff; padding: 28px 36px; border: 1px solid #D0D5DD; border-top: none;">
+    <h2 style="color: #00205B; font-size: 22px; margin: 0 0 12px 0; padding-bottom: 8px; border-bottom: 2px solid #003087;">Welcome to CS210</h2>
+    <p style="margin: 0 0 14px 0; font-size: 15px;">
+      This course builds your proficiency in the C programming language and gives you a working understanding of how programs execute on a machine. You will work directly with memory, organize code across multiple files, and develop the professional habits of testing, debugging, documentation, and version control that produce correct and maintainable software.
+    </p>
+    <p style="margin: 0; font-size: 15px;">
+      Each lesson is two hours. Expect roughly 30 to 45 minutes of focused instruction followed by hands-on lab time. Labs not finished in class become homework. Come ready to write code, ask questions, and debug systematically.
+    </p>
+  </div>
+
+  <!-- ===================== ANNOUNCEMENTS ===================== -->
+  <div style="background: #ffffff; padding: 24px 36px; border: 1px solid #D0D5DD; border-top: none;">
+    <h2 style="color: #00205B; font-size: 20px; margin: 0 0 14px 0;">Announcements</h2>
+    <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; border-radius: 3px; margin-bottom: 10px;">
+      <div style="font-weight: 600; color: #6B5300; font-size: 14px; margin-bottom: 4px;">Welcome to CS210!</div>
+      <div style="font-size: 14px; color: #5A4B00;">Day one is toolchain setup. Bring a laptop that can run VMware Workstation Pro; we will get your course Linux VM up and running, then walk through gcc and Git basics together. Looking forward to a great semester!</div>
+    </div>
+  </div>
+
+  <!-- ===================== COURSE OUTCOMES ===================== -->
+  <div style="background: #ffffff; padding: 24px 36px; border: 1px solid #D0D5DD; border-top: none;">
+    <h2 style="color: #00205B; font-size: 22px; margin: 0 0 14px 0; padding-bottom: 8px; border-bottom: 2px solid #003087;">Course Outcomes</h2>
+    <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0; font-style: italic;">By the end of CS210, cadets will be able to:</p>
+    <ol style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+      <li style="margin-bottom: 8px;">Apply fundamental programming concepts including selection, iteration, recursion, user-defined functions, and logical, arithmetic, and bitwise operators to solve computational problems.</li>
+      <li style="margin-bottom: 8px;">Develop C programs using pointers, dynamic memory, structs, multi-file organization, and basic data structures such as linked lists, stacks, and queues.</li>
+      <li style="margin-bottom: 8px;">Apply the engineering design process to develop, implement, debug, and evaluate algorithmic solutions to complex computing problems, including systematic testing and error handling to produce correct and robust programs.</li>
+      <li style="margin-bottom: 8px;">Communicate technical and ethical reasoning through clear writing and formal presentation.</li>
+      <li style="margin-bottom: 8px;">Analyze an ethical issue in computing using the ACM Computer Science Code of Ethics and articulate a reasoned position.</li>
+      <li style="margin-bottom: 8px;">Collaborate as a contributing member of a software development team using shared version control workflows and team coding conventions.</li>
+      <li style="margin-bottom: 0;">Apply professional development practices including modular design, procedural abstraction, defensive programming, integrated development environments, version control, build automation, and code documentation.</li>
+    </ol>
+  </div>
+
+  <!-- ===================== SCHEDULE AT A GLANCE ===================== -->
+  <div style="background: #F5F7FA; padding: 24px 36px; border: 1px solid #D0D5DD; border-top: none;">
+    <h2 style="color: #00205B; font-size: 22px; margin: 0 0 14px 0; padding-bottom: 8px; border-bottom: 2px solid #003087;">Schedule at a Glance</h2>
+    <p style="font-size: 14px; color: #4A5568; margin: 0 0 18px 0;">Forty-one lessons across five blocks. Major assessments are flagged at the right.</p>
+
+    <!-- Block 1 -->
+    <div style="background: #ffffff; border: 1px solid #C7CFD9; border-left: 5px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+      <div style="display: table; width: 100%;">
+        <div style="display: table-cell; width: 70%; vertical-align: top;">
+          <div style="font-weight: 600; color: #00205B; font-size: 16px; margin-bottom: 4px;">Block 1 &middot; Bridging Python to C</div>
+          <div style="font-size: 13.5px; color: #4A5568;">Lessons 1 to 8 &middot; Toolchain, types, operators, conditionals, loops, functions, Make</div>
+        </div>
+        <div style="display: table-cell; width: 30%; vertical-align: top; text-align: right; font-size: 13px; color: #6B7280;">
+          <span style="display: inline-block; background: #E8EDF5; color: #00205B; padding: 3px 10px; border-radius: 12px; font-weight: 600; margin-bottom: 4px;">GR1 at L8</span><br>
+          <span style="font-size: 12px;">PEX1 assigned L8 &middot; 2 quizzes</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Block 2 -->
+    <div style="background: #ffffff; border: 1px solid #C7CFD9; border-left: 5px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+      <div style="display: table; width: 100%;">
+        <div style="display: table-cell; width: 70%; vertical-align: top;">
+          <div style="font-weight: 600; color: #00205B; font-size: 16px; margin-bottom: 4px;">Block 2 &middot; Memory and Pointers</div>
+          <div style="font-size: 13.5px; color: #4A5568;">Lessons 9 to 17 &middot; Arrays, strings, recursion I, pointers, malloc/free, valgrind</div>
+        </div>
+        <div style="display: table-cell; width: 30%; vertical-align: top; text-align: right; font-size: 13px; color: #6B7280;">
+          <span style="display: inline-block; background: #FCE8E8; color: #8B1A1A; padding: 3px 10px; border-radius: 12px; font-weight: 600; margin-bottom: 4px;">GR2 / Midterm at L17</span><br>
+          <span style="font-size: 12px;">PEX1 due L14 &middot; 4 quizzes</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Block 3 -->
+    <div style="background: #ffffff; border: 1px solid #C7CFD9; border-left: 5px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+      <div style="display: table; width: 100%;">
+        <div style="display: table-cell; width: 70%; vertical-align: top;">
+          <div style="font-weight: 600; color: #00205B; font-size: 16px; margin-bottom: 4px;">Block 3 &middot; Composite Data, Files, Project Setup</div>
+          <div style="font-size: 13.5px; color: #4A5568;">Lessons 18 to 27 &middot; Structs, multi-file, file I/O, design, Git in depth, testing, ethics</div>
+        </div>
+        <div style="display: table-cell; width: 30%; vertical-align: top; text-align: right; font-size: 13px; color: #6B7280;">
+          <span style="display: inline-block; background: #E8EDF5; color: #00205B; padding: 3px 10px; border-radius: 12px; font-weight: 600; margin-bottom: 4px;">PEX2 due L26</span><br>
+          <span style="font-size: 12px;">Team PEX assigned L22 &middot; 2 quizzes</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Block 4 -->
+    <div style="background: #ffffff; border: 1px solid #C7CFD9; border-left: 5px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+      <div style="display: table; width: 100%;">
+        <div style="display: table-cell; width: 70%; vertical-align: top;">
+          <div style="font-weight: 600; color: #00205B; font-size: 16px; margin-bottom: 4px;">Block 4 &middot; Data Structures, Recursion in Practice, Advanced Topics</div>
+          <div style="font-size: 13.5px; color: #4A5568;">Lessons 28 to 36 &middot; Linked lists, stacks/queues, recursion II/III, bitwise, function pointers</div>
+        </div>
+        <div style="display: table-cell; width: 30%; vertical-align: top; text-align: right; font-size: 13px; color: #6B7280;">
+          <span style="display: inline-block; background: #E8EDF5; color: #00205B; padding: 3px 10px; border-radius: 12px; font-weight: 600; margin-bottom: 4px;">GR3 at L28</span><br>
+          <span style="font-size: 12px;">2 quizzes</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Block 5 -->
+    <div style="background: #ffffff; border: 1px solid #C7CFD9; border-left: 5px solid #003087; padding: 16px 20px; margin-bottom: 0; border-radius: 3px;">
+      <div style="display: table; width: 100%;">
+        <div style="display: table-cell; width: 70%; vertical-align: top;">
+          <div style="font-weight: 600; color: #00205B; font-size: 16px; margin-bottom: 4px;">Block 5 &middot; Synthesis and Final</div>
+          <div style="font-size: 13.5px; color: #4A5568;">Lessons 37 to 41 &middot; Defensive programming, memory layout, presentations, cumulative assessment</div>
+        </div>
+        <div style="display: table-cell; width: 30%; vertical-align: top; text-align: right; font-size: 13px; color: #6B7280;">
+          <span style="display: inline-block; background: #FCE8E8; color: #8B1A1A; padding: 3px 10px; border-radius: 12px; font-weight: 600; margin-bottom: 4px;">GR4 / Final at L41</span><br>
+          <span style="font-size: 12px;">Team PEX presentations L39</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== GRADING ===================== -->
+  <div style="background: #ffffff; padding: 24px 36px; border: 1px solid #D0D5DD; border-top: none;">
+    <h2 style="color: #00205B; font-size: 22px; margin: 0 0 14px 0; padding-bottom: 8px; border-bottom: 2px solid #003087;">Grading</h2>
+    <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Course total: 1000 points. Labs and reflections are reported in two categories: a <strong>programming</strong> grade covering the first 15 graded lessons (your midterm standing) and a <strong>final</strong> grade covering the remaining 20.</p>
+
+    <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+      <thead>
+        <tr style="background: #00205B; color: #ffffff;">
+          <th style="padding: 10px 14px; text-align: left; font-weight: 600;">Component</th>
+          <th style="padding: 10px 14px; text-align: center; font-weight: 600; width: 110px;">Points</th>
+          <th style="padding: 10px 14px; text-align: center; font-weight: 600; width: 90px;">Weight</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="background: #F8FAFC;">
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB;">10 Quizzes (20 pts each)</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB; text-align: center;">200</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB; text-align: center;">20%</td>
+        </tr>
+        <tr>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB;">Graded Review 1 (GR1)</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB; text-align: center;">100</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB; text-align: center;">10%</td>
+        </tr>
+        <tr style="background: #F8FAFC;">
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB;">Graded Review 2 / Midterm (GR2)</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB; text-align: center;">100</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB; text-align: center;">10%</td>
+        </tr>
+        <tr>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB;">Graded Review 3 (GR3)</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB; text-align: center;">100</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB; text-align: center;">10%</td>
+        </tr>
+        <tr style="background: #F8FAFC;">
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB;">Graded Review 4 / Final (GR4)</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB; text-align: center;">100</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB; text-align: center;">10%</td>
+        </tr>
+        <tr>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB;">PEX1 (due L14)</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB; text-align: center;">40</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB; text-align: center;">4%</td>
+        </tr>
+        <tr style="background: #F8FAFC;">
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB;">PEX2 (due L26)</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB; text-align: center;">65</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB; text-align: center;">6.5%</td>
+        </tr>
+        <tr>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB;">Team PEX / Final Project (due L39)</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB; text-align: center;">150</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB; text-align: center;">15%</td>
+        </tr>
+        <tr style="background: #F8FAFC;">
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB;">Labs &mdash; programming half (15 lessons &times; 2 pts)</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB; text-align: center;">30</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB; text-align: center;">3%</td>
+        </tr>
+        <tr>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB;">Labs &mdash; final half (20 lessons &times; 2 pts)</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB; text-align: center;">40</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB; text-align: center;">4%</td>
+        </tr>
+        <tr style="background: #F8FAFC;">
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB;">Reflections &mdash; programming half (15 lessons &times; 1 pt)</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB; text-align: center;">15</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB; text-align: center;">1.5%</td>
+        </tr>
+        <tr>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB;">Reflections &mdash; final half (20 lessons &times; 1 pt)</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB; text-align: center;">20</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB; text-align: center;">2%</td>
+        </tr>
+        <tr style="background: #F8FAFC;">
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB;">Ethics discussion</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB; text-align: center;">40</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #E5E7EB; text-align: center;">4%</td>
+        </tr>
+        <tr style="background: #00205B; color: #ffffff; font-weight: 600;">
+          <td style="padding: 11px 14px;">Total</td>
+          <td style="padding: 11px 14px; text-align: center;">1000</td>
+          <td style="padding: 11px 14px; text-align: center;">100%</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ===================== KEY POLICIES ===================== -->
+  <div style="background: #F5F7FA; padding: 24px 36px; border: 1px solid #D0D5DD; border-top: none;">
+    <h2 style="color: #00205B; font-size: 22px; margin: 0 0 14px 0; padding-bottom: 8px; border-bottom: 2px solid #003087;">Key Policies</h2>
+
+    <!-- GenAI -->
+    <h3 style="color: #00205B; font-size: 17px; margin: 18px 0 10px 0;">Generative AI Use</h3>
+    <p style="font-size: 14px; margin: 0 0 12px 0;">Use is tiered by assessment per the DF Generative AI Usage Policy framework. Documentation is required for all permitted use on graded work.</p>
+
+    <table style="width: 100%; border-collapse: collapse; font-size: 13.5px; background: #ffffff; border: 1px solid #D0D5DD;">
+      <thead>
+        <tr style="background: #E8EDF5; color: #00205B;">
+          <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 120px; border-bottom: 1px solid #C7CFD9;">Level</th>
+          <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 220px; border-bottom: 1px solid #C7CFD9;">Use</th>
+          <th style="padding: 9px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9;">Applies To</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; font-weight: 600; color: #8B1A1A;">Level 0</td>
+          <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">No use</td>
+          <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">All in-class GRs, quizzes, the final exam, and PEX defenses</td>
+        </tr>
+        <tr style="background: #F8FAFC;">
+          <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; font-weight: 600; color: #00205B;">Level 1</td>
+          <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Organizational and explanatory</td>
+          <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Pre-class readings, studying, and concept clarification</td>
+        </tr>
+        <tr>
+          <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; font-weight: 600; color: #00205B;">Level 2</td>
+          <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Brainstorming and idea generation</td>
+          <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">PEX1, PEX2, and Team PEX (design phase only, before code is written). All code must be original work.</td>
+        </tr>
+        <tr style="background: #F8FAFC;">
+          <td style="padding: 9px 12px; font-weight: 600; color: #00205B;">Level 3</td>
+          <td style="padding: 9px 12px;">Feedback on student-generated work</td>
+          <td style="padding: 9px 12px;">Daily labs and weekly homework. Cadets write their own code first, then may use GenAI for review or debugging hints.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Honor / Academic Integrity -->
+    <h3 style="color: #00205B; font-size: 17px; margin: 22px 0 10px 0;">Academic Integrity</h3>
+    <p style="font-size: 14px; margin: 0 0 8px 0;">Substantive violations of the GenAI policy or other instances of academic dishonesty are reported under the Cadet Honor Code. When in doubt, ask before submitting.</p>
+
+    <!-- Submissions -->
+    <h3 style="color: #00205B; font-size: 17px; margin: 22px 0 10px 0;">Submissions and Late Work</h3>
+    <p style="font-size: 14px; margin: 0 0 8px 0;">Assignments are delivered through Git Classroom and are due at <strong>2300 on the listed due date</strong>. Each assignment has a fixed cap on graded submissions, so test locally before pushing for a graded run.</p>
+    <p style="font-size: 14px; margin: 0 0 8px 0;">Late work is assessed a <strong>20% deduction per calendar day</strong> past the deadline. This policy applies to projects, labs, and homework. Quizzes and Graded Reviews are administered in class and cannot be made up except in the case of an excused absence.</p>
+    <p style="font-size: 14px; margin: 0 0 8px 0;"><strong>Extensions:</strong> Cadets seeking an extension must reach out to their instructor <em>before the due date</em>. Projects and assignments will only be excused for documented long term absences (e.g., extended TDY, hospitalization, or comparable circumstances). Routine schedule conflicts are not grounds for an excused submission.</p>
+    <p style="font-size: 13px; margin: 0; color: #4A5568; font-style: italic;">Individual instructors may modify this policy for a recovery effort or other purpose at their discretion. Refer to your instructor's section guidance for any deviation from the standard 20% per day deduction.</p>
+
+    <!-- Tools -->
+    <h3 style="color: #00205B; font-size: 17px; margin: 22px 0 10px 0;">Required Tools</h3>
+    <p style="font-size: 14px; margin: 0 0 8px 0;">All development for CS210 happens inside a Linux virtual machine running under <strong>VMware Workstation Pro</strong>. The following tools live on the VM:</p>
+    <ul style="margin: 0; padding-left: 22px; font-size: 14px;">
+      <li style="margin-bottom: 4px;">VSCode with the C/C++ extension</li>
+      <li style="margin-bottom: 4px;">gcc, make, valgrind, gdb</li>
+      <li style="margin-bottom: 0;">Git, with a configured user identity</li>
+    </ul>
+  </div>
+
+  <!-- ===================== RESOURCES ===================== -->
+  <div style="background: #ffffff; padding: 24px 36px; border: 1px solid #D0D5DD; border-top: none; border-radius: 0 0 6px 6px;">
+    <h2 style="color: #00205B; font-size: 22px; margin: 0 0 14px 0; padding-bottom: 8px; border-bottom: 2px solid #003087;">Course Resources</h2>
+    <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">All required resources are free. King is recommended optional secondary reading.</p>
+
+    <ul style="margin: 0 0 12px 0; padding-left: 22px; font-size: 14px;">
+      <li style="margin-bottom: 6px;"><strong>Beej-C:</strong> Beej's Guide to C Programming &mdash; primary text (<a href="https://beej.us/guide/bgc/" style="color: #003087; text-decoration: underline;">beej.us/guide/bgc</a>)</li>
+      <li style="margin-bottom: 6px;"><strong>Beej-Lib:</strong> Beej's Guide to C, Library Reference (<a href="https://beej.us/guide/bgclr/" style="color: #003087; text-decoration: underline;">beej.us/guide/bgclr</a>)</li>
+      <li style="margin-bottom: 6px;"><strong>Beej-Git:</strong> Beej's Guide to Git (<a href="https://beej.us/guide/bggit/" style="color: #003087; text-decoration: underline;">beej.us/guide/bggit</a>)</li>
+      <li style="margin-bottom: 6px;"><strong>MTBE:</strong> Makefile Tutorial by Example (<a href="https://makefiletutorial.com/" style="color: #003087; text-decoration: underline;">makefiletutorial.com</a>)</li>
+      <li style="margin-bottom: 6px;"><strong>Recommended optional:</strong> <em>C Programming: A Modern Approach</em>, 2nd ed., K. N. King (Norton, 2008)</li>
+      <li style="margin-bottom: 0;"><strong>Supplementary notes</strong> (instructor-written) for valgrind, recursion, data structures, software design, test planning, defensive programming, memory layout, and code review</li>
+    </ul>
+  </div>
+
+  <!-- ===================== FOOTER ===================== -->
+  <div style="text-align: center; padding: 18px 0 4px 0; font-size: 12px; color: #6B7280;">
+    CS210 &middot; USAFA DFCS &middot; Fall 2026 &middot; Course Director: Maj Sarah Bolton, PhD
+  </div>
+
+</div>

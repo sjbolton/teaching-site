@@ -1,0 +1,2140 @@
+<!-- ============================================================
+     CS210 - Lesson 18
+     Structs Introduction
+     Self-contained: all CSS inline. Native <details> for collapsing.
+     struct walkthrough widget embedded inline in section 5.
+     Paste into Blackboard Ultra via Document -> Add HTML block.
+     ============================================================ -->
+
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 980px; margin: 0 auto; line-height: 1.6;">
+
+  <!-- ===================== LIGHT HEADER ===================== -->
+  <div style="border-left: 5px solid #003087; padding: 8px 0 8px 18px; margin-bottom: 24px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 2px;">CS210 &middot; Block 3 &middot; Lesson 18</div>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 600; color: #00205B;">Structs Introduction</h1>
+    <div style="font-size: 14px; color: #4A5568; margin-top: 4px;">User-defined types &middot; struct &middot; dot operator &middot; enum &middot; typedef &middot; struct copy</div>
+  </div>
+
+  <!-- ===================== AT A GLANCE ===================== -->
+  <div style="background: #F5F7FA; border-left: 4px solid #B5B7BA; padding: 14px 18px; margin-bottom: 22px; font-size: 14px;">
+    <strong style="color: #00205B;">At a glance:</strong> Your first user-defined type. Block 3 opens with structs: how to bundle several related values into one named type, how to access the parts, and the two small tools (enum and typedef) that make struct heavy code readable. The walkthrough in Section 5 builds a Pokemon type and uses it; the lab applies the same pattern to your own design.
+  </div>
+
+  <!-- ===================== TABLE OF CONTENTS ===================== -->
+  <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 20px; margin-bottom: 24px; border-radius: 3px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Contents</div>
+    <ol style="margin: 0; padding-left: 22px; font-size: 14px;">
+      <li style="margin-bottom: 4px;"><a href="#objectives" style="color: #003087; text-decoration: none;">Lesson Objectives</a></li>
+      <li style="margin-bottom: 4px;"><a href="#readings" style="color: #003087; text-decoration: none;">Assigned Readings</a></li>
+      <li style="margin-bottom: 4px;"><a href="#pre-class" style="color: #003087; text-decoration: none;">Pre-Class Work</a></li>
+      <li style="margin-bottom: 4px;"><a href="#materials" style="color: #003087; text-decoration: none;">Lesson Materials and Overview</a></li>
+      <li style="margin-bottom: 4px;"><a href="#in-class" style="color: #003087; text-decoration: none;">In-Class Work</a></li>
+      <li style="margin-bottom: 0;"><a href="#after-class" style="color: #003087; text-decoration: none;">After Class</a></li>
+    </ol>
+  </div>
+
+  <!-- ===================== 1. OBJECTIVES ===================== -->
+  <details id="objectives" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      1. Lesson Objectives
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 10px 0; font-style: italic;">By the end of this lesson, cadets will be able to:</p>
+      <ol style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Define <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">struct</code> types to group related data. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+        <li style="margin-bottom: 6px;">Declare struct variables and access their members with the dot operator. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+        <li style="margin-bottom: 0;">Apply <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">enum</code> and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">typedef</code> to create readable user-defined types. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 2. READINGS ===================== -->
+  <details id="readings" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      2. Assigned Readings
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 12px 0;">Complete before class. These set the vocabulary we will use.</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <thead>
+          <tr style="background: #E8EDF5; color: #00205B;">
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 130px;">Source</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9;">Sections</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 220px;">Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;"><a href="https://beej.us/guide/bgc/" style="color: #003087; text-decoration: underline;">Beej-C</a></td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Chapter 8 (Structs)</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Defining structs, dot operator, initialization</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;"><a href="https://beej.us/guide/bgc/" style="color: #003087; text-decoration: underline;">Beej-C</a></td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Chapter 10 (typedef)</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Skim. Focus on aliasing struct types; you will use this in the walkthrough and lab.</td>
+          </tr>
+          <tr>
+            <td style="padding: 9px 12px;">King, <em>C Programming: A Modern Approach</em></td>
+            <td style="padding: 9px 12px;">Chapter 16 (Structures, Unions, and Enumerations)</td>
+            <td style="padding: 9px 12px; color: #4A5568;">Optional deeper coverage of enum and typedef</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <!-- ===================== 3. PRE-CLASS WORK ===================== -->
+  <details id="pre-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      3. Pre-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 18px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #6B5300; font-size: 14px; margin-bottom: 4px;">Do this first</div>
+        <div style="font-size: 14px; color: #5A4B00;">Plan on 30 to 45 minutes. The reading is short; budget time for the predict step at the bottom.</div>
+      </div>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 0 0 10px 0;">Pre-Class Checklist</h3>
+
+      <!-- Step 1: Reading -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">1</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Read Beej-C Chapter 8 (Structs)</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">Read the first parts that introduce struct definitions, the dot operator, designated initializers, and copying structs with <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">=</code>. You can skim the section on pointers to structs and the arrow operator; that is Lesson 19.</div>
+            <div style="font-size: 13.5px; color: #4A5568;">Terms to know going in: struct, member, field, enum, typedef.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Predict before walkthrough -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">2</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Predict before you press Enter</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">Read this small program and predict what gets printed before you check the answer below.</div>
+            <div style="background: #1E2A3A; color: #E8EDF5; padding: 12px 16px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.5;">
+              <span style="color: #569CD6;">struct</span> Point { <span style="color: #569CD6;">int</span> x; <span style="color: #569CD6;">int</span> y; };<br><br>
+              <span style="color: #569CD6;">struct</span> Point a = { <span style="color: #B5CEA8;">3</span>, <span style="color: #B5CEA8;">4</span> };<br>
+              <span style="color: #569CD6;">struct</span> Point b = a;<br>
+              b.x = <span style="color: #B5CEA8;">99</span>;<br>
+              <span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"%d %d\n"</span>, a.x, b.x);
+            </div>
+            <details style="margin-top: 10px;">
+              <summary style="cursor: pointer; color: #003087; font-size: 13.5px; font-weight: 600;">Click for the answer</summary>
+              <div style="margin-top: 8px; font-size: 14px;">Prints <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">3 99</code>. When you write <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">b = a</code>, C copies every field of a into b. Once that copy is done, a and b are two separate variables. Changing b.x leaves a.x untouched. This is one of the two ideas the lesson hinges on.</div>
+            </details>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Skim widget -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 8px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">3</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Skim the In-Class section below</div>
+            <div style="font-size: 14px;">You will see one interactive widget: the struct walkthrough. No need to use it yet; just know it is there.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ===================== 4. LESSON MATERIALS AND OVERVIEW ===================== -->
+  <details id="materials" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      4. Lesson Materials and Overview
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 18px 0;">Block 3 is about building the tools for serious programs. Today is the foundational tool: a way to design your own types. Up to now you have used the types the language gave you (int, double, char, pointers, arrays). Starting today, you describe the data your program needs and the compiler treats your description as a real type. Lesson 19 takes the same struct and points at it; Lesson 20 organizes structs across files. Today is the rock at the base.</p>
+
+      <!-- Subsection navigation -->
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 18px; margin-bottom: 22px; border-radius: 3px;">
+        <div style="font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">Jump to</div>
+        <div style="font-size: 13.5px;">
+          <a href="#slides" style="color: #003087; text-decoration: none; margin-right: 14px;">Slides</a>
+          <a href="#why-structs" style="color: #003087; text-decoration: none; margin-right: 14px;">Why structs</a>
+          <a href="#defining" style="color: #003087; text-decoration: none; margin-right: 14px;">Defining a struct</a>
+          <a href="#access" style="color: #003087; text-decoration: none; margin-right: 14px;">Declaring and accessing</a>
+          <a href="#init" style="color: #003087; text-decoration: none; margin-right: 14px;">Initializers</a>
+          <a href="#enum" style="color: #003087; text-decoration: none; margin-right: 14px;">enum</a>
+          <a href="#typedef" style="color: #003087; text-decoration: none; margin-right: 14px;">typedef</a>
+          <a href="#copy" style="color: #003087; text-decoration: none;">Struct copy</a>
+        </div>
+      </div>
+
+      <!-- Slides -->
+      <h3 id="slides" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0; scroll-margin-top: 16px;">Slides</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">The Lesson 18 deck covers why structs exist, the syntax of defining and using them, enum and typedef, and the struct copy semantic. The slides are the spine of the lecture; the struct walkthrough is where you practice each idea hands-on.</p>
+
+      <!-- =========================================================
+           EDIT ME: Lesson 18 slide deck link
+           Replace href="#" below with the SharePoint share URL once the
+           deck is published. Leave target="_blank" and rel="noopener".
+           ========================================================= -->
+      <p style="margin: 0 0 18px 0;">
+        <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 10px 20px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 14px;">Open Lesson 18 slides &rarr;</a>
+      </p>
+
+      <!-- Why structs -->
+      <h3 id="why-structs" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Why structs</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">You already know how to pass several related values around: a function takes three ints and a double. That works for small programs, but it scales badly. When the program grows, the same group of values appears in many places, and the meaning of each parameter has to be remembered from the function name alone. A struct lets you name the group once and treat it as a single value from then on.</p>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">In Python you used dictionaries and class instances for this. C has nothing as flexible as a dictionary, but it does give you the next best thing: a type you define yourself, with named fields and known sizes. The compiler reserves a single block of memory for the whole group and lets you reach into it by name.</p>
+
+      <!-- Defining a struct -->
+      <h3 id="defining" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Defining a struct</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">A struct definition introduces a new type. The type has a tag (the name after the word <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">struct</code>) and a list of fields inside braces. Each field has its own type and its own name. End the definition with a closing brace and a semicolon.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">struct</span> Pokemon {<br>
+        &nbsp;&nbsp;<span style="color: #569CD6;">int</span> pokedex_num;<br>
+        &nbsp;&nbsp;<span style="color: #569CD6;">int</span> hp;<br>
+        &nbsp;&nbsp;<span style="color: #569CD6;">int</span> attack;<br>
+        &nbsp;&nbsp;<span style="color: #569CD6;">int</span> defense;<br>
+        &nbsp;&nbsp;<span style="color: #569CD6;">double</span> catch_rate;<br>
+        };
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">This does not allocate any memory yet. It declares a type, the same way <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">int</code> is a type. You can declare as many variables of this type as you want, or none. Field names are local to the struct: another struct can have its own field called <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">hp</code> with no conflict.</p>
+
+      <!-- Declaring and accessing -->
+      <h3 id="access" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Declaring and accessing</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">To make a variable of a struct type, write the whole type name (including the word <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">struct</code>) followed by the variable name. To read or write a field, use the dot operator.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">struct</span> Pokemon pikachu;<br>
+        pikachu.pokedex_num = <span style="color: #B5CEA8;">25</span>;<br>
+        pikachu.hp = <span style="color: #B5CEA8;">35</span>;<br>
+        <span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"hp: %d\n"</span>, pikachu.hp);
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">The dot operator picks one field out of the bundle. <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">pikachu.hp</code> reads as "the hp field of the pikachu variable". The same syntax works for assignment and for reading. Heads up: declaring a struct without an initializer leaves all its fields uninitialized, exactly like an uninitialized primitive from Lesson 2.</p>
+
+      <!-- Initializers -->
+      <h3 id="init" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Initializers: positional and designated</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">You can set all fields in one statement at declaration time. Two forms:</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #6B7280;">// positional: values in field-declaration order</span><br>
+        <span style="color: #569CD6;">struct</span> Pokemon pikachu = { <span style="color: #B5CEA8;">25</span>, <span style="color: #B5CEA8;">35</span>, <span style="color: #B5CEA8;">55</span>, <span style="color: #B5CEA8;">40</span>, <span style="color: #B5CEA8;">0.255</span> };<br><br>
+        <span style="color: #6B7280;">// designated: explicit field names, any order, skip-allowed</span><br>
+        <span style="color: #569CD6;">struct</span> Pokemon charmander = {<br>
+        &nbsp;&nbsp;.pokedex_num = <span style="color: #B5CEA8;">4</span>,<br>
+        &nbsp;&nbsp;.hp = <span style="color: #B5CEA8;">39</span>,<br>
+        &nbsp;&nbsp;.attack = <span style="color: #B5CEA8;">52</span>,<br>
+        };
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">Prefer designated initializers in your own code. They survive field reorderings, they let you skip fields you do not care about (skipped fields are zero-initialized), and a reader can see the field name at the call site instead of counting commas.</p>
+
+      <!-- enum -->
+      <h3 id="enum" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">enum: names for a set of related integers</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">An enum is a list of named integer constants. The compiler hands out values starting from 0 unless you say otherwise. Enums pair naturally with structs: a struct field has a known set of allowed values, and the enum members are the readable names for them.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">enum</span> PokemonType { TYPE_FIRE, TYPE_WATER, TYPE_GRASS, TYPE_ELECTRIC, TYPE_PSYCHIC, TYPE_NORMAL };<br><br>
+        <span style="color: #6B7280;">// TYPE_FIRE is 0, TYPE_WATER is 1, ... TYPE_NORMAL is 5.</span><br>
+        <span style="color: #569CD6;">enum</span> PokemonType t = TYPE_ELECTRIC;&nbsp;&nbsp;<span style="color: #6B7280;">// t holds the integer 3</span>
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">Style note: write the member names in <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">SCREAMING_SNAKE_CASE</code>. They live in the same namespace as ordinary names; the all-caps convention signals "this is a constant".</p>
+
+      <!-- typedef -->
+      <h3 id="typedef" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">typedef: a shorter alias for an existing type</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Writing <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">struct Pokemon</code> everywhere gets old fast. <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">typedef</code> lets you give an existing type a second name and use that second name interchangeably.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #6B7280;">// after the struct Pokemon definition above</span><br>
+        <span style="color: #569CD6;">typedef</span> <span style="color: #569CD6;">struct</span> Pokemon pokemon_t;<br><br>
+        pokemon_t pikachu;&nbsp;&nbsp;<span style="color: #6B7280;">// same thing as struct Pokemon pikachu</span>
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Style note: typedef names use the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">_t</code> suffix. The standard library follows this rule (<code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">size_t</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">time_t</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">pid_t</code>) and matching it makes your code look like it belongs in the language.</p>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">Real-world C code typedef-s almost every struct so that the word <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">struct</code> rarely appears outside the type definitions themselves.</p>
+
+      <!-- DFCS C Programming Standard callout -->
+      <div style="background: #F5F7FA; border-left: 4px solid #003087; padding: 14px 18px; margin: 0 0 18px 0; border-radius: 3px; font-size: 14px;">
+        <strong style="color: #00205B;">DFCS C Programming Standard.</strong> Both readability tools you just learned are formalized in the course style guide. <strong>&sect;5.3</strong> requires typedef names to use snake_case with a <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">_t</code> suffix (so <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">pokemon_t</code>, not <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">PokemonType</code> or <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">pokemon</code>). <strong>&sect;5.5</strong> requires enum constants to use SCREAMING_SNAKE_CASE (so <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">TYPE_FIRE</code>, not <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">type_fire</code> or <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">Fire</code>). The full standard lives in the course Resources section; both rules apply to Lab 18 and every C lab after this one.
+      </div>
+
+      <!-- Struct copy -->
+      <h3 id="copy" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Struct copy: assignment copies the whole value</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">This is the surprise of Lesson 18 and the bridge to Lesson 19. When you write <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">b = a;</code> for two struct variables of the same type, C copies every field of a into the corresponding field of b. The two variables are now equal but they are SEPARATE: changing one does not affect the other.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        pokemon_t a = { .hp = <span style="color: #B5CEA8;">39</span> };<br>
+        pokemon_t b = a;&nbsp;&nbsp;<span style="color: #6B7280;">// copy every field</span><br>
+        b.hp = <span style="color: #B5CEA8;">100</span>;<br>
+        <span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"%d %d\n"</span>, a.hp, b.hp);&nbsp;&nbsp;<span style="color: #6B7280;">// prints 39 100</span>
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">This is the opposite of what Python does with object assignment. In Python, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">b = a</code> would point both names at the same object; changing one would visibly change the other. In C, structs are values, and values get copied. Tomorrow in Lesson 19 we will see what this means when you pass a struct to a function as an argument and why C programmers usually pass a pointer to a struct instead of the whole thing.</p>
+
+    </div>
+  </details>
+
+  <!-- ===================== 5. IN-CLASS WORK ===================== -->
+  <details id="in-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      5. In-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 16px 0;">Three things to do in class. Use the checklist to track your progress.</p>
+
+      <ul style="list-style: none; padding: 0; margin: 0 0 24px 0; font-size: 14.5px;">
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Work through the struct walkthrough below.</strong>
+          <span style="color: #4A5568;">Twelve guided tasks covering struct definition, dot access, designated initializers, enum, typedef, and the struct copy semantic. About 25 minutes.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Complete Lab 18: Pokemon.</strong>
+          <span style="color: #4A5568;">Design and use a struct Pokemon and a related enum. Auto-graded through GitHub Classroom. Full instructions in the lab repo.</span>
+          <!-- =========================================================
+               EDIT ME: Lab 18 GitHub Classroom assignment link
+               Replace href="#" with the classroom.github.com/a/... invite
+               URL once the assignment is published.
+               ========================================================= -->
+          <div style="margin-top: 8px; margin-left: 28px;">
+            <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 6px 14px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 13px;">Accept Lab 18 on GitHub Classroom &rarr;</a>
+          </div>
+        </li>
+        <li style="margin-bottom: 0; padding: 10px 14px; background: #FFF8E1; border: 1px solid #F0B92C; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #6B5300; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #6B5300;">Receive the PEX2 assignment.</strong>
+          <span style="color: #5A4B00;">Individual project covering structs (today) and file I/O (Lesson 21). Spans Lessons 18 through 26 with the final submission due Lesson 26. Read the handout this week and start planning your struct design now.</span>
+          <!-- =========================================================
+               EDIT ME: PEX2 handout link
+               Replace href="#" with the SharePoint or Blackboard URL for
+               the PEX2 handout PDF once the assignment is published.
+               ========================================================= -->
+          <div style="margin-top: 8px; margin-left: 28px;">
+            <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #B5840A; color: #ffffff; padding: 6px 14px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 13px;">Open the PEX2 handout &rarr;</a>
+          </div>
+        </li>
+      </ul>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 18px 0 10px 0;">struct Walkthrough</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Twelve tasks across five sections. Define a struct Pokemon, declare variables of it, set fields, use designated initializers, alias the type with typedef, then watch what happens when you copy one struct into another.</p>
+
+<!-- ============================================================
+     CS210 Lesson 18 - struct Walkthrough Widget
+     Template-aligned style. Native HTML/CSS + scoped JS.
+     Paste as a block; runs anywhere the parent page allows <script>.
+     ============================================================ -->
+<style>
+.cs210-struct * { box-sizing: border-box; }
+.cs210-struct {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-struct h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-struct .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 22px;
+}
+.cs210-struct .progress-bar {
+  background: #E5E7EB;
+  border-radius: 3px;
+  height: 8px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.cs210-struct .progress-fill {
+  background: #003087;
+  height: 100%;
+  transition: width 0.3s ease;
+}
+.cs210-struct .progress-label {
+  font-size: 12px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-struct .section-header {
+  background: #E8EDF5;
+  color: #00205B;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.cs210-struct .task-card {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  border-radius: 3px;
+}
+.cs210-struct .task-card.complete {
+  background: #E6F4EA;
+  border-left-color: #2E7D32;
+}
+.cs210-struct .task-label {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B5300;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.cs210-struct .task-card.complete .task-label {
+  color: #1B5E20;
+}
+.cs210-struct .task-text {
+  font-size: 15px;
+  color: #1a1a1a;
+}
+.cs210-struct .task-hint {
+  font-size: 12.5px;
+  color: #6B7280;
+  margin-top: 6px;
+  font-style: italic;
+}
+
+/* Two-pane area: terminal left, types/variables right */
+.cs210-struct .panes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+@media (max-width: 760px) {
+  .cs210-struct .panes { grid-template-columns: 1fr; }
+}
+.cs210-struct .terminal {
+  background: #1E2A3A;
+  color: #E8EDF5;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13.5px;
+  line-height: 1.5;
+  border-radius: 4px;
+  padding: 14px 18px;
+  min-height: 420px;
+  max-height: 480px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.cs210-struct .terminal .prompt { color: #7FB3D5; }
+.cs210-struct .terminal .typed { color: #FFFFFF; }
+.cs210-struct .terminal .out { color: #B5BEC8; }
+.cs210-struct .terminal .note { color: #F0B92C; }
+.cs210-struct .terminal .err { color: #F47A7A; }
+.cs210-struct .terminal .ok { color: #7FD17F; }
+.cs210-struct .terminal .dim { color: #6B7280; }
+
+.cs210-struct .right-pane {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  padding: 14px 16px;
+  min-height: 420px;
+  max-height: 480px;
+  overflow-y: auto;
+}
+.cs210-struct .pane-section {
+  margin-bottom: 14px;
+}
+.cs210-struct .pane-section:last-child {
+  margin-bottom: 0;
+}
+.cs210-struct .pane-section-header {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #E5E7EB;
+}
+.cs210-struct .pane-empty {
+  color: #6B7280;
+  font-style: italic;
+  font-size: 12.5px;
+  padding: 14px 4px;
+}
+
+/* Type cards (struct/enum/typedef) */
+.cs210-struct .type-card {
+  background: #F8FAFC;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  font-family: Consolas, monospace;
+  font-size: 12.5px;
+}
+.cs210-struct .type-card .tag {
+  display: inline-block;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #ffffff;
+  background: #003087;
+  padding: 1px 7px;
+  border-radius: 2px;
+  margin-right: 8px;
+  font-weight: 600;
+  vertical-align: middle;
+}
+.cs210-struct .type-card .tag.enum { background: #2E7D32; }
+.cs210-struct .type-card .tag.typedef { background: #6B5300; background: #B5840A; }
+.cs210-struct .type-card .name {
+  color: #00205B;
+  font-weight: 700;
+  font-size: 13px;
+}
+.cs210-struct .type-card .members {
+  margin-top: 6px;
+  padding-left: 8px;
+  border-left: 2px solid #D0D5DD;
+  color: #4A5568;
+}
+.cs210-struct .type-card .member-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 1px 0;
+}
+.cs210-struct .type-card .member-row .mtype { color: #003087; }
+.cs210-struct .type-card .member-row .mname { color: #1a1a1a; }
+.cs210-struct .type-card .member-row .mval {
+  color: #6B7280;
+  font-size: 11.5px;
+}
+.cs210-struct .type-card .members .alias {
+  font-size: 11.5px;
+  color: #6B5300;
+  font-style: italic;
+  padding: 1px 0;
+}
+
+/* Struct instance cards (variable cards) */
+.cs210-struct .var-card {
+  background: #F8FAFC;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+.cs210-struct .var-card.recently-changed {
+  border-color: #F0B92C;
+  box-shadow: 0 0 0 2px rgba(240, 185, 44, 0.3);
+}
+.cs210-struct .var-decl {
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  color: #00205B;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.cs210-struct .var-decl .vtype { color: #003087; }
+.cs210-struct .var-meta {
+  font-size: 11px;
+  color: #6B7280;
+  font-family: Consolas, monospace;
+  margin-bottom: 6px;
+}
+.cs210-struct .field-grid {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  gap: 4px 10px;
+  font-family: Consolas, monospace;
+  font-size: 12px;
+  padding: 4px 0;
+}
+.cs210-struct .field-grid .ftype { color: #003087; }
+.cs210-struct .field-grid .fname { color: #1a1a1a; }
+.cs210-struct .field-grid .fval { color: #4A5568; text-align: right; }
+.cs210-struct .field-grid .fval.changed {
+  background: rgba(240, 185, 44, 0.25);
+  border-radius: 2px;
+  padding: 0 3px;
+  animation: cs210-struct-flash 0.6s ease-out;
+}
+@keyframes cs210-struct-flash {
+  0%   { background: rgba(240, 185, 44, 0.7); }
+  100% { background: rgba(240, 185, 44, 0.25); }
+}
+
+/* Result card (for member-read expressions) */
+.cs210-struct .result-card {
+  background: #ffffff;
+  border: 2px solid #003087;
+  border-radius: 4px;
+  padding: 12px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+.cs210-struct .result-expr {
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  color: #6B7280;
+  margin-bottom: 6px;
+}
+.cs210-struct .result-value {
+  font-family: Consolas, monospace;
+  font-size: 24px;
+  color: #003087;
+  font-weight: 700;
+}
+
+.cs210-struct .input-row {
+  display: flex;
+  background: #1E2A3A;
+  border-radius: 4px;
+  padding: 8px 14px;
+  margin-bottom: 14px;
+  border: 1px solid #003087;
+}
+.cs210-struct .input-prompt {
+  color: #7FB3D5;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  margin-right: 8px;
+  align-self: center;
+  white-space: nowrap;
+}
+.cs210-struct .input-row input {
+  flex: 1;
+  background: transparent;
+  color: #FFFFFF;
+  border: none;
+  outline: none;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  padding: 4px 0;
+}
+.cs210-struct .controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.cs210-struct .btn {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  padding: 6px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #00205B;
+  font-family: inherit;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.cs210-struct .btn:hover { background: #F5F7FA; }
+@keyframes cs210-struct-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(240, 185, 44, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0); }
+}
+.cs210-struct .btn.pulse {
+  background: #FFF8E1;
+  border-color: #F0B92C;
+  color: #6B5300;
+  font-weight: 600;
+  animation: cs210-struct-pulse 1.5s infinite;
+}
+.cs210-struct .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #4A5568;
+  margin-top: 12px;
+}
+.cs210-struct .help-note strong { color: #00205B; }
+
+/* Name modal overlay */
+.cs210-struct .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.cs210-struct .name-modal {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-struct .name-modal h2 {
+  color: #00205B;
+  font-size: 20px;
+  margin: 0 0 10px 0;
+}
+.cs210-struct .name-modal p {
+  color: #4A5568;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+.cs210-struct .name-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-struct .name-modal input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-struct .name-modal-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-struct .name-modal-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-struct .name-modal-btn:not(:disabled):hover {
+  background: #00205B;
+}
+/* Completion screen */
+.cs210-struct .completion-screen {
+  background: #ffffff;
+  border: 2px solid #2E7D32;
+  border-radius: 6px;
+  padding: 24px 28px;
+  margin-top: 16px;
+}
+.cs210-struct .completion-screen .cs-heading {
+  color: #1B5E20;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 6px 0;
+}
+.cs210-struct .completion-screen .cs-name-line {
+  font-size: 15px;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+}
+.cs210-struct .completion-screen .cs-name-line strong {
+  color: #00205B;
+}
+.cs210-struct .completion-screen .cs-code-block {
+  background: #F0F4FA;
+  border: 1px solid #003087;
+  border-radius: 4px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.cs210-struct .completion-screen .cs-code-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #4A5568;
+  margin-bottom: 4px;
+}
+.cs210-struct .completion-screen .cs-code-value {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 28px;
+  font-weight: 700;
+  color: #00205B;
+  letter-spacing: 3px;
+}
+.cs210-struct .completion-screen .cs-copy-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-struct .completion-screen .cs-copy-btn:hover {
+  background: #00205B;
+}
+.cs210-struct .completion-screen .cs-copy-btn.copied {
+  background: #2E7D32;
+}
+.cs210-struct .completion-screen .cs-timestamp {
+  font-size: 13px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-struct .completion-screen .cs-reminder {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 14px;
+  color: #6B5300;
+  line-height: 1.5;
+}
+.cs210-struct .completion-screen .cs-reminder strong {
+  color: #4A3A00;
+}
+</style>
+
+<div class="cs210-struct">
+
+<div class="name-modal-backdrop" id="struct-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Lesson 18 reflection.</p>
+    <input type="text" id="struct-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="struct-cadet-name-btn" disabled>Start the walkthrough</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 18 &middot; struct Walkthrough</h1>
+<div class="subtitle">Build a Pokemon type in C. Define a struct, declare variables of it, set fields, use enums, give types shorter names with typedef, and watch what happens when you copy a struct. Type each statement at the prompt.</div>
+
+<div class="progress-bar"><div class="progress-fill" id="struct-progress-fill" style="width: 0%;"></div></div>
+<div class="progress-label" id="struct-progress-label">Task 0 of 12</div>
+
+<div class="section-header" id="struct-section-header">Section 1: Defining your first struct</div>
+
+<div class="task-card" id="struct-task-card">
+  <div class="task-label" id="struct-task-label">Current task</div>
+  <div class="task-text" id="struct-task-text">Loading...</div>
+  <div class="task-hint" id="struct-task-hint"></div>
+</div>
+
+<div class="panes">
+  <div class="terminal" id="struct-terminal"></div>
+  <div class="right-pane">
+    <div class="pane-section" id="struct-types-section">
+      <div class="pane-section-header">Types defined</div>
+      <div id="struct-types-area">
+        <div class="pane-empty">No types yet. Define a struct on the left.</div>
+      </div>
+    </div>
+    <div class="pane-section">
+      <div class="pane-section-header">Variables</div>
+      <div id="struct-vars-area">
+        <div class="pane-empty">No variables yet.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="input-row">
+  <span class="input-prompt">struct&gt;</span>
+  <input type="text" id="struct-cli-input" autocomplete="off" spellcheck="false" placeholder="follow the task above">
+</div>
+
+<div class="controls">
+  <button class="btn" id="struct-hint-btn">Show hint</button>
+  <button class="btn" id="struct-reset-btn">Reset</button>
+  <button class="btn" id="struct-mode-btn">Switch to free mode</button>
+</div>
+
+<div class="help-note">
+  <strong>How this works:</strong> This is not a Linux terminal. It is a teaching tool that simulates what C struct definitions and field accesses do. The task card tells you what to type next; only the expected command advances the walkthrough so the state stays predictable. Mistype twice and the hint button will pulse. After the walkthrough completes, free mode unlocks so you can experiment.
+</div>
+
+<div id="struct-completion-area"></div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-struct');
+  if (!root) return;
+
+  // ============================================================
+  // CS210 widget completion utilities
+  // Salt -> deterministic 6-char code via FNV-1a.
+  // ============================================================
+  const CS210_SALT = "lesson18_struct_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  // Name-modal gating
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#struct-name-modal-backdrop');
+    const input = root.querySelector('#struct-cadet-name-input');
+    const btn = root.querySelector('#struct-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length >= 2) {
+        cs210CadetName = stored.trim();
+        backdrop.style.display = 'none';
+        return;
+      }
+    } catch (e) { /* localStorage may be disabled */ }
+
+    function updateBtn() { btn.disabled = input.value.trim().length < 2; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', function() {
+      const name = input.value.trim();
+      if (name.length < 2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+      // Dismiss any sibling widget modals on the same page.
+      const siblings = document.querySelectorAll(
+        '#name-modal-backdrop, #bw-name-modal-backdrop, #ptrmath-name-modal-backdrop, #duality-name-modal-backdrop'
+      );
+      siblings.forEach(function(m) { m.style.display = 'none'; });
+      const cli = root.querySelector('#struct-cli-input');
+      if (cli) cli.focus();
+    });
+    setTimeout(function() { input.focus(); }, 50);
+  })();
+
+  function cs210RenderCompletion(area) {
+    if (!area) return;
+    if (root.querySelector('#cs210-struct-completion-overlay')) return;
+    const now = new Date();
+    const ts = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const safeName = (cs210CadetName || 'Cadet').replace(/[<>&"']/g, function(c) {
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+    area.innerHTML =
+      '<div class="completion-screen">' +
+        '<div class="cs-heading">Walkthrough complete</div>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value">' + CS210_CODE + '</div></div>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+      '</div>';
+    const overlay = document.createElement('div');
+    overlay.id = 'cs210-struct-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.style.background = 'rgba(27, 94, 32, 0.55)';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">Walkthrough complete</h2>' +
+        '<p>Take a screenshot of this box. You will need the code and a visual of this screen for the Lesson 18 reflection in Blackboard.</p>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value" id="struct-cs-code-value">' + CS210_CODE + '</div></div>' +
+          '<button class="cs-copy-btn" id="struct-cs-copy-btn" type="button">Copy code</button>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+        '<div class="cs-reminder" style="margin-bottom:14px;">' +
+          '<strong>Next step:</strong> Open the Lesson 18 reflection in Blackboard. Enter this code, answer the reflection prompt, and attach your screenshot.' +
+        '</div>' +
+        '<button class="name-modal-btn" id="struct-cs-overlay-close" type="button" style="background:#2E7D32;">Got it &mdash; close this</button>' +
+      '</div>';
+    root.appendChild(overlay);
+    const closeBtn = overlay.querySelector('#struct-cs-overlay-close');
+    if (closeBtn) closeBtn.addEventListener('click', function() { overlay.style.display = 'none'; });
+    const copyBtn = overlay.querySelector('#struct-cs-copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function() {
+        const text = CS210_CODE;
+        const ok = function() {
+          copyBtn.textContent = 'Copied';
+          copyBtn.classList.add('copied');
+          setTimeout(function() {
+            copyBtn.textContent = 'Copy code';
+            copyBtn.classList.remove('copied');
+          }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(ok, function() {
+            cs210FallbackCopy(text); ok();
+          });
+        } else {
+          cs210FallbackCopy(text); ok();
+        }
+      });
+    }
+  }
+  function cs210FallbackCopy(text) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e) { /* nothing else to do */ }
+  }
+
+  // ============================================================
+  // State
+  // ============================================================
+  // structs: { name -> { fields: [{type, name}] } }
+  // enums: { name -> { members: [{name, value}] } }
+  // typedefs: { alias -> { kind: 'struct', target: 'Pokemon' } } - so we can use the alias as a type
+  // variables: array of { name, structName (resolved tag), fields: [{type, name, value}] }
+  const structs = {};
+  const enums = {};
+  const typedefs = {};
+  const variables = [];
+  let currentTaskIndex = 0;
+  let consecutiveFails = 0;
+  let mode = "walkthrough";
+  let lastChangedVar = null;     // name of the variable that just changed
+  let lastChangedField = null;   // field name within that var that changed
+  let lastResult = null;         // last bare-expression result
+  let lastDefinedTypeName = null; // for highlight flash on new types (unused for now)
+
+  // ============================================================
+  // Primitive types (lightweight; only what L18 needs)
+  // ============================================================
+  const PRIMITIVE_TYPES = ['int', 'short', 'long', 'unsigned int', 'unsigned short',
+                            'unsigned long', 'char', 'float', 'double'];
+  function isPrimitiveType(t) {
+    return PRIMITIVE_TYPES.indexOf(t) !== -1;
+  }
+  function defaultValueFor(typeName) {
+    if (typeName === 'float' || typeName === 'double') return '0.0';
+    return '0';
+  }
+
+  // ============================================================
+  // Type resolution
+  // ============================================================
+  // Given a textual type name as the cadet typed it, return:
+  //   { kind: 'struct', tag: 'Pokemon' }  for 'struct Pokemon' or a typedef alias for it
+  //   { kind: 'enum',   tag: 'PokemonType' } for 'enum PokemonType' or alias
+  //   { kind: 'primitive', name: 'int' }
+  //   null if unresolvable
+  function resolveType(typeStr) {
+    const t = typeStr.trim().replace(/\s+/g, ' ');
+    // struct Tag
+    let m = t.match(/^struct\s+([A-Za-z_][A-Za-z0-9_]*)$/);
+    if (m) {
+      if (structs[m[1]]) return { kind: 'struct', tag: m[1] };
+      return null;
+    }
+    // enum Tag
+    m = t.match(/^enum\s+([A-Za-z_][A-Za-z0-9_]*)$/);
+    if (m) {
+      if (enums[m[1]]) return { kind: 'enum', tag: m[1] };
+      return null;
+    }
+    // typedef alias?
+    if (typedefs[t]) {
+      const td = typedefs[t];
+      if (td.kind === 'struct') return { kind: 'struct', tag: td.target };
+      if (td.kind === 'enum') return { kind: 'enum', tag: td.target };
+    }
+    // primitive
+    if (isPrimitiveType(t)) return { kind: 'primitive', name: t };
+    return null;
+  }
+
+  // ============================================================
+  // Parsers
+  // ============================================================
+  // Strip trailing semicolon and outer whitespace for a single statement
+  function strip(s) { return s.trim().replace(/;?\s*$/, ''); }
+
+  // struct definition: "struct Pokemon { int pokedex_num; int hp; ... };"
+  function tryParseStructDef(line) {
+    const t = line.trim();
+    const m = t.match(/^struct\s+([A-Za-z_][A-Za-z0-9_]*)\s*\{([\s\S]*)\}\s*;?\s*$/);
+    if (!m) return null;
+    const name = m[1];
+    const body = m[2].trim();
+    if (!body) return { error: "struct " + name + " has no fields. Add at least one field inside the braces." };
+    // Split by ; for each field
+    const rawFields = body.split(';').map(f => f.trim()).filter(f => f.length > 0);
+    const fields = [];
+    for (const raw of rawFields) {
+      // Match "type fieldname" where type can be multi-word (e.g., 'unsigned int')
+      // Be conservative: support primitive types and 'enum Tag' types.
+      let fm = raw.match(/^(enum\s+[A-Za-z_][A-Za-z0-9_]*)\s+([A-Za-z_][A-Za-z0-9_]*)$/);
+      if (fm) {
+        fields.push({ type: fm[1].replace(/\s+/g, ' '), name: fm[2] });
+        continue;
+      }
+      // Try multi-word primitives first
+      let matched = null;
+      const sortedPrimitives = PRIMITIVE_TYPES.slice().sort((a, b) => b.length - a.length);
+      for (const p of sortedPrimitives) {
+        const re = new RegExp("^(" + p.replace(/ /g, "\\s+") + ")\\s+([A-Za-z_][A-Za-z0-9_]*)$");
+        const fm2 = raw.match(re);
+        if (fm2) { matched = { type: p, name: fm2[2] }; break; }
+      }
+      if (!matched) {
+        return { error: "couldn't parse field '" + raw + "'. Use 'type name' inside the struct braces." };
+      }
+      fields.push(matched);
+    }
+    return { kind: 'struct-def', name, fields };
+  }
+
+  // enum definition: "enum PokemonType { TYPE_FIRE, TYPE_WATER, ... };"
+  function tryParseEnumDef(line) {
+    const t = line.trim();
+    const m = t.match(/^enum\s+([A-Za-z_][A-Za-z0-9_]*)\s*\{([\s\S]*)\}\s*;?\s*$/);
+    if (!m) return null;
+    const name = m[1];
+    const body = m[2].trim();
+    if (!body) return { error: "enum " + name + " has no members. Add at least one inside the braces." };
+    const rawMembers = body.split(',').map(s => s.trim()).filter(s => s.length > 0);
+    const members = [];
+    let nextVal = 0;
+    for (const raw of rawMembers) {
+      // member can be "NAME" or "NAME = expr"
+      const em = raw.match(/^([A-Za-z_][A-Za-z0-9_]*)(?:\s*=\s*(-?\d+))?$/);
+      if (!em) {
+        return { error: "couldn't parse enum member '" + raw + "'. Use just the name (NAME) or NAME = number." };
+      }
+      const memName = em[1];
+      const memVal = em[2] !== undefined ? parseInt(em[2], 10) : nextVal;
+      members.push({ name: memName, value: memVal });
+      nextVal = memVal + 1;
+    }
+    return { kind: 'enum-def', name, members };
+  }
+
+  // typedef: "typedef struct { ... } pokemon_t;"
+  //       or "typedef struct Pokemon pokemon_t;"
+  //       or "typedef enum PokemonType pokemon_type_t;"
+  function tryParseTypedef(line) {
+    const t = line.trim();
+    if (!/^typedef\b/.test(t)) return null;
+
+    // typedef struct { ... } alias;
+    let m = t.match(/^typedef\s+struct\s*\{([\s\S]*)\}\s*([A-Za-z_][A-Za-z0-9_]*)\s*;?\s*$/);
+    if (m) {
+      const body = m[1].trim();
+      const alias = m[2];
+      // Generate an internal anonymous-but-stable tag name
+      const tagName = '__anon_' + alias;
+      // Parse fields the same way struct def does
+      if (!body) return { error: "typedef struct has no fields." };
+      const rawFields = body.split(';').map(f => f.trim()).filter(f => f.length > 0);
+      const fields = [];
+      const sortedPrimitives = PRIMITIVE_TYPES.slice().sort((a, b) => b.length - a.length);
+      for (const raw of rawFields) {
+        let fm = raw.match(/^(enum\s+[A-Za-z_][A-Za-z0-9_]*)\s+([A-Za-z_][A-Za-z0-9_]*)$/);
+        if (fm) { fields.push({ type: fm[1].replace(/\s+/g, ' '), name: fm[2] }); continue; }
+        let matched = null;
+        for (const p of sortedPrimitives) {
+          const re = new RegExp("^(" + p.replace(/ /g, "\\s+") + ")\\s+([A-Za-z_][A-Za-z0-9_]*)$");
+          const fm2 = raw.match(re);
+          if (fm2) { matched = { type: p, name: fm2[2] }; break; }
+        }
+        if (!matched) return { error: "couldn't parse field '" + raw + "' in typedef struct." };
+        fields.push(matched);
+      }
+      return { kind: 'typedef-anon-struct', alias, tagName, fields };
+    }
+
+    // typedef struct Tag alias;
+    m = t.match(/^typedef\s+struct\s+([A-Za-z_][A-Za-z0-9_]*)\s+([A-Za-z_][A-Za-z0-9_]*)\s*;?\s*$/);
+    if (m) {
+      return { kind: 'typedef-struct-alias', target: m[1], alias: m[2] };
+    }
+
+    // typedef enum Tag alias;
+    m = t.match(/^typedef\s+enum\s+([A-Za-z_][A-Za-z0-9_]*)\s+([A-Za-z_][A-Za-z0-9_]*)\s*;?\s*$/);
+    if (m) {
+      return { kind: 'typedef-enum-alias', target: m[1], alias: m[2] };
+    }
+
+    return { error: "couldn't parse this typedef. Try 'typedef struct { ... } name_t;' or 'typedef struct Tag name_t;'." };
+  }
+
+  // Variable declaration of a struct type, with optional initializer.
+  //   "struct Pokemon p1;"
+  //   "struct Pokemon p1 = { 25, 35, 55, 40, 0.255, TYPE_ELECTRIC };"  (positional)
+  //   "struct Pokemon p1 = { .hp = 35, .attack = 55 };"                (designated)
+  //   "pokemon_t p1;"
+  //   "pokemon_t p1 = { ... };"
+  function tryParseStructDecl(line) {
+    const t = strip(line);
+    // Try to match a type prefix (struct Tag | enum Tag | typedef alias | primitive)
+    // We'll greedy-match the longest known type prefix.
+    const knownTypes = [];
+    for (const tag in structs) knownTypes.push('struct ' + tag);
+    for (const tag in enums) knownTypes.push('enum ' + tag);
+    for (const alias in typedefs) knownTypes.push(alias);
+    // Sort longest-first
+    knownTypes.sort((a, b) => b.length - a.length);
+
+    let matchedType = null;
+    let rest = '';
+    for (const kt of knownTypes) {
+      const re = new RegExp("^(" + kt.replace(/ /g, "\\s+") + ")\\s+([A-Za-z_].*)$");
+      const m = t.match(re);
+      if (m) { matchedType = kt.replace(/\s+/g, ' '); rest = m[2].trim(); break; }
+    }
+    if (!matchedType) return null;
+
+    // rest is either "varname" or "varname = { ... }"
+    let m2 = rest.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{([\s\S]*)\}\s*$/);
+    if (m2) {
+      const varName = m2[1];
+      const initBody = m2[2].trim();
+      return { kind: 'var-decl-init', typeStr: matchedType, varName, initBody };
+    }
+    m2 = rest.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*$/);
+    if (m2) {
+      return { kind: 'var-decl', typeStr: matchedType, varName: m2[1] };
+    }
+    return { kind: 'var-decl-error', error: "couldn't parse declaration after '" + matchedType + "'. Try '" + matchedType + " name;' or '" + matchedType + " name = { ... };'." };
+  }
+
+  // Member assignment: "p1.hp = 35;"
+  function tryParseMemberAssign(line) {
+    const t = strip(line);
+    const m = t.match(/^([A-Za-z_][A-Za-z0-9_]*)\.([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+)$/);
+    if (!m) return null;
+    return { kind: 'member-assign', varName: m[1], field: m[2], valueStr: m[3].trim() };
+  }
+
+  // Bare struct copy: "p2 = p1;" (must follow a prior decl of p2)
+  // Only matches when LHS is a known variable (we check during dispatch).
+  function tryParseStructCopy(line) {
+    const t = strip(line);
+    const m = t.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*([A-Za-z_][A-Za-z0-9_]*)\s*$/);
+    if (!m) return null;
+    return { kind: 'struct-copy', lhs: m[1], rhs: m[2] };
+  }
+
+  // Bare expression: "p1.hp"  --> print value
+  function tryParseMemberRead(line) {
+    const t = strip(line);
+    const m = t.match(/^([A-Za-z_][A-Za-z0-9_]*)\.([A-Za-z_][A-Za-z0-9_]*)\s*$/);
+    if (!m) return null;
+    return { kind: 'member-read', varName: m[1], field: m[2] };
+  }
+
+  // ============================================================
+  // Value parser (for field assignments / initializers)
+  // ============================================================
+  // Given a field declared type (e.g. 'int', 'double', 'enum PokemonType')
+  // and a textual value (e.g. '35', '0.255', 'TYPE_FIRE'), return the
+  // canonical display string. Returns { ok: true, display, raw } or
+  // { ok: false, error }.
+  function parseFieldValue(declaredType, valStr) {
+    valStr = String(valStr).trim();
+    if (declaredType.startsWith('enum ')) {
+      const enumTag = declaredType.slice(5).trim();
+      const en = enums[enumTag];
+      if (!en) return { ok: false, error: "enum " + enumTag + " is not defined yet." };
+      // Allow enum constant name OR integer
+      // Pure integer?
+      if (/^-?\d+$/.test(valStr)) {
+        return { ok: true, display: valStr, raw: parseInt(valStr, 10) };
+      }
+      // Enum member name?
+      const mem = en.members.find(m => m.name === valStr);
+      if (mem) {
+        return { ok: true, display: mem.name + ' (' + mem.value + ')', raw: mem.value };
+      }
+      return { ok: false, error: "'" + valStr + "' is not a member of enum " + enumTag + "." };
+    }
+    if (declaredType === 'float' || declaredType === 'double') {
+      // Strip trailing 'f'
+      const clean = valStr.replace(/[fF]$/, '');
+      if (!/^-?\d+(\.\d+)?$/.test(clean)) return { ok: false, error: "not a valid " + declaredType + " value: " + valStr };
+      // Format: keep the user's literal but drop the f for display
+      let display = clean;
+      // Add .0 if it looks like an integer literal
+      if (!/\./.test(display)) display = display + '.0';
+      return { ok: true, display, raw: parseFloat(clean) };
+    }
+    // Integer-family
+    if (!/^-?\d+$/.test(valStr)) return { ok: false, error: "not a valid integer value: " + valStr };
+    return { ok: true, display: valStr, raw: parseInt(valStr, 10) };
+  }
+
+  // ============================================================
+  // Evaluators
+  // ============================================================
+  function evalStructDef(parsed) {
+    if (structs[parsed.name]) {
+      throw new Error("struct " + parsed.name + " is already defined.");
+    }
+    // Validate each field type resolves (primitive or enum that exists)
+    for (const f of parsed.fields) {
+      if (f.type.startsWith('enum ')) {
+        const tag = f.type.slice(5);
+        if (!enums[tag]) throw new Error("field '" + f.name + "' uses enum " + tag + ", which is not defined.");
+      } else if (!isPrimitiveType(f.type)) {
+        throw new Error("field '" + f.name + "' has an unrecognized type '" + f.type + "'.");
+      }
+    }
+    structs[parsed.name] = { fields: parsed.fields.map(f => ({ ...f })) };
+    return { kind: 'struct-defined', name: parsed.name, fieldCount: parsed.fields.length };
+  }
+
+  function evalEnumDef(parsed) {
+    if (enums[parsed.name]) {
+      throw new Error("enum " + parsed.name + " is already defined.");
+    }
+    enums[parsed.name] = { members: parsed.members.slice() };
+    return { kind: 'enum-defined', name: parsed.name, memberCount: parsed.members.length };
+  }
+
+  function evalTypedef(parsed) {
+    if (parsed.kind === 'typedef-anon-struct') {
+      // Create the underlying struct under the synthetic tag, then alias it.
+      if (typedefs[parsed.alias]) throw new Error("typedef '" + parsed.alias + "' is already defined.");
+      if (structs[parsed.tagName]) throw new Error("typedef tag '" + parsed.tagName + "' already in use.");
+      // Validate field types
+      for (const f of parsed.fields) {
+        if (f.type.startsWith('enum ')) {
+          const tag = f.type.slice(5);
+          if (!enums[tag]) throw new Error("field '" + f.name + "' uses enum " + tag + ", which is not defined.");
+        } else if (!isPrimitiveType(f.type)) {
+          throw new Error("field '" + f.name + "' has an unrecognized type '" + f.type + "'.");
+        }
+      }
+      structs[parsed.tagName] = { fields: parsed.fields.slice(), anonymous: true };
+      typedefs[parsed.alias] = { kind: 'struct', target: parsed.tagName };
+      return { kind: 'typedef-defined', alias: parsed.alias, target: 'struct (anonymous)' };
+    }
+    if (parsed.kind === 'typedef-struct-alias') {
+      if (typedefs[parsed.alias]) throw new Error("typedef '" + parsed.alias + "' is already defined.");
+      if (!structs[parsed.target]) throw new Error("struct " + parsed.target + " is not defined yet.");
+      typedefs[parsed.alias] = { kind: 'struct', target: parsed.target };
+      return { kind: 'typedef-defined', alias: parsed.alias, target: 'struct ' + parsed.target };
+    }
+    if (parsed.kind === 'typedef-enum-alias') {
+      if (typedefs[parsed.alias]) throw new Error("typedef '" + parsed.alias + "' is already defined.");
+      if (!enums[parsed.target]) throw new Error("enum " + parsed.target + " is not defined yet.");
+      typedefs[parsed.alias] = { kind: 'enum', target: parsed.target };
+      return { kind: 'typedef-defined', alias: parsed.alias, target: 'enum ' + parsed.target };
+    }
+    throw new Error("Unsupported typedef.");
+  }
+
+  // Make a fresh struct-variable record with default-valued fields.
+  function makeStructVar(varName, typeStr, structTag) {
+    const sdef = structs[structTag];
+    if (!sdef) throw new Error("struct " + structTag + " is not defined.");
+    const fields = sdef.fields.map(f => ({
+      type: f.type,
+      name: f.name,
+      value: f.type.startsWith('enum ') ? '0' : defaultValueFor(f.type),
+      uninit: true,
+    }));
+    return { name: varName, typeStr, structTag, fields };
+  }
+
+  function evalVarDecl(parsed) {
+    if (variables.find(v => v.name === parsed.varName)) {
+      throw new Error("variable '" + parsed.varName + "' is already declared.");
+    }
+    const resolved = resolveType(parsed.typeStr);
+    if (!resolved || resolved.kind !== 'struct') {
+      throw new Error("'" + parsed.typeStr + "' is not a struct type.");
+    }
+    const v = makeStructVar(parsed.varName, parsed.typeStr, resolved.tag);
+    variables.push(v);
+    return { kind: 'var-declared', variable: v, init: false };
+  }
+
+  function evalVarDeclInit(parsed) {
+    if (variables.find(v => v.name === parsed.varName)) {
+      throw new Error("variable '" + parsed.varName + "' is already declared.");
+    }
+    const resolved = resolveType(parsed.typeStr);
+    if (!resolved || resolved.kind !== 'struct') {
+      throw new Error("'" + parsed.typeStr + "' is not a struct type.");
+    }
+    const sdef = structs[resolved.tag];
+    const v = makeStructVar(parsed.varName, parsed.typeStr, resolved.tag);
+
+    const body = parsed.initBody.trim();
+    if (body === '') {
+      // Empty braces: zero-initialize (already default)
+      variables.push(v);
+      return { kind: 'var-declared', variable: v, init: true, mode: 'empty' };
+    }
+
+    // Designated initializer? Look for at least one .name = ...
+    if (/\.[A-Za-z_]/.test(body)) {
+      // Designated: split on commas at top level (no nested braces here in L18 scope)
+      const parts = body.split(',').map(p => p.trim()).filter(p => p.length > 0);
+      for (const part of parts) {
+        const dm = part.match(/^\.([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+)$/);
+        if (!dm) throw new Error("designated initializer item '" + part + "' is not of the form '.name = value'.");
+        const fname = dm[1];
+        const fvalRaw = dm[2].trim();
+        const field = v.fields.find(f => f.name === fname);
+        if (!field) throw new Error("struct " + resolved.tag + " has no field named '" + fname + "'.");
+        const pv = parseFieldValue(field.type, fvalRaw);
+        if (!pv.ok) throw new Error(pv.error);
+        field.value = pv.display;
+        field.uninit = false;
+      }
+      variables.push(v);
+      return { kind: 'var-declared', variable: v, init: true, mode: 'designated' };
+    }
+
+    // Positional initializer: comma-separated values matching field order
+    const parts = body.split(',').map(p => p.trim()).filter(p => p.length > 0);
+    if (parts.length > sdef.fields.length) {
+      throw new Error("too many initializers: struct " + resolved.tag + " has " + sdef.fields.length + " fields but you gave " + parts.length + ".");
+    }
+    for (let i = 0; i < parts.length; i++) {
+      const field = v.fields[i];
+      const pv = parseFieldValue(field.type, parts[i]);
+      if (!pv.ok) throw new Error("field '" + field.name + "': " + pv.error);
+      field.value = pv.display;
+      field.uninit = false;
+    }
+    variables.push(v);
+    return { kind: 'var-declared', variable: v, init: true, mode: 'positional' };
+  }
+
+  function evalMemberAssign(parsed) {
+    const v = variables.find(x => x.name === parsed.varName);
+    if (!v) throw new Error("'" + parsed.varName + "' is not declared.");
+    const field = v.fields.find(f => f.name === parsed.field);
+    if (!field) throw new Error("'" + parsed.varName + "' (a struct " + v.structTag + ") has no field named '" + parsed.field + "'.");
+    const pv = parseFieldValue(field.type, parsed.valueStr);
+    if (!pv.ok) throw new Error(pv.error);
+    field.value = pv.display;
+    field.uninit = false;
+    lastChangedVar = v.name;
+    lastChangedField = field.name;
+    return { kind: 'member-assigned', varName: v.name, field: field.name, display: pv.display };
+  }
+
+  function evalStructCopy(parsed) {
+    const lhs = variables.find(v => v.name === parsed.lhs);
+    if (!lhs) throw new Error("'" + parsed.lhs + "' is not declared. Declare it first as a struct variable.");
+    const rhs = variables.find(v => v.name === parsed.rhs);
+    if (!rhs) throw new Error("'" + parsed.rhs + "' is not declared.");
+    if (lhs.structTag !== rhs.structTag) {
+      throw new Error("type mismatch: " + parsed.lhs + " is struct " + lhs.structTag + " but " + parsed.rhs + " is struct " + rhs.structTag + ".");
+    }
+    // Copy each field's value over. This is a value copy (the cs210 point of L18).
+    for (let i = 0; i < lhs.fields.length; i++) {
+      lhs.fields[i].value = rhs.fields[i].value;
+      lhs.fields[i].uninit = rhs.fields[i].uninit;
+    }
+    lastChangedVar = lhs.name;
+    lastChangedField = null;  // whole struct changed
+    return { kind: 'struct-copied', lhs: lhs.name, rhs: rhs.name };
+  }
+
+  function evalMemberRead(parsed) {
+    const v = variables.find(x => x.name === parsed.varName);
+    if (!v) throw new Error("'" + parsed.varName + "' is not declared.");
+    const field = v.fields.find(f => f.name === parsed.field);
+    if (!field) throw new Error("'" + parsed.varName + "' has no field named '" + parsed.field + "'.");
+    const r = { kind: 'member-read-result', expr: parsed.varName + '.' + parsed.field, value: field.value };
+    lastResult = r;
+    return r;
+  }
+
+  // ============================================================
+  // Dispatcher
+  // ============================================================
+  function runCommand(line) {
+    const t = line.trim();
+    if (!t) return null;
+    const lower = t.toLowerCase().replace(/;?$/, '');
+
+    if (lower === 'clear' || lower === 'reset') {
+      for (const k in structs) delete structs[k];
+      for (const k in enums) delete enums[k];
+      for (const k in typedefs) delete typedefs[k];
+      variables.length = 0;
+      lastChangedVar = null;
+      lastChangedField = null;
+      lastResult = null;
+      return { kind: 'cleared' };
+    }
+    if (lower === 'help' || lower === '?') {
+      return { kind: 'help' };
+    }
+    if (lower === 'list') return { kind: 'list' };
+
+    // struct definition
+    const sd = tryParseStructDef(t);
+    if (sd) {
+      if (sd.error) throw new Error(sd.error);
+      return evalStructDef(sd);
+    }
+    // enum definition
+    const ed = tryParseEnumDef(t);
+    if (ed) {
+      if (ed.error) throw new Error(ed.error);
+      return evalEnumDef(ed);
+    }
+    // typedef
+    const td = tryParseTypedef(t);
+    if (td) {
+      if (td.error) throw new Error(td.error);
+      return evalTypedef(td);
+    }
+
+    // member assignment (must check before var decl because the LHS could be a name)
+    const ma = tryParseMemberAssign(t);
+    if (ma) return evalMemberAssign(ma);
+
+    // variable declaration of a struct type
+    const vd = tryParseStructDecl(t);
+    if (vd) {
+      if (vd.kind === 'var-decl') return evalVarDecl(vd);
+      if (vd.kind === 'var-decl-init') return evalVarDeclInit(vd);
+      if (vd.kind === 'var-decl-error') throw new Error(vd.error);
+    }
+
+    // struct copy (only if LHS is a known variable)
+    const sc = tryParseStructCopy(t);
+    if (sc && variables.find(v => v.name === sc.lhs)) {
+      return evalStructCopy(sc);
+    }
+
+    // bare expression: member read
+    const mr = tryParseMemberRead(t);
+    if (mr) return evalMemberRead(mr);
+
+    // Shell-command guess
+    if (/^(ls|cd|pwd|cat|echo|mkdir|rm|mv|cp)\b/.test(t)) {
+      throw new Error("This is not a shell. Type a C struct definition, declaration, or member access.");
+    }
+    throw new Error("couldn't parse '" + t + "'. Try a struct definition, declaration, or member access like 'p1.hp = 35;'.");
+  }
+
+  // ============================================================
+  // Terminal
+  // ============================================================
+  const terminalEl = root.querySelector('#struct-terminal');
+  function termWrite(text, cls) {
+    const span = document.createElement('span');
+    if (cls) span.className = cls;
+    span.textContent = text;
+    terminalEl.appendChild(span);
+  }
+  function termLine(text, cls) {
+    termWrite(text, cls);
+    terminalEl.appendChild(document.createElement('br'));
+    terminalEl.scrollTop = terminalEl.scrollHeight;
+  }
+  function echoCommand(cmd) {
+    termWrite('struct> ', 'prompt');
+    termLine(cmd, 'typed');
+  }
+
+  // ============================================================
+  // Rendering
+  // ============================================================
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" })[c]);
+  }
+  function renderTypeCard_Struct(tag) {
+    const sdef = structs[tag];
+    const display = sdef.anonymous ? '(anonymous)' : tag;
+    let rows = '';
+    for (const f of sdef.fields) {
+      rows += '<div class="member-row"><span><span class="mtype">' + escapeHtml(f.type) + '</span> <span class="mname">' + escapeHtml(f.name) + '</span></span><span class="mval">field</span></div>';
+    }
+    // Show aliases
+    const aliases = [];
+    for (const a in typedefs) {
+      if (typedefs[a].kind === 'struct' && typedefs[a].target === tag) aliases.push(a);
+    }
+    let aliasLine = '';
+    if (aliases.length) {
+      aliasLine = '<div class="alias">aliased as: ' + aliases.map(escapeHtml).join(', ') + '</div>';
+    }
+    return '<div class="type-card">' +
+             '<span class="tag">struct</span><span class="name">' + escapeHtml(display) + '</span>' +
+             '<div class="members">' + rows + aliasLine + '</div>' +
+           '</div>';
+  }
+  function renderTypeCard_Enum(tag) {
+    const en = enums[tag];
+    let rows = '';
+    for (const m of en.members) {
+      rows += '<div class="member-row"><span class="mname">' + escapeHtml(m.name) + '</span><span class="mval">= ' + m.value + '</span></div>';
+    }
+    const aliases = [];
+    for (const a in typedefs) {
+      if (typedefs[a].kind === 'enum' && typedefs[a].target === tag) aliases.push(a);
+    }
+    let aliasLine = '';
+    if (aliases.length) {
+      aliasLine = '<div class="alias">aliased as: ' + aliases.map(escapeHtml).join(', ') + '</div>';
+    }
+    return '<div class="type-card">' +
+             '<span class="tag enum">enum</span><span class="name">' + escapeHtml(tag) + '</span>' +
+             '<div class="members">' + rows + aliasLine + '</div>' +
+           '</div>';
+  }
+  function renderTypesPane() {
+    const area = root.querySelector('#struct-types-area');
+    let html = '';
+    // Render structs first (skip anonymous-only ones with no visible tag... show them too actually)
+    for (const tag in structs) html += renderTypeCard_Struct(tag);
+    for (const tag in enums) html += renderTypeCard_Enum(tag);
+    if (!html) {
+      area.innerHTML = '<div class="pane-empty">No types yet. Define a struct on the left.</div>';
+    } else {
+      area.innerHTML = html;
+    }
+  }
+  function renderVarCard(v) {
+    const sdef = structs[v.structTag];
+    let rows = '';
+    for (const f of v.fields) {
+      const isChanged = (v.name === lastChangedVar) && (lastChangedField === null || f.name === lastChangedField);
+      const vcls = isChanged ? 'fval changed' : 'fval';
+      const display = f.uninit ? '<span style="color:#B8002F">(uninit)</span>' : escapeHtml(f.value);
+      rows += '<div class="ftype">' + escapeHtml(f.type) + '</div>' +
+              '<div class="fname">.' + escapeHtml(f.name) + '</div>' +
+              '<div class="' + vcls + '">' + display + '</div>';
+    }
+    const declStr = v.typeStr + ' ' + v.name + ';';
+    return '<div class="var-card">' +
+             '<div class="var-decl"><span class="vtype">' + escapeHtml(v.typeStr) + '</span> ' + escapeHtml(v.name) + '</div>' +
+             '<div class="var-meta">' + sdef.fields.length + ' field' + (sdef.fields.length === 1 ? '' : 's') + '</div>' +
+             '<div class="field-grid">' + rows + '</div>' +
+           '</div>';
+  }
+  function renderVarsPane() {
+    const area = root.querySelector('#struct-vars-area');
+    let html = '';
+    for (const v of variables) html += renderVarCard(v);
+    if (lastResult && lastResult.kind === 'member-read-result') {
+      html += '<div class="result-card">' +
+                '<div class="result-expr">' + escapeHtml(lastResult.expr) + '</div>' +
+                '<div class="result-value">' + escapeHtml(lastResult.value) + '</div>' +
+              '</div>';
+    }
+    if (!html) {
+      area.innerHTML = '<div class="pane-empty">No variables yet.</div>';
+    } else {
+      area.innerHTML = html;
+    }
+  }
+  function renderAll() {
+    renderTypesPane();
+    renderVarsPane();
+  }
+
+  // ============================================================
+  // Diagnostic helpers (gentle near-miss feedback)
+  // ============================================================
+  function diagStructDef(cmd, expectedName) {
+    const t = cmd.trim();
+    if (/^struct\s+\w+\s*\{/.test(t) && !/\}\s*;?\s*$/.test(t)) {
+      return "Close. End the struct definition with '};' (closing brace, then semicolon).";
+    }
+    const m = t.match(/^struct\s+(\w+)\b/);
+    if (m && m[1] !== expectedName) {
+      return "Close. The task wants the struct named '" + expectedName + "'. You wrote '" + m[1] + "'.";
+    }
+    return null;
+  }
+  function diagMemberAssign(cmd, varName, field, value) {
+    const t = cmd.trim();
+    if (new RegExp("^" + varName + "\\." + field + "\\s*=\\s*" + escapeRegex(value) + "\\s*$").test(t)) {
+      return "Almost. Don't forget the semicolon at the end.";
+    }
+    const m = t.match(/^([A-Za-z_]\w*)\.([A-Za-z_]\w*)\s*=/);
+    if (m) {
+      if (m[1] !== varName) return "Close. The task is assigning to '" + varName + "', not '" + m[1] + "'.";
+      if (m[2] !== field) return "Close. The task is assigning to field '" + field + "', not '" + m[2] + "'.";
+    }
+    return null;
+  }
+  function escapeRegex(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+  // ============================================================
+  // Tasks
+  // ============================================================
+  const STRUCT_DEF_REGEX = /^\s*struct\s+Pokemon\s*\{\s*int\s+pokedex_num\s*;\s*int\s+hp\s*;\s*int\s+attack\s*;\s*int\s+defense\s*;\s*double\s+catch_rate\s*;\s*enum\s+PokemonType\s+type\s*;\s*\}\s*;\s*$/;
+
+  const tasks = [
+    // --- Section 1: Defining your first struct ---
+    {
+      section: 'Section 1: Defining your first struct',
+      label: 'Task 1 of 12',
+      text: 'Define an enum named PokemonType with six members: TYPE_FIRE, TYPE_WATER, TYPE_GRASS, TYPE_ELECTRIC, TYPE_PSYCHIC, TYPE_NORMAL. End with a semicolon.',
+      hint: 'enum PokemonType { TYPE_FIRE, TYPE_WATER, TYPE_GRASS, TYPE_ELECTRIC, TYPE_PSYCHIC, TYPE_NORMAL };',
+      match: (cmd) => /^\s*enum\s+PokemonType\s*\{\s*TYPE_FIRE\s*,\s*TYPE_WATER\s*,\s*TYPE_GRASS\s*,\s*TYPE_ELECTRIC\s*,\s*TYPE_PSYCHIC\s*,\s*TYPE_NORMAL\s*,?\s*\}\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^\s*enum\s+PokemonType\s*\{[^}]*\}\s*$/.test(t)) return "Almost. End the line with ';' after the closing brace.";
+        if (/^\s*enum\s+\w+\s*\{/.test(t) && !/PokemonType/.test(t)) return "Close. The task wants the enum named 'PokemonType'.";
+        return null;
+      },
+      note: 'An enum gives names to integer constants. TYPE_FIRE is 0, TYPE_WATER is 1, and so on. The compiler assigns them in order starting from 0 unless you say otherwise.'
+    },
+    {
+      label: 'Task 2 of 12',
+      text: 'Define struct Pokemon with six fields in this order: int pokedex_num, int hp, int attack, int defense, double catch_rate, and enum PokemonType type. End with a semicolon.',
+      hint: 'struct Pokemon { int pokedex_num; int hp; int attack; int defense; double catch_rate; enum PokemonType type; };',
+      match: (cmd) => STRUCT_DEF_REGEX.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^\s*struct\s+Pokemon\s*\{[\s\S]*\}\s*$/.test(t) && !/\}\s*;\s*$/.test(t)) {
+          return "Almost. After the closing brace, add a semicolon. The line should end with '};'.";
+        }
+        return diagStructDef(cmd, 'Pokemon');
+      },
+      note: 'You created a new type. struct Pokemon is now a real type, just like int or double. It groups six related pieces of data under one name. The fields stay in the order you wrote them.'
+    },
+    {
+      label: 'Task 3 of 12',
+      text: 'Declare a struct Pokemon variable named pikachu. Do not initialize it. End with a semicolon.',
+      hint: 'struct Pokemon pikachu;',
+      match: (cmd) => /^\s*struct\s+Pokemon\s+pikachu\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^\s*struct\s+Pokemon\s+pikachu\s*$/.test(t)) return "Almost. Don't forget the semicolon.";
+        if (/^\s*Pokemon\s+pikachu\s*;?\s*$/.test(t)) return "Close. C requires the 'struct' keyword when you declare a variable of a struct type. Write 'struct Pokemon pikachu;'.";
+        const m = t.match(/^\s*struct\s+Pokemon\s+(\w+)\s*;?\s*$/);
+        if (m && m[1] !== 'pikachu') return "Close. The task names the variable 'pikachu', not '" + m[1] + "'.";
+        return null;
+      },
+      note: 'You declared a variable. Its fields exist but were not given values, so they hold garbage (just like uninitialized primitives in Lesson 2). Look at the Variables pane: every field shows (uninit).'
+    },
+
+    // --- Section 2: Setting and reading fields ---
+    {
+      section: 'Section 2: Setting and reading fields',
+      label: 'Task 4 of 12',
+      text: "Set pikachu's hp field to 35 using the dot operator.",
+      hint: 'pikachu.hp = 35;',
+      match: (cmd) => /^\s*pikachu\.hp\s*=\s*35\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diagMemberAssign(cmd, 'pikachu', 'hp', '35'),
+      note: 'The dot operator picks one field out of a struct variable. pikachu.hp means "the hp field of pikachu". It works for both reading and writing.'
+    },
+    {
+      label: 'Task 5 of 12',
+      text: "Now set pikachu's type to TYPE_ELECTRIC.",
+      hint: 'pikachu.type = TYPE_ELECTRIC;',
+      match: (cmd) => /^\s*pikachu\.type\s*=\s*TYPE_ELECTRIC\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diagMemberAssign(cmd, 'pikachu', 'type', 'TYPE_ELECTRIC'),
+      note: 'Enum members work like named integer constants. The compiler is storing 3 (the position of TYPE_ELECTRIC in the enum), but you can read your code by the name. That is the whole point of enums.'
+    },
+    {
+      label: 'Task 6 of 12',
+      text: "Read pikachu's hp. Type just the expression (no semicolon needed for a bare read).",
+      hint: 'pikachu.hp',
+      match: (cmd) => /^\s*pikachu\.hp\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => null,
+      note: 'Same dot operator, used as a read. Real C code wraps reads in printf or assigns them to variables; here, the bare expression just prints the value so you can see it.'
+    },
+
+    // --- Section 3: Designated initializers ---
+    {
+      section: 'Section 3: Initializing structs in one statement',
+      label: 'Task 7 of 12',
+      text: "Declare and initialize a second variable: struct Pokemon charmander with designated initializers. Set pokedex_num to 4, hp to 39, attack to 52, and type to TYPE_FIRE. Skip defense and catch_rate.",
+      hint: 'struct Pokemon charmander = { .pokedex_num = 4, .hp = 39, .attack = 52, .type = TYPE_FIRE };',
+      match: (cmd) => {
+        // Accept any order for the four named fields, semicolon required
+        const m = cmd.trim().match(/^struct\s+Pokemon\s+charmander\s*=\s*\{\s*([\s\S]+?)\s*\}\s*;\s*$/);
+        if (!m) return false;
+        const body = m[1];
+        const required = [
+          { f: 'pokedex_num', v: '4' },
+          { f: 'hp', v: '39' },
+          { f: 'attack', v: '52' },
+          { f: 'type', v: 'TYPE_FIRE' },
+        ];
+        for (const r of required) {
+          const fre = new RegExp("\\." + r.f + "\\s*=\\s*" + r.v + "\\b");
+          if (!fre.test(body)) return false;
+        }
+        // Reject if it contains designated fields not in our list
+        const allowed = ['pokedex_num', 'hp', 'attack', 'defense', 'catch_rate', 'type'];
+        const used = [];
+        const reFind = /\.([A-Za-z_]\w*)/g;
+        let dm;
+        while ((dm = reFind.exec(body))) {
+          if (allowed.indexOf(dm[1]) === -1) return false;
+          used.push(dm[1]);
+        }
+        return true;
+      },
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (!/struct\s+Pokemon\s+charmander/.test(t)) return "Close. Start with 'struct Pokemon charmander'.";
+        if (!/\{[\s\S]*\}/.test(t)) return "Close. Wrap the initializer values in '{ ... }'.";
+        if (!/\.pokedex_num\s*=\s*4/.test(t)) return "Close. Make sure pokedex_num is set to 4.";
+        if (!/\.hp\s*=\s*39/.test(t)) return "Close. Make sure hp is set to 39.";
+        if (!/\.attack\s*=\s*52/.test(t)) return "Close. Make sure attack is set to 52.";
+        if (!/\.type\s*=\s*TYPE_FIRE/.test(t)) return "Close. Make sure type is set to TYPE_FIRE.";
+        if (!/;\s*$/.test(t)) return "Almost. Don't forget the semicolon at the end.";
+        return null;
+      },
+      note: 'Designated initializers (the .field = value syntax) let you set named fields in one statement. Any field you skip stays at zero (defense and catch_rate are 0 and 0.0 here). The fields can appear in any order; the names tell the compiler which is which.'
+    },
+    {
+      label: 'Task 8 of 12',
+      text: "Read charmander.hp.",
+      hint: 'charmander.hp',
+      match: (cmd) => /^\s*charmander\.hp\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => null,
+      note: 'Same dot operator on a different variable. Each struct variable holds its own copy of all the fields.'
+    },
+
+    // --- Section 4: typedef ---
+    {
+      section: 'Section 4: Giving the type a shorter name',
+      label: 'Task 9 of 12',
+      text: "Create a typedef that gives struct Pokemon the alias pokemon_t. Write the form 'typedef struct Pokemon pokemon_t;'.",
+      hint: 'typedef struct Pokemon pokemon_t;',
+      match: (cmd) => /^\s*typedef\s+struct\s+Pokemon\s+pokemon_t\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^\s*typedef\s+struct\s+Pokemon\s+pokemon_t\s*$/.test(t)) return "Almost. Don't forget the semicolon.";
+        if (/^\s*typedef\s+struct\s+\w+/.test(t) && !/Pokemon/.test(t)) return "Close. The task aliases 'struct Pokemon'.";
+        const m = t.match(/^\s*typedef\s+struct\s+Pokemon\s+(\w+)\s*;?\s*$/);
+        if (m && m[1] !== 'pokemon_t') return "Close. The alias should be 'pokemon_t' (the _t suffix is the C standard for typedefs).";
+        return null;
+      },
+      note: 'typedef gives a type a second name. Now pokemon_t means the same thing as struct Pokemon, but it is shorter to write. The _t suffix is the C convention for typedef names (size_t, time_t, FILE_t, ...).'
+    },
+    {
+      label: 'Task 10 of 12',
+      text: "Declare a third variable using the shorter alias: pokemon_t bulbasaur. Do not initialize.",
+      hint: 'pokemon_t bulbasaur;',
+      match: (cmd) => /^\s*pokemon_t\s+bulbasaur\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^\s*pokemon_t\s+bulbasaur\s*$/.test(t)) return "Almost. Don't forget the semicolon.";
+        if (/^\s*struct\s+Pokemon\s+bulbasaur\s*;?\s*$/.test(t)) return "That works in real C, but for this task use the alias: 'pokemon_t bulbasaur;'.";
+        const m = t.match(/^\s*pokemon_t\s+(\w+)\s*;?\s*$/);
+        if (m && m[1] !== 'bulbasaur') return "Close. The task names the variable 'bulbasaur'.";
+        return null;
+      },
+      note: 'Same struct, shorter declaration. No need to write the word "struct" anymore. Most real-world C code typedef-s every struct for exactly this reason.'
+    },
+
+    // --- Section 5: Struct copy ---
+    {
+      section: 'Section 5: Copying a struct',
+      label: 'Task 11 of 12',
+      text: "Copy charmander into bulbasaur with a single assignment. (Yes, you can really do this in C.)",
+      hint: 'bulbasaur = charmander;',
+      match: (cmd) => /^\s*bulbasaur\s*=\s*charmander\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^\s*bulbasaur\s*=\s*charmander\s*$/.test(t)) return "Almost. Don't forget the semicolon.";
+        if (/^\s*charmander\s*=\s*bulbasaur\s*;?\s*$/.test(t)) return "Close. The task copies charmander INTO bulbasaur. The destination (bulbasaur) goes on the left.";
+        return null;
+      },
+      note: 'C copies the whole struct value. Every field of charmander was written into the corresponding field of bulbasaur. They are now equal, but they are SEPARATE: changing one does not affect the other. That matters more than it looks. You will see why in the next task.'
+    },
+    {
+      label: 'Task 12 of 12',
+      text: "Now change bulbasaur's hp to 45. Predict before you press Enter: what is charmander.hp afterward?",
+      hint: 'bulbasaur.hp = 45;',
+      match: (cmd) => /^\s*bulbasaur\.hp\s*=\s*45\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diagMemberAssign(cmd, 'bulbasaur', 'hp', '45'),
+      note: 'charmander.hp is still 39. The copy in the previous task was a VALUE copy, not a reference. bulbasaur and charmander each have their own set of fields. This is how C structs work: assigning copies. Tomorrow in Lesson 19 you will see what this means when you pass a struct to a function as an argument, and why it is sometimes a problem.'
+    },
+  ];
+
+  // ============================================================
+  // Walkthrough controller
+  // ============================================================
+  function checkTask(rawCmd) {
+    if (mode === 'free' || currentTaskIndex >= tasks.length) return null;
+    const t = tasks[currentTaskIndex];
+    if (t.match(rawCmd)) {
+      process(rawCmd);
+      if (t.note) {
+        termLine('', 'out');
+        termLine('  ' + t.note, 'note');
+      }
+      currentTaskIndex++;
+      consecutiveFails = 0;
+      hideHintPulse();
+      renderTask();
+      if (currentTaskIndex >= tasks.length) {
+        setMode('free');
+        termLine('', 'out');
+        termLine('  Walkthrough complete. Free mode unlocked. Type any C statement to keep exploring.', 'note');
+      }
+      return true;
+    } else {
+      echoCommand(rawCmd);
+      const diag = (t.diagnose && t.diagnose(rawCmd)) || null;
+      if (diag) {
+        termLine('  ' + diag, 'err');
+      } else {
+        termLine("  Not what this task is asking for. Look at the task card above, or click 'Show hint'.", 'err');
+      }
+      consecutiveFails++;
+      if (consecutiveFails >= 2) showHintPulse();
+      return false;
+    }
+  }
+
+  function renderTask() {
+    const fill = root.querySelector('#struct-progress-fill');
+    const label = root.querySelector('#struct-progress-label');
+    const card = root.querySelector('#struct-task-card');
+    const labelEl = root.querySelector('#struct-task-label');
+    const textEl = root.querySelector('#struct-task-text');
+    const hintEl = root.querySelector('#struct-task-hint');
+    const sectionEl = root.querySelector('#struct-section-header');
+    const completionArea = root.querySelector('#struct-completion-area');
+
+    const pct = (currentTaskIndex / tasks.length) * 100;
+    fill.style.width = pct + '%';
+    label.textContent = 'Task ' + Math.min(currentTaskIndex + 1, tasks.length) + ' of ' + tasks.length;
+
+    if (currentTaskIndex >= tasks.length) {
+      card.className = 'task-card complete';
+      labelEl.textContent = 'Complete';
+      textEl.textContent = "You worked through every key concept of Lesson 18: defining structs and enums, declaring struct variables, the dot operator, designated initializers, typedef aliases, and the struct-copy assignment. You're ready for Lab 18.";
+      hintEl.textContent = '';
+      fill.style.width = '100%';
+      label.textContent = 'All tasks complete';
+      sectionEl.textContent = 'All done';
+      completionArea.innerHTML = '';
+      cs210RenderCompletion(completionArea);
+      return;
+    }
+
+    completionArea.innerHTML = '';
+    card.className = 'task-card';
+    const t = tasks[currentTaskIndex];
+    if (t.section) sectionEl.textContent = t.section;
+    labelEl.textContent = t.label;
+    textEl.textContent = t.text;
+    hintEl.textContent = '';
+  }
+  function showHint() {
+    if (currentTaskIndex >= tasks.length) return;
+    const t = tasks[currentTaskIndex];
+    root.querySelector('#struct-task-hint').textContent = 'Hint: ' + (t.hint || '');
+    hideHintPulse();
+  }
+  function showHintPulse() { root.querySelector('#struct-hint-btn').classList.add('pulse'); }
+  function hideHintPulse() { root.querySelector('#struct-hint-btn').classList.remove('pulse'); }
+
+  function reset() {
+    for (const k in structs) delete structs[k];
+    for (const k in enums) delete enums[k];
+    for (const k in typedefs) delete typedefs[k];
+    variables.length = 0;
+    lastChangedVar = null;
+    lastChangedField = null;
+    lastResult = null;
+    currentTaskIndex = 0;
+    consecutiveFails = 0;
+    hideHintPulse();
+    setMode('walkthrough');
+    terminalEl.innerHTML = '';
+    termLine('Welcome to the struct walkthrough.', 'dim');
+    termLine('Follow the task card above. Type C statements at the prompt.', 'dim');
+    termLine('', 'out');
+    renderAll();
+    renderTask();
+  }
+
+  // ============================================================
+  // Process a command
+  // ============================================================
+  function process(line) {
+    echoCommand(line);
+    // Clear the "recently changed" highlight before the command runs
+    // (the eval will set it again if applicable)
+    lastChangedVar = null;
+    lastChangedField = null;
+    lastResult = null;
+    try {
+      const r = runCommand(line);
+      if (!r) return;
+      if (r.kind === 'struct-defined') {
+        termLine('  defined struct ' + r.name + ' with ' + r.fieldCount + ' field' + (r.fieldCount === 1 ? '' : 's'), 'out');
+      } else if (r.kind === 'enum-defined') {
+        termLine('  defined enum ' + r.name + ' with ' + r.memberCount + ' member' + (r.memberCount === 1 ? '' : 's'), 'out');
+      } else if (r.kind === 'typedef-defined') {
+        termLine('  ' + r.alias + ' is now an alias for ' + r.target, 'out');
+      } else if (r.kind === 'var-declared') {
+        if (r.init) {
+          termLine('  ' + r.variable.typeStr + ' ' + r.variable.name + ' = { ... }  (initialized)', 'out');
+        } else {
+          termLine('  ' + r.variable.typeStr + ' ' + r.variable.name + '  (fields uninitialized; do not trust)', 'out');
+        }
+      } else if (r.kind === 'member-assigned') {
+        termLine('  ' + r.varName + '.' + r.field + ' = ' + r.display, 'out');
+      } else if (r.kind === 'struct-copied') {
+        termLine('  ' + r.lhs + ' = ' + r.rhs + '  (all fields copied by value)', 'out');
+      } else if (r.kind === 'member-read-result') {
+        termLine('  ' + r.value, 'out');
+      } else if (r.kind === 'cleared') {
+        termLine('  cleared all types and variables', 'out');
+      } else if (r.kind === 'list') {
+        const sc = Object.keys(structs).length;
+        const ec = Object.keys(enums).length;
+        const tc = Object.keys(typedefs).length;
+        const vc = variables.length;
+        termLine('  ' + sc + ' struct(s), ' + ec + ' enum(s), ' + tc + ' typedef(s), ' + vc + ' variable(s)', 'out');
+      } else if (r.kind === 'help') {
+        termLine('  struct def: struct Name { type field; ... };', 'out');
+        termLine('  enum def:   enum Name { A, B, C };', 'out');
+        termLine('  typedef:    typedef struct Name alias_t;', 'out');
+        termLine('  declare:    struct Name v;  or  alias_t v;', 'out');
+        termLine('  init:       struct Name v = { .field = value, ... };', 'out');
+        termLine('  assign:     v.field = value;', 'out');
+        termLine('  copy:       v2 = v1;', 'out');
+        termLine('  read:       v.field', 'out');
+        termLine('  meta:       clear  list  help', 'out');
+      }
+      renderAll();
+    } catch (e) {
+      termLine('  error: ' + e.message, 'err');
+    }
+  }
+
+  // ============================================================
+  // Mode toggle
+  // ============================================================
+  function setMode(newMode) {
+    mode = newMode;
+    const btn = root.querySelector('#struct-mode-btn');
+    if (mode === 'free') {
+      btn.textContent = 'Return to walkthrough';
+      btn.style.background = '#E6F4EA';
+      btn.style.borderColor = '#2E7D32';
+      btn.style.color = '#1B5E20';
+      const cli = root.querySelector('#struct-cli-input');
+      cli.placeholder = 'free mode: type any struct, enum, typedef, decl, or member access';
+    } else {
+      btn.textContent = 'Switch to free mode';
+      btn.style.background = '';
+      btn.style.borderColor = '';
+      btn.style.color = '';
+      const cli = root.querySelector('#struct-cli-input');
+      cli.placeholder = 'follow the task above';
+    }
+  }
+
+  // ============================================================
+  // Input wiring
+  // ============================================================
+  const inputEl = root.querySelector('#struct-cli-input');
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const v = inputEl.value;
+      inputEl.value = '';
+      if (!v.trim()) return;
+      if (mode === 'walkthrough') {
+        checkTask(v);
+      } else {
+        process(v);
+      }
+    }
+  });
+  root.querySelector('#struct-hint-btn').addEventListener('click', showHint);
+  root.querySelector('#struct-reset-btn').addEventListener('click', reset);
+  root.querySelector('#struct-mode-btn').addEventListener('click', () => {
+    if (mode === 'walkthrough') {
+      setMode('free');
+      termLine('', 'out');
+      termLine('  Free mode. Type any C struct, enum, typedef, declaration, or member access.', 'note');
+    } else {
+      setMode('walkthrough');
+      termLine('', 'out');
+      termLine('  Walkthrough mode. Follow the task card above.', 'note');
+    }
+  });
+
+  // Boot
+  reset();
+})();
+</script>
+
+
+    </div>
+  </details>
+
+  <!-- ===================== 6. AFTER CLASS ===================== -->
+  <details id="after-class" style="margin-bottom: 24px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      6. After Class
+    </summary>
+    <div style="padding: 18px 22px;">
+      <ul style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Finish Lab 18 if you did not complete it in class. Submit through GitHub Classroom before Lesson 19.</li>
+        <li style="margin-bottom: 6px;">Submit the Lesson 18 reflection in Blackboard. Enter your completion code and answer the reflection prompt.</li>
+        <li style="margin-bottom: 6px;"><strong>Read the PEX2 handout this week.</strong> Eight lessons from today, individual work, structs and file I/O. Start sketching your struct design now even though file I/O lands at Lesson 21.</li>
+        <li style="margin-bottom: 6px;">Read Beej-C Chapter 8 cont. and Chapter 20 (Structs II) for Lesson 19.</li>
+        <li style="margin-bottom: 6px;">Replay the walkthrough in free mode. Define your own struct of something you care about (a class roster entry, a song, a stat block) and see if you can predict what each field will show in the Variables pane.</li>
+        <li style="margin-bottom: 0;">Heads up: Quiz 7 at Lesson 20 covers structs (Lessons 18 and 19).</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== HELP NOTE ===================== -->
+  <div style="background: #F5F7FA; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 3px; font-size: 13.5px; color: #4A5568;">
+    <strong style="color: #00205B;">Need help?</strong> Check the course Resources section first (DFCS C Programming Standard, Git troubleshooting, course tooling). If you are still stuck, schedule EI with your instructor. Bring specific code or specific widget screenshots, and the exact error message or output you do not understand. Specific questions get unstuck quickly.
+  </div>
+
+</div>

@@ -1,0 +1,1595 @@
+<!-- ============================================================
+     CS210 — Lesson 15
+     Stack, Heap, malloc, free
+     Self-contained: all CSS inline. Native <details> for collapsing.
+     memalloc walkthrough widget embedded inline in section 5.
+     Paste into Blackboard Ultra via Document → Add HTML block.
+     ============================================================ -->
+
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 980px; margin: 0 auto; line-height: 1.6;">
+
+  <!-- ===================== LIGHT HEADER ===================== -->
+  <div style="border-left: 5px solid #003087; padding: 8px 0 8px 18px; margin-bottom: 24px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 2px;">CS210 &middot; Block 2 &middot; Lesson 15</div>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 600; color: #00205B;">Stack, Heap, malloc, free</h1>
+    <div style="font-size: 14px; color: #4A5568; margin-top: 4px;">Two memory regions &middot; The malloc/free pattern &middot; NULL checks &middot; Ownership reasoning</div>
+  </div>
+
+  <!-- ===================== AT A GLANCE ===================== -->
+  <div style="background: #F5F7FA; border-left: 4px solid #B5B7BA; padding: 14px 18px; margin-bottom: 22px; font-size: 14px;">
+    <strong style="color: #00205B;">At a glance:</strong> The last new content lesson before the midterm. You learn to ask the operating system for memory that lives past the function that asked, why every malloc needs a matching free, and how to reason about who owns each allocation. The memalloc walkthrough in Section 5 is where you practice; the lab puts it all to work building Spotify play counts.
+  </div>
+
+  <!-- ===================== TABLE OF CONTENTS ===================== -->
+  <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 20px; margin-bottom: 24px; border-radius: 3px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Contents</div>
+    <ol style="margin: 0; padding-left: 22px; font-size: 14px;">
+      <li style="margin-bottom: 4px;"><a href="#objectives" style="color: #003087; text-decoration: none;">Lesson Objectives</a></li>
+      <li style="margin-bottom: 4px;"><a href="#readings" style="color: #003087; text-decoration: none;">Assigned Readings</a></li>
+      <li style="margin-bottom: 4px;"><a href="#pre-class" style="color: #003087; text-decoration: none;">Pre-Class Work</a></li>
+      <li style="margin-bottom: 4px;"><a href="#materials" style="color: #003087; text-decoration: none;">Lesson Materials and Overview</a></li>
+      <li style="margin-bottom: 4px;"><a href="#in-class" style="color: #003087; text-decoration: none;">In-Class Work</a></li>
+      <li style="margin-bottom: 0;"><a href="#after-class" style="color: #003087; text-decoration: none;">After Class</a></li>
+    </ol>
+  </div>
+
+  <!-- ===================== 1. OBJECTIVES ===================== -->
+  <details id="objectives" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      1. Lesson Objectives
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 10px 0; font-style: italic;">By the end of this lesson, cadets will be able to:</p>
+      <ol style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Distinguish memory allocated on the stack from memory allocated on the heap. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+        <li style="margin-bottom: 6px;">Allocate and deallocate memory using <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">malloc</code> and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">free</code>. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+        <li style="margin-bottom: 6px;">Choose between stack and heap based on program requirements. <span style="color: #6B7280; font-size: 12px;">(Outcomes 1, 3)</span></li>
+        <li style="margin-bottom: 6px;">Validate every allocation by checking for <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">NULL</code>. <span style="color: #6B7280; font-size: 12px;">(Outcome 3)</span></li>
+        <li style="margin-bottom: 0;">Reason about ownership: who allocates and who frees. <span style="color: #6B7280; font-size: 12px;">(Outcomes 1, 3)</span></li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 2. READINGS ===================== -->
+  <details id="readings" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      2. Assigned Readings
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 12px 0;">Complete before class. Beej Chapter 12 is the spine of today's lecture.</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <thead>
+          <tr style="background: #E8EDF5; color: #00205B;">
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 130px;">Source</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9;">Sections</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 240px;">Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;"><a href="https://beej.us/guide/bgc/" style="color: #003087; text-decoration: underline;">Beej-C</a></td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Chapter 12 (Manual Memory Allocation)</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">malloc, calloc, free, the NULL check pattern</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 9px 12px;">King, <em>C Programming: A Modern Approach</em></td>
+            <td style="padding: 9px 12px;">Chapter 17 (Advanced Uses of Pointers)</td>
+            <td style="padding: 9px 12px; color: #4A5568;">Optional deeper dive into heap allocation patterns</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <!-- ===================== 3. PRE-CLASS WORK ===================== -->
+  <details id="pre-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      3. Pre-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 18px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #6B5300; font-size: 14px; margin-bottom: 4px;">Do this first</div>
+        <div style="font-size: 14px; color: #5A4B00;">Plan on 30 to 45 minutes for the reading. The mechanics of malloc and free are small but the first time you write them feels strange; pre-class reading shortens the strangeness.</div>
+      </div>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 0 0 10px 0;">Pre-Class Checklist</h3>
+
+      <!-- Step 1: Reading -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">1</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Read Beej-C Chapter 12</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">Focus on these vocabulary items; we use them all day:</div>
+            <ul style="font-size: 13.5px; margin: 0 0 6px 0; padding-left: 20px;">
+              <li style="margin-bottom: 3px;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">malloc</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">calloc</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">free</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">NULL</code></li>
+              <li style="margin-bottom: 3px;">Stack vs heap</li>
+              <li style="margin-bottom: 3px;">Initialization vs allocation (garbage vs zero)</li>
+              <li style="margin-bottom: 0;">Use after free and double free (preview for Lesson 16)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Connect to L14 -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">2</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Recall the Lesson 14 question</div>
+            <div style="font-size: 14px;">In Lesson 14 you wrote functions that modified caller variables through pointers. Ask yourself: where did those caller variables live? Today opens with the natural next question: what if I need memory that has to live past the function that creates it?</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Skim widget -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 8px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">3</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Skim the In-Class section below</div>
+            <div style="font-size: 14px;">You will see an interactive memalloc walkthrough widget. No need to use it yet; just know it is there and what it looks like.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ===================== 4. LESSON MATERIALS AND OVERVIEW ===================== -->
+  <details id="materials" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      4. Lesson Materials and Overview
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 18px 0;">Today is the last new content lesson before GR2. You learn how to ask the operating system for memory yourself, why every allocation must be matched by exactly one free, and how to keep track of who owns what so you do not leak memory, free the same block twice, or read freed memory.</p>
+
+      <!-- Subsection navigation -->
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 18px; margin-bottom: 22px; border-radius: 3px;">
+        <div style="font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">Jump to</div>
+        <div style="font-size: 13.5px;">
+          <a href="#slides" style="color: #003087; text-decoration: none; margin-right: 14px;">Slides</a>
+          <a href="#two-regions" style="color: #003087; text-decoration: none; margin-right: 14px;">Two Regions</a>
+          <a href="#pattern" style="color: #003087; text-decoration: none; margin-right: 14px;">The Pattern</a>
+          <a href="#choosing" style="color: #003087; text-decoration: none; margin-right: 14px;">Choosing</a>
+          <a href="#ownership" style="color: #003087; text-decoration: none; margin-right: 14px;">Ownership</a>
+          <a href="#dfcs" style="color: #003087; text-decoration: none;">DFCS Standard</a>
+        </div>
+      </div>
+
+      <!-- Slides -->
+      <h3 id="slides" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0; scroll-margin-top: 16px;">Slides</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">The Lesson 15 deck covers stack vs heap, the four allocation functions from the standard library, the ask/check/use/return pattern, the decision table for choosing between stack and heap, and the ownership reasoning framework you will apply in the lab.</p>
+
+      <!-- =========================================================
+           EDIT ME: Lesson 15 slide deck link
+           Replace href="#" below with the SharePoint share URL once
+           the deck is published. Leave target="_blank" and rel="noopener".
+           ========================================================= -->
+      <p style="margin: 0 0 18px 0;">
+        <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 10px 20px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 14px;">Open Lesson 15 slides &rarr;</a>
+      </p>
+
+      <!-- Two regions -->
+      <h3 id="two-regions" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Two memory regions</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Every C program uses two regions of memory. The <strong>stack</strong> is managed by the compiler: every function call gets a frame, and that frame disappears when the function returns. Local variables live there. The <strong>heap</strong> is managed by you: you call <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">malloc</code> to ask the operating system for memory, the OS gives you a pointer, and the block stays valid until you call <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">free</code>.</p>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">The heap is not slower or worse than the stack; it is different. Each region has its own rules and its own use cases. Most programs use both.</p>
+
+      <!-- The pattern -->
+      <h3 id="pattern" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">The malloc/free pattern</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">You will write this pattern hundreds of times in the rest of the course. Four steps: <strong>ask</strong>, <strong>check</strong>, <strong>use</strong>, <strong>return</strong>.</p>
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.55; margin-bottom: 12px; white-space: pre;">int *plays = malloc(sizeof(int) * 50);   <span style="color: #B5BEC8;">// ASK</span>
+if (plays == NULL) {                     <span style="color: #B5BEC8;">// CHECK</span>
+    fprintf(stderr, "out of memory\n");
+    exit(1);
+}
+plays[0] = 42;                           <span style="color: #B5BEC8;">// USE</span>
+plays[1] = 7;
+
+free(plays);                             <span style="color: #B5BEC8;">// RETURN</span>
+plays = NULL;</div>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">The NULL check is not optional. <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">malloc</code> returns <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">NULL</code> when allocation fails; if you skip the check and try to dereference, your program crashes. Setting the pointer to <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">NULL</code> after free is a defensive habit; if any later code accidentally uses the pointer, the segfault is loud and immediate instead of quiet and corrupting.</p>
+
+      <!-- Choosing -->
+      <h3 id="choosing" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Stack or heap?</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Two questions usually decide for you.</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 18px;">
+        <thead>
+          <tr style="background: #00205B; color: #ffffff;">
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600;">Question</th>
+            <th style="padding: 9px 12px; text-align: center; font-weight: 600; width: 130px;">Stack</th>
+            <th style="padding: 9px 12px; text-align: center; font-weight: 600; width: 130px;">Heap</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Is the size known at compile time?</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; text-align: center; font-family: Consolas, monospace; color: #00205B;">Yes</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; text-align: center; font-family: Consolas, monospace; color: #003087;">No or maybe</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Does the data outlive the function?</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; text-align: center; font-family: Consolas, monospace; color: #00205B;">No</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; text-align: center; font-family: Consolas, monospace; color: #003087;">Yes</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Is the data small?</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; text-align: center; font-family: Consolas, monospace; color: #00205B;">Yes (a few KB)</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; text-align: center; font-family: Consolas, monospace; color: #003087;">Any size</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px;">Do I want to manage it myself?</td>
+            <td style="padding: 8px 12px; text-align: center; font-family: Consolas, monospace; color: #00205B;">No</td>
+            <td style="padding: 8px 12px; text-align: center; font-family: Consolas, monospace; color: #003087;">Yes</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Ownership -->
+      <h3 id="ownership" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Ownership: the three questions</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">For every <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">malloc</code> your program does, answer these three questions out loud (or in a comment):</p>
+      <ol style="font-size: 14.5px; margin: 0 0 12px 0; padding-left: 22px;">
+        <li style="margin-bottom: 6px;"><strong style="color: #00205B;">Who allocated it?</strong> Which function called malloc?</li>
+        <li style="margin-bottom: 6px;"><strong style="color: #00205B;">Who is responsible for freeing it?</strong> The caller? This function? Someone further up?</li>
+        <li style="margin-bottom: 0;"><strong style="color: #00205B;">When is it safe to free?</strong> After every reader is done with it. Not before.</li>
+      </ol>
+      <p style="font-size: 14.5px; margin: 14px 0 12px 0;">The four ownership markers from the slide deck name the answers in code:</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 13.5px; margin-bottom: 12px;">
+        <thead>
+          <tr style="background: #E8EDF5; color: #00205B;">
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 180px;">Marker</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9;">Where it goes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace;">// owns:</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">above a function that returns heap memory</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace;">// borrows:</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">above a function that takes a pointer but does not free</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace;">// alloc owner:</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">next to every malloc/calloc call</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; font-family: Consolas, monospace;">// free owner:</td>
+            <td style="padding: 8px 12px;">next to every free call</td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="font-size: 14.5px; margin: 0;">You will apply these markers in Part B of today's lab.</p>
+
+      <!-- DFCS Standard -->
+      <h3 id="dfcs" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">DFCS C Programming Standard</h3>
+      <p style="font-size: 14.5px; margin: 0;">Today's lesson introduces <strong>&sect;8.5</strong> of the DFCS C Programming Standard: <em>always free dynamically allocated memory</em>. The ownership annotation convention you use in Part B is one practical way to follow this rule: if every allocation has a named owner and every owner has a corresponding free, you do not leak. See the Resources section for the full standard. Lesson 19 will revisit &sect;8.5 when struct members are themselves heap pointers.</p>
+    </div>
+  </details>
+
+  <!-- ===================== 5. IN-CLASS WORK ===================== -->
+  <details id="in-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      5. In-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 16px 0;">Two things to do in class. Use the checklist to track your progress.</p>
+
+      <ul style="list-style: none; padding: 0; margin: 0 0 24px 0; font-size: 14.5px;">
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Work through the memalloc walkthrough below.</strong>
+          <span style="color: #4A5568;">Twelve guided tasks covering stack frames, malloc, calloc, free, and the start of ownership reasoning. About 15 minutes.</span>
+        </li>
+        <li style="margin-bottom: 0; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Complete Lab 15.</strong>
+          <span style="color: #4A5568;">Two parts in the same repo. Part A: implement <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">make_play_counts</code> and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">tally_plays</code> and write your own tests in <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">test_lab15.c</code>. Part B: add the four ownership markers to <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">annotate1.c</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">annotate2.c</code>, and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">annotate3.c</code>. The full spec is in the repo README.</span>
+          <!-- =========================================================
+               EDIT ME: Lab 15 GitHub Classroom assignment link
+               Replace href="#" with the classroom.github.com/a/... invite
+               URL once the assignment is published.
+               ========================================================= -->
+          <div style="margin-top: 8px; margin-left: 28px;">
+            <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 6px 14px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 13px;">Accept Lab 15 on GitHub Classroom &rarr;</a>
+          </div>
+        </li>
+      </ul>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 18px 0 10px 0;">memalloc Walkthrough</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Twelve tasks across four sections. Type each C statement at the prompt. The terminal shows what memalloc did; the middle pane shows the current stack; the right pane shows the heap.</p>
+
+<!-- ============================================================
+     CS210 Lesson 15 - memalloc Walkthrough Widget
+     Stack vs heap. Two panes, terminal input.
+     Pattern matches cmem_walkthrough.html.
+     ============================================================ -->
+<style>
+.cs210-memalloc * { box-sizing: border-box; }
+.cs210-memalloc {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-memalloc h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-memalloc .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 22px;
+}
+.cs210-memalloc .progress-bar {
+  background: #E5E7EB;
+  border-radius: 3px;
+  height: 8px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.cs210-memalloc .progress-fill {
+  background: #003087;
+  height: 100%;
+  transition: width 0.3s ease;
+}
+.cs210-memalloc .progress-label {
+  font-size: 12px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-memalloc .section-header {
+  background: #E8EDF5;
+  color: #00205B;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.cs210-memalloc .task-card {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  border-radius: 3px;
+}
+.cs210-memalloc .task-card.complete {
+  background: #E6F4EA;
+  border-left-color: #2E7D32;
+}
+.cs210-memalloc .task-label {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B5300;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.cs210-memalloc .task-card.complete .task-label {
+  color: #1B5E20;
+}
+.cs210-memalloc .task-text {
+  font-size: 15px;
+  color: #1a1a1a;
+}
+.cs210-memalloc .task-hint {
+  font-size: 12.5px;
+  color: #6B7280;
+  margin-top: 6px;
+  font-style: italic;
+}
+
+/* Three-pane layout: terminal | stack | heap */
+.cs210-memalloc .panes {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1.3fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+@media (max-width: 900px) {
+  .cs210-memalloc .panes { grid-template-columns: 1fr; }
+}
+.cs210-memalloc .terminal {
+  background: #1E2A3A;
+  color: #E8EDF5;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 12.5px;
+  line-height: 1.5;
+  border-radius: 4px;
+  padding: 12px 14px;
+  min-height: 380px;
+  max-height: 440px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.cs210-memalloc .terminal .prompt { color: #7FB3D5; }
+.cs210-memalloc .terminal .typed { color: #FFFFFF; }
+.cs210-memalloc .terminal .out { color: #B5BEC8; }
+.cs210-memalloc .terminal .note { color: #F0B92C; }
+.cs210-memalloc .terminal .err { color: #F47A7A; }
+.cs210-memalloc .terminal .ok { color: #7FD17F; }
+.cs210-memalloc .terminal .dim { color: #6B7280; }
+
+.cs210-memalloc .pane {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  padding: 12px 14px;
+  min-height: 380px;
+  max-height: 440px;
+  overflow-y: auto;
+}
+.cs210-memalloc .pane-header {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #E5E7EB;
+}
+.cs210-memalloc .pane-empty {
+  color: #6B7280;
+  font-style: italic;
+  font-size: 12.5px;
+  text-align: center;
+  padding: 60px 8px;
+}
+
+/* Stack frame card */
+.cs210-memalloc .frame {
+  background: #F8FAFC;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+}
+.cs210-memalloc .frame.top {
+  background: #E8EDF5;
+  border-color: #003087;
+}
+.cs210-memalloc .frame-name {
+  font-family: Consolas, monospace;
+  font-size: 12px;
+  color: #00205B;
+  font-weight: 700;
+  margin-bottom: 6px;
+  display: flex;
+  justify-content: space-between;
+}
+.cs210-memalloc .frame-name .tag {
+  font-size: 9px;
+  background: #003087;
+  color: #fff;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+.cs210-memalloc .frame-var {
+  font-family: Consolas, monospace;
+  font-size: 11.5px;
+  color: #1a1a1a;
+  padding: 3px 0;
+  border-top: 1px dashed #D0D5DD;
+}
+.cs210-memalloc .frame-var:first-of-type { border-top: none; }
+.cs210-memalloc .frame-var .vname { color: #00205B; font-weight: 600; }
+.cs210-memalloc .frame-var .vval { color: #1a1a1a; }
+.cs210-memalloc .frame-var .vptr { color: #B8002F; font-weight: 600; }
+.cs210-memalloc .frame-var .vnull { color: #6B7280; font-style: italic; }
+
+/* Heap block card */
+.cs210-memalloc .block {
+  background: #FFF8E1;
+  border: 1px solid #F0B92C;
+  border-radius: 4px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  transition: background 0.4s ease;
+}
+.cs210-memalloc .block.fresh {
+  background: #FFE8A8;
+}
+.cs210-memalloc .block.freed {
+  background: #F5F7FA;
+  border-color: #B5B7BA;
+  opacity: 0.55;
+}
+.cs210-memalloc .block-addr {
+  font-family: Consolas, monospace;
+  font-size: 11px;
+  color: #B8002F;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.cs210-memalloc .block.freed .block-addr {
+  color: #6B7280;
+  text-decoration: line-through;
+}
+.cs210-memalloc .block-meta {
+  font-size: 10.5px;
+  color: #6B7280;
+  font-family: Consolas, monospace;
+  margin-bottom: 6px;
+}
+.cs210-memalloc .block-cells {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+.cs210-memalloc .block-cells .cell {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 10.5px;
+  padding: 3px 5px;
+  min-width: 32px;
+  text-align: center;
+  color: #1a1a1a;
+}
+.cs210-memalloc .block-cells .cell.garbage {
+  background: #F5F7FA;
+  color: #6B7280;
+  font-style: italic;
+}
+.cs210-memalloc .block.freed .block-cells .cell {
+  background: #ECEEF2;
+  color: #B5B7BA;
+}
+
+.cs210-memalloc .input-row {
+  display: flex;
+  background: #1E2A3A;
+  border-radius: 4px;
+  padding: 8px 14px;
+  margin-bottom: 14px;
+  border: 1px solid #003087;
+}
+.cs210-memalloc .input-prompt {
+  color: #7FB3D5;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  margin-right: 8px;
+  align-self: center;
+  white-space: nowrap;
+}
+.cs210-memalloc .input-row input {
+  flex: 1;
+  background: transparent;
+  color: #FFFFFF;
+  border: none;
+  outline: none;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  padding: 4px 0;
+}
+.cs210-memalloc .controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.cs210-memalloc .btn {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  padding: 6px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #00205B;
+  font-family: inherit;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.cs210-memalloc .btn:hover { background: #F5F7FA; }
+@keyframes cs210-memalloc-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(240, 185, 44, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0); }
+}
+.cs210-memalloc .btn.pulse {
+  background: #FFF8E1;
+  border-color: #F0B92C;
+  color: #6B5300;
+  font-weight: 600;
+  animation: cs210-memalloc-pulse 1.5s infinite;
+}
+.cs210-memalloc .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #4A5568;
+  margin-top: 12px;
+}
+.cs210-memalloc .help-note strong { color: #00205B; }
+
+/* Name modal overlay */
+.cs210-memalloc .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.cs210-memalloc .name-modal {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-memalloc .name-modal h2 {
+  color: #00205B;
+  font-size: 20px;
+  margin: 0 0 10px 0;
+}
+.cs210-memalloc .name-modal p {
+  color: #4A5568;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+.cs210-memalloc .name-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-memalloc .name-modal input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-memalloc .name-modal-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-memalloc .name-modal-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-memalloc .name-modal-btn:not(:disabled):hover {
+  background: #00205B;
+}
+
+/* Completion screen */
+.cs210-memalloc .completion-screen {
+  background: #ffffff;
+  border: 2px solid #2E7D32;
+  border-radius: 6px;
+  padding: 24px 28px;
+  margin-top: 16px;
+}
+.cs210-memalloc .completion-screen .cs-heading {
+  color: #1B5E20;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 6px 0;
+}
+.cs210-memalloc .completion-screen .cs-name-line {
+  font-size: 15px;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+}
+.cs210-memalloc .completion-screen .cs-name-line strong {
+  color: #00205B;
+}
+.cs210-memalloc .completion-screen .cs-code-block {
+  background: #F0F4FA;
+  border: 1px solid #003087;
+  border-radius: 4px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.cs210-memalloc .completion-screen .cs-code-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #4A5568;
+  margin-bottom: 4px;
+}
+.cs210-memalloc .completion-screen .cs-code-value {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 28px;
+  font-weight: 700;
+  color: #00205B;
+  letter-spacing: 3px;
+}
+.cs210-memalloc .completion-screen .cs-copy-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-memalloc .completion-screen .cs-copy-btn:hover {
+  background: #00205B;
+}
+.cs210-memalloc .completion-screen .cs-copy-btn.copied {
+  background: #2E7D32;
+}
+.cs210-memalloc .completion-screen .cs-timestamp {
+  font-size: 13px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-memalloc .completion-screen .cs-reminder {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 14px;
+  color: #6B5300;
+  line-height: 1.5;
+}
+.cs210-memalloc .completion-screen .cs-reminder strong {
+  color: #4A3A00;
+}
+</style>
+
+<div class="cs210-memalloc">
+
+<div class="name-modal-backdrop" id="ma-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Lesson 15 reflection.</p>
+    <input type="text" id="ma-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="ma-cadet-name-btn" disabled>Start the walkthrough</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 15 &middot; memalloc Walkthrough</h1>
+<div class="subtitle">A guided tour through stack frames, malloc, free, and ownership. Type each C statement on the input line. Watch the stack and heap update with every step.</div>
+
+<div class="progress-bar"><div class="progress-fill" id="ma-progress-fill" style="width: 0%;"></div></div>
+<div class="progress-label" id="ma-progress-label">Task 0 of 12</div>
+
+<div class="section-header" id="ma-section-header">Section 1: Stack basics</div>
+
+<div class="task-card" id="ma-task-card">
+  <div class="task-label" id="ma-task-label">Current task</div>
+  <div class="task-text" id="ma-task-text">Loading...</div>
+  <div class="task-hint" id="ma-task-hint"></div>
+</div>
+
+<div class="panes">
+  <div class="terminal" id="ma-terminal"></div>
+  <div class="pane">
+    <div class="pane-header">Stack (top is current frame)</div>
+    <div id="ma-stack-area">
+      <div class="pane-empty">No frames yet.</div>
+    </div>
+  </div>
+  <div class="pane">
+    <div class="pane-header">Heap</div>
+    <div id="ma-heap-area">
+      <div class="pane-empty">No allocations yet.</div>
+    </div>
+  </div>
+</div>
+
+<div class="input-row">
+  <span class="input-prompt">memalloc&gt;</span>
+  <input type="text" id="ma-cli-input" autocomplete="off" spellcheck="false" placeholder="follow the task above">
+</div>
+
+<div class="controls">
+  <button class="btn" id="ma-hint-btn">Show hint</button>
+  <button class="btn" id="ma-reset-btn">Reset</button>
+</div>
+
+<div class="help-note">
+  <strong>How this works:</strong> This is a teaching tool, not a real C interpreter. It accepts a small subset of C plus two extra commands: <code>enter_function name</code> and <code>leave_function</code> to simulate scope changes. The task card tells you what to type next. Mistype twice and the hint button will pulse.
+</div>
+
+<div id="ma-completion-area"></div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-memalloc');
+  if (!root) return;
+
+  // ============================================================
+  // CS210 widget completion utilities
+  // ============================================================
+  const CS210_SALT = "lesson15_memalloc_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  // Name-modal gating
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#ma-name-modal-backdrop');
+    const input = root.querySelector('#ma-cadet-name-input');
+    const btn = root.querySelector('#ma-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length >= 2) {
+        cs210CadetName = stored.trim();
+        backdrop.style.display = 'none';
+        return;
+      }
+    } catch (e) { /* localStorage may be disabled */ }
+
+    function updateBtn() {
+      btn.disabled = input.value.trim().length < 2;
+    }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', function() {
+      const name = input.value.trim();
+      if (name.length < 2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+      // Dismiss any sibling widget modals on the same page.
+      const siblings = document.querySelectorAll(
+        '#name-modal-backdrop, #bw-name-modal-backdrop, #ptrmath-name-modal-backdrop, #duality-name-modal-backdrop'
+      );
+      siblings.forEach(function(m) { m.style.display = 'none'; });
+      const cli = root.querySelector('#ma-cli-input');
+      if (cli) cli.focus();
+    });
+    setTimeout(function() { input.focus(); }, 50);
+  })();
+
+  function cs210RenderCompletion(area) {
+    if (!area) return;
+    if (root.querySelector('#ma-completion-overlay')) return;
+    const now = new Date();
+    const ts = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const safeName = (cs210CadetName || 'Cadet').replace(/[<>&"']/g, function(c) {
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+    area.innerHTML =
+      '<div class="completion-screen">' +
+        '<div class="cs-heading">Walkthrough complete</div>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value">' + CS210_CODE + '</div></div>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+      '</div>';
+    const overlay = document.createElement('div');
+    overlay.id = 'ma-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.style.background = 'rgba(27, 94, 32, 0.55)';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">Walkthrough complete</h2>' +
+        '<p>Take a screenshot of this box. You will need the code and a visual of this screen for the Lesson 15 reflection.</p>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value" id="ma-cs-code-value">' + CS210_CODE + '</div></div>' +
+          '<button class="cs-copy-btn" id="ma-cs-copy-btn" type="button">Copy code</button>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+        '<div class="cs-reminder" style="margin-bottom:14px;">' +
+          '<strong>Next step:</strong> Open the Lesson 15 reflection in Blackboard. Enter this code, answer the reflection prompt, and attach your screenshot.' +
+        '</div>' +
+        '<button class="name-modal-btn" id="ma-overlay-close" type="button" style="background:#2E7D32;">Got it &mdash; close this</button>' +
+      '</div>';
+    root.appendChild(overlay);
+    const closeBtn = overlay.querySelector('#ma-overlay-close');
+    if (closeBtn) closeBtn.addEventListener('click', function() { overlay.style.display = 'none'; });
+    const copyBtn = overlay.querySelector('#ma-cs-copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function() {
+        const text = CS210_CODE;
+        const ok = function() {
+          copyBtn.textContent = 'Copied';
+          copyBtn.classList.add('copied');
+          setTimeout(function() {
+            copyBtn.textContent = 'Copy code';
+            copyBtn.classList.remove('copied');
+          }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(ok, function() {
+            cs210FallbackCopy(text); ok();
+          });
+        } else {
+          cs210FallbackCopy(text); ok();
+        }
+      });
+    }
+  }
+  function cs210FallbackCopy(text) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e) { /* nothing */ }
+  }
+
+  // ============================================================
+  // State
+  // ============================================================
+  // Stack: array of frames. Bottom of array is bottom of stack, top is the active frame.
+  // Each frame: { name, locals: [{name, type, value, kind}] }
+  //   kind: "int", "ptr" (heap pointer; value is heap address or NULL)
+  // Heap: map from address (string like "0x1a000") to block
+  //   block: { addr, n, type, contents: [vals or null for garbage], freed: bool, fresh: bool }
+  // Addresses are display-only; we use a counter.
+  let stack = [];
+  let heap = {};
+  let nextHeapAddr = 0x1a000;
+  let lastEventCells = null; // for highlighting last-read cell
+
+  let currentTaskIndex = 0;
+  let consecutiveFails = 0;
+
+  function freshAddr() {
+    const a = '0x' + nextHeapAddr.toString(16);
+    nextHeapAddr += 0x80; // arbitrary spacing
+    return a;
+  }
+
+  // Random-looking garbage values for malloc. Deterministic so the lesson is reproducible.
+  function garbageValue(seed) {
+    // simple xorshift-ish for reproducibility
+    let x = (seed * 2654435761) >>> 0;
+    x ^= x << 13; x >>>= 0;
+    x ^= x >>> 17;
+    x ^= x << 5; x >>>= 0;
+    // map to int range
+    return (x % 200000) - 100000;
+  }
+
+  // ============================================================
+  // Terminal helpers
+  // ============================================================
+  function termClear() {
+    const t = root.querySelector('#ma-terminal');
+    if (t) t.innerHTML = '';
+  }
+  function termLine(text, cls) {
+    const t = root.querySelector('#ma-terminal');
+    if (!t) return;
+    const d = document.createElement('div');
+    if (cls) d.className = cls;
+    d.textContent = text;
+    t.appendChild(d);
+    t.scrollTop = t.scrollHeight;
+  }
+  function echoCommand(cmd) {
+    const t = root.querySelector('#ma-terminal');
+    if (!t) return;
+    const d = document.createElement('div');
+    d.innerHTML = '<span class="prompt">memalloc&gt;</span> <span class="typed"></span>';
+    d.querySelector('.typed').textContent = cmd;
+    t.appendChild(d);
+    t.scrollTop = t.scrollHeight;
+  }
+
+  // ============================================================
+  // Rendering
+  // ============================================================
+  function renderStack() {
+    const area = root.querySelector('#ma-stack-area');
+    if (!area) return;
+    if (stack.length === 0) {
+      area.innerHTML = '<div class="pane-empty">No frames yet.</div>';
+      return;
+    }
+    // Top of stack rendered FIRST (so it's at the top visually).
+    let html = '';
+    for (let i = stack.length - 1; i >= 0; i--) {
+      const f = stack[i];
+      const isTop = (i === stack.length - 1);
+      html += '<div class="frame ' + (isTop ? 'top' : '') + '">';
+      html += '<div class="frame-name">' + escapeHtml(f.name) + '()';
+      if (isTop) html += '<span class="tag">TOP</span>';
+      html += '</div>';
+      if (f.locals.length === 0) {
+        html += '<div class="frame-var dim">(no locals)</div>';
+      } else {
+        for (const v of f.locals) {
+          html += '<div class="frame-var">';
+          html += '<span class="vname">' + escapeHtml(v.type) + ' ' + escapeHtml(v.name) + '</span> = ';
+          if (v.kind === 'ptr') {
+            if (v.value === null || v.value === 'NULL') {
+              html += '<span class="vnull">NULL</span>';
+            } else {
+              html += '<span class="vptr">' + escapeHtml(v.value) + '</span>';
+            }
+          } else {
+            html += '<span class="vval">' + escapeHtml(String(v.value)) + '</span>';
+          }
+          html += '</div>';
+        }
+      }
+      html += '</div>';
+    }
+    area.innerHTML = html;
+  }
+
+  function renderHeap() {
+    const area = root.querySelector('#ma-heap-area');
+    if (!area) return;
+    const blocks = Object.values(heap);
+    if (blocks.length === 0) {
+      area.innerHTML = '<div class="pane-empty">No allocations yet.</div>';
+      return;
+    }
+    let html = '';
+    for (const b of blocks) {
+      const classes = ['block'];
+      if (b.fresh) classes.push('fresh');
+      if (b.freed) classes.push('freed');
+      html += '<div class="' + classes.join(' ') + '">';
+      html += '<div class="block-addr">' + escapeHtml(b.addr) + (b.freed ? '  (freed)' : '') + '</div>';
+      html += '<div class="block-meta">' + b.n + ' x ' + escapeHtml(b.type) + '  ' +
+              '(' + (b.n * 4) + ' bytes)</div>';
+      html += '<div class="block-cells">';
+      for (let i = 0; i < b.contents.length; i++) {
+        const c = b.contents[i];
+        if (c === null) {
+          html += '<div class="cell garbage" title="uninitialized">?</div>';
+        } else if (c === 'garbage') {
+          html += '<div class="cell garbage" title="uninitialized">' + garbageValue(b.addrSeed + i) + '</div>';
+        } else {
+          html += '<div class="cell">' + escapeHtml(String(c)) + '</div>';
+        }
+      }
+      html += '</div>';
+      html += '</div>';
+    }
+    area.innerHTML = html;
+    // Clear fresh flag after a tick so animation only fires once.
+    setTimeout(function() {
+      for (const k in heap) heap[k].fresh = false;
+    }, 600);
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function(c) {
+      return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+    });
+  }
+
+  // ============================================================
+  // Frame helpers
+  // ============================================================
+  function topFrame() {
+    return stack.length > 0 ? stack[stack.length - 1] : null;
+  }
+  function findLocal(name) {
+    const f = topFrame();
+    if (!f) return null;
+    return f.locals.find(v => v.name === name) || null;
+  }
+  // Heap pointer lookup: given a local that holds an address, return the heap block (or null).
+  function blockOfLocal(local) {
+    if (!local || local.kind !== 'ptr' || !local.value || local.value === 'NULL') return null;
+    return heap[local.value] || null;
+  }
+
+  // ============================================================
+  // Parser/processor
+  // The widget accepts only:
+  //   enter_function NAME
+  //   leave_function
+  //   int X = N;                      (local int)
+  //   int *P = malloc(sizeof(int) * N);
+  //   int *P = calloc(N, sizeof(int));
+  //   free(P);
+  //   P = NULL;
+  //   printf("%d\n", P[i]);    (read; just for predict-the-output task)
+  //   printf("%d\n", *P);
+  //   if (P == NULL) ...       (informational only; widget treats it as a no-op acknowledgement)
+  // ============================================================
+  function processCommand(raw) {
+    const trimmed = raw.trim();
+    if (!trimmed) return { kind: 'noop' };
+
+    // enter_function NAME
+    let m = trimmed.match(/^enter_function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*;?$/);
+    if (m) {
+      const name = m[1];
+      stack.push({ name, locals: [] });
+      return { kind: 'enter', name };
+    }
+
+    // leave_function
+    if (/^leave_function\s*;?$/.test(trimmed)) {
+      if (stack.length === 0) {
+        return { kind: 'error', msg: 'no frame to leave' };
+      }
+      const f = stack.pop();
+      return { kind: 'leave', name: f.name };
+    }
+
+    // int X = N;   (local int with literal value)
+    m = trimmed.match(/^int\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(-?\d+)\s*;?$/);
+    if (m) {
+      const f = topFrame();
+      if (!f) return { kind: 'error', msg: 'no active frame; use enter_function first' };
+      const name = m[1];
+      if (findLocal(name)) return { kind: 'error', msg: name + ' already declared in this frame' };
+      f.locals.push({ name, type: 'int', value: parseInt(m[2], 10), kind: 'int' });
+      return { kind: 'decl', name, value: parseInt(m[2], 10) };
+    }
+
+    // int *P = malloc(sizeof(int) * N);
+    m = trimmed.match(/^int\s*\*\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*malloc\s*\(\s*sizeof\s*\(\s*int\s*\)\s*\*\s*(\d+)\s*\)\s*;?$/);
+    if (m) {
+      const f = topFrame();
+      if (!f) return { kind: 'error', msg: 'no active frame; use enter_function first' };
+      const name = m[1];
+      const n = parseInt(m[2], 10);
+      if (n < 1 || n > 16) return { kind: 'error', msg: 'use a count between 1 and 16 for this walkthrough' };
+      if (findLocal(name)) return { kind: 'error', msg: name + ' already declared in this frame' };
+      const addr = freshAddr();
+      const block = {
+        addr, n, type: 'int',
+        contents: Array(n).fill('garbage'),
+        addrSeed: nextHeapAddr, // for the garbage RNG
+        freed: false, fresh: true,
+      };
+      heap[addr] = block;
+      f.locals.push({ name, type: 'int *', value: addr, kind: 'ptr' });
+      return { kind: 'malloc', name, addr, n };
+    }
+
+    // int *P = calloc(N, sizeof(int));
+    m = trimmed.match(/^int\s*\*\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*calloc\s*\(\s*(\d+)\s*,\s*sizeof\s*\(\s*int\s*\)\s*\)\s*;?$/);
+    if (m) {
+      const f = topFrame();
+      if (!f) return { kind: 'error', msg: 'no active frame; use enter_function first' };
+      const name = m[1];
+      const n = parseInt(m[2], 10);
+      if (n < 1 || n > 16) return { kind: 'error', msg: 'use a count between 1 and 16 for this walkthrough' };
+      if (findLocal(name)) return { kind: 'error', msg: name + ' already declared in this frame' };
+      const addr = freshAddr();
+      const block = {
+        addr, n, type: 'int',
+        contents: Array(n).fill(0),
+        addrSeed: nextHeapAddr,
+        freed: false, fresh: true,
+      };
+      heap[addr] = block;
+      f.locals.push({ name, type: 'int *', value: addr, kind: 'ptr' });
+      return { kind: 'calloc', name, addr, n };
+    }
+
+    // P[i] = V;
+    m = trimmed.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*\[\s*(\d+)\s*\]\s*=\s*(-?\d+)\s*;?$/);
+    if (m) {
+      const name = m[1], i = parseInt(m[2], 10), v = parseInt(m[3], 10);
+      const local = findLocal(name);
+      if (!local || local.kind !== 'ptr') return { kind: 'error', msg: name + ' is not a pointer in this frame' };
+      const blk = blockOfLocal(local);
+      if (!blk) return { kind: 'error', msg: name + ' is NULL or invalid' };
+      if (blk.freed) return { kind: 'error', msg: name + ' was already freed (use-after-free)' };
+      if (i < 0 || i >= blk.n) return { kind: 'error', msg: 'index ' + i + ' is out of bounds for this ' + blk.n + '-element block' };
+      blk.contents[i] = v;
+      return { kind: 'write', name, i, v };
+    }
+
+    // printf("...", P[i]);  -> reads heap block
+    m = trimmed.match(/^printf\s*\(\s*"[^"]*"\s*,\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\[\s*(\d+)\s*\]\s*\)\s*;?$/);
+    if (m) {
+      const name = m[1], i = parseInt(m[2], 10);
+      const local = findLocal(name);
+      if (!local || local.kind !== 'ptr') return { kind: 'error', msg: name + ' is not a pointer in this frame' };
+      const blk = blockOfLocal(local);
+      if (!blk) return { kind: 'error', msg: name + ' is NULL or invalid' };
+      if (blk.freed) return { kind: 'error', msg: name + ' was already freed (use-after-free)' };
+      if (i < 0 || i >= blk.n) return { kind: 'error', msg: 'index ' + i + ' is out of bounds' };
+      const raw = blk.contents[i];
+      const display = (raw === 'garbage')
+        ? '(garbage: ' + garbageValue(blk.addrSeed + i) + ')'
+        : String(raw);
+      return { kind: 'print', name, i, value: display, isGarbage: raw === 'garbage' };
+    }
+
+    // free(P);
+    m = trimmed.match(/^free\s*\(\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\)\s*;?$/);
+    if (m) {
+      const name = m[1];
+      const local = findLocal(name);
+      if (!local || local.kind !== 'ptr') return { kind: 'error', msg: name + ' is not a pointer in this frame' };
+      if (local.value === null || local.value === 'NULL') {
+        // Free of NULL is a no-op in C. We acknowledge.
+        return { kind: 'free-null', name };
+      }
+      const blk = heap[local.value];
+      if (!blk) return { kind: 'error', msg: name + ' does not point to a heap block' };
+      if (blk.freed) return { kind: 'error', msg: name + ' was already freed (double-free)' };
+      blk.freed = true;
+      return { kind: 'free', name, addr: local.value };
+    }
+
+    // P = NULL;
+    m = trimmed.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*NULL\s*;?$/);
+    if (m) {
+      const name = m[1];
+      const local = findLocal(name);
+      if (!local || local.kind !== 'ptr') return { kind: 'error', msg: name + ' is not a pointer in this frame' };
+      local.value = 'NULL';
+      return { kind: 'null', name };
+    }
+
+    // if (P == NULL) ...   -- informational acknowledgement
+    m = trimmed.match(/^if\s*\(\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*==\s*NULL\s*\).*$/);
+    if (m) {
+      const name = m[1];
+      const local = findLocal(name);
+      if (!local) return { kind: 'error', msg: name + ' is not declared in this frame' };
+      const isNull = (local.value === 'NULL' || local.value === null);
+      return { kind: 'nullcheck', name, isNull };
+    }
+
+    return { kind: 'unknown' };
+  }
+
+  // ============================================================
+  // Task slate
+  // ============================================================
+  const tasks = [
+    // ----- Section 1: Stack basics -----
+    {
+      section: 'Section 1: Stack basics',
+      label: 'Task 1 of 12',
+      text: "We'll start with the stack. Simulate calling main: type the command to enter a function called main.",
+      hint: 'enter_function main',
+      match: (cmd) => /^enter_function\s+main\s*;?$/.test(cmd.trim()),
+      diagnose: (cmd) => {
+        if (/^main/.test(cmd.trim())) return "Use the enter_function keyword: enter_function main";
+        return null;
+      },
+      note: "main is now on the stack. This is its frame. Every variable you declare from here lives in main until main returns.",
+    },
+    {
+      label: 'Task 2 of 12',
+      text: "Declare a local int x = 5 in main.",
+      hint: 'int x = 5;',
+      match: (cmd) => /^int\s+x\s*=\s*5\s*;?$/.test(cmd.trim()),
+      diagnose: (cmd) => null,
+      note: "x is now stored in main's stack frame. When main returns, x will disappear with the frame.",
+    },
+    {
+      label: 'Task 3 of 12',
+      text: "Now simulate calling a helper function: enter_function compute.",
+      hint: 'enter_function compute',
+      match: (cmd) => /^enter_function\s+compute\s*;?$/.test(cmd.trim()),
+      diagnose: (cmd) => null,
+      note: "A new frame for compute() is pushed on top of main's. Locals declared now live in compute, not main.",
+    },
+    {
+      label: 'Task 4 of 12',
+      text: "Declare int result = 25 inside compute. Watch which frame it lands in.",
+      hint: 'int result = 25;',
+      match: (cmd) => /^int\s+result\s*=\s*25\s*;?$/.test(cmd.trim()),
+      diagnose: (cmd) => null,
+      note: "result is in compute's frame, not main's. main's x is still there but it's not in scope from here.",
+    },
+    {
+      label: 'Task 5 of 12',
+      text: "Simulate compute returning: leave_function. Watch what happens to result.",
+      hint: 'leave_function',
+      match: (cmd) => /^leave_function\s*;?$/.test(cmd.trim()),
+      diagnose: (cmd) => null,
+      note: "compute's frame is gone. result is gone with it. The memory where result lived is reusable by the next call. This is what the stack does.",
+    },
+
+    // ----- Section 2: Heap basics -----
+    {
+      section: 'Section 2: Heap allocation',
+      label: 'Task 6 of 12',
+      text: "Now the heap. From inside main, allocate space for 4 ints on the heap and store the address in a pointer named plays. Use malloc with sizeof(int) * 4.",
+      hint: 'int *plays = malloc(sizeof(int) * 4);',
+      match: (cmd) => /^int\s*\*\s*plays\s*=\s*malloc\s*\(\s*sizeof\s*\(\s*int\s*\)\s*\*\s*4\s*\)\s*;?$/.test(cmd.trim()),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^int\s*\*\s*plays\s*=\s*malloc/.test(t) && !/sizeof/.test(t)) return "Use sizeof(int) * 4, not the literal byte count. The idiom matters.";
+        if (/calloc/.test(t)) return "Use malloc for this task. We'll see calloc next.";
+        return null;
+      },
+      note: "A 4-int block is now on the heap. plays (in main's frame) holds the address. The cells are 'garbage' because malloc does NOT initialize. We'll deal with that in two tasks.",
+    },
+    {
+      label: 'Task 7 of 12',
+      text: "Before you use plays, you have to check whether malloc failed. Type the NULL-check pattern. Use: if (plays == NULL) ...",
+      hint: 'if (plays == NULL) exit(1);',
+      match: (cmd) => /^if\s*\(\s*plays\s*==\s*NULL\s*\).*$/.test(cmd.trim()),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/plays\s*!=\s*NULL/.test(t)) return "Check FOR null, not against it. The pattern is: if (plays == NULL) handle the failure.";
+        if (/null/.test(t)) return "NULL is uppercase in C.";
+        return null;
+      },
+      note: "plays is NOT null in this case (malloc succeeded). In real code, you'd exit or otherwise bail if it were. The check itself is the habit.",
+    },
+    {
+      label: 'Task 8 of 12',
+      text: "Predict first. Before you write to it, what's in plays[0]? Type a printf to read plays[0] and see.",
+      hint: 'printf("%d\\n", plays[0]);',
+      match: (cmd) => /^printf\s*\(\s*"[^"]*"\s*,\s*plays\s*\[\s*0\s*\]\s*\)\s*;?$/.test(cmd.trim()),
+      diagnose: (cmd) => null,
+      note: "Garbage. malloc reserves memory but does not clear it. Whatever was there before is still there. Always initialize before reading.",
+    },
+    {
+      label: 'Task 9 of 12',
+      text: "Now initialize. Write the value 42 into plays[0].",
+      hint: 'plays[0] = 42;',
+      match: (cmd) => /^plays\s*\[\s*0\s*\]\s*=\s*42\s*;?$/.test(cmd.trim()),
+      diagnose: (cmd) => null,
+      note: "plays[0] now holds 42. The other three cells are still garbage; you'd need to write to each one separately, or use calloc to get zeros up front.",
+    },
+
+    // ----- Section 3: Free and ownership -----
+    {
+      section: 'Section 3: Free and ownership',
+      label: 'Task 10 of 12',
+      text: "main is the owner of plays. Free the block now.",
+      hint: 'free(plays);',
+      match: (cmd) => /^free\s*\(\s*plays\s*\)\s*;?$/.test(cmd.trim()),
+      diagnose: (cmd) => null,
+      note: "The block is marked freed (faded above). plays still holds the old address but you cannot use it. Reading from a freed block is undefined behavior.",
+    },
+    {
+      label: 'Task 11 of 12',
+      text: "Defensive habit: set plays to NULL after freeing. Then if anything tries to dereference it, the program crashes immediately and visibly.",
+      hint: 'plays = NULL;',
+      match: (cmd) => /^plays\s*=\s*NULL\s*;?$/.test(cmd.trim()),
+      diagnose: (cmd) => null,
+      note: "Now plays is NULL. If some later code dereferences plays by mistake, the segfault is loud. Better than silent corruption.",
+    },
+
+    // ----- Section 4: Ownership across functions -----
+    {
+      section: 'Section 4: Ownership across functions',
+      label: 'Task 12 of 12',
+      text: "Last one. Allocate a 3-int block with calloc (zero-initialized) and store the pointer in a local called counts. Watch the cells: they should be 0, 0, 0 instead of garbage.",
+      hint: 'int *counts = calloc(3, sizeof(int));',
+      match: (cmd) => /^int\s*\*\s*counts\s*=\s*calloc\s*\(\s*3\s*,\s*sizeof\s*\(\s*int\s*\)\s*\)\s*;?$/.test(cmd.trim()),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/malloc/.test(t)) return "Use calloc for this one. The difference matters.";
+        return null;
+      },
+      note: "calloc gives you a clean slate. The trade-off vs malloc is a tiny bit of extra work to zero the memory. Use calloc when you want zeros; use malloc when you're going to overwrite every cell anyway.",
+    },
+  ];
+
+  // ============================================================
+  // Task control
+  // ============================================================
+  function renderTask() {
+    const fill = root.querySelector('#ma-progress-fill');
+    const label = root.querySelector('#ma-progress-label');
+    const card = root.querySelector('#ma-task-card');
+    const labelEl = root.querySelector('#ma-task-label');
+    const textEl = root.querySelector('#ma-task-text');
+    const hintEl = root.querySelector('#ma-task-hint');
+    const sectionEl = root.querySelector('#ma-section-header');
+    const completionArea = root.querySelector('#ma-completion-area');
+
+    const pct = (currentTaskIndex / tasks.length) * 100;
+    fill.style.width = pct + '%';
+    label.textContent = 'Task ' + Math.min(currentTaskIndex + 1, tasks.length) + ' of ' + tasks.length;
+
+    if (currentTaskIndex >= tasks.length) {
+      card.className = 'task-card complete';
+      labelEl.textContent = 'Complete';
+      textEl.textContent = "You worked through every key concept of Lesson 15: stack frames, heap allocation, NULL checking, free, and the start of ownership reasoning. You're ready for Lab 15.";
+      hintEl.textContent = '';
+      sectionEl.textContent = 'Walkthrough complete';
+      cs210RenderCompletion(completionArea);
+      const input = root.querySelector('#ma-cli-input');
+      if (input) {
+        input.disabled = true;
+        input.placeholder = 'walkthrough complete';
+      }
+      return;
+    }
+
+    const t = tasks[currentTaskIndex];
+    if (t.section) sectionEl.textContent = t.section;
+    card.className = 'task-card';
+    labelEl.textContent = t.label;
+    textEl.textContent = t.text;
+    hintEl.textContent = ''; // hidden until pulse
+  }
+
+  function showHint() {
+    const hintEl = root.querySelector('#ma-task-hint');
+    if (!hintEl) return;
+    const t = tasks[currentTaskIndex];
+    if (!t) return;
+    hintEl.textContent = 'Hint: ' + t.hint;
+    hideHintPulse();
+  }
+  function showHintPulse() {
+    const btn = root.querySelector('#ma-hint-btn');
+    if (btn) btn.classList.add('pulse');
+  }
+  function hideHintPulse() {
+    const btn = root.querySelector('#ma-hint-btn');
+    if (btn) btn.classList.remove('pulse');
+  }
+
+  function describeResult(r) {
+    switch (r.kind) {
+      case 'enter':  termLine('  entered ' + r.name + '()', 'out'); break;
+      case 'leave':  termLine('  left ' + r.name + '() (frame popped)', 'out'); break;
+      case 'decl':   termLine('  declared ' + r.name + ' = ' + r.value, 'out'); break;
+      case 'malloc': termLine('  allocated ' + (r.n * 4) + ' bytes at ' + r.addr + ' (contents: garbage)', 'note'); break;
+      case 'calloc': termLine('  allocated ' + (r.n * 4) + ' bytes at ' + r.addr + ' (contents: all zeros)', 'note'); break;
+      case 'write':  termLine('  wrote ' + r.v + ' to ' + r.name + '[' + r.i + ']', 'out'); break;
+      case 'print':  termLine('  ' + r.value, r.isGarbage ? 'err' : 'out'); break;
+      case 'free':   termLine('  freed block at ' + r.addr, 'ok'); break;
+      case 'free-null': termLine('  free(NULL) is a no-op', 'dim'); break;
+      case 'null':   termLine('  ' + r.name + ' set to NULL', 'out'); break;
+      case 'nullcheck': termLine('  ' + r.name + ' is ' + (r.isNull ? 'NULL' : 'not NULL'), 'out'); break;
+      case 'noop':   break;
+      case 'error':  termLine('  error: ' + r.msg, 'err'); break;
+      case 'unknown':termLine('  not recognized. Look at the task above, or click "Show hint".', 'err'); break;
+    }
+  }
+
+  function checkTask(raw) {
+    if (currentTaskIndex >= tasks.length) return false;
+    const t = tasks[currentTaskIndex];
+    if (t.match(raw)) {
+      echoCommand(raw);
+      const r = processCommand(raw);
+      describeResult(r);
+      if (t.note) {
+        termLine('', 'out');
+        termLine('  ' + t.note, 'note');
+      }
+      currentTaskIndex++;
+      consecutiveFails = 0;
+      hideHintPulse();
+      renderStack();
+      renderHeap();
+      renderTask();
+      return true;
+    }
+    // Mismatch: echo, but do NOT execute. Diagnose.
+    echoCommand(raw);
+    const diag = (t.diagnose && t.diagnose(raw)) || null;
+    if (diag) {
+      termLine('  ' + diag, 'err');
+    } else {
+      termLine("  not what this task is asking for. Look at the task above, or click 'Show hint'.", 'err');
+    }
+    consecutiveFails++;
+    if (consecutiveFails >= 2) showHintPulse();
+    return false;
+  }
+
+  // ============================================================
+  // Wire up
+  // ============================================================
+  const inputEl = root.querySelector('#ma-cli-input');
+  inputEl.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      const v = inputEl.value;
+      inputEl.value = '';
+      if (!v.trim()) return;
+      checkTask(v);
+    }
+  });
+  root.querySelector('#ma-hint-btn').addEventListener('click', showHint);
+  root.querySelector('#ma-reset-btn').addEventListener('click', function() {
+    stack = []; heap = {}; nextHeapAddr = 0x1a000;
+    currentTaskIndex = 0; consecutiveFails = 0;
+    termClear();
+    termLine('Reset. Starting from Task 1.', 'note');
+    renderStack(); renderHeap();
+    renderTask();
+    const input = root.querySelector('#ma-cli-input');
+    if (input) { input.disabled = false; input.placeholder = 'follow the task above'; }
+    const ovr = root.querySelector('#ma-completion-overlay');
+    if (ovr) ovr.remove();
+    const compArea = root.querySelector('#ma-completion-area');
+    if (compArea) compArea.innerHTML = '';
+  });
+
+  // Initial render
+  termLine('memalloc: a teaching simulator for stack and heap. Follow the task card.', 'dim');
+  termLine('', 'out');
+  renderStack();
+  renderHeap();
+  renderTask();
+})();
+</script>
+
+    </div>
+  </details>
+
+  <!-- ===================== 6. AFTER CLASS ===================== -->
+  <details id="after-class" style="margin-bottom: 24px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      6. After Class
+    </summary>
+    <div style="padding: 18px 22px;">
+      <ul style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Finish Lab 15 (both parts) if you did not complete it in class. Submit through GitHub Classroom before Lesson 16.</li>
+        <li style="margin-bottom: 6px;">Complete the Lesson 15 reflection on Blackboard: enter your widget completion code and answer the short reflection prompt.</li>
+        <li style="margin-bottom: 6px;">Read Beej-C Chapter 12 again if anything from today is still fuzzy. Tomorrow we cover what goes wrong with what we did today.</li>
+        <li style="margin-bottom: 0;">Heads up: GR2 is at Lesson 17 and covers everything through Lesson 16.</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== HELP NOTE ===================== -->
+  <div style="background: #F5F7FA; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 3px; font-size: 13.5px; color: #4A5568;">
+    <strong style="color: #00205B;">Need help?</strong> Schedule EI with your instructor. Bring specific code or specific memalloc screenshots, and the exact error message or output you do not understand. Specific questions get unstuck quickly. Check the Resources section first for references on Git, the toolchain, and common compiler errors.
+  </div>
+
+</div>

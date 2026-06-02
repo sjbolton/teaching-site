@@ -1,0 +1,1844 @@
+<!-- ============================================================
+     CS210 — Lesson 26
+     Test Planning and Unit Testing
+     Self-contained: all CSS inline. Native <details> for collapsing.
+     assert walkthrough + test-plan self-check embedded inline in section 5.
+     Paste into Blackboard Ultra via Document → Add HTML block.
+     ============================================================ -->
+
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 980px; margin: 0 auto; line-height: 1.6;">
+
+  <!-- ===================== LIGHT HEADER ===================== -->
+  <div style="border-left: 5px solid #003087; padding: 8px 0 8px 18px; margin-bottom: 24px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 2px;">CS210 &middot; Block 3 &middot; Lesson 26</div>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 600; color: #00205B;">Test Planning and Unit Testing</h1>
+    <div style="font-size: 14px; color: #4A5568; margin-top: 4px;">Test plans &middot; Normal, edge, and error cases &middot; assert &middot; Unit tests &middot; Suite thoroughness</div>
+  </div>
+
+  <!-- ===================== AT A GLANCE ===================== -->
+  <div style="background: #F5F7FA; border-left: 4px solid #B5B7BA; padding: 14px 18px; margin-bottom: 22px; font-size: 14px;">
+    <strong style="color: #00205B;">At a glance:</strong> For twenty-five lessons the autograder tested your code. Today the roles flip: you learn to test code yourself. You will build a test plan that covers normal, edge, and error cases, write unit tests with <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">assert</code>, and judge whether a passing suite is actually thorough. The hands-on practice happens through the assert walkthrough in Section 5; the lab puts you on the other side of the autograder, writing the tests that hold a module accountable.
+  </div>
+
+  <!-- ===================== TABLE OF CONTENTS ===================== -->
+  <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 20px; margin-bottom: 24px; border-radius: 3px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Contents</div>
+    <ol style="margin: 0; padding-left: 22px; font-size: 14px;">
+      <li style="margin-bottom: 4px;"><a href="#objectives" style="color: #003087; text-decoration: none;">Lesson Objectives</a></li>
+      <li style="margin-bottom: 4px;"><a href="#readings" style="color: #003087; text-decoration: none;">Assigned Readings</a></li>
+      <li style="margin-bottom: 4px;"><a href="#pre-class" style="color: #003087; text-decoration: none;">Pre-Class Work</a></li>
+      <li style="margin-bottom: 4px;"><a href="#materials" style="color: #003087; text-decoration: none;">Lesson Materials and Overview</a></li>
+      <li style="margin-bottom: 4px;"><a href="#in-class" style="color: #003087; text-decoration: none;">In-Class Work</a></li>
+      <li style="margin-bottom: 0;"><a href="#after-class" style="color: #003087; text-decoration: none;">After Class</a></li>
+    </ol>
+  </div>
+
+  <!-- ===================== 1. OBJECTIVES ===================== -->
+  <details id="objectives" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      1. Lesson Objectives
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 10px 0; font-style: italic;">By the end of this lesson, cadets will be able to:</p>
+      <ol style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Develop a test plan that covers normal cases, edge cases, and error conditions. <span style="color: #6B7280; font-size: 12px;">(Outcome 3)</span></li>
+        <li style="margin-bottom: 6px;">Implement unit tests for C functions using <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">assert</code> and a simple test runner. <span style="color: #6B7280; font-size: 12px;">(Outcomes 3, 7)</span></li>
+        <li style="margin-bottom: 0;">Evaluate the thoroughness of a test suite. <span style="color: #6B7280; font-size: 12px;">(Outcome 3)</span></li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 2. READINGS ===================== -->
+  <details id="readings" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      2. Assigned Readings
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 12px 0;">Complete before class. These set the vocabulary we will use.</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <thead>
+          <tr style="background: #00205B; color: #ffffff;">
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600;">Reading</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 130px;">Source</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Test planning and unit testing in depth: test plans, the normal / edge / error breakdown, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">assert</code>, and judging suite thoroughness.</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Supplementary notes (instructor-written)</td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="font-size: 13.5px; color: #4A5568; margin: 14px 0 0 0;">There is no Beej chapter for this lesson. The instructor-written notes are the assigned reading; they line up section for section with the overview in Section 4.</p>
+    </div>
+  </details>
+
+  <!-- ===================== 3. PRE-CLASS WORK ===================== -->
+  <details id="pre-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      3. Pre-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+      <ul style="list-style: none; padding: 0; margin: 0; font-size: 14.5px;">
+        <li style="margin-bottom: 12px; padding: 12px 16px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Read the supplementary notes</div>
+          <div style="color: #4A5568;">Read the instructor-written notes listed in Section 2. They introduce the test-plan vocabulary and the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">assert</code> macro you will use in class.</div>
+        </li>
+        <li style="margin-bottom: 12px; padding: 12px 16px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Take the test-plan self-check</div>
+          <div style="color: #4A5568;">The self-check quiz in Section 5 is a good warm-up. It is short, it gives you a completion code, and it surfaces the normal / edge / error distinction before you have to apply it in the lab.</div>
+        </li>
+        <li style="margin-bottom: 0; padding: 12px 16px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Skim the In-Class section below</div>
+          <div style="color: #4A5568;">Know what you are walking into. Today's lab flips the autograder around: you write the tests.</div>
+        </li>
+      </ul>
+      <div style="font-size: 13.5px; color: #4A5568; margin-top: 14px;">Your team's design check-in is due this lesson. If your team is behind on it, schedule EI before class so it does not eat your lab time.</div>
+    </div>
+  </details>
+
+  <!-- ===================== 4. LESSON MATERIALS ===================== -->
+  <details id="materials" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      4. Lesson Materials and Overview
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 18px 0;">You have been on the receiving end of tests since Lesson 1: write code, push it, see whether the autograder turns green. Today you learn to build that green yourself. Testing is not a chore you do at the end; it is how you decide whether code can be trusted at all. The material below is the spine of the lecture and the reference you will use during the lab.</p>
+
+      <!-- Subsection navigation -->
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 18px; margin-bottom: 22px; border-radius: 3px;">
+        <div style="font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">Jump to</div>
+        <div style="font-size: 13.5px;">
+          <a href="#slides" style="color: #003087; text-decoration: none; margin-right: 14px;">Slides</a>
+          <a href="#why-test" style="color: #003087; text-decoration: none; margin-right: 14px;">Why Test</a>
+          <a href="#assert" style="color: #003087; text-decoration: none; margin-right: 14px;">The assert Macro</a>
+          <a href="#test-plan" style="color: #003087; text-decoration: none; margin-right: 14px;">Building a Test Plan</a>
+          <a href="#unit-tests" style="color: #003087; text-decoration: none; margin-right: 14px;">Unit Tests in C</a>
+          <a href="#thoroughness" style="color: #003087; text-decoration: none;">Suite Thoroughness</a>
+        </div>
+      </div>
+
+      <!-- Slides -->
+      <h3 id="slides" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0; scroll-margin-top: 16px;">Slides</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">The Lesson 26 deck covers why we test, the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">assert</code> macro, the normal / edge / error breakdown of a test plan, writing unit tests with a simple runner, and how to judge whether a suite is thorough. The slides are the spine of the in-class lecture; the assert walkthrough is where you practice each idea hands-on.</p>
+
+      <!-- =========================================================
+           EDIT ME: Lesson 26 slide deck link
+           Replace href="#" below with the published deck URL once the
+           deck is uploaded. Leave target="_blank" and rel="noopener".
+           ========================================================= -->
+      <p style="margin: 0 0 18px 0;">
+        <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 10px 20px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 14px;">Open Lesson 26 slides &rarr;</a>
+      </p>
+
+      <!-- Why test -->
+      <h3 id="why-test" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Why test at all</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Code that compiles is not code that works. A function can build cleanly, run without crashing, and still return the wrong answer on inputs you did not try. Testing is the discipline of trying those inputs on purpose, before your users (or your teammates, or a graded review) try them for you.</p>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">There is one rule that shapes everything else in this lesson: <strong>tests can show the presence of bugs, but never their absence.</strong> A passing test tells you the code is correct for that one case. It says nothing about the cases you did not write. That is why a test plan matters more than raw test count: thoroughness comes from choosing the right cases, not from piling up more of the same.</p>
+
+      <!-- assert -->
+      <h3 id="assert" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">The assert macro</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">C's simplest test tool lives in <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&lt;assert.h&gt;</code>. You give <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">assert</code> a condition. If the condition is true, nothing happens and the program continues. If it is false, the program prints the failing expression with its file and line, then aborts immediately.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">#include</span> <span style="color: #CE9178;">&lt;assert.h&gt;</span><br><br>
+        <span style="color: #569CD6;">int</span> total = add_scores(<span style="color: #B5CEA8;">7</span>, <span style="color: #B5CEA8;">5</span>);<br>
+        <span style="color: #DCDCAA;">assert</span>(total == <span style="color: #B5CEA8;">12</span>);&nbsp;&nbsp;<span style="color: #6B7280;">// silent if correct; aborts if not</span>
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">That hard, loud stop is the point. A bug cannot hide when <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">assert</code> halts the program on it. The core unit-test pattern is one line:</p>
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #DCDCAA;">assert</span>(actual == expected);
+      </div>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">The left side is what your code produced; the right side is the answer you worked out by hand before running it. One caution that bites every C programmer eventually: use <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">==</code> for comparison, never a single <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">=</code>. A single <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">=</code> is assignment, which would overwrite your value and quietly pass. Practice this in the assert walkthrough in Section 5.</p>
+
+      <!-- test plan -->
+      <h3 id="test-plan" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Building a test plan: normal, edge, error</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">A test plan is a short list, written before you write the tests, of the cases that matter. The reliable way to build one is to walk three categories for every function:</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 14px;">
+        <thead>
+          <tr style="background: #00205B; color: #ffffff;">
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 130px;">Category</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600;">What it means</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-weight: 600;">Normal</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Ordinary, in-range input the function plainly should handle. A populated list, a typical value.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-weight: 600;">Edge</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">The boundaries. Empty input, a single element, a value sitting exactly on a threshold, the largest allowed value, all-equal or all-negative data.</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-weight: 600;">Error</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Input the contract calls out specially: a value not found, a count of zero that must not divide, anything the function is supposed to reject or handle defensively.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">Most bugs live at the edges and error conditions, not in the normal cases. A function that passes every normal case can still divide by zero on an empty list or return an off-by-one rank for the top element. Writing the plan first forces you to name those cases before the code lulls you into thinking it works.</p>
+
+      <!-- unit tests -->
+      <h3 id="unit-tests" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Unit tests in C</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">A unit test checks one function in isolation. In this course a test is a small <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">void</code> function full of <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">assert</code> calls. You build an input, call the function, and assert on the result:</p>
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">void</span> <span style="color: #DCDCAA;">test_highest_empty</span>(<span style="color: #569CD6;">void</span>)<br>
+        {<br>
+        &nbsp;&nbsp;player_t board[<span style="color: #B5CEA8;">1</span>] = {<span style="color: #B5CEA8;">0</span>};<br>
+        &nbsp;&nbsp;<span style="color: #6B7280;">// empty board: contract says return -1</span><br>
+        &nbsp;&nbsp;<span style="color: #DCDCAA;">assert</span>(highest_score(board, <span style="color: #B5CEA8;">0</span>) == -<span style="color: #B5CEA8;">1</span>);<br>
+        }
+      </div>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">Because a failed <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">assert</code> aborts the whole program, running many tests in one run needs a little infrastructure: a test runner that runs each test in isolation so one failure does not hide the rest. The lab provides that runner; you write the tests and register them. You have seen this multi-file shape since Lesson 20: a header declares the contract, an implementation honors it, and now a third file tests it.</p>
+
+      <!-- thoroughness -->
+      <h3 id="thoroughness" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Judging suite thoroughness</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Once you have a suite, the last skill is judging whether it is any good. The trap is to count assertions: a suite with fifteen assertions all on typical mid-range inputs is weaker than a suite of six that reaches the empty case, the boundary case, and the error case. <strong>Coverage of categories beats raw count.</strong></p>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">A practical way to judge a suite: for each function, can you point to at least one normal case, one edge case, and one error case? If a whole category is missing, that is exactly where a bug will slip through. The lab makes this concrete by grading your suite against a buggy module: you earn credit for the bugs your tests actually catch, and the only way to catch them all is to test the boundaries. All of this becomes hands-on in the assert walkthrough in Section 5; the self-check quiz there lets you rehearse the normal / edge / error judgment before the lab.</p>
+
+    </div>
+  </details>
+
+  <!-- ===================== 5. IN-CLASS WORK ===================== -->
+  <details id="in-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      5. In-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 16px 0;">Three things to do in class. Use the checklist to track your progress.</p>
+
+      <ul style="list-style: none; padding: 0; margin: 0 0 24px 0; font-size: 14.5px;">
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Work through the assert walkthrough below.</strong>
+          <span style="color: #4A5568;">Thirteen guided tasks covering assert basics, the actual-equals-expected pattern, and writing tests that catch real bugs. About 20 minutes.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Take the test-plan self-check.</strong>
+          <span style="color: #4A5568;">Six questions on classifying normal / edge / error cases and judging thoroughness. About 10 minutes.</span>
+        </li>
+        <li style="margin-bottom: 0; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Complete Lab 26: Testing the Leaderboard Module.</strong>
+          <span style="color: #4A5568;">Auto-graded through GitHub Classroom. You write the test suite; the autograder grades it against correct and buggy modules. Full instructions in the lab repo.</span>
+          <!-- =========================================================
+               EDIT ME: Lab 26 GitHub Classroom assignment link
+               Replace href="#" with the classroom.github.com/a/... invite
+               URL once the assignment is published.
+               ========================================================= -->
+          <div style="margin-top: 8px; margin-left: 28px;">
+            <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 6px 14px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 13px;">Accept Lab 26 on GitHub Classroom &rarr;</a>
+          </div>
+        </li>
+      </ul>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 18px 0 10px 0;">assert Walkthrough</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Thirteen tasks across three sections. Type one line at a time at the prompt. The terminal shows what your program did when it ran; the right pane is your running test report.</p>
+
+<!-- ============================================================
+     CS210 Lesson 26 - assertlab Walkthrough Widget
+     Terminal-style walkthrough (cmem archetype). Cadets type
+     assert(...) calls and tiny test functions at a prompt; the
+     right pane shows a running test-results panel. Subset C
+     evaluator handles integer expressions, == != < > <= >=,
+     and assert(...) with pass/abort semantics.
+     Paste as a block; runs anywhere the parent page allows <script>.
+     ============================================================ -->
+<style>
+.cs210-assertlab * { box-sizing: border-box; }
+.cs210-assertlab {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-assertlab h1 { color: #00205B; font-size: 24px; margin: 0 0 6px 0; }
+.cs210-assertlab .subtitle { color: #4A5568; font-size: 14px; margin-bottom: 22px; }
+.cs210-assertlab .progress-bar {
+  background: #E5E7EB; border-radius: 3px; height: 8px; overflow: hidden; margin-bottom: 6px;
+}
+.cs210-assertlab .progress-fill { background: #003087; height: 100%; transition: width 0.3s ease; }
+.cs210-assertlab .progress-label { font-size: 12px; color: #6B7280; margin-bottom: 18px; }
+.cs210-assertlab .section-header {
+  background: #E8EDF5; color: #00205B; padding: 8px 14px; border-radius: 3px;
+  font-size: 13px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px;
+}
+.cs210-assertlab .task-card {
+  background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 14px; border-radius: 3px;
+}
+.cs210-assertlab .task-card.complete { background: #E6F4EA; border-left-color: #2E7D32; }
+.cs210-assertlab .task-label {
+  font-size: 12px; letter-spacing: 1.5px; color: #6B5300; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;
+}
+.cs210-assertlab .task-card.complete .task-label { color: #1B5E20; }
+.cs210-assertlab .task-text { font-size: 15px; color: #1a1a1a; }
+.cs210-assertlab .task-text code {
+  background: rgba(0,0,0,0.06); padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 13px;
+}
+.cs210-assertlab .task-hint { font-size: 12.5px; color: #6B7280; margin-top: 6px; font-style: italic; }
+
+.cs210-assertlab .panes { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 12px; }
+@media (max-width: 760px) { .cs210-assertlab .panes { grid-template-columns: 1fr; } }
+.cs210-assertlab .terminal {
+  background: #1E2A3A; color: #E8EDF5; font-family: Consolas, 'Courier New', monospace;
+  font-size: 13.5px; line-height: 1.5; border-radius: 4px; padding: 14px 18px;
+  min-height: 380px; max-height: 440px; overflow-y: auto; white-space: pre-wrap; word-break: break-word;
+}
+.cs210-assertlab .terminal .prompt { color: #7FB3D5; }
+.cs210-assertlab .terminal .typed { color: #FFFFFF; }
+.cs210-assertlab .terminal .out { color: #B5BEC8; }
+.cs210-assertlab .terminal .note { color: #F0B92C; }
+.cs210-assertlab .terminal .err { color: #F47A7A; }
+.cs210-assertlab .terminal .ok { color: #7FD17F; }
+.cs210-assertlab .terminal .dim { color: #6B7280; }
+
+.cs210-assertlab .results-pane {
+  background: #ffffff; border: 1px solid #D0D5DD; border-radius: 4px; padding: 14px 16px;
+  min-height: 380px; max-height: 440px; overflow-y: auto;
+}
+.cs210-assertlab .results-pane-header {
+  font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; font-weight: 600;
+  margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #E5E7EB;
+  display: flex; justify-content: space-between; align-items: baseline;
+}
+.cs210-assertlab .results-tally { font-size: 12px; letter-spacing: 0.5px; }
+.cs210-assertlab .results-tally .pass { color: #2E7D32; font-weight: 700; }
+.cs210-assertlab .results-tally .fail { color: #B8002F; font-weight: 700; }
+.cs210-assertlab .results-empty {
+  color: #6B7280; font-style: italic; font-size: 13px; text-align: center; padding: 90px 10px;
+}
+.cs210-assertlab .result-row {
+  display: flex; gap: 10px; align-items: flex-start;
+  background: #F8FAFC; border: 1px solid #D0D5DD; border-left-width: 4px; border-radius: 4px;
+  padding: 9px 12px; margin-bottom: 8px;
+}
+.cs210-assertlab .result-row.pass { border-left-color: #2E7D32; }
+.cs210-assertlab .result-row.fail { border-left-color: #B8002F; background: #FFF1F3; }
+.cs210-assertlab .result-icon { flex: 0 0 18px; font-size: 15px; font-weight: 700; line-height: 1.4; }
+.cs210-assertlab .result-row.pass .result-icon { color: #2E7D32; }
+.cs210-assertlab .result-row.fail .result-icon { color: #B8002F; }
+.cs210-assertlab .result-body { flex: 1; min-width: 0; }
+.cs210-assertlab .result-expr {
+  font-family: Consolas, monospace; font-size: 12.5px; color: #00205B; word-break: break-all;
+}
+.cs210-assertlab .result-row.fail .result-expr { color: #6B0000; }
+.cs210-assertlab .result-detail { font-size: 11.5px; color: #4A5568; margin-top: 3px; }
+.cs210-assertlab .result-row.fail .result-detail { color: #6B0000; }
+
+.cs210-assertlab .input-row {
+  display: flex; background: #1E2A3A; border-radius: 4px; padding: 8px 14px; margin-bottom: 14px; border: 1px solid #003087;
+}
+.cs210-assertlab .input-prompt {
+  color: #7FB3D5; font-family: Consolas, monospace; font-size: 14px; margin-right: 8px; align-self: center; white-space: nowrap;
+}
+.cs210-assertlab .input-row input {
+  flex: 1; background: transparent; color: #FFFFFF; border: none; outline: none;
+  font-family: Consolas, monospace; font-size: 14px; padding: 4px 0;
+}
+.cs210-assertlab .controls { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+.cs210-assertlab .btn {
+  background: #ffffff; border: 1px solid #C7CFD9; padding: 6px 14px; border-radius: 3px;
+  font-size: 13px; cursor: pointer; color: #00205B; font-family: inherit;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.cs210-assertlab .btn:hover { background: #F5F7FA; }
+@keyframes cs210-assertlab-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(240, 185, 44, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0); }
+}
+.cs210-assertlab .btn.pulse {
+  background: #FFF8E1; border-color: #F0B92C; color: #6B5300; font-weight: 600;
+  animation: cs210-assertlab-pulse 1.5s infinite;
+}
+.cs210-assertlab .help-note {
+  background: #F5F7FA; border: 1px solid #D0D5DD; padding: 12px 16px; border-radius: 3px;
+  font-size: 13px; color: #4A5568; margin-top: 12px;
+}
+.cs210-assertlab .help-note strong { color: #00205B; }
+
+/* Name modal overlay */
+.cs210-assertlab .name-modal-backdrop {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55); display: flex; align-items: center; justify-content: center; z-index: 9999;
+}
+.cs210-assertlab .name-modal {
+  background: #ffffff; border-radius: 6px; padding: 28px 32px; max-width: 440px; width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25); font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-assertlab .name-modal h2 { color: #00205B; font-size: 20px; margin: 0 0 10px 0; }
+.cs210-assertlab .name-modal p { color: #4A5568; font-size: 14px; line-height: 1.5; margin: 0 0 16px 0; }
+.cs210-assertlab .name-modal input {
+  width: 100%; padding: 10px 12px; font-size: 15px; border: 1px solid #CBD5E0; border-radius: 4px;
+  margin-bottom: 14px; font-family: inherit;
+}
+.cs210-assertlab .name-modal input:focus {
+  outline: none; border-color: #003087; box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-assertlab .name-modal-btn {
+  background: #003087; color: #ffffff; border: none; padding: 10px 20px; border-radius: 4px;
+  font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.cs210-assertlab .name-modal-btn:disabled { background: #A0AEC0; cursor: not-allowed; }
+.cs210-assertlab .name-modal-btn:not(:disabled):hover { background: #00205B; }
+
+/* Completion screen (inline footer) */
+.cs210-assertlab .completion-screen {
+  background: #ffffff; border: 2px solid #2E7D32; border-radius: 6px; padding: 24px 28px; margin-top: 16px;
+}
+.cs210-assertlab .completion-screen .cs-heading { color: #1B5E20; font-size: 20px; font-weight: 600; margin: 0 0 6px 0; }
+.cs210-assertlab .completion-screen .cs-name-line { font-size: 15px; color: #1a1a1a; margin-bottom: 16px; }
+.cs210-assertlab .completion-screen .cs-name-line strong { color: #00205B; }
+.cs210-assertlab .completion-screen .cs-code-block {
+  background: #F0F4FA; border: 1px solid #003087; border-radius: 4px; padding: 16px 20px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 14px;
+}
+.cs210-assertlab .completion-screen .cs-code-label {
+  font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: #4A5568; margin-bottom: 4px;
+}
+.cs210-assertlab .completion-screen .cs-code-value {
+  font-family: 'Consolas', 'Courier New', monospace; font-size: 28px; font-weight: 700; color: #00205B; letter-spacing: 3px;
+}
+.cs210-assertlab .completion-screen .cs-copy-btn {
+  background: #003087; color: #ffffff; border: none; padding: 8px 14px; border-radius: 3px;
+  font-size: 13px; cursor: pointer; font-family: inherit;
+}
+.cs210-assertlab .completion-screen .cs-copy-btn:hover { background: #00205B; }
+.cs210-assertlab .completion-screen .cs-copy-btn.copied { background: #2E7D32; }
+.cs210-assertlab .completion-screen .cs-timestamp { font-size: 13px; color: #6B7280; margin-bottom: 18px; }
+.cs210-assertlab .completion-screen .cs-reminder {
+  background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 12px 16px; border-radius: 3px;
+  font-size: 14px; color: #6B5300; line-height: 1.5;
+}
+.cs210-assertlab .completion-screen .cs-reminder strong { color: #4A3A00; }
+</style>
+
+<div class="cs210-assertlab">
+
+<div class="name-modal-backdrop" id="al-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Lesson 26 reflection.</p>
+    <input type="text" id="al-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="al-cadet-name-btn" disabled>Start the walkthrough</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 26 &middot; assert Walkthrough</h1>
+<div class="subtitle">A guided tour through <code>assert</code>: the simplest test oracle in C. Type each line at the prompt. The terminal shows what your program did when it ran; the right pane is your running test report. A failing assertion stops the program cold, just like the real <code>assert.h</code>.</div>
+
+<div class="progress-bar"><div class="progress-fill" id="al-progress-fill" style="width: 0%;"></div></div>
+<div class="progress-label" id="al-progress-label">Task 0 of 13</div>
+
+<div class="section-header" id="al-section-header">Section 1: assert basics</div>
+
+<div class="task-card" id="al-task-card">
+  <div class="task-label" id="al-task-label">Current task</div>
+  <div class="task-text" id="al-task-text">Loading...</div>
+  <div class="task-hint" id="al-task-hint"></div>
+</div>
+
+<div class="panes">
+  <div class="terminal" id="al-terminal"></div>
+  <div class="results-pane">
+    <div class="results-pane-header">
+      <span>Test report</span>
+      <span class="results-tally" id="al-tally"></span>
+    </div>
+    <div id="al-results-area">
+      <div class="results-empty">No assertions run yet.<br>Type an assert on the left.</div>
+    </div>
+  </div>
+</div>
+
+<div class="input-row">
+  <span class="input-prompt">assertlab&gt;</span>
+  <input type="text" id="al-cli-input" autocomplete="off" spellcheck="false" placeholder="try: assert(2 + 2 == 4);">
+</div>
+
+<div class="controls">
+  <button class="btn" id="al-hint-btn">Show hint</button>
+  <button class="btn" id="al-reset-btn">Reset</button>
+  <button class="btn" id="al-mode-btn">Switch to free mode</button>
+</div>
+
+<div class="help-note">
+  <strong>How this works:</strong> This is not a Linux terminal. It is a teaching tool that runs a small slice of C: integer expressions, comparisons, a few named values, and the <code>assert</code> macro. The task card tells you what to type next; only the expected line advances the walkthrough so the test report stays predictable. Mistype twice and the hint button will pulse. When you finish, free mode unlocks so you can write your own assertions.
+</div>
+
+<div id="al-completion-area"></div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-assertlab');
+  if (!root) return;
+
+  // ============================================================
+  // CS210 widget completion utilities
+  // Salt -> deterministic 6-char code via FNV-1a.
+  // ============================================================
+  const CS210_SALT = "lesson26_assertlab_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  // ============================================================
+  // Name-modal gating
+  // ============================================================
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#al-name-modal-backdrop');
+    const input = root.querySelector('#al-cadet-name-input');
+    const btn = root.querySelector('#al-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length >= 2) {
+        cs210CadetName = stored.trim();
+        backdrop.style.display = 'none';
+        return;
+      }
+    } catch (e) {}
+    function updateBtn() { btn.disabled = input.value.trim().length < 2; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', function() {
+      const name = input.value.trim();
+      if (name.length < 2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+      const siblings = document.querySelectorAll('#testplan-name-modal-backdrop');
+      siblings.forEach(function(m) { m.style.display = 'none'; });
+      const cli = root.querySelector('#al-cli-input');
+      if (cli) cli.focus();
+    });
+    setTimeout(function() { input.focus(); }, 50);
+  })();
+
+  // ============================================================
+  // Completion overlay + inline footer
+  // ============================================================
+  function cs210FallbackCopy(text) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+    } catch (e) {}
+  }
+  function cs210RenderCompletion(area) {
+    if (!area) return;
+    if (root.querySelector('#al-completion-overlay')) return;
+    const now = new Date();
+    const ts = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const safeName = escapeHtml(cs210CadetName || 'Cadet');
+    area.innerHTML =
+      '<div class="completion-screen">' +
+        '<div class="cs-heading">Walkthrough complete</div>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value">' + CS210_CODE + '</div></div>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+      '</div>';
+    const overlay = document.createElement('div');
+    overlay.id = 'al-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.style.background = 'rgba(27, 94, 32, 0.55)';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">Walkthrough complete</h2>' +
+        '<p>Take a screenshot of this box. You will need the code and a visual of this screen for the Lesson 26 reflection.</p>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value" id="al-code-value">' + CS210_CODE + '</div></div>' +
+          '<button class="cs-copy-btn" id="al-copy-btn" type="button">Copy code</button>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+        '<div class="cs-reminder" style="margin-bottom:14px;">' +
+          '<strong>Next step:</strong> Open the Lesson 26 reflection in Blackboard. Enter this code, answer the reflection prompt, and attach your screenshot.' +
+        '</div>' +
+        '<button class="name-modal-btn" id="al-overlay-close" type="button" style="background:#2E7D32;">Got it &mdash; close this</button>' +
+      '</div>';
+    root.appendChild(overlay);
+    const closeBtn = overlay.querySelector('#al-overlay-close');
+    if (closeBtn) closeBtn.addEventListener('click', function() { overlay.style.display = 'none'; });
+    const copyBtn = overlay.querySelector('#al-copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function() {
+        const ok = function() {
+          copyBtn.textContent = 'Copied'; copyBtn.classList.add('copied');
+          setTimeout(function() { copyBtn.textContent = 'Copy code'; copyBtn.classList.remove('copied'); }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(CS210_CODE).then(ok, function() { cs210FallbackCopy(CS210_CODE); ok(); });
+        } else { cs210FallbackCopy(CS210_CODE); ok(); }
+      });
+    }
+  }
+
+  // ============================================================
+  // State
+  // ============================================================
+  // Named integer values the cadet can reference in expressions.
+  // These model "the function under test already returned these".
+  const env = {};            // name -> integer value
+  const results = [];        // {expr, pass, detail}
+  let aborted = false;       // true once an assertion has fired (program halted)
+  let currentTaskIndex = 0;
+  let consecutiveFails = 0;
+  let mode = "walkthrough";
+
+  // ============================================================
+  // Subset C expression evaluator
+  // Supports: integers, named values in env, + - * / %,
+  // parentheses, unary minus, and comparisons == != < > <= >=.
+  // Returns a Number. Comparisons return 1 or 0 (C semantics).
+  // Throws on anything out of scope.
+  // ============================================================
+  function tokenize(src) {
+    const toks = [];
+    const re = /\s*([0-9]+|[A-Za-z_][A-Za-z0-9_]*|==|!=|<=|>=|[-+*/%()<>])/g;
+    let m, idx = 0;
+    while ((m = re.exec(src)) !== null) {
+      if (m.index !== idx) throw new Error("unexpected character near '" + src.slice(idx) + "'");
+      toks.push(m[1]);
+      idx = re.lastIndex;
+    }
+    if (idx !== src.length && src.slice(idx).trim() !== "") {
+      throw new Error("unexpected character near '" + src.slice(idx).trim() + "'");
+    }
+    return toks;
+  }
+  function evalExpr(src) {
+    const toks = tokenize(src.trim());
+    let pos = 0;
+    const peek = () => toks[pos];
+    const next = () => toks[pos++];
+    function parseComparison() {
+      let left = parseAdd();
+      while (['==','!=','<','>','<=','>='].includes(peek())) {
+        const op = next();
+        const right = parseAdd();
+        switch (op) {
+          case '==': left = (left === right) ? 1 : 0; break;
+          case '!=': left = (left !== right) ? 1 : 0; break;
+          case '<':  left = (left <  right) ? 1 : 0; break;
+          case '>':  left = (left >  right) ? 1 : 0; break;
+          case '<=': left = (left <= right) ? 1 : 0; break;
+          case '>=': left = (left >= right) ? 1 : 0; break;
+        }
+      }
+      return left;
+    }
+    function parseAdd() {
+      let left = parseMul();
+      while (peek() === '+' || peek() === '-') {
+        const op = next();
+        const right = parseMul();
+        left = (op === '+') ? left + right : left - right;
+      }
+      return left;
+    }
+    function parseMul() {
+      let left = parseUnary();
+      while (peek() === '*' || peek() === '/' || peek() === '%') {
+        const op = next();
+        const right = parseUnary();
+        if ((op === '/' || op === '%') && right === 0) throw new Error("division by zero");
+        if (op === '*') left = left * right;
+        else if (op === '/') left = Math.trunc(left / right); // C integer division
+        else left = left % right;
+      }
+      return left;
+    }
+    function parseUnary() {
+      if (peek() === '-') { next(); return -parseUnary(); }
+      if (peek() === '+') { next(); return parseUnary(); }
+      return parsePrimary();
+    }
+    function parsePrimary() {
+      const t = peek();
+      if (t === undefined) throw new Error("unexpected end of expression");
+      if (t === '(') {
+        next();
+        const v = parseComparison();
+        if (next() !== ')') throw new Error("missing closing parenthesis");
+        return v;
+      }
+      if (/^[0-9]+$/.test(t)) { next(); return parseInt(t, 10); }
+      if (/^[A-Za-z_]/.test(t)) {
+        next();
+        if (!(t in env)) throw new Error("unknown name '" + t + "'. Define it first, e.g. set " + t + " = 5");
+        return env[t];
+      }
+      throw new Error("unexpected token '" + t + "'");
+    }
+    const v = parseComparison();
+    if (pos !== toks.length) throw new Error("trailing tokens after expression");
+    return v;
+  }
+
+  // ============================================================
+  // Command dispatcher
+  // Recognized forms:
+  //   assert( <expr> );        run an assertion
+  //   set <name> = <expr>;     bind a named integer value
+  //   list                     list current named values
+  //   clear                    reset the test report and names
+  //   help
+  // ============================================================
+  function runCommand(line) {
+    const t = line.trim().replace(/;?\s*$/, "");
+    const lower = t.toLowerCase();
+
+    if (lower === "clear" || lower === "reset") {
+      results.length = 0; aborted = false; for (const k in env) delete env[k];
+      return { kind: "cleared" };
+    }
+    if (lower === "list") return { kind: "list" };
+    if (lower === "help" || lower === "?") return { kind: "help" };
+
+    const setM = t.match(/^set\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+)$/);
+    if (setM) {
+      const name = setM[1];
+      const val = evalExpr(setM[2]);
+      env[name] = val;
+      return { kind: "set", name, value: val };
+    }
+
+    const asM = t.match(/^assert\s*\((.*)\)$/s);
+    if (asM) {
+      const inner = asM[1].trim();
+      if (inner === "") throw new Error("assert needs a condition inside the parentheses");
+      if (aborted) {
+        // Program already halted on a prior failed assertion: nothing after it runs.
+        return { kind: "skipped", expr: inner };
+      }
+      const val = evalExpr(inner);
+      const pass = (val !== 0);
+      const rec = { expr: inner, pass, detail: pass ? "condition was true (" + val + ")" : "condition was false (0)" };
+      results.push(rec);
+      if (!pass) aborted = true;
+      return { kind: "assert", expr: inner, pass, value: val };
+    }
+
+    // Bare expression: evaluate and show, but do not record as a test.
+    if (/^[-+0-9(]/.test(t) || /^[A-Za-z_]/.test(t)) {
+      const v = evalExpr(t);
+      return { kind: "expr", expr: t, value: v };
+    }
+
+    if (/^(printf|int|return|#include|gcc|ls|cd)\b/.test(t)) {
+      throw new Error("assertlab runs a small slice of C. Use assert(...), set name = value, list, clear, or a bare expression.");
+    }
+    throw new Error("couldn't parse '" + t + "'. Try assert(2 + 2 == 4);");
+  }
+
+  // ============================================================
+  // Terminal output
+  // ============================================================
+  const terminalEl = root.querySelector('#al-terminal');
+  function termWrite(text, cls) {
+    const span = document.createElement('span');
+    if (cls) span.className = cls;
+    span.textContent = text;
+    terminalEl.appendChild(span);
+  }
+  function termLine(text, cls) {
+    termWrite(text, cls);
+    terminalEl.appendChild(document.createElement('br'));
+    terminalEl.scrollTop = terminalEl.scrollHeight;
+  }
+  function echoCommand(cmd) {
+    termWrite('assertlab> ', 'prompt');
+    termLine(cmd, 'typed');
+  }
+
+  // ============================================================
+  // Results pane rendering
+  // ============================================================
+  const resultsEl = root.querySelector('#al-results-area');
+  const tallyEl = root.querySelector('#al-tally');
+  function renderResults() {
+    if (results.length === 0) {
+      resultsEl.innerHTML = '<div class="results-empty">No assertions run yet.<br>Type an assert on the left.</div>';
+      tallyEl.innerHTML = '';
+      return;
+    }
+    const passed = results.filter(r => r.pass).length;
+    const failed = results.length - passed;
+    tallyEl.innerHTML = '<span class="pass">' + passed + ' pass</span> &middot; <span class="fail">' + failed + ' fail</span>';
+    let html = '';
+    results.forEach((r, i) => {
+      html += '<div class="result-row ' + (r.pass ? 'pass' : 'fail') + '">' +
+        '<div class="result-icon">' + (r.pass ? '\u2713' : '\u2717') + '</div>' +
+        '<div class="result-body">' +
+          '<div class="result-expr">assert(' + escapeHtml(r.expr) + ')</div>' +
+          '<div class="result-detail">' + escapeHtml(r.detail) + '</div>' +
+        '</div>' +
+      '</div>';
+    });
+    resultsEl.innerHTML = html;
+    resultsEl.scrollTop = resultsEl.scrollHeight;
+  }
+
+  // ============================================================
+  // Run a command and report
+  // ============================================================
+  function process(line) {
+    echoCommand(line);
+    try {
+      const r = runCommand(line);
+      if (!r) return;
+      if (r.kind === "assert") {
+        if (r.pass) {
+          termLine('  assertion passed.', 'ok');
+        } else {
+          termLine('  Assertion failed: ' + r.expr, 'err');
+          termLine('  program aborted (core dumped). Nothing after this line runs.', 'err');
+        }
+      } else if (r.kind === "skipped") {
+        termLine('  (not reached: the program already aborted on an earlier failed assertion)', 'dim');
+      } else if (r.kind === "set") {
+        termLine('  ' + r.name + ' = ' + r.value, 'out');
+      } else if (r.kind === "expr") {
+        termLine('  ' + r.value, 'out');
+      } else if (r.kind === "cleared") {
+        termLine('  test report cleared; named values removed.', 'out');
+      } else if (r.kind === "list") {
+        const keys = Object.keys(env);
+        if (keys.length === 0) termLine('  no named values', 'out');
+        else { termLine('  named values:', 'out'); for (const k of keys) termLine('    ' + k + ' = ' + env[k], 'out'); }
+      } else if (r.kind === "help") {
+        termLine('  assert:  assert(2 + 2 == 4);', 'out');
+        termLine('  set:     set total = 10;   then  assert(total == 10);', 'out');
+        termLine('  expr:    7 % 3', 'out');
+        termLine('  meta:    list   clear   help', 'out');
+      }
+      renderResults();
+    } catch (e) {
+      termLine('  error: ' + e.message, 'err');
+    }
+  }
+
+  // ============================================================
+  // Tasks
+  // ============================================================
+  const tasks = [
+    // --- Section 1: assert basics ---
+    {
+      section: 'Section 1: assert basics',
+      label: 'Task 1 of 13',
+      text: 'Write your first assertion. Assert that 2 + 2 equals 4.',
+      hint: 'assert(2 + 2 == 4);',
+      match: (cmd) => /^\s*assert\s*\(\s*2\s*\+\s*2\s*==\s*4\s*\)\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^\s*assert\s*\(\s*2\s*\+\s*2\s*=\s*4\s*\)/.test(t)) return "Use == for comparison, not a single =. A single = is assignment.";
+        if (/^\s*assert\s*\(.*\)\s*$/.test(t) && !/;\s*$/.test(t)) return "Almost. assert is a statement; end the line with a semicolon.";
+        return null;
+      },
+      note: 'assert takes a condition. When the condition is true (non-zero), nothing happens and your program keeps running. That is exactly what you want: a passing test is silent.'
+    },
+    {
+      label: 'Task 2 of 13',
+      text: 'A test only earns trust if it can fail. Write an assertion that is FALSE on purpose: assert that 2 + 2 equals 5.',
+      hint: 'assert(2 + 2 == 5);',
+      match: (cmd) => /^\s*assert\s*\(\s*2\s*\+\s*2\s*==\s*5\s*\)\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => null,
+      note: 'There it is: "Assertion failed." A false condition makes assert print the failing expression and abort the program immediately. This loud, hard stop is the whole point. A bug cannot hide when assert halts on it.'
+    },
+    {
+      label: 'Task 3 of 13',
+      text: 'That failure aborted the program. Prove it: try to run assert(1 == 1); now. Watch what happens.',
+      hint: 'assert(1 == 1);',
+      match: (cmd) => /^\s*assert\s*\(\s*1\s*==\s*1\s*\)\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => null,
+      note: 'It did not run. Once an assertion fails, the program is gone; no later line executes. In a real test file this means one failed assert can mask every test below it. Order and isolation matter. Type clear to start a fresh run.'
+    },
+    {
+      label: 'Task 4 of 13',
+      text: 'Reset the program so later assertions can run again. Clear the report.',
+      hint: 'clear',
+      match: (cmd) => /^\s*(clear|reset)\s*;?\s*$/i.test(cmd),
+      diagnose: (cmd) => null,
+      note: 'Fresh start. The report is empty and the program is no longer aborted. Now we can test something that looks more like real code.'
+    },
+
+    // --- Section 2: Testing a function's result ---
+    {
+      section: 'Section 2: Testing a result',
+      label: 'Task 5 of 13',
+      text: 'Imagine a function add_scores(7, 5) just returned its result. Capture that result in a name: set total = 7 + 5;',
+      hint: 'set total = 7 + 5;',
+      match: (cmd) => /^\s*set\s+total\s*=\s*7\s*\+\s*5\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^\s*total\s*=\s*7\s*\+\s*5/.test(t)) return "Start the line with set: set total = 7 + 5;";
+        return null;
+      },
+      note: 'total now holds 12, standing in for what a real function returned. Testing a function means comparing its actual return against the value you expected before you ran it.'
+    },
+    {
+      label: 'Task 6 of 13',
+      text: 'Assert that total equals the value you expected: 12.',
+      hint: 'assert(total == 12);',
+      match: (cmd) => /^\s*assert\s*\(\s*total\s*==\s*12\s*\)\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^\s*assert\s*\(\s*12\s*==\s*total\s*\)/.test(t)) return "That also works in real C, but for this task write it as assert(total == 12);";
+        return null;
+      },
+      note: 'This is the core unit-test pattern: assert(actual == expected). The name on the left is what your code produced; the literal on the right is the answer you worked out by hand. When they match, the test is silent.'
+    },
+    {
+      label: 'Task 7 of 13',
+      text: 'Now test a normal case for a different function. A streak counter for [run, run, run] should return 3. Set up streak = 3 first.',
+      hint: 'set streak = 3;',
+      match: (cmd) => /^\s*set\s+streak\s*=\s*3\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => null,
+      note: 'A normal case uses ordinary, expected input: three workouts in a row. Every test plan starts here, with the cases that should obviously work.'
+    },
+    {
+      label: 'Task 8 of 13',
+      text: 'Assert the normal case: streak should equal 3.',
+      hint: 'assert(streak == 3);',
+      match: (cmd) => /^\s*assert\s*\(\s*streak\s*==\s*3\s*\)\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => null,
+      note: 'Good. Two passing tests. But normal cases alone are weak: a buggy function can pass every normal case and still break on the inputs you did not think to try. That is what the next section is about.'
+    },
+
+    // --- Section 3: Edge cases find bugs ---
+    {
+      section: 'Section 3: Edge cases find bugs',
+      label: 'Task 9 of 13',
+      text: 'What is the streak for an EMPTY log, with no workouts at all? Set up the edge case: set empty_streak = 0;',
+      hint: 'set empty_streak = 0;',
+      match: (cmd) => /^\s*set\s+empty_streak\s*=\s*0\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => null,
+      note: 'The empty input is the classic edge case: zero elements, the boundary of "no data at all." Functions that work fine on normal input often crash or return garbage here.'
+    },
+    {
+      label: 'Task 10 of 13',
+      text: 'Assert the edge case: an empty log should give a streak of 0.',
+      hint: 'assert(empty_streak == 0);',
+      match: (cmd) => /^\s*assert\s*\(\s*empty_streak\s*==\s*0\s*\)\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => null,
+      note: 'A test plan is normal cases plus edge cases plus error conditions. The empty case, the single-element case, the largest allowed value: these boundaries are where bugs live. Always write them down before you write the function.'
+    },
+    {
+      label: 'Task 11 of 13',
+      text: 'Now let a bug bite. Suppose a buggy rank function returned 0 for the top player when it should return 1. Set up the wrong result: set rank = 0;',
+      hint: 'set rank = 0;',
+      match: (cmd) => /^\s*set\s+rank\s*=\s*0\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => null,
+      note: 'rank now holds the buggy value, 0. The top player on a leaderboard should be rank 1, not 0. A classic off-by-one. Your next assertion is the test that should catch it.'
+    },
+    {
+      label: 'Task 12 of 13',
+      text: 'Write the assertion that catches the bug: the top player should be rank 1.',
+      hint: 'assert(rank == 1);',
+      match: (cmd) => /^\s*assert\s*\(\s*rank\s*==\s*1\s*\)\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => null,
+      note: 'The assertion failed, and that is a success. A good test FAILS when the code is wrong. This is exactly how Lab 26 is graded: your tests run against a buggy version of the function, and you earn credit for the tests that catch the bug.'
+    },
+    {
+      label: 'Task 13 of 13',
+      text: 'Clean up for free mode. Clear the report one more time.',
+      hint: 'clear',
+      match: (cmd) => /^\s*(clear|reset)\s*;?\s*$/i.test(cmd),
+      diagnose: (cmd) => null,
+      note: 'Report cleared. Free mode is now unlocked. Define your own values with set and write your own assertions to test them.'
+    },
+  ];
+
+  // ============================================================
+  // Walkthrough controller
+  // ============================================================
+  function checkTask(rawCmd) {
+    if (mode === "free" || currentTaskIndex >= tasks.length) return null;
+    const t = tasks[currentTaskIndex];
+    if (t.match(rawCmd)) {
+      process(rawCmd);
+      if (t.note) { termLine('', 'out'); termLine('  ' + t.note, 'note'); }
+      currentTaskIndex++;
+      consecutiveFails = 0;
+      hideHintPulse();
+      renderTask();
+      if (currentTaskIndex >= tasks.length) {
+        setMode("free");
+        termLine('', 'out');
+        termLine('  Walkthrough complete. Free mode unlocked. Define values with set and write your own assertions.', 'note');
+      }
+      return true;
+    } else {
+      echoCommand(rawCmd);
+      const diag = (t.diagnose && t.diagnose(rawCmd)) || null;
+      if (diag) termLine('  ' + diag, 'err');
+      else termLine("  Not what this task is asking for. Look at the task card above, or click 'Show hint'.", 'err');
+      consecutiveFails++;
+      if (consecutiveFails >= 2) showHintPulse();
+      return false;
+    }
+  }
+  function renderTask() {
+    const fill = root.querySelector('#al-progress-fill');
+    const label = root.querySelector('#al-progress-label');
+    const card = root.querySelector('#al-task-card');
+    const labelEl = root.querySelector('#al-task-label');
+    const textEl = root.querySelector('#al-task-text');
+    const hintEl = root.querySelector('#al-task-hint');
+    const sectionEl = root.querySelector('#al-section-header');
+    const completionArea = root.querySelector('#al-completion-area');
+
+    const pct = (currentTaskIndex / tasks.length) * 100;
+    fill.style.width = pct + '%';
+    label.textContent = 'Task ' + Math.min(currentTaskIndex + 1, tasks.length) + ' of ' + tasks.length;
+
+    if (currentTaskIndex >= tasks.length) {
+      card.className = 'task-card complete';
+      labelEl.textContent = 'Complete';
+      textEl.textContent = "You worked the full test-writing cycle: assert basics, the actual-equals-expected pattern, normal cases, edge cases, and a test that catches a real bug. You are ready for Lab 26.";
+      hintEl.textContent = '';
+      fill.style.width = '100%';
+      label.textContent = 'All tasks complete';
+      sectionEl.textContent = 'All done';
+      completionArea.innerHTML = '';
+      cs210RenderCompletion(completionArea);
+      return;
+    }
+    completionArea.innerHTML = '';
+    card.className = 'task-card';
+    const t = tasks[currentTaskIndex];
+    if (t.section) sectionEl.textContent = t.section;
+    labelEl.textContent = t.label;
+    textEl.innerHTML = escapeHtml(t.text).replace(/`([^`]+)`/g, '<code>$1</code>');
+    hintEl.textContent = '';
+  }
+  function showHint() {
+    if (currentTaskIndex >= tasks.length) return;
+    const t = tasks[currentTaskIndex];
+    root.querySelector('#al-task-hint').textContent = 'Hint: ' + (t.hint || '');
+    hideHintPulse();
+  }
+  function showHintPulse() { root.querySelector('#al-hint-btn').classList.add('pulse'); }
+  function hideHintPulse() { root.querySelector('#al-hint-btn').classList.remove('pulse'); }
+
+  function reset() {
+    results.length = 0; aborted = false; for (const k in env) delete env[k];
+    currentTaskIndex = 0; consecutiveFails = 0;
+    hideHintPulse();
+    setMode("walkthrough");
+    terminalEl.innerHTML = '';
+    termLine('Welcome to the assert walkthrough.', 'dim');
+    termLine('Follow the task card above. Type one line at a time at the prompt.', 'dim');
+    termLine('', 'out');
+    renderResults();
+    renderTask();
+  }
+
+  function setMode(newMode) {
+    mode = newMode;
+    const btn = root.querySelector('#al-mode-btn');
+    const cli = root.querySelector('#al-cli-input');
+    if (mode === "free") {
+      btn.textContent = 'Return to walkthrough';
+      btn.style.background = '#E6F4EA'; btn.style.borderColor = '#2E7D32'; btn.style.color = '#1B5E20';
+      cli.placeholder = 'free mode: assert(...), set name = value, list, clear';
+    } else {
+      btn.textContent = 'Switch to free mode';
+      btn.style.background = ''; btn.style.borderColor = ''; btn.style.color = '';
+      cli.placeholder = 'follow the task above';
+    }
+  }
+
+  // ============================================================
+  // Input wiring
+  // ============================================================
+  const inputEl = root.querySelector('#al-cli-input');
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const v = inputEl.value;
+      inputEl.value = '';
+      if (!v.trim()) return;
+      if (mode === "walkthrough") checkTask(v);
+      else process(v);
+    }
+  });
+  root.querySelector('#al-hint-btn').addEventListener('click', showHint);
+  root.querySelector('#al-reset-btn').addEventListener('click', reset);
+  root.querySelector('#al-mode-btn').addEventListener('click', () => {
+    if (mode === "walkthrough") {
+      setMode("free");
+      termLine('', 'out');
+      termLine('  Free mode. Define values with set and write any assertion.', 'note');
+    } else {
+      setMode("walkthrough");
+      termLine('', 'out');
+      termLine('  Walkthrough mode. Follow the task card above.', 'note');
+    }
+  });
+
+  // Boot
+  reset();
+})();
+</script>
+
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 28px 0 10px 0;">Test Plan Self-Check</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Six questions. Pick or type your answer, submit, and read the feedback before moving on. Pass at 70% or above; below that, review and take it again.</p>
+
+<!-- ============================================================
+     CS210 Lesson 26 - Test Plan Self-Check Quiz Widget
+     Card/slide flow: one question per card, Submit + Next/Back.
+     Score card at the end with per-question recap and two-salt
+     completion code (passing >= 70% uses _completed salt;
+     non-passing uses _incomplete salt).
+     Adapted from the duality_quiz archetype.
+     ============================================================ -->
+<style>
+.cs210-testplan-quiz * { box-sizing: border-box; }
+.cs210-testplan-quiz {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a; line-height: 1.55; max-width: 980px; margin: 0 auto;
+  padding: 20px; background: #ffffff; position: relative;
+}
+.cs210-testplan-quiz h1 { color: #00205B; font-size: 24px; margin: 0 0 6px 0; }
+.cs210-testplan-quiz .subtitle { color: #4A5568; font-size: 14px; margin-bottom: 18px; }
+
+.cs210-testplan-quiz .dots { display: flex; gap: 8px; justify-content: center; margin-bottom: 18px; }
+.cs210-testplan-quiz .dot {
+  width: 12px; height: 12px; border-radius: 50%; background: #E5E7EB; border: 1px solid #C7CFD9;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.cs210-testplan-quiz .dot.current { background: #003087; border-color: #00205B; transform: scale(1.25); }
+.cs210-testplan-quiz .dot.correct { background: #2E7D32; border-color: #1B5E20; }
+.cs210-testplan-quiz .dot.incorrect { background: #B8002F; border-color: #6B0000; }
+.cs210-testplan-quiz .dot.score { width: 16px; height: 12px; border-radius: 3px; background: #F0B92C; border-color: #6B5300; }
+
+.cs210-testplan-quiz .card {
+  background: #ffffff; border: 1px solid #D0D5DD; border-radius: 6px; padding: 22px 24px; margin-bottom: 14px;
+}
+.cs210-testplan-quiz .q-label {
+  font-size: 11.5px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; font-weight: 600; margin-bottom: 8px;
+}
+.cs210-testplan-quiz .q-text { font-size: 15.5px; color: #1a1a1a; margin-bottom: 16px; }
+.cs210-testplan-quiz .q-text code {
+  background: #F0F2F5; padding: 1px 6px; border-radius: 2px; font-family: Consolas, monospace; font-size: 13.5px;
+}
+.cs210-testplan-quiz pre.q-code {
+  background: #1E2A3A; color: #E8EDF5; padding: 12px 16px; border-radius: 4px;
+  font-family: Consolas, monospace; font-size: 13px; line-height: 1.55; margin: 0 0 16px 0;
+  white-space: pre; overflow-x: auto;
+}
+
+.cs210-testplan-quiz .choices { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.cs210-testplan-quiz .choice {
+  display: block; padding: 10px 14px; border: 1px solid #C7CFD9; border-radius: 4px; background: #ffffff;
+  cursor: pointer; font-size: 14px; font-family: inherit; transition: background 0.15s ease, border-color 0.15s ease;
+}
+.cs210-testplan-quiz .choice:hover { background: #F5F7FA; }
+.cs210-testplan-quiz .choice.selected { background: #E8EDF5; border-color: #003087; }
+.cs210-testplan-quiz .choice.locked { cursor: default; }
+.cs210-testplan-quiz .choice.locked:hover { background: inherit; }
+.cs210-testplan-quiz .choice.correct { background: #E6F4EA; border-color: #2E7D32; color: #1B5E20; font-weight: 600; }
+.cs210-testplan-quiz .choice.incorrect { background: #FCE7EA; border-color: #B8002F; color: #6B0000; font-weight: 600; }
+.cs210-testplan-quiz .choice code {
+  background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 13px;
+}
+
+.cs210-testplan-quiz .text-input {
+  width: 100%; padding: 10px 12px; font-size: 15px; border: 1px solid #CBD5E0; border-radius: 4px;
+  margin-bottom: 14px; font-family: Consolas, monospace;
+}
+.cs210-testplan-quiz .text-input:focus { outline: none; border-color: #003087; box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15); }
+.cs210-testplan-quiz .text-input:disabled { background: #F5F7FA; color: #4A5568; }
+
+.cs210-testplan-quiz .feedback {
+  padding: 12px 16px; border-radius: 4px; font-size: 14px; margin-bottom: 14px; display: none;
+}
+.cs210-testplan-quiz .feedback.visible { display: block; }
+.cs210-testplan-quiz .feedback.correct { background: #E6F4EA; border-left: 4px solid #2E7D32; color: #1B5E20; }
+.cs210-testplan-quiz .feedback.incorrect { background: #FCE7EA; border-left: 4px solid #B8002F; color: #6B0000; }
+.cs210-testplan-quiz .feedback code {
+  background: rgba(255,255,255,0.6); padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 13px;
+}
+
+.cs210-testplan-quiz .btn-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+.cs210-testplan-quiz .submit-btn, .cs210-testplan-quiz .nav-btn {
+  background: #003087; color: #ffffff; border: none; padding: 9px 18px; border-radius: 4px;
+  font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.cs210-testplan-quiz .submit-btn:hover, .cs210-testplan-quiz .nav-btn:hover { background: #00205B; }
+.cs210-testplan-quiz .submit-btn:disabled { background: #A0AEC0; cursor: not-allowed; }
+.cs210-testplan-quiz .nav-btn.back { background: #ffffff; color: #003087; border: 1px solid #C7CFD9; }
+.cs210-testplan-quiz .nav-btn.back:hover { background: #F5F7FA; color: #00205B; }
+.cs210-testplan-quiz .nav-row { display: flex; gap: 8px; }
+
+/* Score card */
+.cs210-testplan-quiz .score-card { text-align: center; }
+.cs210-testplan-quiz .score-big { font-size: 48px; font-weight: 700; color: #003087; margin: 10px 0 4px 0; }
+.cs210-testplan-quiz .score-card.full-correct .score-big { color: #1B5E20; }
+.cs210-testplan-quiz .score-card.passing .score-big { color: #2E7D32; }
+.cs210-testplan-quiz .score-card.not-passing .score-big { color: #6B0000; }
+.cs210-testplan-quiz .score-label {
+  font-size: 13px; color: #6B7280; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 14px;
+}
+.cs210-testplan-quiz .score-message { font-size: 15px; color: #4A5568; margin-bottom: 18px; }
+.cs210-testplan-quiz .score-message.good-job { color: #1B5E20; font-weight: 600; }
+.cs210-testplan-quiz .recap { margin-top: 16px; padding-top: 16px; border-top: 1px solid #E5E7EB; text-align: left; }
+.cs210-testplan-quiz .recap-title {
+  font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; font-weight: 600; margin-bottom: 10px;
+}
+.cs210-testplan-quiz .recap-item { display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px solid #F0F2F5; }
+.cs210-testplan-quiz .recap-item:last-child { border-bottom: none; }
+.cs210-testplan-quiz .recap-icon { flex: 0 0 22px; font-size: 16px; font-weight: 700; }
+.cs210-testplan-quiz .recap-icon.correct { color: #2E7D32; }
+.cs210-testplan-quiz .recap-icon.incorrect { color: #B8002F; }
+.cs210-testplan-quiz .recap-body { flex: 1; font-size: 13.5px; }
+.cs210-testplan-quiz .recap-question { color: #1a1a1a; margin-bottom: 3px; }
+.cs210-testplan-quiz .recap-explanation { color: #4A5568; font-size: 13px; }
+.cs210-testplan-quiz .recap-explanation code {
+  background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;
+}
+.cs210-testplan-quiz .reset-row { margin-top: 18px; display: flex; justify-content: center; }
+.cs210-testplan-quiz .reset-btn {
+  background: #ffffff; border: 1px solid #003087; color: #003087; padding: 8px 18px; border-radius: 4px;
+  font-size: 13.5px; font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.cs210-testplan-quiz .reset-btn:hover { background: #F5F7FA; }
+
+.cs210-testplan-quiz .help-note {
+  background: #F5F7FA; border: 1px solid #D0D5DD; padding: 12px 16px; border-radius: 3px;
+  font-size: 13px; color: #4A5568; margin-top: 12px;
+}
+.cs210-testplan-quiz .help-note strong { color: #00205B; }
+
+/* Completion code block on the score card */
+.cs210-testplan-quiz .code-block {
+  background: #F0F4FA; border: 1px solid #003087; border-radius: 4px; padding: 14px 18px; margin: 14px 0 6px 0;
+  text-align: left; display: flex; align-items: center; justify-content: space-between; gap: 14px;
+}
+.cs210-testplan-quiz .code-block.fail { background: #FFF1F3; border-color: #B8002F; }
+.cs210-testplan-quiz .code-block .code-left { text-align: left; }
+.cs210-testplan-quiz .code-block .code-label {
+  font-size: 11.5px; text-transform: uppercase; letter-spacing: 1.5px; color: #4A5568;
+}
+.cs210-testplan-quiz .code-block .code-value {
+  font-family: Consolas, monospace; font-size: 26px; font-weight: 700; color: #00205B; letter-spacing: 3px;
+}
+.cs210-testplan-quiz .code-block.fail .code-value { color: #6B0000; }
+.cs210-testplan-quiz .code-block .copy-btn {
+  background: #003087; color: #ffffff; border: none; padding: 8px 14px; border-radius: 3px;
+  font-size: 13px; cursor: pointer; font-family: inherit;
+}
+.cs210-testplan-quiz .code-block .copy-btn:hover { background: #00205B; }
+.cs210-testplan-quiz .code-block .copy-btn.copied { background: #2E7D32; }
+.cs210-testplan-quiz .code-block.fail .copy-btn { background: #6B0000; }
+.cs210-testplan-quiz .inline-code-footer {
+  background: #F5F7FA; border: 1px solid #D0D5DD; padding: 8px 12px; border-radius: 3px;
+  margin-top: 10px; font-size: 12.5px; color: #4A5568; font-family: Consolas, monospace;
+}
+
+/* Name modal overlay */
+.cs210-testplan-quiz .name-modal-backdrop {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55); display: flex; align-items: center; justify-content: center; z-index: 9999;
+}
+.cs210-testplan-quiz .name-modal {
+  background: #ffffff; border-radius: 6px; padding: 28px 32px; max-width: 440px; width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25); font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-testplan-quiz .name-modal h2 { color: #00205B; font-size: 20px; margin: 0 0 10px 0; }
+.cs210-testplan-quiz .name-modal p { color: #4A5568; font-size: 14px; margin: 0 0 16px 0; }
+.cs210-testplan-quiz .name-modal input {
+  width: 100%; padding: 10px 12px; font-size: 15px; border: 1px solid #CBD5E0; border-radius: 4px;
+  margin-bottom: 14px; font-family: inherit;
+}
+.cs210-testplan-quiz .name-modal input:focus { outline: none; border-color: #003087; box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15); }
+.cs210-testplan-quiz .name-modal-btn {
+  background: #003087; color: #ffffff; border: none; padding: 10px 20px; border-radius: 4px;
+  font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.cs210-testplan-quiz .name-modal-btn:disabled { background: #A0AEC0; cursor: not-allowed; }
+.cs210-testplan-quiz .name-modal-btn:not(:disabled):hover { background: #00205B; }
+</style>
+
+<div class="cs210-testplan-quiz">
+
+<div class="name-modal-backdrop" id="testplan-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the score card so you can include it in your screenshot for the Lesson 26 reflection.</p>
+    <input type="text" id="testplan-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="testplan-cadet-name-btn" disabled>Start the quiz</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 26 &middot; Test Plan Self-Check</h1>
+<div class="subtitle">Six questions on building a test plan: classifying cases as normal, edge, or error; spotting the case a suite is missing; and judging whether a green suite is actually thorough. Pass at 70% or above; below that, take it again after reviewing.</div>
+
+<div class="dots" id="testplan-dots"></div>
+
+<div id="testplan-card-area"></div>
+
+<div class="help-note">
+  <strong>How this works:</strong> One question per card. Pick or type your answer and click Submit. Feedback appears, then click Next to move on. Answers lock once submitted, so think before you submit. After all six, you get a score, a completion code, and a per-question recap.
+</div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-testplan-quiz');
+  if (!root) return;
+
+  // ============================================================
+  // Completion code generation (two-salt scheme: pass vs. fail)
+  // ============================================================
+  const CS210_SALT_PASS = "lesson26_testplan_completed";
+  const CS210_SALT_FAIL = "lesson26_testplan_incomplete";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const PASSING_THRESHOLD = 0.70;
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE_PASS = cs210CodeFromSalt(CS210_SALT_PASS);
+  const CS210_CODE_FAIL = cs210CodeFromSalt(CS210_SALT_FAIL);
+  let cadetName = '';
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+  function cs210Copy(text) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text); return true; }
+    } catch (e) {}
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+      return true;
+    } catch (e) { return false; }
+  }
+
+  // ============================================================
+  // Name modal
+  // ============================================================
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#testplan-name-modal-backdrop');
+    const input = root.querySelector('#testplan-cadet-name-input');
+    const btn = root.querySelector('#testplan-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length > 0) {
+        cadetName = stored.trim();
+        backdrop.style.display = 'none';
+        return;
+      }
+    } catch (e) {}
+    function updateBtn() { btn.disabled = input.value.trim().length === 0; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', () => {
+      const n = input.value.trim();
+      if (!n) return;
+      cadetName = n;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', n); } catch (e) {}
+      backdrop.style.display = 'none';
+      const siblings = document.querySelectorAll('#al-name-modal-backdrop');
+      siblings.forEach(function(m) { m.style.display = 'none'; });
+    });
+    setTimeout(() => { try { input.focus(); } catch (e) {} }, 50);
+  })();
+
+  // ============================================================
+  // Questions
+  // ============================================================
+  const questions = [
+    {
+      id: 'q1',
+      type: 'choice',
+      text: 'A function <code>int top_n(int scores[], int len, int n)</code> returns how many of the top <code>n</code> scores it copied into an output array. You are classifying test cases. Which input is best described as a NORMAL case?',
+      options: [
+        'A leaderboard of 8 scores, asking for the top 3.',
+        'An empty leaderboard (<code>len == 0</code>), asking for the top 3.',
+        'Asking for the top 10 from a leaderboard of only 4 scores.',
+        'Passing a negative value for <code>n</code>.',
+      ],
+      correct: 0,
+      correctFeedback: 'Right. A normal case is ordinary, in-range input that the function is plainly expected to handle: a populated board and a reasonable <code>n</code>.',
+      incorrectFeedback: 'The correct answer is the first one. A normal case is ordinary, in-range input. The empty board and "ask for more than exist" are edge cases; a negative <code>n</code> is an error condition.',
+      shortLabel: 'Identify the normal case for top_n',
+    },
+    {
+      id: 'q2',
+      type: 'choice',
+      text: 'Using the same <code>top_n</code> function, which input is the clearest EDGE case?',
+      options: [
+        'A leaderboard of 8 scores, asking for the top 3.',
+        'Asking for the top <code>n</code> where <code>n</code> exactly equals <code>len</code> (every score).',
+        'A <code>scores</code> pointer that is <code>NULL</code>.',
+        'A leaderboard of 20 scores, asking for the top 5.',
+      ],
+      correct: 1,
+      correctFeedback: 'Right. <code>n == len</code> sits exactly on the boundary between "some" and "all" elements. Boundaries are where off-by-one bugs live, which makes this a textbook edge case.',
+      incorrectFeedback: 'The correct answer is the second one. An edge case sits on a boundary: <code>n == len</code> is right at the limit. The two populated boards are normal cases; a <code>NULL</code> pointer is an error condition, not an edge case.',
+      shortLabel: 'Identify the edge case for top_n',
+    },
+    {
+      id: 'q3',
+      type: 'choice',
+      text: 'A teammate writes a test plan for a function that computes a player\'s average score. Their plan lists: (1) several scores, (2) all identical scores, (3) one very large score. What category of case is most clearly MISSING?',
+      options: [
+        'A normal case with a typical spread of scores.',
+        'An error or boundary case, such as zero scores (which would divide by zero).',
+        'A case with exactly two scores.',
+        'Nothing is missing; three cases is enough.',
+      ],
+      correct: 1,
+      correctFeedback: 'Right. Every listed case has at least one score. The dangerous untested input is zero scores, which makes the average a division by zero. That boundary is exactly what a test plan exists to surface.',
+      incorrectFeedback: 'The correct answer is the second one. All three listed cases assume at least one score. The missing case is the boundary or error condition of zero scores, which would divide by zero. A test plan is incomplete until the boundaries are covered.',
+      shortLabel: 'Find the missing category in an average-score plan',
+    },
+    {
+      id: 'q4',
+      type: 'choice',
+      text: 'A suite of 12 assertions for a sorting function all pass. A teammate says, "All green, so the function is correct." What is the most accurate response?',
+      options: [
+        'Agreed; a passing suite proves the function has no bugs.',
+        'A passing suite only shows the function is correct on the cases you chose to test. It says nothing about cases you did not test.',
+        'You need at least 20 assertions before a suite means anything.',
+        'Passing tests are meaningless; only failing tests tell you anything.',
+      ],
+      correct: 1,
+      correctFeedback: 'Right. Thoroughness is about which cases you chose, not how many asserts you wrote. A green suite proves correctness only for the inputs it actually exercises.',
+      incorrectFeedback: 'The correct answer is the second one. Tests can show the presence of bugs, never their absence. A passing suite only covers the cases you chose; untested inputs are still unknown. Count is not coverage.',
+      shortLabel: 'What a passing suite does and does not prove',
+    },
+    {
+      id: 'q5',
+      type: 'choice',
+      text: 'You are reviewing two test plans for the same function. Plan A has 15 assertions, all on typical mid-range inputs. Plan B has 6 assertions: two normal, two edge (empty and full), and two error conditions. Which plan is more thorough, and why?',
+      options: [
+        'Plan A, because it has more than twice as many assertions.',
+        'Plan B, because it covers a wider range of case categories even with fewer assertions.',
+        'They are equally thorough; thoroughness is just the assertion count.',
+        'Neither can be judged without running them.',
+      ],
+      correct: 1,
+      correctFeedback: 'Right. Plan B spreads its tests across normal, edge, and error categories. Plan A piles up on one region and leaves the boundaries untested. Coverage of cases beats raw count.',
+      incorrectFeedback: 'The correct answer is the second one. Thoroughness is about covering the categories where bugs hide, not the raw number of asserts. Plan A tests the same easy region 15 times; Plan B reaches the boundaries and error paths where real bugs live.',
+      shortLabel: 'Judge thoroughness: count vs coverage',
+    },
+    {
+      id: 'q6',
+      type: 'text',
+      text: 'Fill in the blank. The standard unit-test pattern compares what your code actually produced against the value you expected. Written with assert, that pattern is <code>assert(actual ___ expected);</code>. Type the operator that goes in the blank.',
+      correct: ['==', 'equals', 'equal to', 'is equal to'],
+      normalize: s => s.trim().toLowerCase(),
+      placeholder: 'the comparison operator',
+      correctFeedback: 'Right. <code>assert(actual == expected)</code> is the core pattern. A single <code>=</code> would be assignment, not comparison, which is a classic and dangerous typo.',
+      incorrectFeedback: 'The answer is <code>==</code>. The pattern is <code>assert(actual == expected)</code>. Use the double equals for comparison; a single <code>=</code> is assignment and would silently overwrite your value.',
+      shortLabel: 'The operator in assert(actual __ expected)',
+    },
+  ];
+
+  // ============================================================
+  // State
+  // ============================================================
+  const state = questions.map(() => ({ answered: false, correct: false, choice: null, value: '' }));
+  let currentIndex = 0;
+
+  const dotsArea = root.querySelector('#testplan-dots');
+  const cardArea = root.querySelector('#testplan-card-area');
+
+  function renderDots() {
+    dotsArea.innerHTML = '';
+    for (let i = 0; i < questions.length; i++) {
+      const d = document.createElement('div');
+      d.className = 'dot';
+      if (i === currentIndex) d.classList.add('current');
+      if (state[i].answered) d.classList.add(state[i].correct ? 'correct' : 'incorrect');
+      dotsArea.appendChild(d);
+    }
+    const scoreDot = document.createElement('div');
+    scoreDot.className = 'dot score';
+    if (currentIndex === questions.length) scoreDot.classList.add('current');
+    dotsArea.appendChild(scoreDot);
+  }
+
+  function buildQuestionCard(i) {
+    const q = questions[i];
+    const s = state[i];
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    const label = document.createElement('div');
+    label.className = 'q-label';
+    label.textContent = 'Question ' + (i + 1) + ' of ' + questions.length;
+    card.appendChild(label);
+
+    const text = document.createElement('div');
+    text.className = 'q-text';
+    text.innerHTML = q.text;
+    card.appendChild(text);
+
+    if (q.code) {
+      const pre = document.createElement('pre');
+      pre.className = 'q-code';
+      pre.textContent = q.code;
+      card.appendChild(pre);
+    }
+
+    let getAnswer;
+    let submitBtn;
+    if (q.type === 'choice') {
+      const choices = document.createElement('div');
+      choices.className = 'choices';
+      const buttons = [];
+      q.options.forEach((opt, idx) => {
+        const b = document.createElement('button');
+        b.className = 'choice';
+        b.innerHTML = opt;
+        b.type = 'button';
+        b.addEventListener('click', () => {
+          if (s.answered) return;
+          buttons.forEach(x => x.classList.remove('selected'));
+          b.classList.add('selected');
+          s.choice = idx;
+          submitBtn.disabled = false;
+        });
+        if (s.choice === idx) b.classList.add('selected');
+        if (s.answered) {
+          b.classList.add('locked');
+          if (idx === q.correct) b.classList.add('correct');
+          else if (idx === s.choice) b.classList.add('incorrect');
+        }
+        choices.appendChild(b);
+        buttons.push(b);
+      });
+      card.appendChild(choices);
+      getAnswer = () => s.choice;
+    } else {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'text-input';
+      input.placeholder = q.placeholder || '';
+      input.value = s.value || '';
+      input.spellcheck = false;
+      input.autocomplete = 'off';
+      input.addEventListener('input', () => {
+        if (s.answered) return;
+        s.value = input.value;
+        submitBtn.disabled = input.value.trim().length === 0;
+      });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !s.answered && input.value.trim().length > 0) {
+          e.preventDefault();
+          submitBtn.click();
+        }
+      });
+      if (s.answered) input.disabled = true;
+      card.appendChild(input);
+      getAnswer = () => input.value;
+      setTimeout(() => { try { input.focus(); } catch (e) {} }, 50);
+    }
+
+    const fb = document.createElement('div');
+    fb.className = 'feedback';
+    if (s.answered) {
+      fb.classList.add('visible');
+      fb.classList.add(s.correct ? 'correct' : 'incorrect');
+      fb.innerHTML = s.correct ? q.correctFeedback : q.incorrectFeedback;
+    }
+    card.appendChild(fb);
+
+    const row = document.createElement('div');
+    row.className = 'btn-row';
+
+    const navL = document.createElement('div');
+    navL.className = 'nav-row';
+    if (i > 0) {
+      const back = document.createElement('button');
+      back.className = 'nav-btn back';
+      back.type = 'button';
+      back.innerHTML = '&larr; Back';
+      back.addEventListener('click', () => { currentIndex = i - 1; render(); });
+      navL.appendChild(back);
+    }
+    row.appendChild(navL);
+
+    submitBtn = document.createElement('button');
+    submitBtn.type = 'button';
+    if (s.answered) {
+      submitBtn.className = 'nav-btn';
+      submitBtn.innerHTML = (i === questions.length - 1) ? 'See score &rarr;' : 'Next &rarr;';
+      submitBtn.addEventListener('click', () => { currentIndex = i + 1; render(); });
+    } else {
+      submitBtn.className = 'submit-btn';
+      submitBtn.textContent = 'Submit';
+      if (q.type === 'choice') submitBtn.disabled = (s.choice === null);
+      else submitBtn.disabled = (!s.value || s.value.trim().length === 0);
+      submitBtn.addEventListener('click', () => {
+        const ans = getAnswer();
+        let correct = false;
+        if (q.type === 'choice') {
+          correct = (ans === q.correct);
+        } else {
+          const v = q.normalize ? q.normalize(ans) : ans;
+          correct = q.correct.some(c => (q.normalize ? q.normalize(c) : c) === v);
+        }
+        s.answered = true;
+        s.correct = correct;
+        render();
+      });
+    }
+    row.appendChild(submitBtn);
+    card.appendChild(row);
+
+    return card;
+  }
+
+  function buildScoreCard() {
+    const card = document.createElement('div');
+    card.className = 'card score-card';
+    const correctCount = state.filter(s => s.correct).length;
+    const pct = correctCount / questions.length;
+    const passed = pct >= PASSING_THRESHOLD;
+
+    if (correctCount === questions.length) card.classList.add('full-correct');
+    else if (passed) card.classList.add('passing');
+    else card.classList.add('not-passing');
+
+    const label = document.createElement('div');
+    label.className = 'q-label';
+    label.textContent = 'Quiz complete';
+    card.appendChild(label);
+
+    const msg = document.createElement('div');
+    msg.className = 'score-message';
+    if (correctCount === questions.length) {
+      msg.className = 'score-message good-job';
+      msg.textContent = 'Perfect score. You can build a test plan that actually finds bugs.';
+    } else if (passed) {
+      msg.className = 'score-message good-job';
+      msg.textContent = 'Passed.';
+    } else {
+      msg.style.color = '#6B0000';
+      msg.textContent = 'Below the 70% threshold. Review and try again.';
+    }
+    card.appendChild(msg);
+
+    const scoreBig = document.createElement('div');
+    scoreBig.className = 'score-big';
+    scoreBig.textContent = correctCount + ' / ' + questions.length;
+    card.appendChild(scoreBig);
+
+    const scoreLabel = document.createElement('div');
+    scoreLabel.className = 'score-label';
+    scoreLabel.textContent = 'questions correct (' + Math.round(pct * 100) + '%)';
+    card.appendChild(scoreLabel);
+
+    const detail = document.createElement('div');
+    detail.className = 'score-message';
+    if (correctCount === questions.length) {
+      detail.textContent = 'Normal, edge, and error cases are second nature to you now. Take this thinking into Lab 26 and your team test plan.';
+    } else if (passed) {
+      detail.textContent = 'You crossed the threshold. Review the questions you missed below before the lab.';
+    } else {
+      detail.textContent = 'Re-read the test-plan section in the lesson materials. The assert walkthrough is also there if you want to replay it.';
+    }
+    card.appendChild(detail);
+
+    const code = passed ? CS210_CODE_PASS : CS210_CODE_FAIL;
+    const codeBlock = document.createElement('div');
+    codeBlock.className = 'code-block' + (passed ? '' : ' fail');
+    const left = document.createElement('div');
+    left.className = 'code-left';
+    const codeLabel = document.createElement('div');
+    codeLabel.className = 'code-label';
+    codeLabel.textContent = passed ? 'Passing code' : 'Non-passing code';
+    left.appendChild(codeLabel);
+    const codeValue = document.createElement('div');
+    codeValue.className = 'code-value';
+    codeValue.textContent = code;
+    left.appendChild(codeValue);
+    codeBlock.appendChild(left);
+    const copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.className = 'copy-btn';
+    copyBtn.textContent = 'Copy';
+    copyBtn.addEventListener('click', () => {
+      const ok = cs210Copy(code);
+      copyBtn.textContent = ok ? 'Copied!' : 'Copy failed';
+      if (ok) copyBtn.classList.add('copied');
+      setTimeout(() => { copyBtn.textContent = 'Copy'; copyBtn.classList.remove('copied'); }, 1500);
+    });
+    codeBlock.appendChild(copyBtn);
+    card.appendChild(codeBlock);
+
+    const now = new Date();
+    const pad = (n) => n.toString().padStart(2, '0');
+    const ts = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate()) +
+               ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+
+    const footer = document.createElement('div');
+    footer.className = 'inline-code-footer';
+    footer.innerHTML = '<strong>' + escapeHtml(cadetName || '(name not set)') + '</strong> &middot; ' + ts +
+                       (passed ? ' &middot; passing &middot; ' : ' &middot; non-passing &middot; ') + escapeHtml(code);
+    card.appendChild(footer);
+
+    const recap = document.createElement('div');
+    recap.className = 'recap';
+    const recapTitle = document.createElement('div');
+    recapTitle.className = 'recap-title';
+    recapTitle.textContent = 'Question recap';
+    recap.appendChild(recapTitle);
+
+    state.forEach((s, i) => {
+      const item = document.createElement('div');
+      item.className = 'recap-item';
+      const icon = document.createElement('div');
+      icon.className = 'recap-icon ' + (s.correct ? 'correct' : 'incorrect');
+      icon.textContent = s.correct ? '\u2713' : '\u2717';
+      item.appendChild(icon);
+      const body = document.createElement('div');
+      body.className = 'recap-body';
+      const q = questions[i];
+      const qLine = document.createElement('div');
+      qLine.className = 'recap-question';
+      qLine.innerHTML = '<strong>Q' + (i + 1) + '.</strong> ' + q.shortLabel;
+      body.appendChild(qLine);
+      if (!s.correct) {
+        const exp = document.createElement('div');
+        exp.className = 'recap-explanation';
+        exp.innerHTML = q.incorrectFeedback;
+        body.appendChild(exp);
+      }
+      item.appendChild(body);
+      recap.appendChild(item);
+    });
+    card.appendChild(recap);
+
+    const resetRow = document.createElement('div');
+    resetRow.className = 'reset-row';
+    const resetBtn = document.createElement('button');
+    resetBtn.type = 'button';
+    resetBtn.className = 'reset-btn';
+    resetBtn.textContent = 'Take the quiz again';
+    resetBtn.addEventListener('click', reset);
+    resetRow.appendChild(resetBtn);
+    card.appendChild(resetRow);
+
+    return card;
+  }
+
+  function render() {
+    renderDots();
+    cardArea.innerHTML = '';
+    if (currentIndex >= questions.length) {
+      cardArea.appendChild(buildScoreCard());
+    } else {
+      cardArea.appendChild(buildQuestionCard(currentIndex));
+    }
+  }
+
+  function reset() {
+    state.forEach(s => { s.answered = false; s.correct = false; s.choice = null; s.value = ''; });
+    currentIndex = 0;
+    render();
+  }
+
+  render();
+})();
+</script>
+
+
+    </div>
+  </details>
+
+  <!-- ===================== 6. AFTER CLASS ===================== -->
+  <details id="after-class" style="margin-bottom: 24px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      6. After Class
+    </summary>
+    <div style="padding: 18px 22px;">
+      <ul style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Finish Lab 26 if you did not complete it in class. Submit <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">tests.c</code> through GitHub Classroom before Lesson 27.</li>
+        <li style="margin-bottom: 6px;">Complete the Lesson 26 reflection in Blackboard. Enter both widget completion codes and answer the reflection prompt; attach your screenshots of the completion screens.</li>
+        <li style="margin-bottom: 6px;">Read the ACM Code of Ethics and Professional Conduct (acm.org) for the Lesson 27 ethics lesson.</li>
+        <li style="margin-bottom: 6px;">Take the testing mindset into your team PEX. Your team's <strong>test plan check-in is due at Lesson 29</strong>; start listing normal, edge, and error cases for your project's functions now.</li>
+        <li style="margin-bottom: 0;">Heads up: GR3 at Lesson 28 covers Lessons 18 through 27, including today's testing material.</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== HELP NOTE ===================== -->
+  <div style="background: #F5F7FA; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 3px; font-size: 13.5px; color: #4A5568;">
+    <strong style="color: #00205B;">Need help?</strong> Schedule EI with your instructor. Bring your <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">tests.c</code>, the autograder output you do not understand, and the case you are stuck testing. Specific questions get unstuck quickly. A course Resources section collects the standing references (the DFCS C Programming Standard, the Git troubleshooting card, and more) for self-service.
+  </div>
+
+</div>

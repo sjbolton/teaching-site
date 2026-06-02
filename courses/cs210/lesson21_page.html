@@ -1,0 +1,1642 @@
+<!-- ============================================================
+     CS210 — Lesson 21
+     File I/O
+     Self-contained: all CSS inline. Native <details> for collapsing.
+     All six sections collapsed by default.
+     File I/O walkthrough widget embedded inline in section 5.
+     Paste into Blackboard Ultra via Document → Add HTML block.
+     ============================================================ -->
+
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 980px; margin: 0 auto; line-height: 1.6;">
+
+  <!-- ===================== LIGHT HEADER ===================== -->
+  <div style="border-left: 5px solid #003087; padding: 8px 0 8px 18px; margin-bottom: 24px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 2px;">CS210 &middot; Block 3 &middot; Lesson 21</div>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 600; color: #00205B;">File I/O</h1>
+    <div style="font-size: 14px; color: #4A5568; margin-top: 4px;">fopen &middot; fgets &middot; fscanf &middot; sscanf &middot; error handling &middot; text vs binary</div>
+  </div>
+
+  <!-- ===================== AT A GLANCE ===================== -->
+  <div style="background: #F5F7FA; border-left: 4px solid #B5B7BA; padding: 14px 18px; margin-bottom: 22px; font-size: 14px;">
+    <strong style="color: #00205B;">At a glance:</strong> Programs become useful when they read and write data that outlives them. Today you meet the C standard library's file I/O routines: how to open a file, walk a cursor through its bytes, read structured records line by line, write new content, and handle every common thing that can go wrong. The hands-on practice is the File I/O walkthrough in Section 5. The lab applies it all to a flight log reader that parses real CSV records into structs.
+  </div>
+
+  <!-- ===================== TABLE OF CONTENTS ===================== -->
+  <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 20px; margin-bottom: 24px; border-radius: 3px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Contents</div>
+    <ol style="margin: 0; padding-left: 22px; font-size: 14px;">
+      <li style="margin-bottom: 4px;"><a href="#objectives" style="color: #003087; text-decoration: none;">Lesson Objectives</a></li>
+      <li style="margin-bottom: 4px;"><a href="#readings" style="color: #003087; text-decoration: none;">Assigned Readings</a></li>
+      <li style="margin-bottom: 4px;"><a href="#pre-class" style="color: #003087; text-decoration: none;">Pre-Class Work</a></li>
+      <li style="margin-bottom: 4px;"><a href="#materials" style="color: #003087; text-decoration: none;">Lesson Materials and Overview</a></li>
+      <li style="margin-bottom: 4px;"><a href="#in-class" style="color: #003087; text-decoration: none;">In-Class Work</a></li>
+      <li style="margin-bottom: 0;"><a href="#after-class" style="color: #003087; text-decoration: none;">After Class</a></li>
+    </ol>
+  </div>
+
+  <!-- ===================== 1. OBJECTIVES ===================== -->
+  <details id="objectives" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      1. Lesson Objectives
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 10px 0; font-style: italic;">By the end of this lesson, cadets will be able to:</p>
+      <ol style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Open, read, write, and close files in a C program. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+        <li style="margin-bottom: 6px;">Distinguish between text-mode and binary-mode file operations. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+        <li style="margin-bottom: 6px;">Parse formatted input from files using <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">fscanf</code> and from strings using <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">sscanf</code>. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+        <li style="margin-bottom: 0;">Handle file operation errors appropriately. <span style="color: #6B7280; font-size: 12px;">(Outcomes 3, 7)</span></li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 2. READINGS ===================== -->
+  <details id="readings" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      2. Assigned Readings
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 12px 0;">Complete before class. These give you the vocabulary and the library calls. The lecture will assume you have read them.</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <thead>
+          <tr style="background: #F8FAFC;">
+            <th style="text-align: left; padding: 8px 12px; border: 1px solid #D0D5DD; color: #00205B; font-weight: 600;">Source</th>
+            <th style="text-align: left; padding: 8px 12px; border: 1px solid #D0D5DD; color: #00205B; font-weight: 600;">What it covers</th>
+            <th style="text-align: left; padding: 8px 12px; border: 1px solid #D0D5DD; color: #00205B; font-weight: 600;">Why read it</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 8px 12px; border: 1px solid #D0D5DD;"><strong>Beej's Guide to C</strong>, Chapter 9 (File Input/Output)</td>
+            <td style="padding: 8px 12px; border: 1px solid #D0D5DD;">fopen, fclose, modes; fgetc, fputc, fgets, fputs; fread, fwrite; fseek, ftell; feof and ferror</td>
+            <td style="padding: 8px 12px; border: 1px solid #D0D5DD;">The whole conceptual map for today. Read this through once and then again with code open beside it.</td>
+          </tr>
+          <tr style="background: #FAFBFC;">
+            <td style="padding: 8px 12px; border: 1px solid #D0D5DD;"><strong>Beej's Library Reference</strong>, <code style="font-family: Consolas, monospace; font-size: 12.5px;">&lt;stdio.h&gt;</code></td>
+            <td style="padding: 8px 12px; border: 1px solid #D0D5DD;">The reference entries for fscanf and sscanf in particular. Format specifiers, conversion specifications, return values.</td>
+            <td style="padding: 8px 12px; border: 1px solid #D0D5DD;">fscanf and sscanf are how you parse structured records. The lab leans on sscanf heavily.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="font-size: 13px; color: #6B7280; margin: 14px 0 0 0; font-style: italic;">If a reading feels dry, skim once for landmarks, then read again for detail when you sit down for the lab. Reading docs is a course skill; we will keep practicing it.</p>
+    </div>
+  </details>
+
+  <!-- ===================== 3. PRE-CLASS ===================== -->
+  <details id="pre-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      3. Pre-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14.5px; margin: 0 0 14px 0;">Before class, work through these three things. Total time: about 30 minutes.</p>
+      <ol style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 10px;">
+          <strong style="color: #00205B;">Read both assigned readings.</strong>
+          Beej-C Chapter 9 first (concepts), then the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&lt;stdio.h&gt;</code> reference (the specifics). Stop and write down the answers to:
+          <ul style="margin-top: 6px; padding-left: 22px; font-size: 14px; color: #4A5568;">
+            <li>What does <code style="background: #F0F2F5; padding: 1px 4px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">fopen</code> return when the file does not exist?</li>
+            <li>What is the difference between <code style="background: #F0F2F5; padding: 1px 4px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">fgetc</code> returning a value and <code style="background: #F0F2F5; padding: 1px 4px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">fgets</code> returning a value?</li>
+            <li>Why is the return type of <code style="background: #F0F2F5; padding: 1px 4px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">fgetc</code> <code style="background: #F0F2F5; padding: 1px 4px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">int</code> and not <code style="background: #F0F2F5; padding: 1px 4px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">char</code>?</li>
+            <li>What does <code style="background: #F0F2F5; padding: 1px 4px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">sscanf</code> return on success, and what does it return when only some of the fields matched?</li>
+          </ul>
+        </li>
+        <li style="margin-bottom: 10px;">
+          <strong style="color: #00205B;">Skim the lab README.</strong>
+          You do not need to start the lab. Just know what you are signing up for: parsing flight log records, handling malformed input, summary output. The lab will make a lot more sense after the lesson and the walkthrough.
+        </li>
+        <li style="margin-bottom: 0;">
+          <strong style="color: #00205B;">Bring your laptop ready to compile and run C.</strong>
+          The walkthrough lives in the browser, but the lab needs your terminal and your gcc.
+        </li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 4. LESSON MATERIALS ===================== -->
+  <details id="materials" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      4. Lesson Materials and Overview
+    </summary>
+    <div style="padding: 18px 22px;">
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 18px; margin-bottom: 22px; border-radius: 3px;">
+        <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">Jump to</div>
+        <ul style="margin: 0; padding-left: 22px; font-size: 14px;">
+          <li><a href="#m-mental-model" style="color: #003087; text-decoration: none;">Mental model: a file is bytes with a cursor</a></li>
+          <li><a href="#m-fopen-fclose" style="color: #003087; text-decoration: none;">fopen and fclose: getting a FILE pointer</a></li>
+          <li><a href="#m-reading" style="color: #003087; text-decoration: none;">Reading: fgetc, fgets, fscanf</a></li>
+          <li><a href="#m-sscanf" style="color: #003087; text-decoration: none;">sscanf: the parser you will use most</a></li>
+          <li><a href="#m-writing" style="color: #003087; text-decoration: none;">Writing: fputc, fputs, fprintf</a></li>
+          <li><a href="#m-errors" style="color: #003087; text-decoration: none;">Error handling: check every return value</a></li>
+          <li><a href="#m-text-binary" style="color: #003087; text-decoration: none;">Text mode vs binary mode</a></li>
+        </ul>
+      </div>
+
+      <!-- =========================================================
+           EDIT ME: Lesson 21 slide deck link
+           Replace href="#" below with the SharePoint share URL once the
+           deck is published. Leave target="_blank" and rel="noopener".
+           ========================================================= -->
+      <p style="margin: 0 0 22px 0;">
+        <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 10px 20px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 14px;">Open Lesson 21 slides &rarr;</a>
+      </p>
+
+      <h3 id="m-mental-model" style="color: #00205B; font-size: 16px; margin: 0 0 8px 0;">Mental model: a file is bytes with a cursor</h3>
+      <p style="font-size: 14.5px; margin: 0 0 10px 0;">A file on disk is just a sequence of bytes. C's standard library gives you a <strong>FILE pointer</strong>, which is an opaque handle that points to a kernel object tracking three things about your access to that file:</p>
+      <ul style="margin: 0 0 14px 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 4px;">Which file you have open</li>
+        <li style="margin-bottom: 4px;">What mode you opened it in (read, write, append, read-plus-write)</li>
+        <li style="margin-bottom: 0;">A <strong>cursor</strong>: the position in the file where the next read or write will happen</li>
+      </ul>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">Every operation either reads from the cursor and advances it, writes at the cursor and advances it, or moves the cursor without reading or writing (<code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">fseek</code>). The walkthrough in Section 5 makes the cursor visible so you can watch it move.</p>
+
+      <h3 id="m-fopen-fclose" style="color: #00205B; font-size: 16px; margin: 0 0 8px 0;">fopen and fclose: getting a FILE pointer</h3>
+      <pre style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 14px; border-radius: 3px; font-family: Consolas, monospace; font-size: 13px; overflow-x: auto; margin: 0 0 12px 0;">FILE *f = fopen(<span style="color: #B45309;">"flights.log"</span>, <span style="color: #B45309;">"r"</span>);
+if (f == NULL) {
+    fprintf(stderr, <span style="color: #B45309;">"cannot open flights.log\n"</span>);
+    return 1;
+}
+<span style="color: #6B7280;">/* ... read or write through f ... */</span>
+fclose(f);</pre>
+      <p style="font-size: 14.5px; margin: 0 0 10px 0;">Common modes:</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 18px;">
+        <thead>
+          <tr style="background: #F8FAFC;">
+            <th style="text-align: left; padding: 6px 12px; border: 1px solid #D0D5DD; color: #00205B; font-family: Consolas, monospace; font-size: 13px;">Mode</th>
+            <th style="text-align: left; padding: 6px 12px; border: 1px solid #D0D5DD; color: #00205B;">What it does</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="padding: 6px 12px; border: 1px solid #D0D5DD; font-family: Consolas, monospace;">"r"</td>  <td style="padding: 6px 12px; border: 1px solid #D0D5DD;">Read. Fails if the file does not exist.</td></tr>
+          <tr style="background: #FAFBFC;"><td style="padding: 6px 12px; border: 1px solid #D0D5DD; font-family: Consolas, monospace;">"w"</td>  <td style="padding: 6px 12px; border: 1px solid #D0D5DD;">Write. <strong>Creates or truncates</strong> the file. Anything that was there is gone.</td></tr>
+          <tr><td style="padding: 6px 12px; border: 1px solid #D0D5DD; font-family: Consolas, monospace;">"a"</td>  <td style="padding: 6px 12px; border: 1px solid #D0D5DD;">Append. Writes go to the end of the file. Creates if missing.</td></tr>
+          <tr style="background: #FAFBFC;"><td style="padding: 6px 12px; border: 1px solid #D0D5DD; font-family: Consolas, monospace;">"r+"</td> <td style="padding: 6px 12px; border: 1px solid #D0D5DD;">Read and write. File must exist.</td></tr>
+          <tr><td style="padding: 6px 12px; border: 1px solid #D0D5DD; font-family: Consolas, monospace;">"w+"</td> <td style="padding: 6px 12px; border: 1px solid #D0D5DD;">Read and write, but starts by truncating. Almost always not what you want.</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">fclose</code> flushes any pending writes and releases the file handle. <strong>Always close what you open.</strong> Forgetting <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">fclose</code> leaks resources and can lose unflushed writes if the process ends abnormally.</p>
+
+      <h3 id="m-reading" style="color: #00205B; font-size: 16px; margin: 0 0 8px 0;">Reading: fgetc, fgets, fscanf</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Three reading patterns, from finest grained to most structured:</p>
+      <ul style="margin: 0 0 12px 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 8px;"><strong style="color: #00205B;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 13px;">fgetc(f)</code></strong> reads one byte and returns it as an <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">int</code>. On EOF, returns the special value <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">EOF</code> (which is <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">-1</code>). That is why the return type is <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">int</code>, not <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">char</code>: it needs to represent every possible byte plus EOF.</li>
+        <li style="margin-bottom: 8px;"><strong style="color: #00205B;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 13px;">fgets(buf, n, f)</code></strong> reads up to <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">n - 1</code> characters into <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">buf</code>, stopping at a newline or EOF. The newline is included in the buffer if it was read. Returns <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">NULL</code> at EOF. This is your line-by-line workhorse.</li>
+        <li style="margin-bottom: 0;"><strong style="color: #00205B;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 13px;">fscanf(f, fmt, ...)</code></strong> parses formatted fields directly from the file. Powerful but brittle: any deviation in the input throws off the parse and leaves the cursor at the failure point. Most C programmers prefer the two-step pattern of <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">fgets</code> + <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">sscanf</code> for that reason: read a whole line first, then parse it.</li>
+      </ul>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">The canonical line-reading loop:</p>
+      <pre style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 14px; border-radius: 3px; font-family: Consolas, monospace; font-size: 13px; overflow-x: auto; margin: 0 0 22px 0;">char line[256];
+while (fgets(line, sizeof line, f) != NULL) {
+    <span style="color: #6B7280;">/* process one line */</span>
+}</pre>
+
+      <h3 id="m-sscanf" style="color: #00205B; font-size: 16px; margin: 0 0 8px 0;">sscanf: the parser you will use most</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">sscanf</code> reads from a string instead of a file. Combined with <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">fgets</code>, it gives you robust line parsing. Format specifiers you need today:</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 14px;">
+        <thead>
+          <tr style="background: #F8FAFC;">
+            <th style="text-align: left; padding: 6px 12px; border: 1px solid #D0D5DD; color: #00205B; font-family: Consolas, monospace; font-size: 13px;">Specifier</th>
+            <th style="text-align: left; padding: 6px 12px; border: 1px solid #D0D5DD; color: #00205B;">Reads</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="padding: 6px 12px; border: 1px solid #D0D5DD; font-family: Consolas, monospace;">%d</td>      <td style="padding: 6px 12px; border: 1px solid #D0D5DD;">Decimal integer.</td></tr>
+          <tr style="background: #FAFBFC;"><td style="padding: 6px 12px; border: 1px solid #D0D5DD; font-family: Consolas, monospace;">%f</td>      <td style="padding: 6px 12px; border: 1px solid #D0D5DD;">Floating-point number into a <code style="font-family: Consolas, monospace;">float *</code>. (Use %lf for <code style="font-family: Consolas, monospace;">double</code>.)</td></tr>
+          <tr><td style="padding: 6px 12px; border: 1px solid #D0D5DD; font-family: Consolas, monospace;">%s</td>      <td style="padding: 6px 12px; border: 1px solid #D0D5DD;">Whitespace-delimited word. <strong>Dangerous without a width limit.</strong></td></tr>
+          <tr style="background: #FAFBFC;"><td style="padding: 6px 12px; border: 1px solid #D0D5DD; font-family: Consolas, monospace;">%7s</td>     <td style="padding: 6px 12px; border: 1px solid #D0D5DD;">Same, but at most 7 characters. The width is a buffer-overflow defense.</td></tr>
+          <tr><td style="padding: 6px 12px; border: 1px solid #D0D5DD; font-family: Consolas, monospace;">%[^,]</td>   <td style="padding: 6px 12px; border: 1px solid #D0D5DD;">All characters up to a comma. Useful for comma-separated records.</td></tr>
+          <tr style="background: #FAFBFC;"><td style="padding: 6px 12px; border: 1px solid #D0D5DD; font-family: Consolas, monospace;">%4[^,]</td>  <td style="padding: 6px 12px; border: 1px solid #D0D5DD;">Up to 4 characters, no comma. Width-limited string of a non-default character set.</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size: 14.5px; margin: 0 0 10px 0;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">sscanf</code> returns the number of fields it matched. <strong>Always check the return value</strong> to detect malformed input. Worked example: parsing a flight record</p>
+      <pre style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 14px; border-radius: 3px; font-family: Consolas, monospace; font-size: 13px; overflow-x: auto; margin: 0 0 22px 0;">char tail[8], depart[5], arrive[5];
+int  duration, fuel;
+
+int matched = sscanf(line, <span style="color: #B45309;">"%7[^,],%4[^,],%4[^,],%d,%d"</span>,
+                     tail, depart, arrive, &amp;duration, &amp;fuel);
+
+if (matched != 5) {
+    <span style="color: #6B7280;">/* malformed line; skip and warn */</span>
+}</pre>
+
+      <h3 id="m-writing" style="color: #00205B; font-size: 16px; margin: 0 0 8px 0;">Writing: fputc, fputs, fprintf</h3>
+      <ul style="margin: 0 0 18px 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">fputc(c, f)</code> writes one byte.</li>
+        <li style="margin-bottom: 6px;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">fputs(str, f)</code> writes a string. Note: unlike <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">puts</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">fputs</code> does <strong>not</strong> add a newline. You include the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">\n</code> yourself if you want one.</li>
+        <li style="margin-bottom: 0;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">fprintf(f, fmt, ...)</code> is <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">printf</code> but to a file. Same format specifiers as you already know.</li>
+      </ul>
+      <p style="font-size: 14.5px; margin: 0 0 22px 0;"><strong>An especially useful pattern:</strong> <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">fprintf(stderr, ...)</code> writes error messages to the standard error stream so they do not get mixed in with your program's normal output. The lab autograder checks stdout and stderr separately for exactly this reason.</p>
+
+      <h3 id="m-errors" style="color: #00205B; font-size: 16px; margin: 0 0 8px 0;">Error handling: check every return value</h3>
+      <p style="font-size: 14.5px; margin: 0 0 14px 0;">Every file operation can fail. Things that go wrong in real programs:</p>
+      <ul style="margin: 0 0 14px 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 4px;">The file does not exist (read mode).</li>
+        <li style="margin-bottom: 4px;">You do not have permission to read or write it.</li>
+        <li style="margin-bottom: 4px;">The disk is full (write mode).</li>
+        <li style="margin-bottom: 4px;">The input file is malformed in unexpected ways.</li>
+        <li style="margin-bottom: 0;">The cadet at the keyboard typed the wrong filename.</li>
+      </ul>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">The standard library tells you what went wrong through return values. The discipline is to check, every time:</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 18px;">
+        <thead>
+          <tr style="background: #F8FAFC;">
+            <th style="text-align: left; padding: 6px 12px; border: 1px solid #D0D5DD; color: #00205B; font-family: Consolas, monospace; font-size: 13px;">Function</th>
+            <th style="text-align: left; padding: 6px 12px; border: 1px solid #D0D5DD; color: #00205B;">Failure signal</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="padding: 6px 12px; border: 1px solid #D0D5DD; font-family: Consolas, monospace;">fopen</td>  <td style="padding: 6px 12px; border: 1px solid #D0D5DD;">Returns <code style="font-family: Consolas, monospace;">NULL</code>.</td></tr>
+          <tr style="background: #FAFBFC;"><td style="padding: 6px 12px; border: 1px solid #D0D5DD; font-family: Consolas, monospace;">fgetc</td>  <td style="padding: 6px 12px; border: 1px solid #D0D5DD;">Returns <code style="font-family: Consolas, monospace;">EOF</code> (also returned at end of file; use <code style="font-family: Consolas, monospace;">feof</code>/<code style="font-family: Consolas, monospace;">ferror</code> to distinguish).</td></tr>
+          <tr><td style="padding: 6px 12px; border: 1px solid #D0D5DD; font-family: Consolas, monospace;">fgets</td>  <td style="padding: 6px 12px; border: 1px solid #D0D5DD;">Returns <code style="font-family: Consolas, monospace;">NULL</code> at EOF or on error.</td></tr>
+          <tr style="background: #FAFBFC;"><td style="padding: 6px 12px; border: 1px solid #D0D5DD; font-family: Consolas, monospace;">fscanf, sscanf</td><td style="padding: 6px 12px; border: 1px solid #D0D5DD;">Returns count of matched fields. Compare to the count you expected.</td></tr>
+          <tr><td style="padding: 6px 12px; border: 1px solid #D0D5DD; font-family: Consolas, monospace;">fputc, fputs, fprintf</td><td style="padding: 6px 12px; border: 1px solid #D0D5DD;">Returns <code style="font-family: Consolas, monospace;">EOF</code> or a negative number on write failure.</td></tr>
+          <tr style="background: #FAFBFC;"><td style="padding: 6px 12px; border: 1px solid #D0D5DD; font-family: Consolas, monospace;">fclose</td> <td style="padding: 6px 12px; border: 1px solid #D0D5DD;">Returns <code style="font-family: Consolas, monospace;">EOF</code> on failure (rare but possible if a final write was buffered and now fails to flush).</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="m-text-binary" style="color: #00205B; font-size: 16px; margin: 0 0 8px 0;">Text mode vs binary mode</h3>
+      <p style="font-size: 14.5px; margin: 0 0 10px 0;">Add a <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">"b"</code> to the mode string to open in <strong>binary mode</strong>: <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">"rb"</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">"wb"</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">"r+b"</code>.</p>
+      <p style="font-size: 14.5px; margin: 0 0 10px 0;">On Linux and macOS, text and binary modes are identical; the distinction is a no-op. On Windows, text mode silently converts <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">"\r\n"</code> sequences in the file to <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">"\n"</code> in your buffer (and vice versa on write). Binary mode passes bytes through unchanged.</p>
+      <p style="font-size: 14.5px; margin: 0 0 0 0;"><strong>Rule of thumb:</strong> read CSV, logs, source code, and other text content in text mode. Read images, executables, and serialized data structures in binary mode. When in doubt, binary is safer because it never lies to you about what is in the file.</p>
+    </div>
+  </details>
+
+  <!-- ===================== 5. IN-CLASS ===================== -->
+  <details id="in-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      5. In-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 16px 0;">Three things to do in class. Use the checklist to track your progress.</p>
+
+      <ul style="list-style: none; padding: 0; margin: 0 0 24px 0; font-size: 14.5px;">
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Work through the File I/O walkthrough below.</strong>
+          <span style="color: #4A5568;">Fourteen guided tasks covering fopen, fgetc, fseek, fgets, fputs, ftell, and fclose. The right pane shows the cursor walking through the file. About 25 minutes.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Get the Lab 21 starter from GitHub Classroom.</strong>
+          <span style="color: #4A5568;">Clone the repo, read the README, run <code style="background: #F0F2F5; padding: 1px 4px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12px;">make</code> to confirm the starter compiles (it does; the TODO stubs are no-ops), and read <code style="background: #F0F2F5; padding: 1px 4px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12px;">flight.h</code> carefully.</span>
+          <!-- =========================================================
+               EDIT ME: Lab 21 GitHub Classroom assignment link
+               Replace href="#" with the classroom.github.com/a/... invite
+               URL once the assignment is published.
+               ========================================================= -->
+          <div style="margin-top: 8px; margin-left: 28px;">
+            <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 6px 14px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 13px;">Accept Lab 21 on GitHub Classroom &rarr;</a>
+          </div>
+        </li>
+        <li style="margin-bottom: 0; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Begin Lab 21: Flight Log Reader.</strong>
+          <span style="color: #4A5568;">Implement <code style="background: #F0F2F5; padding: 1px 4px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12px;">parse_flight_line</code> first; it is the function you can write entirely from what we covered today. Get the basic case passing, then tackle malformed input. Submit to Gradescope when you have at least the basic functional test passing.</span>
+        </li>
+      </ul>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 18px 0 10px 0;">File I/O Walkthrough</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Fourteen tasks across four sections. Type each statement at the prompt. The terminal pane shows what your statement did; the right pane shows each open file as a row of bytes with the cursor marked underneath.</p>
+
+<!-- ============================================================
+     CS210 Lesson 21 - File I/O Walkthrough Widget
+     Terminal pane + file state visualization (bytes with cursor).
+     Patterned on cmem_walkthrough.html (Lesson 2 reference).
+     ============================================================ -->
+<style>
+.cs210-fileio * { box-sizing: border-box; }
+.cs210-fileio {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+}
+.cs210-fileio h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-fileio .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 22px;
+}
+.cs210-fileio .progress-bar {
+  background: #E5E7EB;
+  border-radius: 3px;
+  height: 8px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.cs210-fileio .progress-fill {
+  background: #003087;
+  height: 100%;
+  transition: width 0.3s ease;
+}
+.cs210-fileio .progress-label {
+  font-size: 12px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-fileio .section-header {
+  background: #E8EDF5;
+  color: #00205B;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.cs210-fileio .task-card {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  border-radius: 3px;
+}
+.cs210-fileio .task-card.complete {
+  background: #E6F4EA;
+  border-left-color: #2E7D32;
+}
+.cs210-fileio .task-label {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B5300;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.cs210-fileio .task-card.complete .task-label { color: #1B5E20; }
+.cs210-fileio .task-text { font-size: 15px; color: #1a1a1a; }
+.cs210-fileio .task-hint {
+  font-size: 12.5px;
+  color: #6B7280;
+  margin-top: 6px;
+  font-style: italic;
+}
+
+.cs210-fileio .panes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+@media (max-width: 760px) {
+  .cs210-fileio .panes { grid-template-columns: 1fr; }
+}
+.cs210-fileio .terminal {
+  background: #1E2A3A;
+  color: #E8EDF5;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13px;
+  padding: 12px 14px;
+  border-radius: 4px;
+  height: 360px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  line-height: 1.45;
+}
+.cs210-fileio .terminal .ok       { color: #6FCF97; }
+.cs210-fileio .terminal .warn     { color: #F0B92C; }
+.cs210-fileio .terminal .err      { color: #F08F8F; }
+.cs210-fileio .terminal .echo     { color: #7FB3D5; }
+.cs210-fileio .terminal .note     { color: #B0BEC5; }
+.cs210-fileio .terminal .label    { color: #FFFFFF; font-weight: 600; }
+
+.cs210-fileio .file-pane {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  padding: 14px;
+  height: 360px;
+  overflow-y: auto;
+}
+.cs210-fileio .file-pane-header {
+  font-size: 11px;
+  color: #6B7280;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.cs210-fileio .file-empty {
+  color: #9CA3AF;
+  font-style: italic;
+  font-size: 13px;
+  text-align: center;
+  padding: 50px 10px;
+}
+
+.cs210-fileio .file-card {
+  background: #FFFFFF;
+  border: 1px solid #D0D5DD;
+  border-radius: 3px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+.cs210-fileio .file-card.closed { background: #F0F1F4; border-color: #C7CFD9; }
+.cs210-fileio .file-card-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  color: #00205B;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.cs210-fileio .mode-pill {
+  display: inline-block;
+  font-size: 10px;
+  background: #003087;
+  color: #FFFFFF;
+  padding: 2px 6px;
+  border-radius: 2px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+.cs210-fileio .mode-pill.write { background: #B45309; }
+.cs210-fileio .mode-pill.rw    { background: #4338CA; }
+.cs210-fileio .mode-pill.closed { background: #6B7280; }
+.cs210-fileio .file-meta {
+  font-size: 11px;
+  color: #6B7280;
+  font-family: Consolas, monospace;
+  margin-bottom: 6px;
+}
+
+.cs210-fileio .byte-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+.cs210-fileio .byte-cell {
+  width: 28px;
+  height: 28px;
+  background: #FFFFFF;
+  border: 1px solid #C7CFD9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Consolas, monospace;
+  font-size: 12px;
+  color: #1a1a1a;
+  border-radius: 2px;
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+.cs210-fileio .byte-cell.eof {
+  background: #F0F1F4;
+  color: #9CA3AF;
+  border-style: dashed;
+}
+.cs210-fileio .byte-cell.read-flash {
+  background: #E8EDF5;
+  border-color: #003087;
+}
+.cs210-fileio .byte-cell.written {
+  animation: cs210-fileio-write-flash 0.6s ease;
+}
+@keyframes cs210-fileio-write-flash {
+  0%   { background: #FFEEAA; border-color: #F0B92C; }
+  100% { background: #FFFFFF; border-color: #C7CFD9; }
+}
+.cs210-fileio .position-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  font-family: Consolas, monospace;
+  font-size: 9px;
+  color: #9CA3AF;
+  margin-bottom: 8px;
+}
+.cs210-fileio .position-cell {
+  width: 28px;
+  text-align: center;
+}
+
+.cs210-fileio .cursor-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-bottom: 4px;
+  height: 14px;
+}
+.cs210-fileio .cursor-cell {
+  width: 28px;
+  height: 14px;
+  position: relative;
+}
+.cs210-fileio .cursor-cell.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 9px solid #003087;
+}
+
+.cs210-fileio .input-row {
+  display: flex;
+  background: #1E2A3A;
+  border-radius: 4px;
+  padding: 8px 14px;
+  margin-bottom: 14px;
+  border: 1px solid #003087;
+}
+.cs210-fileio .input-prompt {
+  color: #7FB3D5;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  margin-right: 8px;
+  align-self: center;
+  white-space: nowrap;
+}
+.cs210-fileio .input-row input {
+  flex: 1;
+  background: transparent;
+  color: #FFFFFF;
+  border: none;
+  outline: none;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  padding: 4px 0;
+}
+.cs210-fileio .controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.cs210-fileio .btn {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  padding: 6px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #00205B;
+  font-family: inherit;
+  transition: box-shadow 0.2s ease;
+}
+.cs210-fileio .btn:hover { background: #F5F7FA; }
+@keyframes cs210-fileio-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(240, 185, 44, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0); }
+}
+.cs210-fileio .btn.pulse {
+  background: #FFF8E1;
+  border-color: #F0B92C;
+  color: #6B5300;
+  font-weight: 600;
+  animation: cs210-fileio-pulse 1.5s infinite;
+}
+.cs210-fileio .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #4A5568;
+  margin-top: 12px;
+}
+.cs210-fileio .help-note strong { color: #00205B; }
+.cs210-fileio .completion {
+  background: #E6F4EA;
+  border: 1px solid #2E7D32;
+  color: #1B5E20;
+  padding: 16px 20px;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 15px;
+  margin-top: 12px;
+}
+
+/* ===== Name modal (gating widget start) ===== */
+.cs210-fileio .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.cs210-fileio .name-modal {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-fileio .name-modal h2 {
+  color: #00205B;
+  font-size: 20px;
+  margin: 0 0 10px 0;
+}
+.cs210-fileio .name-modal p {
+  color: #4A5568;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+.cs210-fileio .name-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-fileio .name-modal input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-fileio .name-modal-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-fileio .name-modal-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-fileio .name-modal-btn:not(:disabled):hover { background: #00205B; }
+
+/* ===== Completion screen (inline footer in the widget body) ===== */
+.cs210-fileio .completion-screen {
+  background: #ffffff;
+  border: 2px solid #2E7D32;
+  border-radius: 6px;
+  padding: 24px 28px;
+  margin-top: 16px;
+}
+.cs210-fileio .completion-screen .cs-heading {
+  color: #1B5E20;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 6px 0;
+}
+.cs210-fileio .completion-screen .cs-name-line {
+  font-size: 15px;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+}
+.cs210-fileio .completion-screen .cs-name-line strong { color: #00205B; }
+.cs210-fileio .completion-screen .cs-code-block {
+  background: #F0F4FA;
+  border: 1px solid #003087;
+  border-radius: 4px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.cs210-fileio .completion-screen .cs-code-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #4A5568;
+  margin-bottom: 4px;
+}
+.cs210-fileio .completion-screen .cs-code-value {
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 28px;
+  font-weight: 700;
+  color: #00205B;
+  letter-spacing: 3px;
+}
+.cs210-fileio .completion-screen .cs-copy-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-fileio .completion-screen .cs-copy-btn:hover { background: #00205B; }
+.cs210-fileio .completion-screen .cs-copy-btn.copied { background: #2E7D32; }
+.cs210-fileio .completion-screen .cs-timestamp {
+  font-size: 13px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-fileio .completion-screen .cs-reminder {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 14px;
+  color: #6B5300;
+  line-height: 1.5;
+}
+.cs210-fileio .completion-screen .cs-reminder strong { color: #4A3A00; }
+
+/* Position root so the absolute-positioned modal scopes to the widget */
+.cs210-fileio { position: relative; }
+</style>
+
+<div class="cs210-fileio">
+
+<div class="name-modal-backdrop" id="fio-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Lesson 21 reflection on Blackboard.</p>
+    <input type="text" id="fio-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="fio-cadet-name-btn" disabled>Start the walkthrough</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 21 &middot; File I/O Walkthrough</h1>
+<div class="subtitle">A guided tour through fopen, fgetc, fgets, fputs, fseek, ftell, and fclose. Type each statement on the input line. The terminal pane shows what your line did; the right pane shows the files and where the cursor sits in each.</div>
+
+<div class="progress-bar"><div class="progress-fill" id="fio-progress-fill" style="width: 0%;"></div></div>
+<div class="progress-label" id="fio-progress-label">Task 0 of 14</div>
+
+<div class="section-header" id="fio-section-header">Section 1: Opening and reading a file</div>
+
+<div class="task-card" id="fio-task-card">
+  <div class="task-label" id="fio-task-label">Current task</div>
+  <div class="task-text" id="fio-task-text">Loading...</div>
+  <div class="task-hint" id="fio-task-hint"></div>
+</div>
+
+<div class="panes">
+  <div class="terminal" id="fio-terminal"></div>
+  <div class="file-pane">
+    <div class="file-pane-header">Files in scope</div>
+    <div id="fio-files-area">
+      <div class="file-empty">No files open yet.<br>Type an fopen call on the left.</div>
+    </div>
+  </div>
+</div>
+
+<div class="input-row">
+  <span class="input-prompt">fio&gt;</span>
+  <input type="text" id="fio-cli-input" autocomplete="off" spellcheck="false" placeholder='try: FILE *f = fopen("hello.txt", "r");'>
+</div>
+
+<div class="controls">
+  <button class="btn" id="fio-hint-btn">Show hint</button>
+  <button class="btn" id="fio-reset-btn">Reset</button>
+  <button class="btn" id="fio-mode-btn">Switch to free mode</button>
+</div>
+
+<div class="help-note">
+  <strong>How this works:</strong> This is not a real filesystem. It is a teaching tool that simulates what file I/O calls do to a file's bytes and cursor position. The task card tells you what to type next; only the expected statement advances the walkthrough so the file state stays predictable. Mistype twice and the hint button will pulse. After the walkthrough finishes, free mode unlocks so you can experiment with extra fopens, fseeks, and reads.
+</div>
+
+<div id="fio-completion-area"></div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-fileio');
+  if (!root) return;
+
+  // ============================================================
+  // CS210 widget completion utilities
+  // Salt -> deterministic 6-char code via FNV-1a.
+  // Alphabet excludes 0, 1, O, I (uppercase only output).
+  // ============================================================
+  const CS210_SALT = "lesson21_fileio_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  // Name-modal gating: widget stays blocked until name entered.
+  // Pre-fill from localStorage if available, but still require explicit Start
+  // (so sibling widgets that fired earlier on the page do not silently fire here).
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#fio-name-modal-backdrop');
+    const input = root.querySelector('#fio-cadet-name-input');
+    const btn = root.querySelector('#fio-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored) input.value = stored;
+    } catch (e) { /* localStorage may be disabled */ }
+
+    function updateBtn() { btn.disabled = input.value.trim().length < 2; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', function() {
+      const name = input.value.trim();
+      if (name.length < 2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+      const cli = root.querySelector('#fio-cli-input');
+      if (cli) cli.focus();
+    });
+    setTimeout(function() { input.focus(); }, 50);
+  })();
+
+  const HELLO_CONTENT = "Hello\n";
+  const POEM_CONTENT  = "Roses are red\nViolets are blue\n";
+
+  const files = {};
+  const filesystem = {
+    "hello.txt": stringToBytes(HELLO_CONTENT),
+    "poem.txt":  stringToBytes(POEM_CONTENT),
+  };
+
+  let currentTaskIndex = 0;
+  let consecutiveFails = 0;
+  let mode = "walkthrough";
+  let twoStepState = null;
+
+  function stringToBytes(s) {
+    const out = [];
+    for (let i = 0; i < s.length; i++) out.push(s.charCodeAt(i));
+    return out;
+  }
+  function displayChar(code) {
+    if (code === 0x0A) return "\\n";
+    if (code === 0x09) return "\\t";
+    if (code === 0x0D) return "\\r";
+    if (code < 0x20 || code > 0x7E) return ".";
+    return String.fromCharCode(code);
+  }
+
+  const termEl = root.querySelector('#fio-terminal');
+  function termLine(cls, text) {
+    const div = document.createElement('div');
+    if (cls) div.className = cls;
+    div.textContent = text;
+    termEl.appendChild(div);
+    const nearBottom = termEl.scrollHeight - termEl.scrollTop - termEl.clientHeight < 40;
+    if (nearBottom) termEl.scrollTop = termEl.scrollHeight;
+  }
+  function termEcho(cmd) { termLine('echo', '> ' + cmd); }
+  function termOk(t)     { termLine('ok',   t); }
+  function termWarn(t)   { termLine('warn', t); }
+  function termErr(t)    { termLine('err',  t); }
+  function termNote(t)   { termLine('note', t); }
+  function termLabel(t)  { termLine('label', t); }
+
+  const filesArea = root.querySelector('#fio-files-area');
+  function renderFiles() {
+    const open = Object.values(files);
+    if (open.length === 0) {
+      filesArea.innerHTML = '<div class="file-empty">No files open yet.<br>Type an fopen call on the left.</div>';
+      return;
+    }
+    filesArea.innerHTML = '';
+    open.forEach(f => filesArea.appendChild(renderOneFile(f)));
+  }
+
+  function renderOneFile(f) {
+    const card = document.createElement('div');
+    card.className = 'file-card' + (f.isOpen ? '' : ' closed');
+
+    const title = document.createElement('div');
+    title.className = 'file-card-title';
+
+    const left = document.createElement('span');
+    left.textContent = 'FILE *' + f.varName + ' = "' + f.path + '"';
+    title.appendChild(left);
+
+    const pill = document.createElement('span');
+    let pillText = f.mode;
+    let pillClass = '';
+    if (!f.isOpen) { pillText = 'closed'; pillClass = 'closed'; }
+    else if (f.mode === 'w') pillClass = 'write';
+    else if (f.mode === 'r+' || f.mode === 'w+') pillClass = 'rw';
+    pill.className = 'mode-pill ' + pillClass;
+    pill.textContent = pillText;
+    title.appendChild(pill);
+    card.appendChild(title);
+
+    const meta = document.createElement('div');
+    meta.className = 'file-meta';
+    meta.textContent = 'cursor: ' + f.cursor + '    size: ' + f.bytes.length + ' bytes    EOF: ' + (f.cursor >= f.bytes.length ? 'yes' : 'no');
+    card.appendChild(meta);
+
+    const byteRow = document.createElement('div');
+    byteRow.className = 'byte-row';
+    for (let i = 0; i < f.bytes.length; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'byte-cell';
+      if (f._justWrote && f._justWrote.includes(i)) cell.classList.add('written');
+      if (f._justRead === i) cell.classList.add('read-flash');
+      cell.textContent = displayChar(f.bytes[i]);
+      byteRow.appendChild(cell);
+    }
+    const eofCell = document.createElement('div');
+    eofCell.className = 'byte-cell eof';
+    eofCell.textContent = 'EOF';
+    byteRow.appendChild(eofCell);
+    card.appendChild(byteRow);
+
+    const cursorRow = document.createElement('div');
+    cursorRow.className = 'cursor-row';
+    for (let i = 0; i <= f.bytes.length; i++) {
+      const c = document.createElement('div');
+      c.className = 'cursor-cell';
+      if (i === f.cursor) c.classList.add('active');
+      cursorRow.appendChild(c);
+    }
+    card.appendChild(cursorRow);
+
+    const posRow = document.createElement('div');
+    posRow.className = 'position-row';
+    for (let i = 0; i <= f.bytes.length; i++) {
+      const p = document.createElement('div');
+      p.className = 'position-cell';
+      p.textContent = i;
+      posRow.appendChild(p);
+    }
+    card.appendChild(posRow);
+
+    f._justWrote = null;
+    f._justRead = null;
+    return card;
+  }
+
+  function opFopen(varName, path, modeStr) {
+    if (files[varName] && files[varName].isOpen) {
+      return { error: varName + ' already refers to an open file. Close it first.' };
+    }
+    if (!['r', 'w', 'r+', 'w+'].includes(modeStr)) {
+      return { error: 'Mode "' + modeStr + '" not supported in this walkthrough. Try "r", "w", "r+", or "w+".' };
+    }
+    let bytes;
+    let kind;
+    if (modeStr === 'r' || modeStr === 'r+') {
+      if (!(path in filesystem)) {
+        return { error: 'Cannot open "' + path + '" for reading: no such file.', returnsNull: true };
+      }
+      bytes = filesystem[path].slice();
+      kind = 'preset';
+    } else {
+      bytes = [];
+      kind = 'fresh';
+    }
+    files[varName] = { varName, path, mode: modeStr, bytes, cursor: 0, isOpen: true, kind };
+    return { ok: true, note: varName + ' now refers to "' + path + '" in mode "' + modeStr + '". cursor = 0.' };
+  }
+
+  function opFgetc(varName) {
+    const f = files[varName];
+    if (!f || !f.isOpen) return { error: varName + ' is not an open file.' };
+    if (f.mode === 'w') return { error: 'Cannot read from "' + f.path + '": opened in write-only mode.' };
+    if (f.cursor >= f.bytes.length) {
+      return { ok: true, returned: 'EOF', note: 'fgetc returned EOF (-1). Cursor stays at ' + f.cursor + '.' };
+    }
+    const byte = f.bytes[f.cursor];
+    f._justRead = f.cursor;
+    f.cursor += 1;
+    const ch = displayChar(byte);
+    return { ok: true, returned: "'" + ch + "' (" + byte + ')',
+             note: 'Read byte ' + byte + " ('" + ch + "'). Cursor advanced to " + f.cursor + '.' };
+  }
+
+  function opFputc(varName, ch) {
+    const f = files[varName];
+    if (!f || !f.isOpen) return { error: varName + ' is not an open file.' };
+    if (f.mode === 'r') return { error: 'Cannot write to "' + f.path + '": opened in read-only mode.' };
+    const code = ch.charCodeAt(0);
+    if (f.cursor < f.bytes.length) f.bytes[f.cursor] = code;
+    else { while (f.bytes.length < f.cursor) f.bytes.push(0); f.bytes.push(code); }
+    f._justWrote = [f.cursor];
+    f.cursor += 1;
+    return { ok: true, note: 'Wrote byte ' + code + " ('" + displayChar(code) + "'). Cursor advanced to " + f.cursor + '.' };
+  }
+
+  function opFputs(varName, str) {
+    const f = files[varName];
+    if (!f || !f.isOpen) return { error: varName + ' is not an open file.' };
+    if (f.mode === 'r') return { error: 'Cannot write to "' + f.path + '": opened in read-only mode.' };
+    const written = [];
+    for (let i = 0; i < str.length; i++) {
+      const code = str.charCodeAt(i);
+      if (f.cursor < f.bytes.length) f.bytes[f.cursor] = code;
+      else f.bytes.push(code);
+      written.push(f.cursor);
+      f.cursor += 1;
+    }
+    f._justWrote = written;
+    return { ok: true, note: 'Wrote ' + str.length + ' bytes. Cursor advanced to ' + f.cursor + '.' };
+  }
+
+  function opFgets(varName, n) {
+    const f = files[varName];
+    if (!f || !f.isOpen) return { error: varName + ' is not an open file.' };
+    if (f.mode === 'w') return { error: 'Cannot read from "' + f.path + '": opened in write-only mode.' };
+    if (f.cursor >= f.bytes.length) return { ok: true, returned: 'NULL', note: 'fgets returned NULL (already at EOF).' };
+    let s = '';
+    while (f.cursor < f.bytes.length && s.length < n - 1) {
+      const b = f.bytes[f.cursor];
+      s += String.fromCharCode(b);
+      f.cursor += 1;
+      if (b === 0x0A) break;
+    }
+    f._justRead = f.cursor - 1;
+    return { ok: true, returned: JSON.stringify(s), note: 'fgets read ' + s.length + ' bytes into the buffer. Cursor at ' + f.cursor + '.' };
+  }
+
+  function opFseek(varName, offset, whence) {
+    const f = files[varName];
+    if (!f || !f.isOpen) return { error: varName + ' is not an open file.' };
+    let newCursor;
+    if (whence === 'SEEK_SET' || whence === '0') newCursor = offset;
+    else if (whence === 'SEEK_CUR' || whence === '1') newCursor = f.cursor + offset;
+    else if (whence === 'SEEK_END' || whence === '2') newCursor = f.bytes.length + offset;
+    else return { error: 'Unknown whence: ' + whence + '. Use SEEK_SET, SEEK_CUR, or SEEK_END.' };
+    if (newCursor < 0) return { error: 'fseek would move cursor before position 0.' };
+    f.cursor = newCursor;
+    return { ok: true, returned: '0', note: 'Cursor jumped to ' + f.cursor + '.' };
+  }
+
+  function opFtell(varName) {
+    const f = files[varName];
+    if (!f || !f.isOpen) return { error: varName + ' is not an open file.' };
+    return { ok: true, returned: String(f.cursor), note: 'ftell returned ' + f.cursor + '.' };
+  }
+
+  function opFclose(varName) {
+    const f = files[varName];
+    if (!f || !f.isOpen) return { error: varName + ' is not an open file.' };
+    f.isOpen = false;
+    if (f.kind === 'fresh' || f.mode === 'w' || f.mode === 'w+' || f.mode === 'r+') {
+      filesystem[f.path] = f.bytes.slice();
+    }
+    return { ok: true, returned: '0', note: 'Closed "' + f.path + '". ' + f.bytes.length + ' bytes saved.' };
+  }
+
+  // predict(): testing-as-habit op. Peeks at the next byte the most recently
+  // opened file would return, without advancing the cursor. Used by tasks that
+  // ask cadets to predict before reading.
+  function opPredict(ch) {
+    // Find the first open file in scope (Task 2 has only one: f).
+    const open = Object.values(files).filter(x => x.isOpen);
+    if (open.length === 0) return { error: 'predict() needs an open file. Open one first.' };
+    const f = open[0];
+    if (f.cursor >= f.bytes.length) {
+      return { ok: true, predicted: ch, actual: 'EOF',
+               note: 'Cursor is at EOF; the next fgetc would return EOF (-1).' };
+    }
+    const actualByte = f.bytes[f.cursor];
+    const actualCh = String.fromCharCode(actualByte);
+    const isMatch = (ch === actualCh);
+    return {
+      ok: true,
+      predicted: ch,
+      actual: displayChar(actualByte),
+      actualByte: actualByte,
+      isMatch: isMatch,
+      note: isMatch
+        ? "Correct. The next fgetc will read '" + displayChar(actualByte) + "' (byte " + actualByte + ")."
+        : "Off. You guessed '" + ch + "', but the next byte is actually '" + displayChar(actualByte) + "' (" + actualByte + "). Cursor stays at " + f.cursor + "; nothing was read."
+    };
+  }
+
+  function parseLine(line) {
+    const s = line.trim().replace(/;\s*$/, '');
+
+    let m = s.match(/^FILE\s*\*\s*([a-zA-Z_]\w*)\s*=\s*fopen\s*\(\s*"([^"]+)"\s*,\s*"([rwa]\+?)"\s*\)$/);
+    if (m) return { op: 'fopen', args: { varName: m[1], path: m[2], mode: m[3] } };
+
+    m = s.match(/^([a-zA-Z_]\w*)\s*=\s*fopen\s*\(\s*"([^"]+)"\s*,\s*"([rwa]\+?)"\s*\)$/);
+    if (m) return { op: 'fopen', args: { varName: m[1], path: m[2], mode: m[3] } };
+
+    m = s.match(/^(?:(?:char|int)?\s*[a-zA-Z_]\w*\s*=\s*)?fgetc\s*\(\s*([a-zA-Z_]\w*)\s*\)$/);
+    if (m) return { op: 'fgetc', args: { varName: m[1] } };
+
+    m = s.match(/^fputc\s*\(\s*'(.)'\s*,\s*([a-zA-Z_]\w*)\s*\)$/);
+    if (m) return { op: 'fputc', args: { ch: m[1], varName: m[2] } };
+
+    m = s.match(/^fputs\s*\(\s*"((?:[^"\\]|\\.)*)"\s*,\s*([a-zA-Z_]\w*)\s*\)$/);
+    if (m) {
+      const str = m[1].replace(/\\n/g, '\n').replace(/\\t/g, '\t').replace(/\\\\/g, '\\');
+      return { op: 'fputs', args: { str, varName: m[2] } };
+    }
+
+    m = s.match(/^(?:[a-zA-Z_]\w*\s*=\s*)?fgets\s*\(\s*[a-zA-Z_]\w*\s*,\s*(\d+)\s*,\s*([a-zA-Z_]\w*)\s*\)$/);
+    if (m) return { op: 'fgets', args: { n: parseInt(m[1], 10), varName: m[2] } };
+
+    m = s.match(/^(?:[a-zA-Z_]\w*\s*=\s*)?fseek\s*\(\s*([a-zA-Z_]\w*)\s*,\s*(-?\d+)\s*,\s*(SEEK_SET|SEEK_CUR|SEEK_END|0|1|2)\s*\)$/);
+    if (m) return { op: 'fseek', args: { varName: m[1], offset: parseInt(m[2], 10), whence: m[3] } };
+
+    m = s.match(/^(?:(?:long|int)?\s*[a-zA-Z_]\w*\s*=\s*)?ftell\s*\(\s*([a-zA-Z_]\w*)\s*\)$/);
+    if (m) return { op: 'ftell', args: { varName: m[1] } };
+
+    m = s.match(/^fclose\s*\(\s*([a-zA-Z_]\w*)\s*\)$/);
+    if (m) return { op: 'fclose', args: { varName: m[1] } };
+
+    // predict('X') — pseudo-call used by testing-as-habit tasks.
+    // Accepts a single character in single quotes, e.g. predict('H')
+    m = s.match(/^predict\s*\(\s*'(.)'\s*\)$/);
+    if (m) return { op: 'predict', args: { ch: m[1] } };
+
+    return { error: 'Could not parse: "' + line + '"' };
+  }
+
+  function diagFopen(cmd, expect) {
+    if (!/^FILE\s*\*/.test(cmd.trim())) return "Close. Start with FILE * to declare a file pointer variable, like FILE *f = fopen(...).";
+    if (!/fopen\s*\(/.test(cmd)) return 'Use fopen to open a file. Pattern: FILE *f = fopen("path", "mode");';
+    if (!/"/.test(cmd)) return "Both arguments to fopen are strings in double quotes: the path and the mode.";
+    if (expect.mode && !cmd.includes('"' + expect.mode + '"')) return 'Use mode "' + expect.mode + '" for this task.';
+    if (expect.path && !cmd.includes('"' + expect.path + '"')) return 'Use path "' + expect.path + '" for this task.';
+    if (!/;\s*$/.test(cmd.trim())) return "Almost. Don't forget the semicolon at the end.";
+    return null;
+  }
+
+  const tasks = [
+    {
+      section: 'Section 1: Opening and reading a file',
+      label: 'Task 1 of 14',
+      text: 'Open "hello.txt" for reading. Store the result in a FILE pointer named f.',
+      hint: 'FILE *f = fopen("hello.txt", "r");',
+      match: (cmd) => /^\s*FILE\s*\*\s*f\s*=\s*fopen\s*\(\s*"hello\.txt"\s*,\s*"r"\s*\)\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diagFopen(cmd, { path: 'hello.txt', mode: 'r' }),
+      note: 'Opened "hello.txt" in read mode. The file holds "Hello\\n" (6 bytes). Cursor sits at position 0.'
+    },
+    {
+      label: 'Task 2 of 14',
+      text: 'Before you read: predict the next character. The file is "Hello\\n" with the cursor at position 0. Type predict(\'X\') where X is the character you expect fgetc to return next.',
+      hint: "predict('H');",
+      match: (cmd) => /^\s*predict\s*\(\s*'.'\s*\)\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        if (/predict/.test(cmd) && !/'.'/.test(cmd)) return "predict takes a single character in single quotes, e.g. predict('H').";
+        return null;
+      },
+      note: "This is the testing-as-habit move: predict, then verify. You will do this with your own code too — write what you expect, then run it and compare. The cursor did NOT advance (predict only peeks); the actual fgetc happens next."
+    },
+    {
+      label: 'Task 3 of 14',
+      text: 'Now actually read the character from f using fgetc. You can assign the result to a variable or just call fgetc directly.',
+      hint: 'fgetc(f);   // or:  int c = fgetc(f);',
+      match: (cmd) => /^\s*(?:(?:int|char)\s+\w+\s*=\s*)?fgetc\s*\(\s*f\s*\)\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        if (/fgetc\s*\(\s*f\s*\)/.test(cmd) && !/;\s*$/.test(cmd.trim())) return "Almost. Don't forget the semicolon.";
+        if (/fgetc/.test(cmd) && !/\(\s*f\s*\)/.test(cmd)) return "fgetc takes a FILE pointer as its argument: fgetc(f).";
+        return null;
+      },
+      note: "fgetc returns the byte at the cursor as an int, then advances the cursor by 1. The return type is int (not char) because it must also be able to return EOF (-1)."
+    },
+    {
+      label: 'Task 4 of 14',
+      text: 'Read another character from f. The cursor will advance again.',
+      hint: 'fgetc(f);',
+      match: (cmd) => /^\s*(?:(?:int|char)\s+\w+\s*=\s*)?fgetc\s*\(\s*f\s*\)\s*;\s*$/.test(cmd),
+      diagnose: () => null,
+      note: "Each fgetc call moves the cursor one byte forward. The file is just a sequence of bytes; the cursor is the position you'll read next."
+    },
+    {
+      label: 'Task 5 of 14',
+      text: 'Jump the cursor back to the start with fseek. Use SEEK_SET and an offset of 0.',
+      hint: 'fseek(f, 0, SEEK_SET);',
+      match: (cmd) => /^\s*fseek\s*\(\s*f\s*,\s*0\s*,\s*SEEK_SET\s*\)\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        if (/fseek/.test(cmd) && !/SEEK_SET/.test(cmd)) return "Use SEEK_SET as the whence argument to mean 'from the start of the file'.";
+        if (/fseek\s*\(\s*f\s*,\s*[^0\s]/.test(cmd)) return "For this task, offset is 0 (we want to jump to the very start).";
+        return null;
+      },
+      note: "fseek lets you move the cursor anywhere. SEEK_SET means 'from the start', SEEK_CUR 'from current position', SEEK_END 'from the end'."
+    },
+    {
+      label: 'Task 6 of 14',
+      text: 'Close the file with fclose.',
+      hint: 'fclose(f);',
+      match: (cmd) => /^\s*fclose\s*\(\s*f\s*\)\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        if (/fclose/.test(cmd) && !/\(\s*f\s*\)/.test(cmd)) return "fclose takes the FILE pointer as its argument: fclose(f).";
+        return null;
+      },
+      note: "Always close files you open. Forgetting fclose leaks a file descriptor and can leave unflushed data lost on disk."
+    },
+    {
+      section: 'Section 2: Reading line by line with fgets',
+      label: 'Task 7 of 14',
+      text: 'Open "poem.txt" for reading, into a FILE pointer named f.',
+      hint: 'FILE *f = fopen("poem.txt", "r");',
+      match: (cmd) => /^\s*FILE\s*\*\s*f\s*=\s*fopen\s*\(\s*"poem\.txt"\s*,\s*"r"\s*\)\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => diagFopen(cmd, { path: 'poem.txt', mode: 'r' }),
+      note: '"poem.txt" has two lines. Each line ends with \\n.'
+    },
+    {
+      label: 'Task 8 of 14',
+      text: 'Read the first line with fgets. Use any buffer name and pass 64 as the size.',
+      hint: 'fgets(buf, 64, f);',
+      match: (cmd) => /^\s*(?:[a-zA-Z_]\w*\s*=\s*)?fgets\s*\(\s*[a-zA-Z_]\w*\s*,\s*64\s*,\s*f\s*\)\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        if (/fgets\s*\(/.test(cmd) && !/,\s*64\s*,/.test(cmd)) return "For this task, use 64 as the buffer size argument.";
+        if (/fgets/.test(cmd) && !/,\s*f\s*\)/.test(cmd)) return "The third argument to fgets is the FILE pointer: fgets(buf, 64, f).";
+        return null;
+      },
+      note: "fgets reads until newline OR until size-1 bytes, whichever comes first. The \\n IS included in the buffer. That surprises a lot of cadets at the printf stage."
+    },
+    {
+      label: 'Task 9 of 14',
+      text: 'Call fgets again to read the second line.',
+      hint: 'fgets(buf, 64, f);',
+      match: (cmd) => /^\s*(?:[a-zA-Z_]\w*\s*=\s*)?fgets\s*\(\s*[a-zA-Z_]\w*\s*,\s*64\s*,\s*f\s*\)\s*;\s*$/.test(cmd),
+      diagnose: () => null,
+      note: "Cursor moved forward through the file. Both lines now consumed."
+    },
+    {
+      label: 'Task 10 of 14',
+      text: 'Call fgets one more time. The file is fully consumed, so fgets returns NULL.',
+      hint: 'fgets(buf, 64, f);',
+      match: (cmd) => /^\s*(?:[a-zA-Z_]\w*\s*=\s*)?fgets\s*\(\s*[a-zA-Z_]\w*\s*,\s*64\s*,\s*f\s*\)\s*;\s*$/.test(cmd),
+      diagnose: () => null,
+      note: "fgets returns NULL when there is nothing left. THIS is your end-of-loop signal: while (fgets(buf, sizeof buf, f) != NULL) { ... }"
+    },
+    {
+      section: 'Section 3: Writing to a new file',
+      label: 'Task 11 of 14',
+      text: 'Close f, then open "out.txt" for WRITING into a new FILE pointer also named f. Two statements; type them one at a time.',
+      hint: 'fclose(f);   then:   FILE *f = fopen("out.txt", "w");',
+      match: (cmd) => /^\s*fclose\s*\(\s*f\s*\)\s*;\s*$/.test(cmd) || /^\s*FILE\s*\*\s*f\s*=\s*fopen\s*\(\s*"out\.txt"\s*,\s*"w"\s*\)\s*;\s*$/.test(cmd),
+      twoStep: true,
+      diagnose: (cmd) => {
+        if (/fopen.*out\.txt.*"r"/.test(cmd)) return 'Use mode "w" (write), not "r". "w" creates or truncates the file.';
+        return null;
+      },
+      note: 'Two steps: first close the old f, then open "out.txt" in write mode. Write mode truncates the file to empty if it already existed.'
+    },
+    {
+      label: 'Task 12 of 14',
+      text: 'Use fputs to write the string "CS210\\n" to the file. (The \\n is part of the string.)',
+      hint: 'fputs("CS210\\n", f);',
+      match: (cmd) => /^\s*fputs\s*\(\s*"CS210\\n"\s*,\s*f\s*\)\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        if (/fputs\s*\(\s*"CS210"\s*,\s*f\s*\)/.test(cmd)) return 'Close. Include the \\n at the end: "CS210\\n".';
+        if (/fputs/.test(cmd) && !/,\s*f\s*\)/.test(cmd)) return "fputs takes the string first, then the FILE pointer: fputs(str, f).";
+        return null;
+      },
+      note: 'fputs writes the bytes of the string to the file. Unlike puts (which adds \\n automatically), fputs does NOT. You include the newline yourself if you want one.'
+    },
+    {
+      section: 'Section 4: Finding your place with fseek and ftell',
+      label: 'Task 13 of 14',
+      text: 'Jump the cursor to the end of the file with fseek. Use offset 0 and SEEK_END.',
+      hint: 'fseek(f, 0, SEEK_END);',
+      match: (cmd) => /^\s*fseek\s*\(\s*f\s*,\s*0\s*,\s*SEEK_END\s*\)\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        if (/fseek/.test(cmd) && !/SEEK_END/.test(cmd)) return "Use SEEK_END as the whence argument to mean 'from the end of the file'.";
+        return null;
+      },
+      note: "Now cursor sits past the last byte. SEEK_END plus offset 0 puts you at EOF -- which equals the file size."
+    },
+    {
+      label: 'Task 14 of 14',
+      text: 'Call ftell to read the current cursor position. This is the file size in bytes.',
+      hint: 'ftell(f);',
+      match: (cmd) => /^\s*(?:(?:long|int)\s+\w+\s*=\s*)?ftell\s*\(\s*f\s*\)\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        if (/ftell/.test(cmd) && !/\(\s*f\s*\)/.test(cmd)) return "ftell takes the FILE pointer: ftell(f).";
+        return null;
+      },
+      note: "The fseek+ftell pattern is the standard way to find a file's size in C. You will use this in the lab to do related work."
+    },
+  ];
+
+  const progressFill = root.querySelector('#fio-progress-fill');
+  const progressLabel = root.querySelector('#fio-progress-label');
+  const sectionHeader = root.querySelector('#fio-section-header');
+  const taskCard = root.querySelector('#fio-task-card');
+  const taskLabel = root.querySelector('#fio-task-label');
+  const taskText = root.querySelector('#fio-task-text');
+  const taskHint = root.querySelector('#fio-task-hint');
+  const cliInput = root.querySelector('#fio-cli-input');
+  const hintBtn = root.querySelector('#fio-hint-btn');
+  const resetBtn = root.querySelector('#fio-reset-btn');
+  const modeBtn = root.querySelector('#fio-mode-btn');
+  const completionArea = root.querySelector('#fio-completion-area');
+
+  function updateUI() {
+    const total = tasks.length;
+    if (mode === 'free' || currentTaskIndex >= total) {
+      progressFill.style.width = '100%';
+      progressLabel.textContent = mode === 'free' ? 'Free mode — type anything legal' : 'All ' + total + ' tasks complete';
+      sectionHeader.textContent = mode === 'free' ? 'Free mode' : 'Complete';
+      taskCard.classList.add('complete');
+      taskLabel.textContent = mode === 'free' ? 'FREE MODE' : 'DONE';
+      taskText.textContent = mode === 'free'
+        ? 'Try any of the operations you have seen. Open a new file, fputc some chars, fseek around, ftell to check.'
+        : 'You have completed all walkthrough tasks. Free mode is unlocked.';
+      taskHint.textContent = '';
+      return;
+    }
+    const t = tasks[currentTaskIndex];
+    let sectionText = null;
+    for (let i = currentTaskIndex; i >= 0; i--) {
+      if (tasks[i].section) { sectionText = tasks[i].section; break; }
+    }
+    if (sectionText) sectionHeader.textContent = sectionText;
+    taskCard.classList.remove('complete');
+    taskLabel.textContent = t.label;
+    taskText.textContent = t.text;
+    taskHint.textContent = '';
+    progressFill.style.width = ((currentTaskIndex / total) * 100) + '%';
+    progressLabel.textContent = 'Task ' + currentTaskIndex + ' of ' + total;
+    if (consecutiveFails >= 2) hintBtn.classList.add('pulse');
+    else hintBtn.classList.remove('pulse');
+  }
+
+  function showCompletion() {
+    if (root.querySelector('#fio-completion-overlay')) return; // already shown
+    const now = new Date();
+    const ts = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const safeName = (cs210CadetName || 'Cadet').replace(/[<>&"']/g, function(c) {
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+
+    // Inline footer (kept so a screenshot of the widget body has the code+name+ts)
+    completionArea.innerHTML =
+      '<div class="completion-screen">' +
+        '<div class="cs-heading">Walkthrough complete</div>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value">' + CS210_CODE + '</div></div>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+      '</div>';
+
+    // Overlay (the unmissable version, scoped to the widget root)
+    const overlay = document.createElement('div');
+    overlay.id = 'fio-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.style.background = 'rgba(27, 94, 32, 0.55)';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">Walkthrough complete</h2>' +
+        '<p>Take a screenshot of this box. You will need the code and a visual of this screen for the Lesson 21 reflection on Blackboard.</p>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value" id="fio-cs-code-value">' + CS210_CODE + '</div></div>' +
+          '<button class="cs-copy-btn" id="fio-cs-copy-btn" type="button">Copy code</button>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+        '<div class="cs-reminder" style="margin-bottom:14px;">' +
+          '<strong>Next step:</strong> Open the Lesson 21 reflection on Blackboard. Enter this code, answer the reflection prompt, and attach your screenshot.' +
+        '</div>' +
+        '<button class="name-modal-btn" id="fio-overlay-close" type="button" style="background:#2E7D32;">Got it &mdash; close this</button>' +
+      '</div>';
+    root.appendChild(overlay);
+
+    const copyBtn = overlay.querySelector('#fio-cs-copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function() {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(CS210_CODE).then(function() {
+            copyBtn.textContent = 'Copied!';
+            copyBtn.classList.add('copied');
+            setTimeout(function() {
+              copyBtn.textContent = 'Copy code';
+              copyBtn.classList.remove('copied');
+            }, 1800);
+          }).catch(function() {
+            copyBtn.textContent = 'Press Ctrl+C';
+          });
+        } else {
+          copyBtn.textContent = 'Press Ctrl+C';
+        }
+      });
+    }
+    const closeBtn = overlay.querySelector('#fio-overlay-close');
+    if (closeBtn) closeBtn.addEventListener('click', function() { overlay.remove(); });
+  }
+
+  function runOp(parsed) {
+    switch (parsed.op) {
+      case 'fopen':  return opFopen(parsed.args.varName, parsed.args.path, parsed.args.mode);
+      case 'fgetc':  return opFgetc(parsed.args.varName);
+      case 'fputc':  return opFputc(parsed.args.varName, parsed.args.ch);
+      case 'fputs':  return opFputs(parsed.args.varName, parsed.args.str);
+      case 'fgets':  return opFgets(parsed.args.varName, parsed.args.n);
+      case 'fseek':  return opFseek(parsed.args.varName, parsed.args.offset, parsed.args.whence);
+      case 'ftell':  return opFtell(parsed.args.varName);
+      case 'fclose': return opFclose(parsed.args.varName);
+      case 'predict': return opPredict(parsed.args.ch);
+    }
+    return { error: 'Unknown op' };
+  }
+
+  function submitLine() {
+    const cmd = cliInput.value;
+    if (!cmd.trim()) return;
+    termEcho(cmd);
+
+    const parsed = parseLine(cmd);
+    if (parsed.error) {
+      termErr(parsed.error);
+      consecutiveFails += 1;
+      if (consecutiveFails >= 2 && mode === 'walkthrough') hintBtn.classList.add('pulse');
+      cliInput.value = '';
+      cliInput.focus();
+      return;
+    }
+
+    const result = runOp(parsed);
+    if (result.error) {
+      termErr(result.error);
+      consecutiveFails += 1;
+      if (consecutiveFails >= 2 && mode === 'walkthrough') hintBtn.classList.add('pulse');
+      cliInput.value = '';
+      cliInput.focus();
+      return;
+    }
+
+    if (result.returned !== undefined) termOk('returned: ' + result.returned);
+    else termOk('ok');
+
+    if (mode === 'walkthrough' && currentTaskIndex < tasks.length) {
+      const t = tasks[currentTaskIndex];
+      let matched = false;
+
+      if (t.match(cmd)) {
+        if (t.twoStep) {
+          // First time: fclose. Second: fopen of out.txt.
+          if (twoStepState === null && /^\s*fclose/.test(cmd.trim())) {
+            twoStepState = 'awaiting-fopen';
+            termNote(t.note);
+            termNote('Now open "out.txt" for writing.');
+            consecutiveFails = 0;
+            renderFiles();
+            cliInput.value = '';
+            cliInput.focus();
+            return;
+          } else if (twoStepState === 'awaiting-fopen' && /^\s*FILE\s*\*\s*f\s*=\s*fopen/.test(cmd.trim())) {
+            matched = true;
+            twoStepState = null;
+          } else {
+            // unusual order
+            matched = true;
+            twoStepState = null;
+          }
+        } else {
+          matched = true;
+        }
+      }
+
+      if (matched) {
+        // For predict tasks, the op's note carries the specific correct/wrong
+        // feedback; show it first, then the broader habit lesson from t.note.
+        if (parsed.op === 'predict' && result.note) termNote(result.note);
+        if (t.note) termNote(t.note);
+        currentTaskIndex += 1;
+        consecutiveFails = 0;
+        renderFiles();
+        updateUI();
+        if (currentTaskIndex >= tasks.length) {
+          mode = 'free';
+          modeBtn.textContent = 'Free mode';
+          modeBtn.disabled = true;
+          showCompletion();
+        }
+        cliInput.value = '';
+        cliInput.focus();
+        return;
+      } else {
+        const diag = t.diagnose ? t.diagnose(cmd) : null;
+        if (diag) termWarn(diag);
+        else termWarn('That ran, but the current task is: ' + t.text + ' Try: ' + t.hint);
+        consecutiveFails += 1;
+        if (consecutiveFails >= 2) hintBtn.classList.add('pulse');
+        renderFiles();
+        cliInput.value = '';
+        cliInput.focus();
+        return;
+      }
+    }
+
+    if (result.note) termNote(result.note);
+    renderFiles();
+    cliInput.value = '';
+    cliInput.focus();
+  }
+
+  cliInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); submitLine(); }
+  });
+
+  hintBtn.addEventListener('click', () => {
+    if (mode !== 'walkthrough') return;
+    if (currentTaskIndex >= tasks.length) return;
+    const t = tasks[currentTaskIndex];
+    taskHint.textContent = 'Hint: ' + (t.hint || '(no hint)');
+    cliInput.value = t.hint || '';
+    cliInput.focus();
+    hintBtn.classList.remove('pulse');
+    consecutiveFails = 0;
+  });
+
+  resetBtn.addEventListener('click', () => {
+    if (!confirm('Reset the walkthrough? All files and progress will be cleared.')) return;
+    for (const k in files) delete files[k];
+    filesystem["hello.txt"] = stringToBytes(HELLO_CONTENT);
+    filesystem["poem.txt"]  = stringToBytes(POEM_CONTENT);
+    delete filesystem["out.txt"];
+    currentTaskIndex = 0;
+    consecutiveFails = 0;
+    twoStepState = null;
+    mode = 'walkthrough';
+    modeBtn.disabled = false;
+    modeBtn.textContent = 'Switch to free mode';
+    termEl.innerHTML = '';
+    completionArea.innerHTML = '';
+    const existingOverlay = root.querySelector('#fio-completion-overlay');
+    if (existingOverlay) existingOverlay.remove();
+    cliInput.value = '';
+    renderFiles();
+    updateUI();
+    termLabel('Reset. Start over with Task 1.');
+  });
+
+  modeBtn.addEventListener('click', () => {
+    if (mode === 'walkthrough') {
+      if (!confirm('Switch to free mode? You will skip the remaining tasks.')) return;
+      mode = 'free';
+      modeBtn.textContent = 'Free mode';
+      modeBtn.disabled = true;
+      updateUI();
+      termLabel('Free mode unlocked. Type any legal file operation.');
+    }
+  });
+
+  termLabel('Welcome. The file pane on the right will show files you open.');
+  termNote('There are two preset files available in this widget: "hello.txt" and "poem.txt". You can also create new ones with fopen mode "w".');
+  renderFiles();
+  updateUI();
+  cliInput.focus();
+})();
+</script>
+
+
+    </div>
+  </details>
+
+  <!-- ===================== 6. AFTER CLASS ===================== -->
+  <details id="after-class" style="margin-bottom: 24px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      6. After Class
+    </summary>
+    <div style="padding: 18px 22px;">
+      <ul style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Finish Lab 21 if you did not complete it in class. Submit to Gradescope before Lesson 22.</li>
+        <li style="margin-bottom: 6px;">Read Beej-C Chapter 16 (Command-Line Arguments) for Lesson 22.</li>
+        <li style="margin-bottom: 6px;">Replay the walkthrough in free mode. Open a file you create with <code style="background: #F0F2F5; padding: 1px 4px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12px;">fopen(..., "w")</code>, write some bytes with <code style="background: #F0F2F5; padding: 1px 4px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12px;">fputc</code>, then close and reopen for reading. The cursor behavior on freshly-written files is a common point of confusion.</li>
+        <li style="margin-bottom: 0;"><strong>Heads up: Quiz 8 (File I/O) is at Lesson 22</strong>, covering today's material. Be sure your reading and walkthrough are solid before then.</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== HELP NOTE ===================== -->
+  <div style="background: #F5F7FA; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 3px; font-size: 13.5px; color: #4A5568;">
+    <strong style="color: #00205B;">Need help?</strong> Schedule EI with your instructor. Bring your code, the exact command you ran, the exact output you got, and what you expected instead. Specific questions get unstuck quickly.
+  </div>
+
+</div>

@@ -1,0 +1,2986 @@
+<!-- ============================================================
+     CS210 - Lesson 19
+     Pointers to Structs and Dynamic Arrays
+     Self-contained: all CSS inline. Native <details> for collapsing.
+     Planets walkthrough + structptr quiz embedded inline in section 5.
+     Paste into Blackboard Ultra via Document -> Add HTML block.
+     ============================================================ -->
+
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 980px; margin: 0 auto; line-height: 1.6;">
+
+  <!-- ===================== LIGHT HEADER ===================== -->
+  <div style="border-left: 5px solid #003087; padding: 8px 0 8px 18px; margin-bottom: 24px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 2px;">CS210 &middot; Block 3 &middot; Lesson 19</div>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 600; color: #00205B;">Pointers to Structs and Dynamic Arrays</h1>
+    <div style="font-size: 14px; color: #4A5568; margin-top: 4px;">Arrow operator &middot; malloc of struct arrays &middot; Pass-by-value vs pass-by-pointer &middot; Ownership of struct members</div>
+  </div>
+
+  <!-- ===================== AT A GLANCE ===================== -->
+  <div style="background: #F5F7FA; border-left: 4px solid #B5B7BA; padding: 14px 18px; margin-bottom: 22px; font-size: 14px;">
+    <strong style="color: #00205B;">At a glance:</strong> Lesson 18 introduced structs as values. Today we put a pointer in front of them. The arrow operator gives us a clean way to reach a struct’s fields through a pointer, and that unlocks the real workhorse pattern: dynamic arrays of structs allocated on the heap with malloc. The trap we close on is ownership, when a struct’s field is itself a pointer.
+  </div>
+
+  <!-- ===================== TABLE OF CONTENTS ===================== -->
+  <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 20px; margin-bottom: 24px; border-radius: 3px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Contents</div>
+    <ol style="margin: 0; padding-left: 22px; font-size: 14px;">
+      <li style="margin-bottom: 4px;"><a href="#objectives" style="color: #003087; text-decoration: none;">Lesson Objectives</a></li>
+      <li style="margin-bottom: 4px;"><a href="#readings" style="color: #003087; text-decoration: none;">Assigned Readings</a></li>
+      <li style="margin-bottom: 4px;"><a href="#pre-class" style="color: #003087; text-decoration: none;">Pre-Class Work</a></li>
+      <li style="margin-bottom: 4px;"><a href="#materials" style="color: #003087; text-decoration: none;">Lesson Materials and Overview</a></li>
+      <li style="margin-bottom: 4px;"><a href="#in-class" style="color: #003087; text-decoration: none;">In-Class Work</a></li>
+      <li style="margin-bottom: 0;"><a href="#after-class" style="color: #003087; text-decoration: none;">After Class</a></li>
+    </ol>
+  </div>
+
+  <!-- ===================== 1. OBJECTIVES ===================== -->
+  <details id="objectives" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      1. Lesson Objectives
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 10px 0; font-style: italic;">By the end of this lesson, cadets will be able to:</p>
+      <ol style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Access struct members through a pointer using the arrow operator. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+        <li style="margin-bottom: 6px;">Allocate and use dynamically sized arrays of structs. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+        <li style="margin-bottom: 0;">Manage memory correctly for arrays of structs containing pointer members. <span style="color: #6B7280; font-size: 12px;">(Outcomes 2, 3)</span></li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 2. READINGS ===================== -->
+  <details id="readings" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      2. Assigned Readings
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 12px 0;">Complete before class. These build the vocabulary we will use.</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <thead>
+          <tr style="background: #E8EDF5; color: #00205B;">
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 130px;">Source</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9;">Sections</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 240px;">Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;"><a href="https://beej.us/guide/bgc/" style="color: #003087; text-decoration: underline;">Beej-C</a></td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Chapter 8 cont. (Structs and pointers)</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">The arrow operator and how structs interact with pointers</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 9px 12px;"><a href="https://beej.us/guide/bgc/" style="color: #003087; text-decoration: underline;">Beej-C</a></td>
+            <td style="padding: 9px 12px;">Chapter 20 (Structs II)</td>
+            <td style="padding: 9px 12px; color: #4A5568;">Structs as full citizens: passing them to functions, returning them, and using them with pointers</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <!-- ===================== 3. PRE-CLASS WORK ===================== -->
+  <details id="pre-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      3. Pre-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 18px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #6B5300; font-size: 14px; margin-bottom: 4px;">Do this first</div>
+        <div style="font-size: 14px; color: #5A4B00;">Plan on 30 to 40 minutes for the reading and the pre-class skim. Most of today’s learning happens in the in-class walkthrough and the lab; come ready to type.</div>
+      </div>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 0 0 10px 0;">Pre-Class Checklist</h3>
+
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">1</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Read the assigned chapters</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">Beej Chapter 8 cont. (arrow operator and structs with pointers) and Chapter 20 (Structs II, which covers passing structs to functions and returning them). Skim if confident, read closely if any of these feel unfamiliar:</div>
+            <ul style="font-size: 13.5px; margin: 0 0 6px 0; padding-left: 20px;">
+              <li style="margin-bottom: 3px;">The arrow operator (<code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">p-&gt;field</code>) and what it expands to</li>
+              <li style="margin-bottom: 3px;">Passing a struct by value vs by pointer</li>
+              <li style="margin-bottom: 3px;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">malloc(N * sizeof(T))</code> idiom</li>
+              <li style="margin-bottom: 0;">Pairing every <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">malloc</code> with a <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">free</code></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">2</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Recall structs from Lesson 18</div>
+            <div style="font-size: 14px;">Pull up your Lesson 18 lab. Re-read your struct definitions and how you wrote to their fields with the dot operator. Today we use the same struct shapes but reach the fields through pointers instead.</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 8px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">3</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Skim the In-Class section below</div>
+            <div style="font-size: 14px;">You will see a planets walkthrough widget and a self-check quiz. No need to use them yet; just know they are there.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ===================== 4. LESSON MATERIALS AND OVERVIEW ===================== -->
+  <details id="materials" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      4. Lesson Materials and Overview
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 18px 0;">Today connects three threads you already know. Structs (Lesson 18) gave us a way to bundle related fields. Pointers (Lessons 12 to 16) gave us a way to refer to memory without copying it. malloc and free (Lesson 17) gave us heap allocation. Putting them together yields the workhorse pattern for the rest of CS210 and most of professional C: a dynamically sized array of structs on the heap, with the arrow operator as the everyday notation.</p>
+
+      <!-- Subsection navigation -->
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 18px; margin-bottom: 22px; border-radius: 3px;">
+        <div style="font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">Jump to</div>
+        <div style="font-size: 13.5px;">
+          <a href="#slides" style="color: #003087; text-decoration: none; margin-right: 14px;">Slides</a>
+          <a href="#arrow" style="color: #003087; text-decoration: none; margin-right: 14px;">The Arrow Operator</a>
+          <a href="#dynarr" style="color: #003087; text-decoration: none; margin-right: 14px;">Dynamic Arrays of Structs</a>
+          <a href="#passing" style="color: #003087; text-decoration: none; margin-right: 14px;">Pass by Value vs Pass by Pointer</a>
+          <a href="#ownership" style="color: #003087; text-decoration: none; margin-right: 14px;">Ownership and Pointer Members</a>
+          <a href="#decomposition" style="color: #003087; text-decoration: none;">Designing Structs and Their Operations Together</a>
+        </div>
+      </div>
+
+      <!-- Slides -->
+      <h3 id="slides" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0; scroll-margin-top: 16px;">Slides</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">The Lesson 19 deck covers the arrow operator, dynamic arrays of structs, pass-by-pointer mechanics, and the ownership rules when struct members are themselves pointers. The slides are the spine of the in-class lecture; the planets walkthrough is where you practice the mechanics hands on.</p>
+
+      <!-- =========================================================
+           EDIT ME: Lesson 19 slide deck link
+           Replace href="#" below with the SharePoint share URL once
+           the deck is published. Leave target="_blank" and rel="noopener".
+           ========================================================= -->
+      <p style="margin: 0 0 18px 0;">
+        <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 10px 20px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 14px;">Open Lesson 19 slides &rarr;</a>
+      </p>
+
+      <!-- Arrow operator -->
+      <h3 id="arrow" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">The arrow operator</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">When you have a pointer to a struct and you want one of its fields, you have two ways to write it. The long way dereferences the pointer first, then takes the field:</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">Planet</span> *p = &amp;roster[<span style="color: #B5CEA8;">1</span>];<br>
+        (*p).id = <span style="color: #B5CEA8;">5</span>;&nbsp;&nbsp;<span style="color: #6B7280;">// dereference, then dot</span>
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">The short way uses the arrow operator. It does exactly the same thing:</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        p-&gt;id = <span style="color: #B5CEA8;">5</span>;&nbsp;&nbsp;<span style="color: #6B7280;">// equivalent to (*p).id = 5;</span>
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">In real code you will almost always see the arrow. The parenthesized-deref form is just useful for understanding what the arrow expands to.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;"><strong style="color: #00205B;">Common mistake:</strong> writing <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">p.id</code> when p is a pointer. The compiler will reject it with a "member reference base type is not a structure" error. The fix is the arrow.</p>
+
+      <!-- Dynamic arrays of structs -->
+      <h3 id="dynarr" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Dynamic arrays of structs</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">An array of structs on the heap is the most common dynamic data pattern in C. The shape is always the same:</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">Planet</span> *roster = <span style="color: #DCDCAA;">malloc</span>(n * <span style="color: #DCDCAA;">sizeof</span>(<span style="color: #569CD6;">Planet</span>));<br>
+        <span style="color: #C586C0;">if</span> (roster == <span style="color: #569CD6;">NULL</span>) { <span style="color: #6B7280;">/* allocation failed; handle and return */</span> }<br>
+        <span style="color: #6B7280;">// ...use roster[0] through roster[n-1]...</span><br>
+        <span style="color: #DCDCAA;">free</span>(roster);<br>
+        roster = <span style="color: #569CD6;">NULL</span>;
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">A few rules of thumb that you will follow in every CS210 lab from here on:</p>
+      <ul style="font-size: 14.5px; margin: 0 0 18px 0; padding-left: 22px;">
+        <li style="margin-bottom: 6px;">Always write the size as <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">n * sizeof(T)</code>, not a hard-coded byte count. If the struct changes size later, your allocation still works.</li>
+        <li style="margin-bottom: 6px;">Always check the return value of malloc. On modern systems it almost never returns NULL, but the autograder and the code-review culture in CS210 both expect you to check.</li>
+        <li style="margin-bottom: 6px;">Pair every malloc with exactly one free. Allocate in one place, free in one place. Document who owns the memory.</li>
+        <li style="margin-bottom: 0;">After free, set the pointer to NULL. The memory is no longer yours; the pointer should no longer claim to point at anything.</li>
+      </ul>
+
+      <!-- Pass by value vs pointer -->
+      <h3 id="passing" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Pass by value vs pass by pointer</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">When you pass a struct to a function by value, the function receives a copy. Mutations to its parameter do not affect the caller. This is identical to passing an int by value, except the bytes copied are larger.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">void</span> <span style="color: #DCDCAA;">label_as_earth</span>(<span style="color: #569CD6;">Planet</span> pl) {<br>
+        &nbsp;&nbsp;pl.id = <span style="color: #B5CEA8;">3</span>;&nbsp;&nbsp;<span style="color: #6B7280;">// only mutates the local copy</span><br>
+        }<br>
+        <br>
+        <span style="color: #569CD6;">int</span> <span style="color: #DCDCAA;">main</span>(<span style="color: #569CD6;">void</span>) {<br>
+        &nbsp;&nbsp;<span style="color: #569CD6;">Planet</span> pl = {<span style="color: #B5CEA8;">0</span>, <span style="color: #B5CEA8;">0.0</span>, <span style="color: #B5CEA8;">0</span>};<br>
+        &nbsp;&nbsp;<span style="color: #DCDCAA;">label_as_earth</span>(pl);<br>
+        &nbsp;&nbsp;<span style="color: #6B7280;">// pl.id is still 0; the copy is gone</span><br>
+        }
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">To mutate the caller’s struct, take a pointer to it:</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">void</span> <span style="color: #DCDCAA;">label_as_earth</span>(<span style="color: #569CD6;">Planet</span> *pl) {<br>
+        &nbsp;&nbsp;pl-&gt;id = <span style="color: #B5CEA8;">3</span>;&nbsp;&nbsp;<span style="color: #6B7280;">// writes through the pointer to the caller</span><br>
+        }<br>
+        <br>
+        <span style="color: #569CD6;">int</span> <span style="color: #DCDCAA;">main</span>(<span style="color: #569CD6;">void</span>) {<br>
+        &nbsp;&nbsp;<span style="color: #569CD6;">Planet</span> pl = {<span style="color: #B5CEA8;">0</span>, <span style="color: #B5CEA8;">0.0</span>, <span style="color: #B5CEA8;">0</span>};<br>
+        &nbsp;&nbsp;<span style="color: #DCDCAA;">label_as_earth</span>(&amp;pl);<br>
+        &nbsp;&nbsp;<span style="color: #6B7280;">// pl.id is now 3</span><br>
+        }
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Even when the function does not need to mutate, passing by pointer is often the better choice for large structs because it copies only the pointer (8 bytes on a 64-bit system) instead of the whole struct. The convention to signal "I am not going to modify this" is to mark the parameter <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">const</code>:</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 18px;">
+        <span style="color: #569CD6;">void</span> <span style="color: #DCDCAA;">describe</span>(<span style="color: #569CD6;">const</span> <span style="color: #569CD6;">Planet</span> *pl) {<br>
+        &nbsp;&nbsp;<span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"id=%d, moons=%d</span><span style="color: #D7BA7D;">\n</span><span style="color: #CE9178;">"</span>, pl-&gt;id, pl-&gt;moons);<br>
+        }
+      </div>
+
+      <!-- Ownership -->
+      <h3 id="ownership" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Ownership and pointer members</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Suppose a struct has a field that is itself a pointer to heap memory:</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #C586C0;">typedef</span> <span style="color: #C586C0;">struct</span> {<br>
+        &nbsp;&nbsp;<span style="color: #569CD6;">char</span> *name;&nbsp;<span style="color: #6B7280;">// heap-allocated string</span><br>
+        &nbsp;&nbsp;<span style="color: #569CD6;">int</span> id;<br>
+        &nbsp;&nbsp;<span style="color: #569CD6;">double</span> gpa;<br>
+        } Student;
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Now you have two levels of allocation. The student record itself is one allocation; the name string is another. When you free the student, you have to free both, in the right order:</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #DCDCAA;">free</span>(s-&gt;name);&nbsp;&nbsp;<span style="color: #6B7280;">// free what s owns first</span><br>
+        <span style="color: #DCDCAA;">free</span>(s);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #6B7280;">// then free s itself</span>
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Order matters. If you free <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">s</code> first, then try to read <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">s-&gt;name</code> to free it, you are reading freed memory. The C standard says that is undefined behavior; in practice it sometimes works, sometimes crashes, sometimes leaks. None of those outcomes is acceptable. Free what the struct owns, then free the struct.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">The general rule: when you write a struct that owns heap memory through a pointer member, write a paired "create" and "free" function for it. Document who owns what in a header comment. The lab today is built on exactly that pattern.</p>
+
+      <!-- Decomposition along the data axis -->
+      <h3 id="decomposition" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Designing structs and their operations together</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">There is a design idea hiding in everything above. When you wrote the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">Student</code> struct, you decided which fields belong together. That is decomposition of data: id, gpa, and name are one thing, not three loose variables. When you wrote the roster functions, you decided which operations belong together. That is decomposition of behavior: init, add, remove, print, and free are the things a roster supports.</p>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">The skill is doing both at once. When you reach for a struct from now on, design the fields and the functions that operate on them in a single pass. The struct should carry the data the functions need; the functions should know what the struct guarantees. If you find yourself adding a field that no function reads, or writing a function that does not match any struct's responsibilities, the design is drifting. Lesson 6 anchored decomposition for functions; Lesson 19 extends it to data.</p>
+
+    </div>
+  </details>
+
+  <!-- ===================== 5. IN-CLASS WORK ===================== -->
+  <details id="in-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      5. In-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 16px 0;">Three things to do in class. Use the checklist to track your progress.</p>
+
+      <ul style="list-style: none; padding: 0; margin: 0 0 24px 0; font-size: 14.5px;">
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Work through the planets walkthrough below.</strong>
+          <span style="color: #4A5568;">Nine guided tasks across four sections: a pointer to a struct, malloc of a dynamic array, the dot and arrow operators, and free with dangling-pointer awareness. About 20 minutes.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Take the pass-by-value vs pass-by-pointer self-check.</strong>
+          <span style="color: #4A5568;">Ten questions on how structs travel into and out of functions, plus dynamic arrays and ownership. About 12 minutes.</span>
+        </li>
+        <li style="margin-bottom: 0; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Complete Lab 19: Swapping Structs and a Dynamic Roster.</strong>
+          <span style="color: #4A5568;">Two parts. Part 1: implement two swap functions to see pass-by-value vs pass-by-pointer with structs in action. Part 2: build a small roster manager that creates, prints, and frees Student records with heap-allocated name fields. Auto-graded through GitHub Classroom.</span>
+          <!-- =========================================================
+               EDIT ME: Lab 19 GitHub Classroom assignment link
+               Replace href="#" with the classroom.github.com/a/... invite
+               URL once the assignment is published.
+               ========================================================= -->
+          <div style="margin-top: 8px; margin-left: 28px;">
+            <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 6px 14px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 13px;">Accept Lab 19 on GitHub Classroom &rarr;</a>
+          </div>
+        </li>
+      </ul>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 18px 0 10px 0;">Planets Walkthrough</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Nine tasks across four sections. Type each C statement at the prompt. The terminal shows what the simulator did; the right pane shows the heap and any pointers aimed at it.</p>
+
+<!-- ============================================================
+     CS210 Lesson 19 - Planets Walkthrough Widget
+     Visualization-style walkthrough for the arrow operator and
+     dynamic arrays of structs.
+     Template-aligned style. Native HTML/CSS + scoped JS.
+     Paste as a block; runs anywhere the parent page allows <script>.
+     ============================================================ -->
+<style>
+.cs210-planets * { box-sizing: border-box; }
+.cs210-planets {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-planets h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-planets .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 22px;
+}
+.cs210-planets .progress-bar {
+  background: #E5E7EB;
+  border-radius: 3px;
+  height: 8px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.cs210-planets .progress-fill {
+  background: #003087;
+  height: 100%;
+  transition: width 0.3s ease;
+}
+.cs210-planets .progress-label {
+  font-size: 12px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-planets .section-header {
+  background: #E8EDF5;
+  color: #00205B;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.cs210-planets .task-card {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  border-radius: 3px;
+}
+.cs210-planets .task-card.complete {
+  background: #E6F4EA;
+  border-left-color: #2E7D32;
+}
+.cs210-planets .task-label {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B5300;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.cs210-planets .task-card.complete .task-label {
+  color: #1B5E20;
+}
+.cs210-planets .task-text {
+  font-size: 15px;
+  color: #1a1a1a;
+  margin-bottom: 6px;
+}
+.cs210-planets .task-text code {
+  background: #F0F2F5;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+}
+.cs210-planets .task-hint {
+  font-size: 13px;
+  color: #6B7280;
+  font-style: italic;
+  margin-top: 4px;
+}
+.cs210-planets .task-hint.pulse {
+  background: #FFF3CD;
+  border: 1px solid #F0B92C;
+  border-radius: 3px;
+  padding: 6px 10px;
+  color: #6B5300;
+  font-style: normal;
+  animation: cs210-pulse 1.4s ease-in-out;
+}
+@keyframes cs210-pulse {
+  0% { background: #FFF8E1; }
+  40% { background: #F0B92C; color: #ffffff; }
+  100% { background: #FFF3CD; color: #6B5300; }
+}
+.cs210-planets .task-note {
+  background: #F0F4FA;
+  border-left: 3px solid #003087;
+  padding: 8px 12px;
+  margin-top: 8px;
+  font-size: 13px;
+  color: #1a2a4a;
+  border-radius: 2px;
+}
+
+.cs210-planets .pane-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.cs210-planets .pane {
+  background: #F8FAFC;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+}
+.cs210-planets .pane-header {
+  background: #00205B;
+  color: #ffffff;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  border-radius: 4px 4px 0 0;
+}
+.cs210-planets .terminal {
+  background: #1E2A3A;
+  color: #E8EDF5;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13px;
+  padding: 10px 12px;
+  flex: 1;
+  overflow-y: auto;
+  border-radius: 0 0 4px 4px;
+  white-space: pre-wrap;
+  line-height: 1.5;
+  min-height: 240px;
+  max-height: 360px;
+}
+.cs210-planets .terminal .prompt { color: #7FB3D5; }
+.cs210-planets .terminal .typed  { color: #E8EDF5; }
+.cs210-planets .terminal .out    { color: #BCD9C3; }
+.cs210-planets .terminal .err    { color: #E89999; }
+.cs210-planets .terminal .info   { color: #C6B5E0; }
+
+.cs210-planets .memory-area {
+  padding: 12px;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 240px;
+  max-height: 360px;
+}
+.cs210-planets .memory-empty {
+  color: #6B7280;
+  font-size: 13px;
+  text-align: center;
+  padding-top: 20px;
+  font-style: italic;
+}
+
+.cs210-planets .ptr-card {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-left: 3px solid #003087;
+  border-radius: 3px;
+  padding: 6px 10px;
+  margin-bottom: 8px;
+  font-family: Consolas, monospace;
+  font-size: 12.5px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.cs210-planets .ptr-card.dangling {
+  border-left-color: #B8002F;
+  background: #FFF5F5;
+}
+.cs210-planets .ptr-card.null {
+  border-left-color: #6B7280;
+  background: #F0F2F5;
+}
+.cs210-planets .ptr-name { color: #00205B; font-weight: 700; }
+.cs210-planets .ptr-type { color: #6B7280; font-weight: 400; font-size: 11.5px; }
+.cs210-planets .ptr-target { color: #4A5568; font-size: 11.5px; }
+.cs210-planets .ptr-target.dangling { color: #B8002F; font-weight: 600; }
+.cs210-planets .ptr-target.null { color: #6B7280; font-style: italic; }
+
+.cs210-planets .heap-block {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  border-radius: 4px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+.cs210-planets .heap-title {
+  color: #00205B;
+  font-family: Consolas, monospace;
+  font-size: 12.5px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.cs210-planets .heap-meta {
+  color: #6B7280;
+  font-size: 11px;
+  font-family: Consolas, monospace;
+  margin-bottom: 8px;
+}
+.cs210-planets .slot-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.cs210-planets .slot {
+  background: #F8FAFC;
+  border: 1px solid #C7CFD9;
+  border-radius: 3px;
+  padding: 6px 8px;
+  min-width: 110px;
+  position: relative;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+.cs210-planets .slot.targeted {
+  border-color: #003087;
+  border-width: 2px;
+  padding: 5px 7px;
+}
+.cs210-planets .slot.flash-write {
+  animation: cs210-slot-flash 0.7s ease-in-out;
+}
+@keyframes cs210-slot-flash {
+  0%   { background: #F8FAFC; }
+  30%  { background: #F0B92C; }
+  100% { background: #F8FAFC; }
+}
+.cs210-planets .slot .idx {
+  font-size: 10px;
+  color: #6B7280;
+  font-family: Consolas, monospace;
+}
+.cs210-planets .slot .field {
+  font-size: 11.5px;
+  font-family: Consolas, monospace;
+  color: #1a1a1a;
+  line-height: 1.4;
+}
+.cs210-planets .slot .field .fname { color: #6B7280; }
+.cs210-planets .slot .field .fval  { color: #00205B; font-weight: 600; }
+.cs210-planets .slot .field .uninit { color: #B8002F; font-style: italic; }
+.cs210-planets .slot .slot-addr {
+  font-size: 9.5px;
+  color: #6B7280;
+  font-family: Consolas, monospace;
+  margin-top: 3px;
+  border-top: 1px dashed #D0D5DD;
+  padding-top: 2px;
+}
+.cs210-planets .slot .ptr-tag {
+  font-size: 10px;
+  color: #003087;
+  font-family: Consolas, monospace;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.cs210-planets .input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 10px;
+}
+.cs210-planets .cli-prompt {
+  color: #003087;
+  font-family: Consolas, monospace;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.cs210-planets .cli-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #C7CFD9;
+  border-radius: 3px;
+  font-family: Consolas, monospace;
+  font-size: 13.5px;
+  background: #ffffff;
+}
+.cs210-planets .cli-input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-planets .cli-run {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.cs210-planets .cli-run:hover { background: #00205B; }
+
+.cs210-planets .controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: #6B7280;
+}
+.cs210-planets .mode-toggle {
+  display: inline-flex;
+  border: 1px solid #C7CFD9;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.cs210-planets .mode-toggle button {
+  background: #ffffff;
+  border: none;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #4A5568;
+  font-family: inherit;
+}
+.cs210-planets .mode-toggle button.active {
+  background: #003087;
+  color: #ffffff;
+}
+.cs210-planets .small-link {
+  background: none;
+  border: none;
+  color: #003087;
+  font-family: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.cs210-planets .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  border-radius: 3px;
+  padding: 10px 14px;
+  margin-top: 16px;
+  font-size: 12.5px;
+  color: #4A5568;
+}
+
+.cs210-planets .inline-code-footer {
+  background: #F8FAFC;
+  border: 1px solid #C7CFD9;
+  border-radius: 3px;
+  padding: 8px 12px;
+  margin-top: 14px;
+  font-size: 12.5px;
+  color: #4A5568;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.cs210-planets .inline-code-footer .label {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #6B7280;
+  font-weight: 600;
+}
+.cs210-planets .inline-code-footer strong {
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  color: #00205B;
+  letter-spacing: 2px;
+}
+
+/* Name modal */
+.cs210-planets .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+.cs210-planets .name-modal {
+  background: #ffffff;
+  padding: 22px 26px;
+  border-radius: 6px;
+  border-top: 6px solid #003087;
+  max-width: 440px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+}
+.cs210-planets .name-modal h2 {
+  color: #00205B;
+  font-size: 18px;
+  margin: 0 0 8px 0;
+}
+.cs210-planets .name-modal p {
+  color: #4A5568;
+  font-size: 14px;
+  margin: 0 0 16px 0;
+}
+.cs210-planets .name-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-planets .name-modal input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-planets .name-modal-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-planets .name-modal-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-planets .name-modal-btn:not(:disabled):hover {
+  background: #00205B;
+}
+</style>
+
+<div class="cs210-planets">
+
+<div class="name-modal-backdrop" id="planets-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion card so you can include it in your screenshot for the Blackboard reflection.</p>
+    <input type="text" id="planets-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="planets-cadet-name-btn" disabled>Start the walkthrough</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 19 &middot; Planets Walkthrough</h1>
+<div class="subtitle">Nine guided tasks across four sections. Build a dynamic array of <code>Planet</code> structs on the heap, fill it with the dot and arrow operators, then free it. The right pane shows the heap as you go.</div>
+
+<div class="progress-bar"><div class="progress-fill" id="planets-progress-fill" style="width: 0%"></div></div>
+<div class="progress-label" id="planets-progress-label">Task 1 of 9</div>
+
+<div id="planets-section-header" class="section-header">Section 1: A pointer to a struct</div>
+
+<div class="task-card" id="planets-task-card">
+  <div class="task-label" id="planets-task-label">Task 1 of 9</div>
+  <div class="task-text" id="planets-task-text">Loading...</div>
+  <div class="task-hint" id="planets-task-hint"></div>
+  <div class="task-note" id="planets-task-note" style="display:none;"></div>
+</div>
+
+<div class="pane-row">
+  <div class="pane">
+    <div class="pane-header">Terminal</div>
+    <div class="terminal" id="planets-terminal"></div>
+  </div>
+  <div class="pane">
+    <div class="pane-header">Heap and pointers</div>
+    <div class="memory-area" id="planets-memory-area"></div>
+  </div>
+</div>
+
+<div class="input-row">
+  <span class="cli-prompt">planets&gt;</span>
+  <input type="text" class="cli-input" id="planets-cli-input" placeholder="Type a C statement, then press Enter" autocomplete="off" spellcheck="false">
+  <button class="cli-run" id="planets-cli-run">Run</button>
+</div>
+
+<div class="controls">
+  <span>Mode:</span>
+  <div class="mode-toggle">
+    <button id="planets-mode-walk" class="active" type="button">Walkthrough</button>
+    <button id="planets-mode-free" type="button">Free play</button>
+  </div>
+  <button id="planets-reset" class="small-link" type="button">Reset memory</button>
+  <button id="planets-help" class="small-link" type="button">help</button>
+</div>
+
+<div class="help-note">
+  <strong>How this works:</strong> Read each task, type the C statement at the prompt, press Enter. The terminal shows what the simulator did; the heap pane shows your data. Walkthrough mode advances you task by task; switch to Free play to type any supported statement at any time.
+</div>
+
+<div id="planets-completion-area"></div>
+
+</div>
+
+<script>
+(function () {
+  const root = document.querySelector('.cs210-planets');
+  if (!root) return;
+
+  // ============================================================
+  // CS210 widget completion utilities
+  // Salt -> deterministic 6-char code via FNV-1a.
+  // Alphabet excludes 0, 1, O, I (uppercase only output).
+  // ============================================================
+  const CS210_SALT = "lesson19_planets_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+  function cs210Copy(text) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch (e) {}
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      return true;
+    } catch (e) { return false; }
+  }
+
+  // ============================================================
+  // Name modal
+  // ============================================================
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#planets-name-modal-backdrop');
+    const input = root.querySelector('#planets-cadet-name-input');
+    const btn = root.querySelector('#planets-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length > 0) {
+        cs210CadetName = stored.trim();
+        backdrop.style.display = 'none';
+        return;
+      }
+    } catch (e) {}
+    function updateBtn() { btn.disabled = input.value.trim().length === 0; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', () => {
+      const n = input.value.trim();
+      if (!n) return;
+      cs210CadetName = n;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', n); } catch (e) {}
+      backdrop.style.display = 'none';
+      // Dismiss any sibling widget modals on the same page.
+      const siblings = document.querySelectorAll(
+        '#name-modal-backdrop, #bw-name-modal-backdrop, #ptrmath-name-modal-backdrop, #duality-name-modal-backdrop, #structptr-name-modal-backdrop'
+      );
+      siblings.forEach(function(m) { m.style.display = 'none'; });
+      const cli = root.querySelector('#planets-cli-input');
+      if (cli) cli.focus();
+    });
+    setTimeout(() => { try { input.focus(); } catch (e) {} }, 50);
+  })();
+
+  // ============================================================
+  // Completion overlay
+  // ============================================================
+  function cs210RenderCompletion(area) {
+    if (root.querySelector('#cs210-planets-completion-overlay')) return;
+    const now = new Date();
+    const pad = (n) => n.toString().padStart(2, '0');
+    const ts = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate()) +
+               ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+
+    const overlay = document.createElement('div');
+    overlay.id = 'cs210-planets-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">Walkthrough complete</h2>' +
+        '<p>You allocated a dynamic array of structs, filled it with the dot and arrow operators, and freed it cleanly. Take a screenshot of this card and include it with your Lesson 19 reflection in Blackboard.</p>' +
+        '<div style="background:#F0F4FA;border:1px solid #003087;border-radius:4px;padding:14px 18px;margin-bottom:14px;">' +
+          '<div style="font-size:12px;letter-spacing:1.5px;color:#4A5568;margin-bottom:4px;text-transform:uppercase;">Completion code</div>' +
+          '<div style="font-family:Consolas,monospace;font-size:26px;font-weight:700;color:#00205B;letter-spacing:3px;">' + CS210_CODE + '</div>' +
+        '</div>' +
+        '<div style="font-size:14px;color:#1a1a1a;margin-bottom:6px;"><strong style="color:#00205B;">' + escapeHtml(cs210CadetName || '(name not set)') + '</strong></div>' +
+        '<div style="font-size:13px;color:#6B7280;margin-bottom:14px;">' + ts + '</div>' +
+        '<div style="background:#FFF8E1;border-left:4px solid #F0B92C;padding:10px 14px;border-radius:3px;font-size:13.5px;color:#6B5300;margin-bottom:14px;">' +
+          '<strong style="color:#4A3A00;">Reminder:</strong> Submit this code on the Lesson 19 reflection in Blackboard. The fill-in-the-blank question asks for the 6-character completion code; a screenshot of this card is your backup.' +
+        '</div>' +
+        '<div style="display:flex;gap:8px;">' +
+          '<button class="name-modal-btn" id="cs-planets-copy-btn" type="button" style="background:#003087;">Copy code</button>' +
+          '<button class="name-modal-btn" id="cs-planets-overlay-close" type="button" style="background:#2E7D32;">Got it &mdash; close this</button>' +
+        '</div>' +
+      '</div>';
+    root.appendChild(overlay);
+
+    overlay.querySelector('#cs-planets-overlay-close').addEventListener('click', () => {
+      overlay.remove();
+    });
+    overlay.querySelector('#cs-planets-copy-btn').addEventListener('click', (e) => {
+      const btn = e.currentTarget;
+      const ok = cs210Copy(CS210_CODE);
+      btn.textContent = ok ? 'Copied!' : 'Copy failed';
+      btn.style.background = ok ? '#2E7D32' : '#B8002F';
+      setTimeout(() => { btn.textContent = 'Copy code'; btn.style.background = '#003087'; }, 1500);
+    });
+
+    if (area) {
+      area.innerHTML =
+        '<div class="inline-code-footer">' +
+          '<span class="label">Completion code</span>' +
+          '<strong>' + CS210_CODE + '</strong>' +
+          '<span style="color:#6B7280;margin-left:14px;font-family:\'Segoe UI\',Arial,sans-serif;">' +
+            escapeHtml(cs210CadetName || '(name not set)') + ' &middot; ' + ts +
+          '</span>' +
+        '</div>';
+    }
+  }
+
+  // ============================================================
+  // Widget state
+  // ============================================================
+  const terminalEl    = root.querySelector('#planets-terminal');
+  const memoryEl      = root.querySelector('#planets-memory-area');
+  const inputEl       = root.querySelector('#planets-cli-input');
+  const runBtn        = root.querySelector('#planets-cli-run');
+  const completionEl  = root.querySelector('#planets-completion-area');
+  const taskCardEl    = root.querySelector('#planets-task-card');
+  const taskLabelEl   = root.querySelector('#planets-task-label');
+  const taskTextEl    = root.querySelector('#planets-task-text');
+  const taskHintEl    = root.querySelector('#planets-task-hint');
+  const taskNoteEl    = root.querySelector('#planets-task-note');
+  const progressFill  = root.querySelector('#planets-progress-fill');
+  const progressLabel = root.querySelector('#planets-progress-label');
+  const sectionHeader = root.querySelector('#planets-section-header');
+  const modeWalkBtn   = root.querySelector('#planets-mode-walk');
+  const modeFreeBtn   = root.querySelector('#planets-mode-free');
+  const resetBtn      = root.querySelector('#planets-reset');
+  const helpBtn       = root.querySelector('#planets-help');
+
+  // Heap state. Each Planet struct has: id (int, 4 bytes), mass (double, 8 bytes), moons (int, 4 bytes).
+  // We treat sizeof(Planet) = 16 (the natural layout with int padding to 8 for the double; cadets won't
+  // count bytes here, but we use 16 for realistic-looking addresses).
+  const PLANET_SIZE = 16;
+  const HEAP_BASE = 0x5000; // realistic-looking address for malloc-returned memory
+
+  // roster: { name, length, baseAddr, cells: [{id, mass, moons, init: {id, mass, moons}}], freed: bool }
+  // null  -> not allocated
+  let roster = null;
+
+  // Pointers indexed by name
+  // { name, kind: 'roster' | 'slot', addr: BigInt|null, slotIndex: int|null, freed: bool }
+  // (kind 'roster' = points to roster base; 'slot' = points into a specific slot)
+  let pointers = new Map();
+
+  // Flash key for the slot that was just written
+  let flashSlotKey = null; // "slotIndex"
+
+  let currentTaskIndex = 0;
+  let consecutiveFails = 0;
+  let mode = "walkthrough";
+
+  // ============================================================
+  // Parser primitives
+  // ============================================================
+  function norm(s) { return s.replace(/\s+/g, ' ').trim(); }
+  const ID = '[A-Za-z_][A-Za-z0-9_]*';
+
+  // Planet *NAME = NULL;
+  function tryParseRosterDeclNull(line) {
+    const re = new RegExp('^Planet\\s*\\*\\s*(' + ID + ')\\s*=\\s*NULL\\s*;?$');
+    const m = norm(line).match(re);
+    if (!m) return null;
+    return { name: m[1] };
+  }
+  // Planet *NAME = malloc(N * sizeof(Planet));
+  function tryParseRosterMalloc(line) {
+    const t = norm(line);
+    // Two flavours: with or without (Planet *) cast.
+    const re1 = new RegExp('^Planet\\s*\\*\\s*(' + ID + ')\\s*=\\s*malloc\\(\\s*(\\d+)\\s*\\*\\s*sizeof\\(\\s*Planet\\s*\\)\\s*\\)\\s*;?$');
+    const m1 = t.match(re1);
+    if (m1) return { name: m1[1], count: parseInt(m1[2], 10), cast: false };
+    const re2 = new RegExp('^Planet\\s*\\*\\s*(' + ID + ')\\s*=\\s*\\(\\s*Planet\\s*\\*\\s*\\)\\s*malloc\\(\\s*(\\d+)\\s*\\*\\s*sizeof\\(\\s*Planet\\s*\\)\\s*\\)\\s*;?$');
+    const m2 = t.match(re2);
+    if (m2) return { name: m2[1], count: parseInt(m2[2], 10), cast: true };
+    return null;
+  }
+  // NAME = malloc(...) -- on an existing pointer
+  function tryParseRosterMallocAssign(line) {
+    const t = norm(line);
+    const re1 = new RegExp('^(' + ID + ')\\s*=\\s*malloc\\(\\s*(\\d+)\\s*\\*\\s*sizeof\\(\\s*Planet\\s*\\)\\s*\\)\\s*;?$');
+    const m1 = t.match(re1);
+    if (m1) return { name: m1[1], count: parseInt(m1[2], 10), cast: false };
+    const re2 = new RegExp('^(' + ID + ')\\s*=\\s*\\(\\s*Planet\\s*\\*\\s*\\)\\s*malloc\\(\\s*(\\d+)\\s*\\*\\s*sizeof\\(\\s*Planet\\s*\\)\\s*\\)\\s*;?$');
+    const m2 = t.match(re2);
+    if (m2) return { name: m2[1], count: parseInt(m2[2], 10), cast: true };
+    return null;
+  }
+
+  // free(NAME);
+  function tryParseFree(line) {
+    const re = new RegExp('^free\\s*\\(\\s*(' + ID + ')\\s*\\)\\s*;?$');
+    const m = norm(line).match(re);
+    if (!m) return null;
+    return { name: m[1] };
+  }
+
+  // ROSTER[N].field = value;
+  function tryParseDotAssign(line) {
+    const re = new RegExp(
+      '^(' + ID + ')\\s*\\[\\s*(\\d+)\\s*\\]\\s*\\.\\s*(' + ID + ')\\s*=\\s*(.+?)\\s*;?$'
+    );
+    const m = norm(line).match(re);
+    if (!m) return null;
+    return { name: m[1], index: parseInt(m[2], 10), field: m[3], rhs: m[4].trim() };
+  }
+
+  // Planet *NAME = &ROSTER[N];
+  function tryParseSlotPtrDecl(line) {
+    const re = new RegExp(
+      '^Planet\\s*\\*\\s*(' + ID + ')\\s*=\\s*&\\s*(' + ID + ')\\s*\\[\\s*(\\d+)\\s*\\]\\s*;?$'
+    );
+    const m = norm(line).match(re);
+    if (!m) return null;
+    return { ptrName: m[1], rosterName: m[2], index: parseInt(m[3], 10) };
+  }
+
+  // PTR->field = value;
+  function tryParseArrowAssign(line) {
+    const re = new RegExp(
+      '^(' + ID + ')\\s*->\\s*(' + ID + ')\\s*=\\s*(.+?)\\s*;?$'
+    );
+    const m = norm(line).match(re);
+    if (!m) return null;
+    return { name: m[1], field: m[2], rhs: m[3].trim() };
+  }
+
+  // PTR.field -- common error (using . on a pointer); detect for diagnose
+  function looksLikeDotOnPointer(line) {
+    // matches "p.id = ..." where p is in our pointers map (not roster name)
+    const re = new RegExp('^(' + ID + ')\\s*\\.\\s*(' + ID + ')\\s*=\\s*(.+?)\\s*;?$');
+    const m = norm(line).match(re);
+    if (!m) return null;
+    return { name: m[1], field: m[2], rhs: m[3].trim() };
+  }
+
+  // (*PTR).field = value;
+  function tryParseParenStarAssign(line) {
+    const re = new RegExp('^\\(\\s*\\*\\s*(' + ID + ')\\s*\\)\\s*\\.\\s*(' + ID + ')\\s*=\\s*(.+?)\\s*;?$');
+    const m = norm(line).match(re);
+    if (!m) return null;
+    return { name: m[1], field: m[2], rhs: m[3].trim() };
+  }
+
+  // PTR = expression; (reassign existing pointer)
+  function tryParsePtrAssign(line) {
+    const re = new RegExp('^(' + ID + ')\\s*=\\s*(.+?)\\s*;?$');
+    const m = norm(line).match(re);
+    if (!m) return null;
+    return { name: m[1], rhs: m[2].trim() };
+  }
+
+  // ============================================================
+  // Value parsing for struct fields
+  // ============================================================
+  function parseFieldValue(field, rhs) {
+    // id and moons -> int; mass -> double
+    if (field === 'id' || field === 'moons') {
+      if (!/^-?\d+$/.test(rhs)) return { error: 'Expected an integer for ' + field + ', got ' + rhs };
+      return { value: parseInt(rhs, 10) };
+    }
+    if (field === 'mass') {
+      if (!/^-?\d+(\.\d+)?$/.test(rhs)) return { error: 'Expected a number for mass, got ' + rhs };
+      return { value: parseFloat(rhs) };
+    }
+    return { error: 'Unknown field "' + field + '". Planet has id, mass, moons.' };
+  }
+
+  // ============================================================
+  // Run a command
+  // ============================================================
+  function runCommand(rawCmd) {
+    const cmd = norm(rawCmd);
+    if (cmd === '' || cmd === ';') return { kind: 'noop' };
+
+    if (/^help\s*;?$/i.test(cmd)) {
+      return { kind: 'help' };
+    }
+    if (/^(clear|reset)\s*;?$/i.test(cmd)) {
+      doClear();
+      return { kind: 'cleared' };
+    }
+
+    // Planet *roster = NULL;
+    let parsed = tryParseRosterDeclNull(cmd);
+    if (parsed) {
+      if (pointers.has(parsed.name)) {
+        return { kind: 'error', message: 'Pointer "' + parsed.name + '" has already been declared.' };
+      }
+      pointers.set(parsed.name, { name: parsed.name, kind: 'roster', addr: null, slotIndex: null, freed: false });
+      return { kind: 'ptr-null', name: parsed.name };
+    }
+
+    // Planet *roster = malloc(N * sizeof(Planet));
+    parsed = tryParseRosterMalloc(cmd);
+    if (parsed) {
+      if (pointers.has(parsed.name)) {
+        // Re-declaration -- treat as error
+        return { kind: 'error', message: 'Pointer "' + parsed.name + '" has already been declared. To allocate into an existing pointer, write "' + parsed.name + ' = malloc(...);".' };
+      }
+      if (roster && !roster.freed) {
+        return { kind: 'error', message: 'A roster is already allocated. For this widget we model one roster at a time. Call free first, or use Reset memory.' };
+      }
+      return doMalloc(parsed.name, parsed.count, /*newDecl=*/true);
+    }
+
+    // roster = malloc(N * sizeof(Planet));
+    parsed = tryParseRosterMallocAssign(cmd);
+    if (parsed) {
+      if (!pointers.has(parsed.name)) {
+        return { kind: 'error', message: 'Pointer "' + parsed.name + '" has not been declared. Try: Planet *' + parsed.name + ' = malloc(...);' };
+      }
+      const p = pointers.get(parsed.name);
+      if (p.kind !== 'roster') {
+        return { kind: 'error', message: parsed.name + ' was declared as a slot pointer; assigning malloc to it would lose the roster. Allocate into the roster pointer instead.' };
+      }
+      if (roster && !roster.freed) {
+        return { kind: 'error', message: 'A roster is already allocated. For this widget we model one roster at a time. Call free first, or use Reset memory.' };
+      }
+      return doMalloc(parsed.name, parsed.count, /*newDecl=*/false);
+    }
+
+    // free(roster);
+    parsed = tryParseFree(cmd);
+    if (parsed) {
+      if (!pointers.has(parsed.name)) {
+        return { kind: 'error', message: 'free expects a pointer; "' + parsed.name + '" has not been declared.' };
+      }
+      const p = pointers.get(parsed.name);
+      if (p.kind !== 'roster') {
+        return { kind: 'error', message: 'You can only free a pointer that was returned by malloc. ' + parsed.name + ' is a slot pointer into an existing array, not its own allocation.' };
+      }
+      if (!roster) {
+        return { kind: 'error', message: 'Nothing to free. ' + parsed.name + ' is NULL.' };
+      }
+      if (roster.freed) {
+        return { kind: 'error', message: 'Double free. ' + parsed.name + ' was already freed; freeing it again is undefined behavior.' };
+      }
+      // Mark heap freed; mark all pointers (roster and slot) as dangling.
+      roster.freed = true;
+      for (const [, p2] of pointers) {
+        p2.freed = true;
+      }
+      return { kind: 'freed', name: parsed.name };
+    }
+
+    // roster[N].field = value;
+    parsed = tryParseDotAssign(cmd);
+    if (parsed) {
+      if (!pointers.has(parsed.name)) {
+        return { kind: 'error', message: '"' + parsed.name + '" is not a declared pointer.' };
+      }
+      const p = pointers.get(parsed.name);
+      if (p.kind !== 'roster') {
+        return { kind: 'error', message: parsed.name + ' is a slot pointer, not the roster. Use the arrow operator: ' + parsed.name + '->' + parsed.field + ' = ' + parsed.rhs + ';' };
+      }
+      if (!roster) {
+        return { kind: 'error', message: parsed.name + ' is NULL; you cannot index into it. Allocate with malloc first.' };
+      }
+      if (roster.freed) {
+        return { kind: 'error', message: 'Use-after-free. ' + parsed.name + ' was freed; writing through it is undefined behavior.' };
+      }
+      if (parsed.index < 0 || parsed.index >= roster.length) {
+        return { kind: 'error', message: 'Index ' + parsed.index + ' is outside the roster (length ' + roster.length + '). Real C would not stop you, but writing there corrupts memory.' };
+      }
+      const val = parseFieldValue(parsed.field, parsed.rhs);
+      if (val.error) return { kind: 'error', message: val.error };
+      const cell = roster.cells[parsed.index];
+      cell[parsed.field] = val.value;
+      cell.init[parsed.field] = true;
+      flashSlotKey = String(parsed.index);
+      return { kind: 'cell-written', mode: 'dot', name: parsed.name, index: parsed.index, field: parsed.field, value: val.value };
+    }
+
+    // Planet *p = &roster[N];
+    parsed = tryParseSlotPtrDecl(cmd);
+    if (parsed) {
+      if (pointers.has(parsed.ptrName)) {
+        return { kind: 'error', message: 'Pointer "' + parsed.ptrName + '" has already been declared.' };
+      }
+      if (!pointers.has(parsed.rosterName)) {
+        return { kind: 'error', message: '"' + parsed.rosterName + '" is not a declared pointer.' };
+      }
+      const rp = pointers.get(parsed.rosterName);
+      if (rp.kind !== 'roster' || !roster) {
+        return { kind: 'error', message: 'Cannot take the address of a roster slot when no roster is allocated.' };
+      }
+      if (roster.freed) {
+        return { kind: 'error', message: 'Cannot take the address of a slot in freed memory.' };
+      }
+      if (parsed.index < 0 || parsed.index >= roster.length) {
+        return { kind: 'error', message: 'Index ' + parsed.index + ' is outside the roster (length ' + roster.length + ').' };
+      }
+      const addr = BigInt(roster.baseAddr) + BigInt(parsed.index) * BigInt(PLANET_SIZE);
+      pointers.set(parsed.ptrName, {
+        name: parsed.ptrName, kind: 'slot', addr, slotIndex: parsed.index, freed: false
+      });
+      return { kind: 'slot-ptr-declared', name: parsed.ptrName, index: parsed.index };
+    }
+
+    // PTR->field = value;
+    parsed = tryParseArrowAssign(cmd);
+    if (parsed) {
+      if (!pointers.has(parsed.name)) {
+        return { kind: 'error', message: '"' + parsed.name + '" is not a declared pointer.' };
+      }
+      const p = pointers.get(parsed.name);
+      if (p.freed) {
+        return { kind: 'error', message: 'Use-after-free. ' + parsed.name + ' points into memory that was freed; writing through it is undefined behavior.' };
+      }
+      if (p.addr === null) {
+        return { kind: 'error', message: 'Cannot dereference a NULL pointer.' };
+      }
+      let idx;
+      if (p.kind === 'roster') {
+        // roster->id writes to index 0 (the first element)
+        idx = 0;
+      } else {
+        idx = p.slotIndex;
+      }
+      if (!roster) return { kind: 'error', message: 'No roster is allocated.' };
+      if (idx < 0 || idx >= roster.length) return { kind: 'error', message: 'Pointer ' + parsed.name + ' is outside the roster.' };
+      const val = parseFieldValue(parsed.field, parsed.rhs);
+      if (val.error) return { kind: 'error', message: val.error };
+      const cell = roster.cells[idx];
+      cell[parsed.field] = val.value;
+      cell.init[parsed.field] = true;
+      flashSlotKey = String(idx);
+      return { kind: 'cell-written', mode: 'arrow', name: parsed.name, index: idx, field: parsed.field, value: val.value };
+    }
+
+    // (*p).field = value;  (same as p->field; teach the equivalence)
+    parsed = tryParseParenStarAssign(cmd);
+    if (parsed) {
+      if (!pointers.has(parsed.name)) {
+        return { kind: 'error', message: '"' + parsed.name + '" is not a declared pointer.' };
+      }
+      const p = pointers.get(parsed.name);
+      if (p.freed) {
+        return { kind: 'error', message: 'Use-after-free. ' + parsed.name + ' points into memory that was freed.' };
+      }
+      if (p.addr === null) return { kind: 'error', message: 'Cannot dereference a NULL pointer.' };
+      let idx = (p.kind === 'roster') ? 0 : p.slotIndex;
+      if (!roster) return { kind: 'error', message: 'No roster is allocated.' };
+      const val = parseFieldValue(parsed.field, parsed.rhs);
+      if (val.error) return { kind: 'error', message: val.error };
+      const cell = roster.cells[idx];
+      cell[parsed.field] = val.value;
+      cell.init[parsed.field] = true;
+      flashSlotKey = String(idx);
+      return { kind: 'cell-written', mode: 'parenstar', name: parsed.name, index: idx, field: parsed.field, value: val.value };
+    }
+
+    // Detect "p.field = val" used incorrectly on a pointer (common mistake)
+    parsed = looksLikeDotOnPointer(cmd);
+    if (parsed && pointers.has(parsed.name)) {
+      const p = pointers.get(parsed.name);
+      if (p.kind === 'slot' || p.kind === 'roster') {
+        // It's a pointer, so . is wrong (unless it's roster[N].field, which was matched earlier).
+        return {
+          kind: 'error',
+          message: parsed.name + ' is a pointer (Planet *), so the dot operator does not apply directly. Either use the arrow: ' + parsed.name + '->' + parsed.field + ' = ' + parsed.rhs + ';   or dereference first: (*' + parsed.name + ').' + parsed.field + ' = ' + parsed.rhs + ';'
+        };
+      }
+    }
+
+    // PTR = expression; (reassign)
+    parsed = tryParsePtrAssign(cmd);
+    if (parsed) {
+      if (!pointers.has(parsed.name)) {
+        return { kind: 'error', message: '"' + parsed.name + '" is not a declared pointer.' };
+      }
+      const p = pointers.get(parsed.name);
+      const rhs = parsed.rhs;
+      if (rhs === 'NULL') {
+        p.addr = null;
+        p.slotIndex = null;
+        p.freed = false;
+        return { kind: 'ptr-assigned', name: parsed.name, target: 'NULL' };
+      }
+      const mSlot = rhs.match(new RegExp('^&\\s*(' + ID + ')\\s*\\[\\s*(\\d+)\\s*\\]$'));
+      if (mSlot) {
+        const rosterName = mSlot[1];
+        const index = parseInt(mSlot[2], 10);
+        if (!pointers.has(rosterName)) return { kind: 'error', message: '"' + rosterName + '" is not a declared pointer.' };
+        const rp = pointers.get(rosterName);
+        if (rp.kind !== 'roster' || !roster) return { kind: 'error', message: 'No roster is allocated.' };
+        if (roster.freed) return { kind: 'error', message: 'Cannot take the address of a slot in freed memory.' };
+        if (index < 0 || index >= roster.length) return { kind: 'error', message: 'Index ' + index + ' is outside the roster.' };
+        p.addr = BigInt(roster.baseAddr) + BigInt(index) * BigInt(PLANET_SIZE);
+        p.slotIndex = index;
+        p.freed = false;
+        p.kind = 'slot'; // could be promotion from roster, but this widget keeps roster names roster-shaped; we'll allow either
+        return { kind: 'ptr-assigned', name: parsed.name, target: rosterName + '[' + index + ']' };
+      }
+      return { kind: 'error', message: 'Unsupported pointer assignment. Try NULL or &roster[N].' };
+    }
+
+    return { kind: 'error', message: 'Could not parse that statement. Try typing "help" for the supported forms.' };
+  }
+
+  function doMalloc(name, count, newDecl) {
+    if (count < 1 || count > 6) {
+      return { kind: 'error', message: 'For this widget, pick a count between 1 and 6 slots.' };
+    }
+    const cells = [];
+    for (let i = 0; i < count; i++) {
+      cells.push({ id: 0, mass: 0.0, moons: 0, init: { id: false, mass: false, moons: false } });
+    }
+    roster = { name, length: count, baseAddr: HEAP_BASE, cells, freed: false };
+    if (newDecl) {
+      pointers.set(name, { name, kind: 'roster', addr: BigInt(HEAP_BASE), slotIndex: null, freed: false });
+    } else {
+      const p = pointers.get(name);
+      p.addr = BigInt(HEAP_BASE);
+      p.kind = 'roster';
+      p.freed = false;
+    }
+    return { kind: 'malloc', name, count };
+  }
+
+  function doClear() {
+    roster = null;
+    pointers = new Map();
+    flashSlotKey = null;
+  }
+
+  // ============================================================
+  // Terminal helpers
+  // ============================================================
+  function termWrite(text, cls) {
+    const span = document.createElement('span');
+    if (cls) span.className = cls;
+    span.textContent = text;
+    terminalEl.appendChild(span);
+  }
+  function termLine(text, cls) {
+    termWrite(text, cls);
+    terminalEl.appendChild(document.createElement('br'));
+    // Hybrid scroll: only auto-scroll if user is already near the bottom
+    const nearBottom = terminalEl.scrollHeight - terminalEl.scrollTop - terminalEl.clientHeight < 30;
+    if (nearBottom) terminalEl.scrollTop = terminalEl.scrollHeight;
+  }
+  function echoCommand(cmd) {
+    termWrite('planets> ', 'prompt');
+    termLine(cmd, 'typed');
+  }
+
+  // ============================================================
+  // Memory pane rendering
+  // ============================================================
+  function renderMemory() {
+    if (!roster && pointers.size === 0) {
+      memoryEl.innerHTML = '<div class="memory-empty">No pointer or roster yet.<br>Type the first statement on the left.</div>';
+      return;
+    }
+    let html = '';
+    // Heap region (roster)
+    if (roster) {
+      html += renderHeapBlock(roster);
+    }
+    // Pointers
+    if (pointers.size > 0) {
+      for (const [, p] of pointers) {
+        html += renderPtrCard(p);
+      }
+    }
+    memoryEl.innerHTML = html;
+
+    if (flashSlotKey !== null) {
+      const slotEl = memoryEl.querySelector('.slot[data-key="' + flashSlotKey + '"]');
+      if (slotEl) {
+        slotEl.classList.add('flash-write');
+        setTimeout(() => { slotEl.classList.remove('flash-write'); }, 700);
+      }
+      flashSlotKey = null;
+    }
+  }
+
+  function renderHeapBlock(r) {
+    // Map slot index -> array of pointer names that target it
+    const tagsByIdx = {};
+    for (const [, p] of pointers) {
+      if (p.freed || p.addr === null) continue;
+      let idx = null;
+      if (p.kind === 'roster') idx = 0;
+      else if (p.kind === 'slot') idx = p.slotIndex;
+      if (idx !== null && idx >= 0 && idx < r.length) {
+        (tagsByIdx[idx] = tagsByIdx[idx] || []).push(p.name);
+      }
+    }
+    let slotsHtml = '';
+    for (let i = 0; i < r.length; i++) {
+      const cell = r.cells[i];
+      const addr = '0x' + (BigInt(r.baseAddr) + BigInt(i) * BigInt(PLANET_SIZE)).toString(16).toUpperCase();
+      const tags = tagsByIdx[i] ? '<div class="ptr-tag">&darr; ' + tagsByIdx[i].map(escapeHtml).join(', ') + '</div>' : '';
+      const targeted = tagsByIdx[i] ? ' targeted' : '';
+      const idDisp   = cell.init.id    ? '<span class="fval">' + cell.id + '</span>'    : '<span class="uninit">?</span>';
+      const massDisp = cell.init.mass  ? '<span class="fval">' + formatDouble(cell.mass) + '</span>' : '<span class="uninit">?</span>';
+      const moonDisp = cell.init.moons ? '<span class="fval">' + cell.moons + '</span>' : '<span class="uninit">?</span>';
+      slotsHtml +=
+        '<div class="slot' + targeted + '" data-key="' + i + '">' +
+          tags +
+          '<div class="idx">[' + i + ']</div>' +
+          '<div class="field"><span class="fname">id:</span> ' + idDisp + '</div>' +
+          '<div class="field"><span class="fname">mass:</span> ' + massDisp + '</div>' +
+          '<div class="field"><span class="fname">moons:</span> ' + moonDisp + '</div>' +
+          '<div class="slot-addr">' + addr + '</div>' +
+        '</div>';
+    }
+    const freedTag = r.freed ? ' <span style="color:#B8002F;font-weight:600;">(freed)</span>' : '';
+    return '<div class="heap-block"' + (r.freed ? ' style="opacity:0.45;border-style:dashed;"' : '') + '>' +
+      '<div class="heap-title">Planet ' + escapeHtml(r.name) + '[' + r.length + ']' + freedTag + '</div>' +
+      '<div class="heap-meta">base 0x' + r.baseAddr.toString(16).toUpperCase() + ' &middot; ' + PLANET_SIZE + ' bytes/Planet &middot; ' + (r.length * PLANET_SIZE) + ' bytes total</div>' +
+      '<div class="slot-row">' + slotsHtml + '</div>' +
+    '</div>';
+  }
+
+  function renderPtrCard(p) {
+    let cardCls = 'ptr-card';
+    let targetCls = '';
+    let addrStr;
+    let targetStr;
+    if (p.freed) {
+      cardCls += ' dangling';
+      addrStr = (p.addr === null) ? 'NULL' : '0x' + p.addr.toString(16).toUpperCase();
+      targetStr = 'dangling: memory was freed';
+      targetCls = 'dangling';
+    } else if (p.addr === null) {
+      cardCls += ' null';
+      addrStr = 'NULL';
+      targetStr = 'points to: NULL';
+      targetCls = 'null';
+    } else {
+      addrStr = '0x' + p.addr.toString(16).toUpperCase();
+      let idx;
+      if (p.kind === 'roster') idx = 0;
+      else idx = p.slotIndex;
+      if (roster && idx !== null && idx >= 0 && idx < roster.length) {
+        if (p.kind === 'roster') {
+          targetStr = 'points to: roster base (slot [0])';
+        } else {
+          targetStr = 'points to: roster[' + idx + ']';
+        }
+      } else {
+        targetStr = 'points to: ' + addrStr;
+      }
+    }
+    return '<div class="' + cardCls + '">' +
+      '<span class="ptr-name">' + escapeHtml(p.name) + '</span>' +
+      '<span><span class="ptr-type">Planet *</span> = ' + addrStr + '</span>' +
+      '<span class="ptr-target ' + targetCls + '">' + escapeHtml(targetStr) + '</span>' +
+    '</div>';
+  }
+
+  function formatDouble(v) {
+    if (Number.isInteger(v)) return v.toFixed(1);
+    return v.toFixed(2).replace(/0+$/, '').replace(/\.$/, '.0');
+  }
+
+  // ============================================================
+  // Task slate
+  // ============================================================
+  const tasks = [
+    // Section 1: A pointer to a struct
+    {
+      section: 'Section 1: A pointer to a struct',
+      label: 'Task 1 of 9',
+      text: 'Today\u2019s data type. A Planet struct holds three fields: int id, double mass, int moons. We\u2019ll build a roster of planets on the heap. Start by declaring a Planet pointer named roster, initialized to NULL. (NULL is the same convention you used in Lesson 12 \u2014 the pointer holds no address yet.)',
+      hint: 'Planet *roster = NULL;',
+      match: (cmd) => /^\s*Planet\s*\*\s*roster\s*=\s*NULL\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = norm(cmd);
+        if (/^Planet\s+roster\s*=\s*NULL\s*;?$/.test(t)) return 'Almost. You wrote Planet without the *. roster needs to be a pointer to Planet, not a Planet value. Try: Planet *roster = NULL;';
+        if (/^Planet\s*\*\s*roster\s*;?$/.test(t)) return 'Almost. Always initialize a pointer when you declare it; an uninitialized pointer can hold anything. Try: Planet *roster = NULL;';
+        if (!t.endsWith(';')) return 'Almost. Don\u2019t forget the semicolon at the end.';
+        return null;
+      },
+      note: 'roster now exists, but holds NULL. NULL is a placeholder address \u2014 it does not point to anything yet. The heap pane is still empty.',
+    },
+    // Section 2: Allocate a dynamic array
+    {
+      section: 'Section 2: Allocate a dynamic array of structs',
+      label: 'Task 2 of 9',
+      text: 'Allocate 3 Planet slots on the heap and store the address in roster. The size in bytes is 3 * sizeof(Planet); that\u2019s the only correct way to ask malloc for an array \u2014 never hard-code the byte count.',
+      hint: 'roster = malloc(3 * sizeof(Planet));',
+      match: (cmd) => /^\s*roster\s*=\s*(\(\s*Planet\s*\*\s*\)\s*)?malloc\s*\(\s*3\s*\*\s*sizeof\s*\(\s*Planet\s*\)\s*\)\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = norm(cmd);
+        if (/malloc\s*\(\s*3\s*\)/.test(t) || /malloc\s*\(\s*\d+\s*\)\s*;?$/.test(t) && !/sizeof/.test(t)) {
+          return 'Watch the size. malloc takes bytes, not elements. Use 3 * sizeof(Planet) so it works no matter how big a Planet is.';
+        }
+        if (/malloc\s*\(\s*sizeof\s*\(\s*Planet\s*\)\s*\*\s*3\s*\)/.test(t)) {
+          return 'That works in real C, but for this task write it in the conventional order: 3 * sizeof(Planet).';
+        }
+        if (/Planet\s*\*\s*roster\s*=\s*malloc/.test(t)) {
+          return 'roster was already declared in task 1. For this task, assign into the existing pointer: roster = malloc(...);';
+        }
+        if (!t.endsWith(';')) return 'Almost. Don\u2019t forget the semicolon at the end.';
+        return null;
+      },
+      note: 'malloc returned a chunk of heap memory and roster now points to it. Three slots appear in the heap pane, each holding garbage (shown as "?") until we write to them. In real C the bytes are whatever happens to be there \u2014 do NOT read a field before initializing it.',
+    },
+    // Section 3: Fill via the dot operator
+    {
+      section: 'Section 3: Write fields with the dot operator',
+      label: 'Task 3 of 9',
+      text: 'Set the id field of the first slot to 3 (we\u2019re using id 3 for Earth: it\u2019s the third planet from the Sun). roster[0] is a Planet value (the * is folded into the [ ]), so you reach its fields with the dot operator.',
+      hint: 'roster[0].id = 3;',
+      match: (cmd) => /^\s*roster\s*\[\s*0\s*\]\s*\.\s*id\s*=\s*3\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = norm(cmd);
+        if (/^roster\s*->\s*id\s*=\s*3\s*;?$/.test(t)) {
+          return 'That writes through the roster pointer to slot 0 only because roster points AT slot 0. For this task use the index form: roster[0].id = 3;';
+        }
+        if (/^roster\s*\[\s*0\s*\]\s*->\s*id\s*=\s*3\s*;?$/.test(t)) {
+          return 'Once you index with [0], the result is a Planet value, not a pointer. Use the dot operator: roster[0].id = 3;';
+        }
+        if (!t.endsWith(';')) return 'Almost. Don\u2019t forget the semicolon at the end.';
+        return null;
+      },
+      note: 'roster[0] is a Planet value, so we use the dot operator. The slot now shows id: 3. The other two fields are still uninitialized.',
+    },
+    {
+      label: 'Task 4 of 9',
+      text: 'Set the mass field of the first slot to 1.0 (Earth, in Earth masses).',
+      hint: 'roster[0].mass = 1.0;',
+      match: (cmd) => /^\s*roster\s*\[\s*0\s*\]\s*\.\s*mass\s*=\s*1\.0\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = norm(cmd);
+        if (/^roster\s*\[\s*0\s*\]\s*\.\s*mass\s*=\s*1\s*;?$/.test(t)) {
+          return 'For a double field, write the literal with a decimal point so the type is obvious: 1.0';
+        }
+        if (!t.endsWith(';')) return 'Almost. Don\u2019t forget the semicolon at the end.';
+        return null;
+      },
+      note: 'mass is a double, so we wrote it as 1.0 (not just 1). The C compiler would accept 1 here too \u2014 it converts the int to double implicitly \u2014 but writing 1.0 makes the type intent visible.',
+    },
+    {
+      label: 'Task 5 of 9',
+      text: 'Set the moons field of the first slot to 1. (Earth has one moon, in case the orbital mechanics class hasn\u2019t come up yet.)',
+      hint: 'roster[0].moons = 1;',
+      match: (cmd) => /^\s*roster\s*\[\s*0\s*\]\s*\.\s*moons\s*=\s*1\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = norm(cmd);
+        if (!t.endsWith(';')) return 'Almost. Don\u2019t forget the semicolon at the end.';
+        return null;
+      },
+      note: 'Slot 0 is fully initialized now: {id: 3, mass: 1.0, moons: 1}. Notice how each line touched exactly one field. The dot operator works field by field.',
+    },
+    // Section 4: The arrow operator
+    {
+      section: 'Section 4: Write fields with the arrow operator',
+      label: 'Task 6 of 9',
+      text: 'PREDICT FIRST: in the next two tasks, you\u2019ll declare a Planet pointer named p that points at slot 1 (&roster[1]), then write Jupiter\u2019s id (5) into that slot through p. Before you type anything, predict in your head: when p->id is set, which slot lights up in the heap pane? Then declare p: Planet *p = &roster[1];',
+      hint: 'Planet *p = &roster[1];',
+      match: (cmd) => /^\s*Planet\s*\*\s*p\s*=\s*&\s*roster\s*\[\s*1\s*\]\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = norm(cmd);
+        if (/^Planet\s*\*\s*p\s*=\s*roster\s*\[\s*1\s*\]\s*;?$/.test(t)) {
+          return 'roster[1] is the Planet value; you need its address. Add the & in front: &roster[1].';
+        }
+        if (/^Planet\s*p\s*=/.test(t)) {
+          return 'p should be a pointer. Add the *: Planet *p = &roster[1];';
+        }
+        if (!t.endsWith(';')) return 'Almost. Don\u2019t forget the semicolon at the end.';
+        return null;
+      },
+      note: 'p now points at slot 1. Notice the two arrows in the heap pane: roster points at slot 0 (the base), and p points at slot 1. They\u2019re both Planet * pointers, just aimed at different slots in the same array.',
+    },
+    {
+      label: 'Task 7 of 9',
+      text: 'Now write the id of Jupiter (id 5) through p. Because p is a pointer (not a value), use the arrow operator. The arrow is shorthand for (*p).id \u2014 it dereferences p first, then takes the field.',
+      hint: 'p->id = 5;',
+      match: (cmd) => /^\s*p\s*->\s*id\s*=\s*5\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = norm(cmd);
+        if (/^p\s*\.\s*id\s*=\s*5\s*;?$/.test(t)) {
+          return 'Dot only works on a Planet value. p is a Planet pointer, so use the arrow: p->id = 5;';
+        }
+        if (/^\(\s*\*\s*p\s*\)\s*\.\s*id\s*=\s*5\s*;?$/.test(t)) {
+          return 'That works in real C \u2014 it\u2019s exactly what the arrow operator means \u2014 but for this task practice the shorthand: p->id = 5;';
+        }
+        if (/^roster\s*\[\s*1\s*\]\s*\.\s*id\s*=\s*5\s*;?$/.test(t)) {
+          return 'Equivalent result, but for this task practice the arrow operator through p: p->id = 5;';
+        }
+        if (!t.endsWith(';')) return 'Almost. Don\u2019t forget the semicolon at the end.';
+        return null;
+      },
+      note: 'Slot 1 lit up, as you predicted. Both roster[0].id and p->id wrote to the heap; the only difference is whether you reach the slot by indexing the array or by following a pointer. Once you can flip between the two, structs are easy.',
+    },
+    {
+      label: 'Task 8 of 9',
+      text: 'Finish slot 1. Set mass to 317.8 (Jupiter, in Earth masses) and moons to 95. Type one statement, then the next. Use the arrow operator through p for both.',
+      hint: 'p->mass = 317.8; then p->moons = 95;',
+      match: (cmd) => /^\s*p\s*->\s*moons\s*=\s*95\s*;\s*$/.test(cmd),
+      // This task requires two statements; we trigger advance only on the second one.
+      // The first (p->mass = 317.8) is accepted via diagnose, which returns null (no error)
+      // and the task simply does not advance until the cadet types the second statement.
+      diagnose: (cmd) => {
+        const t = norm(cmd);
+        if (/^p\s*->\s*mass\s*=\s*317\.8\s*;?$/.test(t)) return null; // first half; widget runs it, just doesn't advance
+        if (/^p\s*->\s*mass\s*=\s*317\s*;?$/.test(t)) return 'mass is a double, so write 317.8 (with the decimal).';
+        if (!t.endsWith(';')) return 'Almost. Don\u2019t forget the semicolon at the end.';
+        return null;
+      },
+      note: 'Slot 1 is fully initialized now. Slot 2 is still uninitialized (the "?" placeholders). In a real program you would either fill it before reading it, or you would shrink the array. Reading an uninitialized field is undefined behavior.',
+    },
+    // Section 5: Free
+    {
+      section: 'Section 5: Free the array',
+      label: 'Task 9 of 9',
+      text: 'Free the roster. You only call free on the pointer that malloc gave you (the roster pointer), not on slot pointers like p. After free, the slots are released; any pointer that still holds an address into that memory is "dangling" \u2014 reading or writing through it is undefined behavior.',
+      hint: 'free(roster);',
+      match: (cmd) => /^\s*free\s*\(\s*roster\s*\)\s*;\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = norm(cmd);
+        if (/^free\s*\(\s*p\s*\)\s*;?$/.test(t)) {
+          return 'You can only free memory that malloc returned to you. p was assigned &roster[1], so it points into the middle of an existing allocation. Free the roster instead.';
+        }
+        if (/^free\s*\(\s*roster\s*\[\s*0\s*\]\s*\)\s*;?$/.test(t)) {
+          return 'free takes a pointer, not a Planet value. Pass the roster pointer itself: free(roster);';
+        }
+        if (!t.endsWith(';')) return 'Almost. Don\u2019t forget the semicolon at the end.';
+        return null;
+      },
+      note: 'Heap released. Both roster and p are now shown as DANGLING (red border): the addresses they hold are still numbers, but the bytes at those addresses no longer belong to you. In CS210 we follow free with roster = NULL; to make this explicit \u2014 you\u2019ll do that habit in the lab.',
+    },
+  ];
+
+  // ============================================================
+  // Render the current task
+  // ============================================================
+  function renderTask() {
+    const t = tasks[currentTaskIndex];
+    if (!t) {
+      // All done
+      taskCardEl.classList.add('complete');
+      taskLabelEl.textContent = 'Walkthrough complete';
+      taskTextEl.textContent = 'You worked through pointer-to-struct declaration, malloc of a dynamic array, the dot and arrow operators, predicted-then-observed memory writes, and free with dangling-pointer awareness. The completion code is below.';
+      taskHintEl.textContent = '';
+      taskHintEl.classList.remove('pulse');
+      taskNoteEl.style.display = 'none';
+      progressFill.style.width = '100%';
+      progressLabel.textContent = 'Done';
+      sectionHeader.textContent = 'Complete';
+      cs210RenderCompletion(completionEl);
+      // Switch silently to free play so cadets can keep experimenting
+      setMode('free');
+      return;
+    }
+    if (t.section) sectionHeader.textContent = t.section;
+    taskCardEl.classList.remove('complete');
+    taskLabelEl.textContent = t.label;
+    taskTextEl.innerHTML = t.text;
+    taskHintEl.textContent = 'Hint: ' + t.hint;
+    taskHintEl.classList.remove('pulse');
+    taskNoteEl.style.display = 'none';
+    const pct = (currentTaskIndex / tasks.length) * 100;
+    progressFill.style.width = pct + '%';
+    progressLabel.textContent = t.label;
+  }
+
+  function advanceTask(note) {
+    const t = tasks[currentTaskIndex];
+    if (t && note) {
+      taskNoteEl.style.display = 'block';
+      taskNoteEl.innerHTML = note;
+    }
+    taskCardEl.classList.add('complete');
+    consecutiveFails = 0;
+    setTimeout(() => {
+      currentTaskIndex += 1;
+      renderTask();
+    }, 600);
+  }
+
+  // ============================================================
+  // Main submit handler
+  // ============================================================
+  function handleSubmit() {
+    const raw = inputEl.value;
+    if (!raw.trim()) return;
+    echoCommand(raw);
+    inputEl.value = '';
+
+    const result = runCommand(raw);
+
+    // Print result feedback
+    if (result.kind === 'help') {
+      termLine('  Supported statements in this widget:', 'info');
+      termLine('    Planet *roster = NULL;', 'info');
+      termLine('    Planet *roster = malloc(N * sizeof(Planet));', 'info');
+      termLine('    roster = malloc(N * sizeof(Planet));', 'info');
+      termLine('    roster[N].field = value;        (field = id | mass | moons)', 'info');
+      termLine('    Planet *p = &roster[N];', 'info');
+      termLine('    p->field = value;', 'info');
+      termLine('    (*p).field = value;', 'info');
+      termLine('    free(roster);', 'info');
+      termLine('    clear;   reset;   help', 'info');
+    } else if (result.kind === 'cleared') {
+      termLine('  memory cleared', 'out');
+    } else if (result.kind === 'error') {
+      termLine('  ' + result.message, 'err');
+    } else if (result.kind === 'ptr-null') {
+      termLine('  Planet * ' + result.name + ' = NULL', 'out');
+    } else if (result.kind === 'malloc') {
+      termLine('  malloc returned a chunk of ' + (result.count * PLANET_SIZE) + ' bytes (' + result.count + ' Planet slots) at 0x' + HEAP_BASE.toString(16).toUpperCase(), 'out');
+      termLine('  ' + result.name + ' now points to the heap region', 'out');
+    } else if (result.kind === 'cell-written') {
+      const sym = result.mode === 'dot' ? '.' : result.mode === 'arrow' ? '->' : '(*).';
+      termLine('  roster[' + result.index + '].' + result.field + ' = ' + (result.field === 'mass' ? formatDouble(result.value) : result.value) + '   (via ' + (result.mode === 'arrow' ? 'arrow operator on ' + result.name : result.mode === 'parenstar' ? '(*'+result.name+').' + result.field : 'dot operator') + ')', 'out');
+    } else if (result.kind === 'slot-ptr-declared') {
+      termLine('  Planet * ' + result.name + ' set to &roster[' + result.index + ']', 'out');
+    } else if (result.kind === 'ptr-assigned') {
+      termLine('  ' + result.name + ' now points to ' + result.target, 'out');
+    } else if (result.kind === 'freed') {
+      termLine('  free returned ' + (roster.length * PLANET_SIZE) + ' bytes to the heap allocator', 'out');
+      termLine('  WARNING: ' + result.name + ' still holds 0x' + HEAP_BASE.toString(16).toUpperCase() + ', but the memory no longer belongs to you. Reading or writing through it is undefined behavior.', 'err');
+    } else if (result.kind === 'noop') {
+      // nothing
+    }
+
+    renderMemory();
+
+    // Task matching (walkthrough mode only)
+    if (mode === 'walkthrough') {
+      const task = tasks[currentTaskIndex];
+      if (task && task.match && task.match(raw)) {
+        advanceTask(task.note);
+      } else if (task) {
+        // Try task-level diagnosis
+        const diag = task.diagnose ? task.diagnose(raw) : null;
+        if (diag) {
+          termLine('  ' + diag, 'info');
+        }
+        // Pulse the hint after two failed attempts
+        if (result.kind !== 'help' && result.kind !== 'cleared' && result.kind !== 'noop') {
+          consecutiveFails += 1;
+          if (consecutiveFails >= 2) {
+            taskHintEl.classList.remove('pulse');
+            // Force reflow so the animation re-runs
+            void taskHintEl.offsetWidth;
+            taskHintEl.classList.add('pulse');
+            consecutiveFails = 0;
+          }
+        }
+      }
+    }
+  }
+
+  // ============================================================
+  // Mode toggle
+  // ============================================================
+  function setMode(m) {
+    mode = m;
+    if (m === 'walkthrough') {
+      modeWalkBtn.classList.add('active');
+      modeFreeBtn.classList.remove('active');
+      taskCardEl.style.display = 'block';
+    } else {
+      modeWalkBtn.classList.remove('active');
+      modeFreeBtn.classList.add('active');
+      // Keep task card visible after completion so cadets see the "complete" message,
+      // but hide it during normal free-play.
+      if (currentTaskIndex < tasks.length) taskCardEl.style.display = 'none';
+    }
+  }
+  modeWalkBtn.addEventListener('click', () => setMode('walkthrough'));
+  modeFreeBtn.addEventListener('click', () => setMode('free'));
+
+  // Reset memory (keeps mode and task index)
+  resetBtn.addEventListener('click', () => {
+    doClear();
+    termLine('  memory cleared', 'out');
+    renderMemory();
+  });
+
+  helpBtn.addEventListener('click', () => {
+    inputEl.value = 'help';
+    handleSubmit();
+    inputEl.focus();
+  });
+
+  // ============================================================
+  // Wire up input
+  // ============================================================
+  runBtn.addEventListener('click', handleSubmit);
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); handleSubmit(); }
+  });
+
+  // Boot
+  termLine('Welcome to planets. Type each statement at the prompt, press Enter.', 'info');
+  termLine('We will build a dynamic array of Planet structs on the heap and fill it.', 'info');
+  termLine('', '');
+  renderTask();
+  renderMemory();
+
+})();
+</script>
+
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 32px 0 10px 0;">Pass-by-Value vs Pass-by-Pointer Self-Check</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Ten questions. Read each code snippet carefully and trace what main sees. The final score card gives you the completion code to submit on Blackboard.</p>
+
+<!-- ============================================================
+     CS210 Lesson 19 - Struct Pass-by-Value vs Pass-by-Pointer Quiz
+     Card/slide flow: one question per card, Submit + Next/Back.
+     Score card at the end with per-question recap and two-salt
+     completion code (passing >= 70% uses _completed salt;
+     non-passing uses _incomplete salt).
+     ============================================================ -->
+<style>
+.cs210-structptr-quiz * { box-sizing: border-box; }
+.cs210-structptr-quiz {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-structptr-quiz h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-structptr-quiz .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+
+.cs210-structptr-quiz .dots {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+.cs210-structptr-quiz .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #E5E7EB;
+  border: 1px solid #C7CFD9;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.cs210-structptr-quiz .dot.current {
+  background: #003087;
+  border-color: #00205B;
+  transform: scale(1.25);
+}
+.cs210-structptr-quiz .dot.correct {
+  background: #2E7D32;
+  border-color: #1B5E20;
+}
+.cs210-structptr-quiz .dot.incorrect {
+  background: #B8002F;
+  border-color: #6B0000;
+}
+.cs210-structptr-quiz .dot.score {
+  width: 16px;
+  height: 12px;
+  border-radius: 3px;
+  background: #F0B92C;
+  border-color: #6B5300;
+}
+
+.cs210-structptr-quiz .card {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 6px;
+  padding: 22px 24px;
+  margin-bottom: 14px;
+}
+.cs210-structptr-quiz .q-label {
+  font-size: 11.5px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.cs210-structptr-quiz .q-text {
+  font-size: 15.5px;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+}
+.cs210-structptr-quiz .q-text code {
+  background: #F0F2F5;
+  padding: 1px 6px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13.5px;
+}
+.cs210-structptr-quiz pre.q-code {
+  background: #1E2A3A;
+  color: #E8EDF5;
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.55;
+  margin-bottom: 14px;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.cs210-structptr-quiz .choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.cs210-structptr-quiz .choice {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  border-radius: 4px;
+  padding: 10px 14px;
+  font-family: inherit;
+  font-size: 14px;
+  color: #1a1a1a;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+}
+.cs210-structptr-quiz .choice:hover {
+  border-color: #003087;
+  background: #F0F4FA;
+}
+.cs210-structptr-quiz .choice.selected {
+  border-color: #003087;
+  background: #E8EDF5;
+}
+.cs210-structptr-quiz .choice.locked { cursor: default; }
+.cs210-structptr-quiz .choice.locked:hover { border-color: #C7CFD9; background: #ffffff; }
+.cs210-structptr-quiz .choice.correct {
+  border-color: #2E7D32;
+  background: #E6F4EA;
+}
+.cs210-structptr-quiz .choice.incorrect {
+  border-color: #B8002F;
+  background: #FCEFEC;
+}
+.cs210-structptr-quiz .choice code {
+  background: #F0F2F5;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 12.5px;
+}
+
+.cs210-structptr-quiz .text-input {
+  width: 100%;
+  padding: 9px 12px;
+  font-size: 14.5px;
+  border: 1px solid #C7CFD9;
+  border-radius: 4px;
+  font-family: Consolas, monospace;
+  margin-bottom: 8px;
+}
+.cs210-structptr-quiz .text-input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+
+.cs210-structptr-quiz .feedback {
+  font-size: 14px;
+  padding: 12px 14px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  display: none;
+}
+.cs210-structptr-quiz .feedback.visible { display: block; }
+.cs210-structptr-quiz .feedback.correct { background: #E6F4EA; color: #1B5E20; border-left: 3px solid #2E7D32; }
+.cs210-structptr-quiz .feedback.incorrect { background: #FCEFEC; color: #6B0000; border-left: 3px solid #B8002F; }
+.cs210-structptr-quiz .feedback code {
+  background: rgba(0,0,0,0.06);
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 12.5px;
+}
+
+.cs210-structptr-quiz .btn-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.cs210-structptr-quiz .nav-row {
+  display: flex;
+  gap: 8px;
+}
+.cs210-structptr-quiz .nav-btn {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  border-radius: 3px;
+  padding: 7px 14px;
+  font-family: inherit;
+  font-size: 13.5px;
+  color: #4A5568;
+  cursor: pointer;
+}
+.cs210-structptr-quiz .nav-btn:hover { border-color: #003087; color: #003087; }
+.cs210-structptr-quiz .nav-btn.back { color: #6B7280; }
+.cs210-structptr-quiz .submit-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  border-radius: 3px;
+  padding: 8px 18px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.cs210-structptr-quiz .submit-btn:hover { background: #00205B; }
+.cs210-structptr-quiz .submit-btn:disabled { background: #A0AEC0; cursor: not-allowed; }
+
+.cs210-structptr-quiz .score-card .score-message {
+  font-size: 16px;
+  margin-bottom: 8px;
+  color: #1a1a1a;
+}
+.cs210-structptr-quiz .score-card.full-correct .score-message.good-job,
+.cs210-structptr-quiz .score-card.passing .score-message.good-job { color: #1B5E20; font-weight: 600; }
+.cs210-structptr-quiz .score-card .score-big {
+  font-size: 48px;
+  font-weight: 700;
+  color: #003087;
+  text-align: center;
+  margin: 10px 0 4px 0;
+}
+.cs210-structptr-quiz .score-card.not-passing .score-big { color: #B8002F; }
+.cs210-structptr-quiz .score-card .score-label {
+  text-align: center;
+  font-size: 13px;
+  color: #6B7280;
+  margin-bottom: 16px;
+}
+.cs210-structptr-quiz .score-card .code-block {
+  background: #F0F4FA;
+  border: 1px solid #003087;
+  border-radius: 4px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.cs210-structptr-quiz .score-card .code-block.fail {
+  background: #FCEFEC;
+  border-color: #B8002F;
+}
+.cs210-structptr-quiz .score-card .code-block .code-left { flex: 1; }
+.cs210-structptr-quiz .score-card .code-label {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #4A5568;
+  margin-bottom: 4px;
+}
+.cs210-structptr-quiz .score-card .code-value {
+  font-family: Consolas, monospace;
+  font-size: 24px;
+  font-weight: 700;
+  color: #00205B;
+  letter-spacing: 3px;
+}
+.cs210-structptr-quiz .score-card .code-block.fail .code-value { color: #6B0000; }
+.cs210-structptr-quiz .score-card .copy-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.cs210-structptr-quiz .score-card .copy-btn:hover { background: #00205B; }
+.cs210-structptr-quiz .score-card .copy-btn.copied { background: #2E7D32; }
+.cs210-structptr-quiz .score-card .code-block.fail .copy-btn { background: #B8002F; }
+.cs210-structptr-quiz .score-card .code-block.fail .copy-btn:hover { background: #6B0000; }
+
+.cs210-structptr-quiz .inline-code-footer {
+  background: #F8FAFC;
+  border: 1px solid #C7CFD9;
+  border-radius: 3px;
+  padding: 8px 12px;
+  margin-bottom: 14px;
+  font-size: 12.5px;
+  color: #4A5568;
+}
+
+.cs210-structptr-quiz .recap {
+  background: #F8FAFC;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+}
+.cs210-structptr-quiz .recap-title {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #00205B;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.cs210-structptr-quiz .recap-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.cs210-structptr-quiz .recap-icon {
+  font-size: 13px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-weight: 700;
+}
+.cs210-structptr-quiz .recap-icon.correct { background: #2E7D32; }
+.cs210-structptr-quiz .recap-icon.incorrect { background: #B8002F; }
+.cs210-structptr-quiz .recap-body { flex: 1; font-size: 13.5px; }
+.cs210-structptr-quiz .recap-question { color: #1a1a1a; }
+.cs210-structptr-quiz .recap-explanation {
+  margin-top: 4px;
+  color: #6B0000;
+  font-size: 13px;
+}
+.cs210-structptr-quiz .recap-explanation code {
+  background: rgba(0,0,0,0.06);
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 12px;
+}
+
+.cs210-structptr-quiz .reset-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
+.cs210-structptr-quiz .reset-btn {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  color: #4A5568;
+  padding: 8px 16px;
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.cs210-structptr-quiz .reset-btn:hover { border-color: #003087; color: #003087; }
+
+.cs210-structptr-quiz .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  border-radius: 3px;
+  padding: 10px 14px;
+  margin-top: 8px;
+  font-size: 12.5px;
+  color: #4A5568;
+}
+
+/* Name modal */
+.cs210-structptr-quiz .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+.cs210-structptr-quiz .name-modal {
+  background: #ffffff;
+  padding: 22px 26px;
+  border-radius: 6px;
+  border-top: 6px solid #003087;
+  max-width: 440px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+}
+.cs210-structptr-quiz .name-modal h2 {
+  color: #00205B;
+  font-size: 18px;
+  margin: 0 0 8px 0;
+}
+.cs210-structptr-quiz .name-modal p {
+  color: #4A5568;
+  font-size: 14px;
+  margin: 0 0 16px 0;
+}
+.cs210-structptr-quiz .name-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-structptr-quiz .name-modal input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-structptr-quiz .name-modal-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-structptr-quiz .name-modal-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-structptr-quiz .name-modal-btn:not(:disabled):hover {
+  background: #00205B;
+}
+</style>
+
+<div class="cs210-structptr-quiz">
+
+<div class="name-modal-backdrop" id="structptr-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the score card so you can include it in your screenshot for the Blackboard reflection.</p>
+    <input type="text" id="structptr-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="structptr-cadet-name-btn" disabled>Start the quiz</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 19 &middot; Pass-by-Value vs Pass-by-Pointer Self-Check</h1>
+<div class="subtitle">Ten questions on how structs travel into and out of functions, plus a few on dynamic arrays and ownership. Pass at 70% or above; below that, take it again after reviewing.</div>
+
+<div class="dots" id="structptr-dots"></div>
+
+<div id="structptr-card-area"></div>
+
+<div class="help-note">
+  <strong>How this works:</strong> One question per card. Pick or type your answer, click Submit, then click Next. Answers lock once submitted, so trace the code carefully before you commit. After all ten you get a score, a completion code, and a per-question recap.
+</div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-structptr-quiz');
+  if (!root) return;
+
+  // ============================================================
+  // Completion code generation (two-salt scheme: pass vs. fail)
+  // ============================================================
+  const CS210_SALT_PASS = "lesson19_structptr_completed";
+  const CS210_SALT_FAIL = "lesson19_structptr_incomplete";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const PASSING_THRESHOLD = 0.70;
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE_PASS = cs210CodeFromSalt(CS210_SALT_PASS);
+  const CS210_CODE_FAIL = cs210CodeFromSalt(CS210_SALT_FAIL);
+  let cadetName = '';
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+  function cs210Copy(text) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch (e) {}
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      return true;
+    } catch (e) { return false; }
+  }
+
+  // ============================================================
+  // Name modal
+  // ============================================================
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#structptr-name-modal-backdrop');
+    const input = root.querySelector('#structptr-cadet-name-input');
+    const btn = root.querySelector('#structptr-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length > 0) {
+        cadetName = stored.trim();
+        backdrop.style.display = 'none';
+        return;
+      }
+    } catch (e) {}
+    function updateBtn() { btn.disabled = input.value.trim().length === 0; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', () => {
+      const n = input.value.trim();
+      if (!n) return;
+      cadetName = n;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', n); } catch (e) {}
+      backdrop.style.display = 'none';
+      // Dismiss any sibling widget modals on the same page.
+      const siblings = document.querySelectorAll(
+        '#name-modal-backdrop, #bw-name-modal-backdrop, #ptrmath-name-modal-backdrop, #duality-name-modal-backdrop, #planets-name-modal-backdrop'
+      );
+      siblings.forEach(function(m) { m.style.display = 'none'; });
+    });
+    setTimeout(() => { try { input.focus(); } catch (e) {} }, 50);
+  })();
+
+  // ============================================================
+  // Questions
+  // ============================================================
+  const questions = [
+    {
+      id: 'q1',
+      type: 'text',
+      text: 'Given the function and main below, what value does <code>printf</code> in main print? Type just the integer.',
+      code:
+'typedef struct {\n' +
+'    int id;\n' +
+'    int moons;\n' +
+'} Planet;\n' +
+'\n' +
+'void label_as_earth(Planet pl) {\n' +
+'    pl.id = 3;\n' +
+'    pl.moons = 1;\n' +
+'}\n' +
+'\n' +
+'int main(void) {\n' +
+'    Planet pl = {0, 0};\n' +
+'    label_as_earth(pl);\n' +
+'    printf("%d\\n", pl.id);\n' +
+'    return 0;\n' +
+'}',
+      correct: ['0'],
+      normalize: s => s.trim(),
+      placeholder: 'e.g. 3',
+      correctFeedback: 'Right. <code>pl</code> was passed by value, so <code>label_as_earth</code> received a copy. It modified its copy; the original <code>pl</code> in main is still <code>{0, 0}</code>.',
+      incorrectFeedback: 'The answer is <code>0</code>. <code>pl</code> was passed by value, so the function received a copy of the struct. The function modified its copy and returned; main\u2019s <code>pl</code> never saw the change.',
+      shortLabel: 'What prints after pass-by-value modify?',
+    },
+    {
+      id: 'q2',
+      type: 'text',
+      text: 'Same Planet struct. With the function below, what does the printf in main print? Type just the integer.',
+      code:
+'void label_as_earth(Planet *pl) {\n' +
+'    pl->id = 3;\n' +
+'    pl->moons = 1;\n' +
+'}\n' +
+'\n' +
+'int main(void) {\n' +
+'    Planet pl = {0, 0};\n' +
+'    label_as_earth(&pl);\n' +
+'    printf("%d\\n", pl.id);\n' +
+'    return 0;\n' +
+'}',
+      correct: ['3'],
+      normalize: s => s.trim(),
+      placeholder: 'e.g. 0',
+      correctFeedback: 'Right. The function received a pointer to main\u2019s <code>pl</code>, so writing through <code>pl-&gt;id</code> changed the original struct. main now sees <code>pl.id == 3</code>.',
+      incorrectFeedback: 'The answer is <code>3</code>. <code>&amp;pl</code> gave the function the address of main\u2019s struct. <code>pl-&gt;id = 3</code> wrote through that address, reaching main\u2019s actual struct.',
+      shortLabel: 'What prints after pass-by-pointer modify?',
+    },
+    {
+      id: 'q3',
+      type: 'choice',
+      text: 'Consider the function below. What is the conceptual problem with it?',
+      code:
+'// Planet has int id, double mass, int moons.\n' +
+'// We want this to "set" the mass on the caller\'s planet.\n' +
+'void set_mass(Planet pl, double new_mass) {\n' +
+'    pl.mass = new_mass;\n' +
+'}',
+      options: [
+        'Nothing. It correctly sets the mass on the caller\'s planet.',
+        'It takes <code>pl</code> by value, so it only mutates a local copy. The caller\'s struct is unchanged. The parameter should be <code>Planet *pl</code> and the body should use <code>pl->mass</code>.',
+        'It uses <code>double</code> for mass; <code>float</code> would compile faster on most systems.',
+        'It will not compile because you cannot pass a struct by value in C.',
+      ],
+      correct: 1,
+      correctFeedback: 'Right. <code>pl</code> is a copy of the caller\u2019s struct, so the assignment only mutates the copy. Change the parameter to <code>Planet *pl</code> and use <code>pl-&gt;mass</code>.',
+      incorrectFeedback: 'The correct answer is the second one. Pass by value gives the function a copy; mutating the copy does nothing the caller can see. The fix is to take a pointer and use the arrow operator.',
+      shortLabel: 'Bug in set_mass(Planet pl, ...)',
+    },
+    {
+      id: 'q4',
+      type: 'choice',
+      text: 'Given <code>Planet pl;</code> in main and a Planet struct with <code>int id; double mass; int moons;</code>, which statement is the correct way to call <code>print_planet(const Planet *)</code>?',
+      options: [
+        '<code>print_planet(pl);</code>',
+        '<code>print_planet(*pl);</code>',
+        '<code>print_planet(&pl);</code>',
+        '<code>print_planet(pl->);</code>',
+      ],
+      correct: 2,
+      correctFeedback: 'Right. The function wants a pointer to a Planet. <code>pl</code> is a Planet value; you take its address with <code>&amp;pl</code>.',
+      incorrectFeedback: 'The correct answer is <code>print_planet(&amp;pl);</code>. The function\u2019s parameter type is <code>const Planet *</code>, so you have to give it the address of a Planet. <code>&amp;pl</code> does that.',
+      shortLabel: 'How to call print_planet(const Planet *)',
+    },
+    {
+      id: 'q5',
+      type: 'choice',
+      text: 'You see a function declared as <code>void describe(const Planet *pl);</code>. Why is the <code>const</code> there?',
+      options: [
+        'It makes the function run faster because the compiler skips bounds checking.',
+        'It tells the caller that <code>describe</code> promises not to modify the Planet through this pointer. The compiler enforces it.',
+        'It means <code>pl</code> itself cannot be reassigned inside the function.',
+        'It makes the function thread-safe.',
+      ],
+      correct: 1,
+      correctFeedback: 'Right. <code>const Planet *</code> means "pointer to a Planet that I will not modify." It is a promise to the caller, enforced by the compiler. You\u2019ll see this convention in nearly every read-only struct accessor.',
+      incorrectFeedback: 'The correct answer is the second one. <code>const Planet *</code> is "pointer to const Planet" \u2014 the function cannot modify the Planet through the pointer. The compiler will refuse code that tries.',
+      shortLabel: 'Meaning of const Planet * parameter',
+    },
+    {
+      id: 'q6',
+      type: 'text',
+      text: 'A Planet struct is 16 bytes on this system. If you pass a Planet by value to a function, how many bytes get copied onto the stack for that argument? Type just the integer.',
+      code:
+'// sizeof(Planet) is 16\n' +
+'void f1(Planet pl);     // takes Planet by value\n' +
+'void f2(Planet *pl);    // takes Planet by pointer',
+      correct: ['16'],
+      normalize: s => s.trim(),
+      placeholder: 'e.g. 8',
+      correctFeedback: 'Right. Pass-by-value copies the whole struct \u2014 all 16 bytes. By contrast, <code>f2</code> would copy only 8 bytes (the pointer itself, on a 64-bit system). For large structs, the pointer version is dramatically cheaper.',
+      incorrectFeedback: 'The answer is <code>16</code>. Pass-by-value copies the entire struct onto the stack, all sixteen bytes. Pass-by-pointer would copy only the pointer (8 bytes on 64-bit). That cost difference is one reason large structs are usually passed by pointer.',
+      shortLabel: 'Bytes copied for pass-by-value of 16-byte struct',
+    },
+    {
+      id: 'q7',
+      type: 'text',
+      text: 'Trace the code below. What two ids does main print on the line after the call to <code>swap_by_val</code>? Type them in order, separated by one space (for example: <code>5 9</code>).',
+      code:
+'typedef struct {\n' +
+'    int id;\n' +
+'} Tag;\n' +
+'\n' +
+'void swap_by_val(Tag x, Tag y) {\n' +
+'    Tag t = x;\n' +
+'    x = y;\n' +
+'    y = t;\n' +
+'}\n' +
+'\n' +
+'int main(void) {\n' +
+'    Tag a = { 7 };\n' +
+'    Tag b = { 3 };\n' +
+'    swap_by_val(a, b);\n' +
+'    printf("%d %d\\n", a.id, b.id);\n' +
+'    return 0;\n' +
+'}',
+      correct: ['7 3'],
+      normalize: s => s.trim().replace(/\s+/g, ' '),
+      placeholder: 'e.g. 3 7',
+      correctFeedback: 'Right. <code>swap_by_val</code> received copies of <code>a</code> and <code>b</code> and swapped those copies. main\u2019s <code>a</code> and <code>b</code> never changed, so printf prints the original 7 then 3.',
+      incorrectFeedback: 'The answer is <code>7 3</code>. The swap happened inside <code>swap_by_val</code> on local copies, so main\u2019s <code>a</code> and <code>b</code> never changed. The function discarded its work when it returned.',
+      shortLabel: 'Trace: swap by value leaves caller unchanged',
+    },
+    {
+      id: 'q8',
+      type: 'choice',
+      text: 'Same Tag struct as the last question. Which version of the function actually swaps the caller\u2019s Tags?',
+      options: [
+        '<code>void swap(Tag x, Tag y)</code> \u2014 swap inside using a temp Tag',
+        '<code>void swap(Tag *x, Tag y)</code> \u2014 mix pointer and value, swap inside',
+        '<code>void swap(Tag *x, Tag *y)</code> \u2014 swap <code>*x</code> and <code>*y</code> inside using a temp Tag',
+        'You cannot swap two structs in C; you have to copy each field manually.',
+      ],
+      correct: 2,
+      correctFeedback: 'Right. Both parameters need to be pointers, and the function swaps the structs the pointers refer to (using <code>Tag t = *x; *x = *y; *y = t;</code>). The caller writes <code>swap(&amp;a, &amp;b);</code>.',
+      incorrectFeedback: 'The correct answer is the third one: both parameters must be pointers, and the function swaps <code>*x</code> and <code>*y</code> using a temp Tag. The first option swaps local copies; the second only reaches one of the caller\u2019s Tags; the fourth is just wrong (you absolutely can swap structs in C).',
+      shortLabel: 'Which swap signature actually swaps',
+    },
+    {
+      id: 'q9',
+      type: 'choice',
+      text: 'A Student struct has a heap-allocated <code>char *name</code> field. You also heap-allocated the Student itself with <code>Student *s = malloc(sizeof(Student));</code> and <code>s-&gt;name = malloc(64);</code>. Which order of frees is correct?',
+      options: [
+        '<code>free(s); free(s->name);</code>',
+        '<code>free(s->name); free(s);</code>',
+        '<code>free(s); s->name = NULL;</code>',
+        'Either order is fine; <code>free</code> figures it out.',
+      ],
+      correct: 1,
+      correctFeedback: 'Right. Free what the struct owns first (<code>s-&gt;name</code>), then free the struct itself. Reversing the order would mean reading <code>s-&gt;name</code> through freed memory.',
+      incorrectFeedback: 'The correct answer is <code>free(s-&gt;name); free(s);</code>. You have to reach <code>s-&gt;name</code> while <code>s</code> is still valid memory \u2014 so free the owned allocation first, then free the struct. Reversing the order is reading freed memory: undefined behavior.',
+      shortLabel: 'Order of frees with pointer member',
+    },
+    {
+      id: 'q10',
+      type: 'text',
+      text: 'You wrote <code>Planet *roster = malloc(5 * sizeof(Planet));</code>. To set the id of the third planet (index 2) using the arrow operator on a pointer named <code>p</code>, you would write two statements: first <code>Planet *p = ____;</code> and then <code>p->id = 100;</code>. Fill in the blank with the expression that goes on the right side of the first assignment. Type the expression only, no semicolon.',
+      correct: ['&roster[2]'],
+      normalize: s => s.trim().replace(/\s+/g, ''),
+      placeholder: 'e.g. &something',
+      correctFeedback: 'Right. <code>&amp;roster[2]</code> is the address of the third Planet in the array. Once <code>p</code> holds that address, <code>p-&gt;id = 100;</code> writes through the pointer to slot 2.',
+      incorrectFeedback: 'The expression is <code>&amp;roster[2]</code>. You want <code>p</code> to point AT the third Planet, so take its address with <code>&amp;</code>. <code>roster[2]</code> alone is the Planet value, not its address.',
+      shortLabel: 'Setting up a slot pointer with the arrow operator',
+    },
+  ];
+
+  // ============================================================
+  // State
+  // ============================================================
+  const state = questions.map(() => ({ answered: false, correct: false, choice: null, value: '' }));
+  let currentIndex = 0;
+
+  const dotsArea = root.querySelector('#structptr-dots');
+  const cardArea = root.querySelector('#structptr-card-area');
+
+  // ============================================================
+  // Rendering: dots
+  // ============================================================
+  function renderDots() {
+    dotsArea.innerHTML = '';
+    for (let i = 0; i < questions.length; i++) {
+      const d = document.createElement('div');
+      d.className = 'dot';
+      if (i === currentIndex) d.classList.add('current');
+      if (state[i].answered) {
+        d.classList.add(state[i].correct ? 'correct' : 'incorrect');
+      }
+      dotsArea.appendChild(d);
+    }
+    const scoreDot = document.createElement('div');
+    scoreDot.className = 'dot score';
+    if (currentIndex === questions.length) scoreDot.classList.add('current');
+    dotsArea.appendChild(scoreDot);
+  }
+
+  // ============================================================
+  // Rendering: question card
+  // ============================================================
+  function buildQuestionCard(i) {
+    const q = questions[i];
+    const s = state[i];
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    const label = document.createElement('div');
+    label.className = 'q-label';
+    label.textContent = 'Question ' + (i + 1) + ' of ' + questions.length;
+    card.appendChild(label);
+
+    const text = document.createElement('div');
+    text.className = 'q-text';
+    text.innerHTML = q.text;
+    card.appendChild(text);
+
+    if (q.code) {
+      const pre = document.createElement('pre');
+      pre.className = 'q-code';
+      pre.textContent = q.code;
+      card.appendChild(pre);
+    }
+
+    // Answer surface
+    let getAnswer;
+    let submitBtn; // forward-declare so handlers below can reach it
+    if (q.type === 'choice') {
+      const choices = document.createElement('div');
+      choices.className = 'choices';
+      const buttons = [];
+      q.options.forEach((opt, idx) => {
+        const b = document.createElement('button');
+        b.className = 'choice';
+        b.innerHTML = opt;
+        b.type = 'button';
+        b.addEventListener('click', () => {
+          if (s.answered) return;
+          buttons.forEach(x => x.classList.remove('selected'));
+          b.classList.add('selected');
+          s.choice = idx;
+          if (submitBtn) submitBtn.disabled = false;
+        });
+        if (s.choice === idx) b.classList.add('selected');
+        if (s.answered) {
+          b.classList.add('locked');
+          if (idx === q.correct) b.classList.add('correct');
+          else if (idx === s.choice) b.classList.add('incorrect');
+        }
+        choices.appendChild(b);
+        buttons.push(b);
+      });
+      card.appendChild(choices);
+      getAnswer = () => s.choice;
+    } else {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'text-input';
+      input.placeholder = q.placeholder || '';
+      input.value = s.value || '';
+      input.spellcheck = false;
+      input.autocomplete = 'off';
+      input.addEventListener('input', () => {
+        if (s.answered) return;
+        s.value = input.value;
+        if (submitBtn) submitBtn.disabled = input.value.trim().length === 0;
+      });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !s.answered && input.value.trim().length > 0) {
+          e.preventDefault();
+          submitBtn.click();
+        }
+      });
+      if (s.answered) input.disabled = true;
+      card.appendChild(input);
+      getAnswer = () => input.value;
+      setTimeout(() => { try { input.focus(); } catch (e) {} }, 50);
+    }
+
+    // Feedback
+    const fb = document.createElement('div');
+    fb.className = 'feedback';
+    if (s.answered) {
+      fb.classList.add('visible');
+      fb.classList.add(s.correct ? 'correct' : 'incorrect');
+      fb.innerHTML = s.correct ? q.correctFeedback : q.incorrectFeedback;
+    }
+    card.appendChild(fb);
+
+    // Button row
+    const row = document.createElement('div');
+    row.className = 'btn-row';
+
+    const navL = document.createElement('div');
+    navL.className = 'nav-row';
+    if (i > 0) {
+      const back = document.createElement('button');
+      back.className = 'nav-btn back';
+      back.type = 'button';
+      back.innerHTML = '&larr; Back';
+      back.addEventListener('click', () => { currentIndex = i - 1; render(); });
+      navL.appendChild(back);
+    }
+    row.appendChild(navL);
+
+    submitBtn = document.createElement('button');
+    submitBtn.type = 'button';
+    if (s.answered) {
+      submitBtn.className = 'nav-btn';
+      submitBtn.innerHTML = (i === questions.length - 1) ? 'See score &rarr;' : 'Next &rarr;';
+      submitBtn.addEventListener('click', () => { currentIndex = i + 1; render(); });
+    } else {
+      submitBtn.className = 'submit-btn';
+      submitBtn.textContent = 'Submit';
+      if (q.type === 'choice') submitBtn.disabled = (s.choice === null);
+      else submitBtn.disabled = (!s.value || s.value.trim().length === 0);
+      submitBtn.addEventListener('click', () => {
+        const ans = getAnswer();
+        let correct = false;
+        if (q.type === 'choice') {
+          correct = (ans === q.correct);
+        } else {
+          const v = q.normalize ? q.normalize(ans) : ans;
+          correct = q.correct.some(c => (q.normalize ? q.normalize(c) : c) === v);
+        }
+        s.answered = true;
+        s.correct = correct;
+        render();
+      });
+    }
+    row.appendChild(submitBtn);
+    card.appendChild(row);
+
+    return card;
+  }
+
+  // ============================================================
+  // Rendering: score card
+  // ============================================================
+  function buildScoreCard() {
+    const card = document.createElement('div');
+    card.className = 'card score-card';
+    const correctCount = state.filter(s => s.correct).length;
+    const pct = correctCount / questions.length;
+    const passed = pct >= PASSING_THRESHOLD;
+
+    if (correctCount === questions.length) card.classList.add('full-correct');
+    else if (passed) card.classList.add('passing');
+    else card.classList.add('not-passing');
+
+    const label = document.createElement('div');
+    label.className = 'q-label';
+    label.textContent = 'Quiz complete';
+    card.appendChild(label);
+
+    const msg = document.createElement('div');
+    msg.className = 'score-message';
+    if (correctCount === questions.length) {
+      msg.className = 'score-message good-job';
+      msg.textContent = 'Perfect score. Pass-by-value and pass-by-pointer for structs are locked in.';
+    } else if (passed) {
+      msg.className = 'score-message good-job';
+      msg.textContent = 'Passed.';
+    } else {
+      msg.style.color = '#6B0000';
+      msg.textContent = 'Below the 70% threshold. Review and try again.';
+    }
+    card.appendChild(msg);
+
+    const scoreBig = document.createElement('div');
+    scoreBig.className = 'score-big';
+    scoreBig.textContent = correctCount + ' / ' + questions.length;
+    card.appendChild(scoreBig);
+
+    const scoreLabel = document.createElement('div');
+    scoreLabel.className = 'score-label';
+    scoreLabel.textContent = 'questions correct (' + Math.round(pct * 100) + '%)';
+    card.appendChild(scoreLabel);
+
+    const detail = document.createElement('div');
+    detail.className = 'score-message';
+    if (correctCount === questions.length) {
+      detail.textContent = 'You can predict what main sees after every flavor of struct-arg function. Move on to the lab.';
+    } else if (passed) {
+      detail.textContent = 'You crossed the threshold. Review the questions you missed below before starting the lab.';
+    } else {
+      detail.textContent = 'Re-read the pass-by-value vs pass-by-pointer section in the lesson materials, then take the quiz again.';
+    }
+    card.appendChild(detail);
+
+    // Completion code block
+    const code = passed ? CS210_CODE_PASS : CS210_CODE_FAIL;
+    const codeBlock = document.createElement('div');
+    codeBlock.className = 'code-block' + (passed ? '' : ' fail');
+    const left = document.createElement('div');
+    left.className = 'code-left';
+    const codeLabel = document.createElement('div');
+    codeLabel.className = 'code-label';
+    codeLabel.textContent = passed ? 'Passing code' : 'Non-passing code';
+    left.appendChild(codeLabel);
+    const codeValue = document.createElement('div');
+    codeValue.className = 'code-value';
+    codeValue.textContent = code;
+    left.appendChild(codeValue);
+    codeBlock.appendChild(left);
+    const copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.className = 'copy-btn';
+    copyBtn.textContent = 'Copy';
+    copyBtn.addEventListener('click', () => {
+      const ok = cs210Copy(code);
+      copyBtn.textContent = ok ? 'Copied!' : 'Copy failed';
+      if (ok) copyBtn.classList.add('copied');
+      setTimeout(() => { copyBtn.textContent = 'Copy'; copyBtn.classList.remove('copied'); }, 1500);
+    });
+    codeBlock.appendChild(copyBtn);
+    card.appendChild(codeBlock);
+
+    const now = new Date();
+    const pad = (n) => n.toString().padStart(2, '0');
+    const ts = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate()) +
+               ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+
+    const footer = document.createElement('div');
+    footer.className = 'inline-code-footer';
+    footer.innerHTML = '<strong>' + escapeHtml(cadetName || '(name not set)') + '</strong> &middot; ' + ts +
+                       (passed ? ' &middot; passing' : ' &middot; non-passing');
+    card.appendChild(footer);
+
+    const recap = document.createElement('div');
+    recap.className = 'recap';
+    const recapTitle = document.createElement('div');
+    recapTitle.className = 'recap-title';
+    recapTitle.textContent = 'Question recap';
+    recap.appendChild(recapTitle);
+
+    state.forEach((s, i) => {
+      const item = document.createElement('div');
+      item.className = 'recap-item';
+      const icon = document.createElement('div');
+      icon.className = 'recap-icon ' + (s.correct ? 'correct' : 'incorrect');
+      icon.textContent = s.correct ? '\u2713' : '\u2717';
+      item.appendChild(icon);
+      const body = document.createElement('div');
+      body.className = 'recap-body';
+      const q = questions[i];
+      const qLine = document.createElement('div');
+      qLine.className = 'recap-question';
+      qLine.innerHTML = '<strong>Q' + (i + 1) + '.</strong> ' + q.shortLabel;
+      body.appendChild(qLine);
+      if (!s.correct) {
+        const exp = document.createElement('div');
+        exp.className = 'recap-explanation';
+        exp.innerHTML = q.incorrectFeedback;
+        body.appendChild(exp);
+      }
+      item.appendChild(body);
+      recap.appendChild(item);
+    });
+    card.appendChild(recap);
+
+    const resetRow = document.createElement('div');
+    resetRow.className = 'reset-row';
+    const resetBtn = document.createElement('button');
+    resetBtn.type = 'button';
+    resetBtn.className = 'reset-btn';
+    resetBtn.textContent = 'Take the quiz again';
+    resetBtn.addEventListener('click', reset);
+    resetRow.appendChild(resetBtn);
+    card.appendChild(resetRow);
+
+    return card;
+  }
+
+  function render() {
+    renderDots();
+    cardArea.innerHTML = '';
+    if (currentIndex >= questions.length) {
+      cardArea.appendChild(buildScoreCard());
+    } else {
+      cardArea.appendChild(buildQuestionCard(currentIndex));
+    }
+  }
+
+  function reset() {
+    state.forEach(s => { s.answered = false; s.correct = false; s.choice = null; s.value = ''; });
+    currentIndex = 0;
+    render();
+  }
+
+  render();
+})();
+</script>
+
+
+    </div>
+  </details>
+
+  <!-- ===================== 6. AFTER CLASS ===================== -->
+  <details id="after-class" style="margin-bottom: 24px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      6. After Class
+    </summary>
+    <div style="padding: 18px 22px;">
+      <ul style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Finish Lab 19 if you did not complete it in class. Submit through GitHub Classroom before Lesson 20.</li>
+        <li style="margin-bottom: 6px;">Submit your Lesson 19 reflection on Blackboard (the completion code from the walkthrough plus a short-answer prompt drawn from the lesson question bank).</li>
+        <li style="margin-bottom: 6px;">Read the Lesson 20 assigned reading. Lesson 20 builds on today by introducing functions that produce and consume structs through pointers, organized across multiple source files.</li>
+        <li style="margin-bottom: 0;">Replay the planets walkthrough in free play mode if you want extra practice. Try different malloc sizes; try assigning a slot pointer mid-way through and using it to fill a slot.</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== HELP NOTE ===================== -->
+  <div style="background: #F5F7FA; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 3px; font-size: 13.5px; color: #4A5568;">
+    <strong style="color: #00205B;">Need help?</strong> Schedule EI with your instructor. Bring specific code, the exact error message, or a screenshot of the walkthrough memory pane and a clear statement of what you expected versus what happened. Specific questions get unstuck quickly. For general reference material (the C Programming Standard, Git troubleshooting, debugging tips), see the Resources section of the course.
+  </div>
+
+</div>

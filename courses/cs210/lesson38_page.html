@@ -1,0 +1,883 @@
+<!-- ============================================================
+     CS210 — Lesson 38
+     Memory Layout Deep Dive
+     Self-contained: all CSS inline. Native <details> for collapsing.
+     Memory-map walkthrough widget embedded inline in Section 5.
+     Paste into Blackboard Ultra via Document -> Add HTML block.
+     ============================================================ -->
+
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 980px; margin: 0 auto; line-height: 1.6;">
+
+  <!-- ===================== LIGHT HEADER ===================== -->
+  <div style="border-left: 5px solid #003087; padding: 8px 0 8px 18px; margin-bottom: 24px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 2px;">CS210 &middot; Block 5 &middot; Lesson 38</div>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 600; color: #00205B;">Memory Layout Deep Dive</h1>
+    <div style="font-size: 14px; color: #4A5568; margin-top: 4px;">Text &middot; Data &middot; BSS &middot; Heap &middot; Stack &middot; Virtual memory</div>
+  </div>
+
+  <!-- ===================== AT A GLANCE ===================== -->
+  <div style="background: #F5F7FA; border-left: 4px solid #B5B7BA; padding: 14px 18px; margin-bottom: 22px; font-size: 14px;">
+    <strong style="color: #00205B;">At a glance:</strong> This is the synthesis lesson. Everything you have built this semester lives somewhere in memory, and today you learn the map: the five segments of a running C program, what lands in each one, and why. There is no new syntax to memorize. Instead you connect things you already know (globals, locals, the call stack, the heap) into one picture. The memory-map walkthrough in Section 5 lets you place objects segment by segment, and the capstone lab exercises all five at once.
+  </div>
+
+  <!-- ===================== TABLE OF CONTENTS ===================== -->
+  <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 20px; margin-bottom: 24px; border-radius: 3px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Contents</div>
+    <ol style="margin: 0; padding-left: 22px; font-size: 14px;">
+      <li style="margin-bottom: 4px;"><a href="#objectives" style="color: #003087; text-decoration: none;">Lesson Objectives</a></li>
+      <li style="margin-bottom: 4px;"><a href="#readings" style="color: #003087; text-decoration: none;">Assigned Readings</a></li>
+      <li style="margin-bottom: 4px;"><a href="#pre-class" style="color: #003087; text-decoration: none;">Pre-Class Work</a></li>
+      <li style="margin-bottom: 4px;"><a href="#materials" style="color: #003087; text-decoration: none;">Lesson Materials and Overview</a></li>
+      <li style="margin-bottom: 4px;"><a href="#in-class" style="color: #003087; text-decoration: none;">In-Class Work</a></li>
+      <li style="margin-bottom: 0;"><a href="#after-class" style="color: #003087; text-decoration: none;">After Class</a></li>
+    </ol>
+  </div>
+
+  <!-- ===================== 1. OBJECTIVES ===================== -->
+  <details id="objectives" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      1. Lesson Objectives
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 10px 0; font-style: italic;">By the end of this lesson, cadets will be able to:</p>
+      <ol style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Identify the standard memory segments of a running C program: text, data, BSS, heap, and stack. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+        <li style="margin-bottom: 6px;">Predict which segment a given program element occupies, including globals, statics, locals, string literals, and dynamically allocated data. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+        <li style="margin-bottom: 0;">Explain at a high level how virtual memory gives each process its own private address space on top of shared physical memory. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 2. READINGS ===================== -->
+  <details id="readings" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      2. Assigned Readings
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 12px 0;">Complete before class. The instructor notes and diagram below are the primary reading; the optional source goes deeper.</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <thead>
+          <tr style="background: #E8EDF5; color: #00205B;">
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 200px;">Source</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9;">Sections</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 220px;">Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Instructor notes (Section 4 below, with diagram)</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">All</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">The five segments and what lands in each. This is the required reading.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 9px 12px;"><a href="https://beej.us/guide/bgc/" style="color: #003087; text-decoration: underline;">Beej-C</a></td>
+            <td style="padding: 9px 12px;">Pointers and Manual Memory Allocation (review)</td>
+            <td style="padding: 9px 12px; color: #4A5568;">Optional refresher on the heap and pointers from earlier blocks.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <!-- ===================== 3. PRE-CLASS WORK ===================== -->
+  <details id="pre-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      3. Pre-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 18px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #6B5300; font-size: 14px; margin-bottom: 4px;">Do this first</div>
+        <div style="font-size: 14px; color: #5A4B00;">Plan on about 20 minutes. This is a conceptual lesson, so the reading is short. Come to class ready to predict where things live, then prove it in the walkthrough.</div>
+      </div>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 0 0 10px 0;">Pre-Class Checklist</h3>
+
+      <!-- Step 1: Read the notes + study the diagram -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">1</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Read the instructor notes and study the diagram in Section 4</div>
+            <div style="font-size: 14px;">Learn the five segments and what lives in each. You should be able to name them top to bottom and give one example of something that lives in each before you walk in.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Recall prior threads -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">2</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Refresh two earlier ideas</div>
+            <div style="font-size: 14px;">This lesson ties together the call stack (the recursion lesson) and the heap (dynamic memory with <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">malloc</code> and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">free</code>). If either feels rusty, skim your notes from those lessons before class.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Skim widget -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 8px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">3</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Skim the In-Class section below</div>
+            <div style="font-size: 14px;">You will see an interactive memory-map walkthrough. No need to use it yet; just know it is there and what it looks like.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ===================== 4. LESSON MATERIALS AND OVERVIEW ===================== -->
+  <details id="materials" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      4. Lesson Materials and Overview
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 18px 0;">You have spent the semester declaring variables, calling functions, and allocating memory with <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">malloc</code>. Each of those things ends up in a specific region of memory, and the region is not arbitrary. Today you learn the map of a running C program and the two questions that decide where anything lives.</p>
+
+      <!-- Subsection navigation -->
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 18px; margin-bottom: 22px; border-radius: 3px;">
+        <div style="font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">Jump to</div>
+        <div style="font-size: 13.5px;">
+          <a href="#slides" style="color: #003087; text-decoration: none; margin-right: 14px;">Slides</a>
+          <a href="#the-map" style="color: #003087; text-decoration: none; margin-right: 14px;">The Map</a>
+          <a href="#segments" style="color: #003087; text-decoration: none; margin-right: 14px;">The Five Segments</a>
+          <a href="#two-questions" style="color: #003087; text-decoration: none; margin-right: 14px;">Two Questions</a>
+          <a href="#virtual-memory" style="color: #003087; text-decoration: none; margin-right: 14px;">Virtual Memory</a>
+          <a href="#dfcs" style="color: #003087; text-decoration: none;">DFCS Standard</a>
+        </div>
+      </div>
+
+      <!-- Slides -->
+      <h3 id="slides" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0; scroll-margin-top: 16px;">Slides</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">The Lesson 38 deck walks the memory map from top to bottom, places examples in each segment, and closes by looking ahead to your team presentations. The slides are the spine of the in-class lecture; the memory-map walkthrough is where you practice placing things yourself.</p>
+
+      <!-- =========================================================
+           EDIT ME: Lesson 38 slide deck link
+           Replace href="#" below with the SharePoint share URL once the
+           deck is published. Leave target="_blank" and rel="noopener".
+           ========================================================= -->
+      <p style="margin: 0 0 18px 0;">
+        <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 10px 20px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 14px;">Open Lesson 38 slides &rarr;</a>
+        <span style="display: inline-block; margin-left: 10px; font-size: 12.5px; color: #6B7280;">replace href with your SharePoint link</span>
+      </p>
+
+      <!-- The map (diagram) -->
+      <h3 id="the-map" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">The map of a running program</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">When your program runs, the operating system gives it an address space: a range of memory addresses laid out from high to low. That space is divided into regions, each with its own job and its own rules. High addresses sit at the top; the lowest addresses at the bottom. This is the single picture to carry out of this lesson.</p>
+
+      <div style="border: 1px solid #D0D5DD; border-radius: 4px; padding: 10px; margin: 0 0 10px 0; background: #ffffff; text-align: center;">
+        <svg xmlns="http://www.w3.org/2000/svg" style="max-width:760px; width:100%; height:auto;" viewBox="0 0 980 900" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrUp" markerWidth="10" markerHeight="10" refX="5" refY="2" orient="auto">
+      <path d="M5 0 L10 7 L0 7 Z" fill="#003087"/>
+    </marker>
+    <marker id="arrDown" markerWidth="10" markerHeight="10" refX="5" refY="8" orient="auto">
+      <path d="M0 3 L10 3 L5 10 Z" fill="#9A7B12"/>
+    </marker>
+    <pattern id="gapHatch" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="12" height="12" fill="#EEF1F5"/>
+      <line x1="0" y1="0" x2="0" y2="12" stroke="#CDD4DE" stroke-width="2"/>
+    </pattern>
+  </defs>
+
+  <!-- Title -->
+  <text x="490" y="40" text-anchor="middle" font-size="26" font-weight="700" fill="#00205B">A C Process in Memory</text>
+  <text x="490" y="66" text-anchor="middle" font-size="14" fill="#5A6473">One running program's virtual address space, high addresses at top</text>
+
+  <!-- Address axis -->
+  <line x1="150" y1="92" x2="150" y2="846" stroke="#B5B7BA" stroke-width="2"/>
+  <text x="138" y="100" text-anchor="end" font-size="12" fill="#5A6473">High addresses</text>
+  <text x="138" y="842" text-anchor="end" font-size="12" fill="#5A6473">0x0  (low)</text>
+
+  <!-- ===== STACK ===== -->
+  <g>
+    <rect x="170" y="92" width="430" height="120" fill="#FFF7DE" stroke="#F0B92C" stroke-width="2"/>
+    <rect x="170" y="92" width="8" height="120" fill="#F0B92C"/>
+    <text x="194" y="120" font-size="19" font-weight="700" fill="#9A7B12">Stack</text>
+    <text x="194" y="144" font-size="13" fill="#4A4636">Function parameters, local variables,</text>
+    <text x="194" y="162" font-size="13" fill="#4A4636">return addresses. One frame per active call.</text>
+    <text x="194" y="186" font-size="12.5" font-style="italic" fill="#7A6A2E">Reclaimed automatically when a function returns.</text>
+    <line x1="560" y1="110" x2="560" y2="196" stroke="#9A7B12" stroke-width="2.5" marker-end="url(#arrDown)"/>
+    <text x="612" y="150" text-anchor="middle" font-size="11.5" fill="#9A7B12" transform="rotate(90 612 150)">grows down</text>
+  </g>
+
+  <!-- ===== GAP ===== -->
+  <g>
+    <rect x="170" y="212" width="430" height="118" fill="url(#gapHatch)" stroke="#CDD4DE" stroke-width="2"/>
+    <text x="385" y="262" text-anchor="middle" font-size="14" font-weight="600" fill="#6B7280">unused virtual address space</text>
+    <text x="385" y="284" text-anchor="middle" font-size="12.5" fill="#6B7280">the stack and the heap grow toward each other here</text>
+  </g>
+
+  <!-- ===== HEAP ===== -->
+  <g>
+    <rect x="170" y="330" width="430" height="120" fill="#E7F0FA" stroke="#003087" stroke-width="2"/>
+    <rect x="170" y="330" width="8" height="120" fill="#003087"/>
+    <text x="194" y="358" font-size="19" font-weight="700" fill="#003087">Heap</text>
+    <text x="194" y="382" font-size="13" fill="#27374D">Memory you request at run time with</text>
+    <text x="194" y="400" font-size="13" fill="#27374D">malloc / calloc / realloc.</text>
+    <text x="194" y="424" font-size="12.5" font-style="italic" fill="#3A5577">You decide its lifetime. You must free it.</text>
+    <line x1="560" y1="432" x2="560" y2="346" stroke="#003087" stroke-width="2.5" marker-end="url(#arrUp)"/>
+    <text x="612" y="390" text-anchor="middle" font-size="11.5" fill="#003087" transform="rotate(90 612 390)">grows up</text>
+  </g>
+
+  <!-- ===== BSS ===== -->
+  <g>
+    <rect x="170" y="450" width="430" height="96" fill="#F1F3F6" stroke="#8A93A0" stroke-width="2"/>
+    <rect x="170" y="450" width="8" height="96" fill="#8A93A0"/>
+    <text x="194" y="478" font-size="19" font-weight="700" fill="#566173">BSS  (uninitialized data)</text>
+    <text x="194" y="502" font-size="13" fill="#3D4757">Globals and statics with no initializer.</text>
+    <text x="194" y="524" font-size="12.5" font-style="italic" fill="#5A6473">Zeroed at startup; costs no space in the executable file.</text>
+  </g>
+
+  <!-- ===== DATA ===== -->
+  <g>
+    <rect x="170" y="546" width="430" height="96" fill="#E8F3EC" stroke="#2E7D32" stroke-width="2"/>
+    <rect x="170" y="546" width="8" height="96" fill="#2E7D32"/>
+    <text x="194" y="574" font-size="19" font-weight="700" fill="#1B5E20">Data  (initialized data)</text>
+    <text x="194" y="598" font-size="13" fill="#234A28">Globals and statics that have a starting value.</text>
+    <text x="194" y="620" font-size="12.5" font-style="italic" fill="#3A6B40">Lives for the entire run of the program.</text>
+  </g>
+
+  <!-- ===== TEXT ===== -->
+  <g>
+    <rect x="170" y="642" width="430" height="204" fill="#E4E8F2" stroke="#00205B" stroke-width="2"/>
+    <rect x="170" y="642" width="8" height="204" fill="#00205B"/>
+    <text x="194" y="670" font-size="19" font-weight="700" fill="#00205B">Text  (code)</text>
+    <text x="194" y="694" font-size="13" fill="#1B2A4A">The machine code of your functions.</text>
+    <text x="194" y="716" font-size="13" fill="#1B2A4A">String literals and const data sit in a</text>
+    <text x="194" y="734" font-size="13" fill="#1B2A4A">read-only region alongside it.</text>
+    <text x="194" y="758" font-size="12.5" font-style="italic" fill="#3A4A6B">Read-only: writing here crashes the program.</text>
+  </g>
+
+  <!-- Right-side example callouts -->
+  <g font-size="12.5">
+    <text x="636" y="640" font-size="13" font-weight="700" fill="#00205B">Where things land</text>
+    <text x="636" y="662" fill="#4A4636">int x; inside a function  &#8594;  Stack</text>
+    <text x="636" y="684" fill="#3A5577">malloc(n)  &#8594;  Heap</text>
+    <text x="636" y="706" fill="#566173">static int n;  &#8594;  BSS</text>
+    <text x="636" y="728" fill="#1B5E20">int g = 5; at file scope  &#8594;  Data</text>
+    <text x="636" y="750" fill="#1B2A4A">"hello" and your code  &#8594;  Text</text>
+  </g>
+
+  <!-- footer -->
+  <text x="490" y="884" text-anchor="middle" font-size="11.5" fill="#8A93A0">CS210 / Lesson 38 / Memory Layout Deep Dive</text>
+</svg>
+
+      </div>
+      <p style="font-size: 13px; color: #6B7280; margin: 0 0 18px 0; text-align: center;">The five segments of a C process, with the stack and heap growing toward each other through the unused middle.</p>
+
+      <!-- The five segments -->
+      <h3 id="segments" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">The five segments</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Read the map from the bottom up, because that is roughly the order in which things are decided, from fixed-at-compile-time to decided-at-run-time.</p>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 18px;">
+        <thead>
+          <tr style="background: #00205B; color: #ffffff;">
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 150px;">Segment</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600;">What lives here</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 180px;">Lifetime</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-weight: 600; color: #00205B;">Text</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Your compiled code, plus string literals and other read-only constants.</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Whole run. Read-only; writing here crashes.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-weight: 600; color: #1B5E20;">Data</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Globals and statics that have an initial value.</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Whole run.</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-weight: 600; color: #566173;">BSS</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Globals and statics with no initializer. Zeroed at startup.</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Whole run. Costs no bytes in the executable file.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-weight: 600; color: #003087;">Heap</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Memory you request at run time with <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">malloc</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">calloc</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">realloc</code>.</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">From your <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">malloc</code> until your <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">free</code>. Your responsibility.</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; font-weight: 600; color: #9A7B12;">Stack</td>
+            <td style="padding: 8px 12px;">Function parameters, local variables, and return addresses. One frame per active call.</td>
+            <td style="padding: 8px 12px;">Reclaimed automatically when the function returns.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><strong style="color: #00205B;">The pointer trap.</strong> A line like <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">animal_t *p = malloc(sizeof(animal_t));</code> creates <em>two</em> objects in two different segments. The pointer variable <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">p</code> lives on the stack; the block it points to lives on the heap. When the function returns, the stack reclaims <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">p</code> automatically, but the heap block stays allocated until you free it. Forgetting that is exactly the leak that valgrind reports.</p>
+
+      <!-- Two questions -->
+      <h3 id="two-questions" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Two questions decide everything</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">You do not need to memorize a table of cases. For any variable, two questions place it:</p>
+      <ol style="font-size: 14.5px; margin: 0 0 12px 0; padding-left: 22px;">
+        <li style="margin-bottom: 6px;"><strong style="color: #00205B;">What is its scope and lifetime?</strong> A plain local inside a function goes on the stack. Anything at file scope, or marked <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">static</code>, lives for the whole run and goes in data or BSS. Anything from <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">malloc</code> goes on the heap.</li>
+        <li style="margin-bottom: 0;"><strong style="color: #00205B;">Does it have an initializer?</strong> For whole-run variables, an initial value puts it in data; no initializer puts it in BSS.</li>
+      </ol>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">Notice that scope, not syntax, decides the home. The exact same line <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">int n = 5;</code> goes on the stack inside a function and into the data segment at file scope. That is the single most useful idea in this lesson, and the walkthrough drills it directly.</p>
+
+      <!-- Virtual memory -->
+      <h3 id="virtual-memory" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Virtual memory, briefly</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">The address space in the diagram is <em>virtual</em>. Every running program sees the same clean layout starting from low addresses, as if it owned the whole machine. It does not. The operating system maps each program's virtual addresses onto whatever physical memory is actually free, and keeps each program's space private from the others.</p>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">Two practical consequences follow. First, the addresses you print are virtual, so the same program run twice can report different numbers (modern systems also randomize the layout on purpose for security). Second, one program cannot read or corrupt another's memory by accident, because they do not share an address space. You do not need the page-table details for this course. You need the mental model: each process gets its own private map, and the diagram is that map.</p>
+
+      <!-- DFCS standard -->
+      <h3 id="dfcs" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">DFCS C Programming Standard</h3>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">This lesson does not introduce a new style rule; it reinforces one you already follow. The heap discipline in <strong>&sect;8.5</strong> (every allocation has a matching free; no leaks) is exactly what the memory map makes concrete. The stack reclaims its frames for you, but the heap is yours to manage. The capstone lab is graded in part on a clean valgrind run, which is the standard's no-leak rule made measurable. The full standard lives in the course Resources section.</p>
+
+    </div>
+  </details>
+
+  <!-- ===================== 5. IN-CLASS WORK ===================== -->
+  <details id="in-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      5. In-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 16px 0;">Two things to do in class. Use the checklist to track your progress.</p>
+
+      <ul style="list-style: none; padding: 0; margin: 0 0 24px 0; font-size: 14.5px;">
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Work through the memory-map walkthrough below.</strong>
+          <span style="color: #4A5568;">Twelve guided tasks across four sections. Declare or allocate what each task asks for, predict the segment, then watch the map fill in. About 20 minutes.</span>
+        </li>
+        <li style="margin-bottom: 0; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Start the capstone lab: Aspen Humane Society Roster.</strong>
+          <span style="color: #4A5568;">Your synthesis lab. Auto-graded through GitHub Classroom and Gradescope.</span>
+          <div style="margin-top: 6px; margin-left: 28px; font-size: 13.5px; color: #6B5300; background: #FFF8E1; border-left: 3px solid #F0B92C; padding: 6px 10px; border-radius: 3px;">This lab is due at <strong>Lesson 40</strong>, not next lesson. The extra time is on purpose: treat it as a real warmup for the final.</div>
+          <!-- =========================================================
+               EDIT ME: Lesson 38 capstone GitHub Classroom assignment link
+               Replace href="#" with the classroom.github.com/a/... invite
+               URL once the assignment is published.
+               ========================================================= -->
+          <div style="margin-top: 8px; margin-left: 28px;">
+            <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 6px 14px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 13px;">Accept the capstone on GitHub Classroom &rarr;</a>
+          </div>
+        </li>
+      </ul>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 18px 0 10px 0;">Memory-Map Walkthrough</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Twelve tasks across four sections. Each task names a scope (file scope, or inside <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">main</code>). Decide which segment the object lands in before you press Enter, then type the declaration and watch the right pane.</p>
+
+<!-- CS210 Lesson 38 — Memory Layout walkthrough widget (visualization archetype).
+     Cadets declare/allocate things in a stated scope and predict which segment each lands in;
+     the right pane is a segmented address-space map that populates as they work. -->
+<div class="cs210-memlayout">
+<style>
+  .cs210-memlayout { --navy:#00205B; --blue:#003087; --silver:#B5B7BA; --gold:#F0B92C;
+    --ink:#1B2A4A; --muted:#5A6473; --bg:#FFFFFF; --term-bg:#1E2A3A;
+    box-sizing:border-box; max-width:980px; margin:0 auto; font-family:"Segoe UI",Helvetica,Arial,sans-serif;
+    color:var(--ink); position:relative; border:1px solid #D0D5DD; border-radius:10px; overflow:hidden; background:var(--bg); }
+  .cs210-memlayout *, .cs210-memlayout *::before, .cs210-memlayout *::after { box-sizing:border-box; }
+  .cs210-memlayout .ml-head { background:var(--navy); color:#fff; padding:14px 20px; }
+  .cs210-memlayout .ml-head h3 { margin:0; font-size:18px; }
+  .cs210-memlayout .ml-head p { margin:4px 0 0; font-size:13px; color:#C9D2E3; }
+  .cs210-memlayout .ml-progress { height:6px; background:#E4E8F2; }
+  .cs210-memlayout .ml-progress-fill { height:100%; width:0; background:var(--gold); transition:width .25s ease; }
+  .cs210-memlayout .ml-progress-label { font-size:11px; color:var(--muted); padding:4px 20px 0; text-align:right; }
+  .cs210-memlayout .ml-task { padding:14px 20px; border-bottom:1px solid #ECEFF3; }
+  .cs210-memlayout .ml-section-header { font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--blue); font-weight:700; margin-bottom:6px; }
+  .cs210-memlayout .ml-scope { display:inline-block; font-size:11.5px; font-weight:700; padding:2px 9px; border-radius:12px; margin-bottom:8px; }
+  .cs210-memlayout .ml-scope.file { background:#E8F3EC; color:#1B5E20; border:1px solid #2E7D32; }
+  .cs210-memlayout .ml-scope.main { background:#FFF7DE; color:#9A7B12; border:1px solid #F0B92C; }
+  .cs210-memlayout .ml-scope.none { background:#EEF1F5; color:#566173; border:1px solid #B5B7BA; }
+  .cs210-memlayout .task-card .ml-label { font-size:12px; color:var(--muted); font-weight:600; }
+  .cs210-memlayout .task-card .ml-text { font-size:15px; margin:4px 0 0; line-height:1.45; }
+  .cs210-memlayout .task-card.complete { background:#E8F3EC; }
+  .cs210-memlayout .ml-hint { font-size:13px; color:#9A7B12; margin-top:8px; min-height:18px; font-family:Consolas,monospace; }
+  .cs210-memlayout .ml-body { display:grid; grid-template-columns:1fr 1fr; gap:0; }
+  @media (max-width:760px){ .cs210-memlayout .ml-body { grid-template-columns:1fr; } }
+  .cs210-memlayout .ml-left { border-right:1px solid #ECEFF3; min-height:430px; display:flex; flex-direction:column; }
+  @media (max-width:760px){ .cs210-memlayout .ml-left { border-right:none; border-bottom:1px solid #ECEFF3; } }
+  .cs210-memlayout .ml-term { background:var(--term-bg); color:#E6EBF2; font-family:Consolas,monospace; font-size:13px;
+    padding:12px 14px; flex:1; overflow-y:auto; max-height:330px; line-height:1.5; }
+  .cs210-memlayout .ml-term .l-dim { color:#8FA0B8; }
+  .cs210-memlayout .ml-term .l-out { color:#E6EBF2; }
+  .cs210-memlayout .ml-term .l-err { color:#FF9E9E; }
+  .cs210-memlayout .ml-term .l-cmd { color:#9CDCFE; }
+  .cs210-memlayout .ml-term .l-note { color:var(--gold); }
+  .cs210-memlayout .ml-inputrow { display:flex; border-top:1px solid #2A3850; background:#172230; }
+  .cs210-memlayout .ml-prompt { color:var(--gold); font-family:Consolas,monospace; padding:10px 6px 10px 14px; font-size:14px; }
+  .cs210-memlayout .ml-input { flex:1; background:transparent; border:none; color:#E6EBF2; font-family:Consolas,monospace;
+    font-size:14px; padding:10px 14px 10px 0; outline:none; }
+  .cs210-memlayout .ml-controls { display:flex; gap:8px; padding:10px 14px; background:#172230; border-top:1px solid #2A3850; }
+  .cs210-memlayout .ml-btn { font-size:12.5px; padding:6px 11px; border-radius:6px; border:1px solid #3A4A6B; background:#22304A;
+    color:#C9D2E3; cursor:pointer; font-family:inherit; }
+  .cs210-memlayout .ml-btn:hover { background:#2C3C5C; }
+  .cs210-memlayout .ml-btn.pulse { animation:mlpulse 1s ease-in-out infinite; border-color:var(--gold); color:var(--gold); }
+  @keyframes mlpulse { 0%,100%{ box-shadow:0 0 0 0 rgba(240,185,44,.0);} 50%{ box-shadow:0 0 0 4px rgba(240,185,44,.45);} }
+  /* memory map (right pane) */
+  .cs210-memlayout .ml-map { padding:14px; display:flex; flex-direction:column; gap:0; }
+  .cs210-memlayout .ml-seg { border:1px solid #D0D5DD; border-left-width:7px; padding:8px 10px; }
+  .cs210-memlayout .ml-seg + .ml-seg { border-top:none; }
+  .cs210-memlayout .ml-seg .seg-name { font-weight:700; font-size:13.5px; }
+  .cs210-memlayout .ml-seg .seg-sub { font-size:11px; color:var(--muted); }
+  .cs210-memlayout .ml-seg .seg-chips { display:flex; flex-wrap:wrap; gap:5px; margin-top:6px; min-height:8px; }
+  .cs210-memlayout .ml-seg.stack { background:#FFF7DE; border-left-color:var(--gold); }
+  .cs210-memlayout .ml-seg.stack .seg-name { color:#9A7B12; }
+  .cs210-memlayout .ml-seg.gap { background:repeating-linear-gradient(45deg,#EEF1F5,#EEF1F5 8px,#E3E8EF 8px,#E3E8EF 16px); border-left-color:#CDD4DE; text-align:center; }
+  .cs210-memlayout .ml-seg.gap .seg-name { color:#6B7280; font-weight:600; font-size:12px; }
+  .cs210-memlayout .ml-seg.heap { background:#E7F0FA; border-left-color:var(--blue); }
+  .cs210-memlayout .ml-seg.heap .seg-name { color:var(--blue); }
+  .cs210-memlayout .ml-seg.bss { background:#F1F3F6; border-left-color:#8A93A0; }
+  .cs210-memlayout .ml-seg.bss .seg-name { color:#566173; }
+  .cs210-memlayout .ml-seg.data { background:#E8F3EC; border-left-color:#2E7D32; }
+  .cs210-memlayout .ml-seg.data .seg-name { color:#1B5E20; }
+  .cs210-memlayout .ml-seg.text { background:#E4E8F2; border-left-color:var(--navy); }
+  .cs210-memlayout .ml-seg.text .seg-name { color:var(--navy); }
+  .cs210-memlayout .ml-chip { font-family:Consolas,monospace; font-size:11.5px; background:#fff; border:1px solid #C7CDD6;
+    border-radius:5px; padding:2px 7px; color:#27374D; }
+  .cs210-memlayout .ml-chip.heap-blk { background:var(--blue); color:#fff; border-color:var(--blue); }
+  .cs210-memlayout .ml-chip.chip-new { animation:mlflash .9s ease; }
+  @keyframes mlflash { 0%{ background:var(--gold); color:#1E2A3A; box-shadow:0 0 0 3px rgba(240,185,44,.5);} 100%{} }
+  .cs210-memlayout .ml-completion-area { padding:0 14px 14px; }
+  .cs210-memlayout .completion-screen { background:#E8F3EC; border:1px solid #2E7D32; border-radius:8px; padding:14px; }
+  .cs210-memlayout .completion-screen .cs-heading { font-weight:700; color:#1B5E20; font-size:15px; }
+  .cs210-memlayout .completion-screen .cs-name-line { margin-top:6px; font-size:13px; }
+  .cs210-memlayout .completion-screen .cs-code-block { display:flex; align-items:center; gap:12px; margin-top:8px; }
+  .cs210-memlayout .completion-screen .cs-code-label { font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+  .cs210-memlayout .completion-screen .cs-code-value { font-family:Consolas,monospace; font-size:22px; font-weight:700; letter-spacing:.12em; color:var(--navy); }
+  .cs210-memlayout .completion-screen .cs-timestamp { font-size:11.5px; color:var(--muted); margin-top:6px; }
+  /* name + completion modals (scoped to widget) */
+  .cs210-memlayout .name-modal-backdrop { position:absolute; inset:0; background:rgba(0,32,91,.45); display:flex;
+    align-items:center; justify-content:center; z-index:20; padding:18px; }
+  .cs210-memlayout .name-modal { background:#fff; border-radius:10px; border-top:6px solid var(--navy); padding:22px; max-width:460px; width:100%; }
+  .cs210-memlayout .name-modal h2 { margin:0 0 8px; color:var(--navy); font-size:19px; }
+  .cs210-memlayout .name-modal p { font-size:13.5px; color:#3D4757; line-height:1.5; margin:0 0 14px; }
+  .cs210-memlayout .name-modal input { width:100%; padding:10px; font-size:15px; border:1px solid #C7CDD6; border-radius:6px; margin-bottom:12px; }
+  .cs210-memlayout .name-modal-btn { background:var(--navy); color:#fff; border:none; padding:10px 18px; border-radius:6px; font-size:14px; cursor:pointer; }
+  .cs210-memlayout .name-modal-btn:disabled { background:#9AA4B2; cursor:not-allowed; }
+  .cs210-memlayout .cs-copy-btn { background:#22304A; color:#fff; border:none; padding:7px 12px; border-radius:6px; font-size:12.5px; cursor:pointer; }
+  .cs210-memlayout .cs-copy-btn.copied { background:#2E7D32; }
+  .cs210-memlayout .cs-reminder { font-size:13px; background:#FFF8E1; border-left:4px solid var(--gold); padding:10px 12px; border-radius:4px; }
+</style>
+
+  <div class="ml-head">
+    <h3>Memory Map: where does each thing live?</h3>
+    <p>Declare or allocate what each task asks for. Before you press enter, decide which segment it lands in — then watch the map.</p>
+  </div>
+  <div class="ml-progress"><div class="ml-progress-fill" id="ml-progress-fill"></div></div>
+  <div class="ml-progress-label" id="ml-progress-label">Task 1 of 12</div>
+
+  <div class="ml-task">
+    <div class="ml-section-header" id="ml-section-header">Section 1: Globals split in two</div>
+    <div class="task-card" id="ml-task-card">
+      <span class="ml-scope none" id="ml-scope">scope</span>
+      <div class="ml-label" id="ml-task-label">Task 1 of 12</div>
+      <div class="ml-text" id="ml-task-text">Loading…</div>
+      <div class="ml-hint" id="ml-task-hint"></div>
+    </div>
+  </div>
+
+  <div class="ml-body">
+    <div class="ml-left">
+      <div class="ml-term" id="ml-term"></div>
+      <div class="ml-inputrow">
+        <span class="ml-prompt" id="ml-prompt-scope">file&gt;</span>
+        <input class="ml-input" id="ml-input" type="text" autocomplete="off" spellcheck="false" placeholder="type the declaration the task asks for">
+      </div>
+      <div class="ml-controls">
+        <button class="ml-btn" id="ml-hint-btn" type="button">Show hint</button>
+        <button class="ml-btn" id="ml-mode-btn" type="button">Switch to free mode</button>
+        <button class="ml-btn" id="ml-reset-btn" type="button">Reset</button>
+      </div>
+    </div>
+    <div class="ml-map" id="ml-map"></div>
+  </div>
+  <div class="ml-completion-area" id="ml-completion-area"></div>
+
+  <!-- name modal -->
+  <div class="name-modal-backdrop" id="ml-name-modal-backdrop">
+    <div class="name-modal">
+      <h2>Before you start</h2>
+      <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Lesson 38 reflection.</p>
+      <input id="ml-cadet-name-input" type="text" placeholder="Your name" autocomplete="off">
+      <button class="name-modal-btn" id="ml-cadet-name-btn" type="button" disabled>Start</button>
+    </div>
+  </div>
+
+<script>
+(function(){
+  var root = document.currentScript.closest('.cs210-memlayout');
+  if (!root) { var all = document.querySelectorAll('.cs210-memlayout'); root = all[all.length-1]; }
+
+  // ---- completion utilities (FNV-1a -> 6-char code) ----
+  var CS210_SALT = "lesson38_memlayout_completed";
+  var CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  function cs210Fnv1a(str){ var h=0x811c9dc5; for(var i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=(h+((h<<1)+(h<<4)+(h<<7)+(h<<8)+(h<<24)))>>>0; } return h>>>0; }
+  function cs210CodeFromSalt(salt){ var h1=cs210Fnv1a(salt), h2=cs210Fnv1a(salt+'|cs210');
+    var pool=BigInt(h1)|(BigInt(h2)<<32n), out=''; for(var i=0;i<6;i++){ out+=CS210_ALPHABET[Number(pool&31n)]; pool>>=5n; } return out; }
+  var CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  var cs210CadetName = '';
+
+  // ---- state ----
+  var SEGS = [
+    { key:'stack', name:'Stack', sub:'locals, parameters' },
+    { key:'gap',   name:'unused virtual address space', sub:'' },
+    { key:'heap',  name:'Heap', sub:'malloc / calloc / realloc' },
+    { key:'bss',   name:'BSS', sub:'uninitialized globals & statics' },
+    { key:'data',  name:'Data', sub:'initialized globals & statics' },
+    { key:'text',  name:'Text', sub:'code + string literals (read-only)' }
+  ];
+  var objects = [];      // { seg, label, heapBlk }
+  var lastAddedIds = []; // labels added on the most recent step (for flash)
+  var currentTaskIndex = 0, consecutiveFails = 0, mode = 'walkthrough';
+
+  function addObj(seg, label, heapBlk){ objects.push({ seg:seg, label:label, heapBlk:!!heapBlk }); lastAddedIds.push(label); }
+  function removeObj(label){ objects = objects.filter(function(o){ return o.label !== label; }); }
+
+  // ---- terminal ----
+  var termEl = root.querySelector('#ml-term');
+  function termLine(text, cls){ var d=document.createElement('div'); d.className='l-'+(cls||'out'); d.textContent=text; termEl.appendChild(d);
+    termEl.scrollTop = termEl.scrollHeight; }
+  function echoCommand(cmd){ termLine((mode==='free'?'free> ':(currentScope()+'> '))+cmd, 'cmd'); }
+
+  // ---- tasks ----
+  // each: section?, label, scope ('file'|'main'|'none'), text, hint, match(cmd), diagnose(cmd), apply(), note
+  var tasks = [
+    { section:'Section 1: Globals split in two', label:'Task 1 of 12', scope:'file',
+      text:'At file scope, declare an initialized global: int shelter_capacity = 50;',
+      hint:'int shelter_capacity = 50;',
+      match:function(c){ return /^\s*int\s+shelter_capacity\s*=\s*50\s*;\s*$/.test(c); },
+      diagnose:diagFileInit, apply:function(){ addObj('data','shelter_capacity'); },
+      note:'A global WITH an initializer lives in Data. Its starting value (50) is baked into the executable file and the variable lives for the whole run.' },
+    { label:'Task 2 of 12', scope:'file',
+      text:'Now a global with NO initializer: int dogs_present;',
+      hint:'int dogs_present;',
+      match:function(c){ return /^\s*int\s+dogs_present\s*;\s*$/.test(c); },
+      diagnose:diagFileUninit, apply:function(){ addObj('bss','dogs_present'); },
+      note:'Same syntax, no value -> it lands in BSS instead of Data. BSS is zeroed at startup, so dogs_present starts at 0, and it costs zero bytes in the executable file (only Data carries real bytes on disk).' },
+    { label:'Task 3 of 12', scope:'none',
+      text:'Predict: a file-scope array char shelter_name[] = "Aspen Humane"; — which segment? Type one of: stack heap data bss text',
+      hint:'It has an initializer, and the array itself is writable.',
+      match:function(c){ return /^\s*data\s*$/i.test(c); },
+      diagnose:diagSeg, apply:function(){ addObj('data','shelter_name[]'); },
+      note:'Data. The array is initialized, so it carries real bytes. Because the array is writable, the characters are copied into Data — not the read-only Text region. Hold that thought for Task 10.' },
+
+    { section:'Section 2: Inside a function', label:'Task 4 of 12', scope:'main',
+      text:'Now you are inside main(). Declare a local: int waiting = 3;',
+      hint:'int waiting = 3;',
+      match:function(c){ return /^\s*int\s+waiting\s*=\s*3\s*;\s*$/.test(c); },
+      diagnose:diagLocal, apply:function(){ addObj('stack','waiting'); },
+      note:'Identical syntax to Task 1, but inside a function it lives on the Stack, in main\'s frame. It is gone the instant main returns. Scope, not syntax, decides the home.' },
+    { label:'Task 5 of 12', scope:'main',
+      text:'Inside main, declare: static int total_seen = 0;',
+      hint:'static int total_seen = 0;',
+      match:function(c){ return /^\s*static\s+int\s+total_seen\s*=\s*0\s*;\s*$/.test(c); },
+      diagnose:diagStaticInit, apply:function(){ addObj('data','total_seen (static)'); },
+      note:'static moves it off the stack and into Data, even though it is declared inside a function. It keeps its value between calls and lives for the whole run — a global lifetime with a local name. (Recall L6: avoid real globals; a function-local static is the disciplined version.)' },
+    { label:'Task 6 of 12', scope:'none',
+      text:'Predict: static int errors; (no initializer, inside main) — which segment? Type one of: stack heap data bss text',
+      hint:'static + no value.',
+      match:function(c){ return /^\s*bss\s*$/i.test(c); },
+      diagnose:diagSeg, apply:function(){ addObj('bss','errors (static)'); },
+      note:'BSS. static gives it a whole-run lifetime; the missing initializer puts it in BSS rather than Data. The same two questions decide every storage location: what is the scope, and is there an initializer.' },
+
+    { section:'Section 3: The heap (and the pointer that finds it)', label:'Task 7 of 12', scope:'main',
+      text:'Inside main, allocate room for the roster: Animal *roster = malloc(80);',
+      hint:'Animal *roster = malloc(80);',
+      match:function(c){ return /^\s*Animal\s*\*\s*roster\s*=\s*malloc\s*\(\s*80\s*\)\s*;\s*$/.test(c); },
+      diagnose:diagMalloc, apply:function(){ addObj('stack','roster (ptr)'); addObj('heap','80-byte block', true); },
+      note:'ONE line, TWO objects. The pointer variable roster lives on the Stack. The 80-byte block it points to lives on the Heap. Confusing these is the single most common pointer mistake. (Callback: L23-24 dynamic memory.)' },
+    { label:'Task 8 of 12', scope:'none',
+      text:'Predict: when main returns, the 80-byte heap block is freed automatically. True or false? Type true or false.',
+      hint:'What reclaims the stack vs the heap?',
+      match:function(c){ return /^\s*false\s*$/i.test(c); },
+      diagnose:diagBool, apply:function(){},
+      note:'False. The stack frame (including the pointer roster) is reclaimed automatically, but the heap block is NOT. If you never free it, it leaks. This is exactly what valgrind reports as "definitely lost" — and exactly what your lab must come back clean on.' },
+    { label:'Task 9 of 12', scope:'main',
+      text:'Release the block: free(roster);',
+      hint:'free(roster);',
+      match:function(c){ return /^\s*free\s*\(\s*roster\s*\)\s*;\s*$/.test(c); },
+      diagnose:diagFree, apply:function(){ removeObj('80-byte block'); },
+      note:'free() returns the block to the allocator — watch it leave the Heap. The pointer roster still holds the old address (it is now dangling); good practice is to stop using it or set it to NULL. (Callback: L37 defensive programming.)' },
+
+    { section:'Section 4: Code and read-only data', label:'Task 10 of 12', scope:'main',
+      text:'Inside main, declare: char *greeting = "Welcome";',
+      hint:'char *greeting = "Welcome";',
+      match:function(c){ return /^\s*char\s*\*\s*greeting\s*=\s*"Welcome"\s*;\s*$/.test(c); },
+      diagnose:diagStrLit, apply:function(){ addObj('stack','greeting (ptr)'); addObj('text','"Welcome"'); },
+      note:'Again two objects: the pointer greeting on the Stack, and the literal "Welcome" in read-only Text. Contrast Task 3: char name[] = "..." COPIES the text into a writable array; char *p = "..." POINTS at a read-only literal. Writing through greeting crashes the program.' },
+    { label:'Task 11 of 12', scope:'none',
+      text:'Predict: the compiled instructions of your function adopt_animal() live in which segment? Type one of: stack heap data bss text',
+      hint:'Where does code live?',
+      match:function(c){ return /^\s*text\s*$/i.test(c); },
+      diagnose:diagSeg, apply:function(){ addObj('text','adopt_animal() code'); },
+      note:'Text. Your functions are machine code loaded read-only when the program starts. That is why it sits with the string literals: both are read-only and fixed for the whole run.' },
+    { label:'Task 12 of 12', scope:'none',
+      text:'Synthesis: each active call to a recursive function gets its own copy of its locals on the stack. True or false? Type true or false.',
+      hint:'Think back to the call stack in L11.',
+      match:function(c){ return /^\s*true\s*$/i.test(c); },
+      diagnose:diagBool, apply:function(){},
+      note:'True. Every active call has its own frame on the Stack with its own locals — that is exactly why recursion works (L11). You now have the whole map: scope and lifetime decide where everything lives. Your lab will exercise all five segments at once, and valgrind will check your heap discipline.' }
+  ];
+
+  function currentScope(){
+    if (mode === 'free') return 'free';
+    var t = tasks[currentTaskIndex];
+    if (!t) return 'file';
+    return t.scope === 'main' ? 'main' : (t.scope === 'file' ? 'file' : 'predict');
+  }
+
+  // ---- diagnosis helpers (classify near-misses) ----
+  function diagFileInit(c){ if (/^\s*int\s+shelter_capacity\s*;\s*$/.test(c)) return 'Close — but Task 1 wants an initializer (= 50). Without it, you would land in BSS, not Data.'; return diagGeneric(c); }
+  function diagFileUninit(c){ if (/=/.test(c)) return 'Task 2 wants NO initializer. Drop the = ... so it goes to BSS.'; return diagGeneric(c); }
+  function diagLocal(c){ if (/^\s*static\b/.test(c)) return 'No static here — Task 4 wants a plain local so it lands on the Stack.'; return diagGeneric(c); }
+  function diagStaticInit(c){ if (/^\s*int\s+total_seen/.test(c) && !/static/.test(c)) return 'Add static — that is what moves it off the Stack into Data.'; return diagGeneric(c); }
+  function diagMalloc(c){ if (/malloc/.test(c) && !/\bAnimal\s*\*\s*roster\b/.test(c)) return 'Use the exact form Animal *roster = malloc(80); so the map can name both objects.'; if (!/malloc/.test(c)) return 'This task allocates on the heap — you need malloc(80).'; return diagGeneric(c); }
+  function diagFree(c){ if (!/free/.test(c)) return 'Use free(roster); to release the heap block.'; return diagGeneric(c); }
+  function diagStrLit(c){ if (/char\s+\w+\s*\[\s*\]/.test(c)) return 'That is the array form (copies into Data). Task 10 wants the pointer form char *greeting = "Welcome";'; return diagGeneric(c); }
+  function diagSeg(c){ if (/^\s*(stack|heap|data|bss|text)\s*$/i.test(c)) return 'Not the segment this one lands in. Re-read the task and use the map as a guide.'; return 'Type just one segment name: stack, heap, data, bss, or text.'; }
+  function diagBool(c){ if (/^\s*(true|false)\s*$/i.test(c)) return 'Not quite — reconsider what the stack reclaims automatically versus what you must free yourself.'; return 'Type just true or false for this one.'; }
+  function diagGeneric(c){ if (!/;\s*$/.test(c) && !/^\s*(stack|heap|data|bss|text|true|false)\s*$/i.test(c)) return 'A C statement needs a semicolon. Check the hint.'; return 'Not what this task is asking for. Look at the task card, or click Show hint.'; }
+
+  // ---- free-mode parser (recognizes the same forms for early finishers) ----
+  function placeFree(c){
+    var m;
+    if (/^\s*free\s*\(\s*(\w+)\s*\)\s*;\s*$/.test(c)) { var nm=c.match(/free\s*\(\s*(\w+)/)[1]; removeObj(nm+' (ptr)'); removeObj(nm); termLine('  freed heap block for '+nm, 'note'); return true; }
+    if ((m=c.match(/^\s*(\w[\w ]*?)\s*\*\s*(\w+)\s*=\s*malloc\s*\(\s*(\d+)\s*\)\s*;\s*$/))) { addObj('stack', m[2]+' (ptr)'); addObj('heap', m[3]+'-byte block', true); termLine('  pointer '+m[2]+' on stack; '+m[3]+'-byte block on heap', 'note'); return true; }
+    if ((m=c.match(/^\s*char\s*\*\s*(\w+)\s*=\s*"([^"]*)"\s*;\s*$/))) { addObj('stack', m[1]+' (ptr)'); addObj('text', '"'+m[2]+'"'); termLine('  pointer on stack; literal in text', 'note'); return true; }
+    if ((m=c.match(/^\s*static\s+[\w ]+?\s+(\w+)\s*(=\s*[^;]+)?;\s*$/))) { addObj(m[2]?'data':'bss', m[1]+' (static)'); termLine('  static -> '+(m[2]?'data':'bss'), 'note'); return true; }
+    if ((m=c.match(/^\s*[\w ]+?\s+(\w+)\s*(=\s*[^;]+)?;\s*$/))) { addObj('stack', m[1]); termLine('  free mode assumes function scope -> stack', 'note'); return true; }
+    return false;
+  }
+
+  // ---- renderer ----
+  function renderMap(){
+    var map = root.querySelector('#ml-map');
+    map.innerHTML = '';
+    SEGS.forEach(function(seg){
+      var div = document.createElement('div');
+      div.className = 'ml-seg ' + seg.key;
+      var html = '<div class="seg-name">' + seg.name + '</div>';
+      if (seg.sub) html += '<div class="seg-sub">' + seg.sub + '</div>';
+      if (seg.key !== 'gap') html += '<div class="seg-chips"></div>';
+      div.innerHTML = html;
+      map.appendChild(div);
+      if (seg.key !== 'gap') {
+        var chipWrap = div.querySelector('.seg-chips');
+        objects.filter(function(o){ return o.seg === seg.key; }).forEach(function(o){
+          var chip = document.createElement('span');
+          chip.className = 'ml-chip' + (o.heapBlk ? ' heap-blk' : '') + (lastAddedIds.indexOf(o.label) !== -1 ? ' chip-new' : '');
+          chip.textContent = o.label;
+          chipWrap.appendChild(chip);
+        });
+      }
+    });
+  }
+
+  // ---- controller ----
+  function checkTask(rawCmd){
+    if (mode === 'free' || currentTaskIndex >= tasks.length) {
+      echoCommand(rawCmd);
+      if (mode === 'free') { if (!placeFree(rawCmd)) termLine('  free mode: try a declaration, malloc, char *p = "...", or free(name);', 'err'); renderMap(); }
+      return null;
+    }
+    var t = tasks[currentTaskIndex];
+    if (t.match(rawCmd)) {
+      echoCommand(rawCmd);
+      lastAddedIds = [];
+      if (t.apply) t.apply();
+      renderMap();
+      termLine('  ' + t.note, 'note');
+      termLine('', 'out');
+      currentTaskIndex++;
+      consecutiveFails = 0;
+      hideHintPulse();
+      renderTask();
+      if (currentTaskIndex >= tasks.length) {
+        setMode('free');
+        termLine('  Memory map complete. Free mode unlocked — try any declaration, malloc, or free.', 'note');
+      }
+      return true;
+    } else {
+      echoCommand(rawCmd);
+      var d = (t.diagnose && t.diagnose(rawCmd)) || null;
+      termLine('  ' + (d || 'Not what this task is asking for. Click Show hint.'), 'err');
+      consecutiveFails++;
+      if (consecutiveFails >= 2) showHintPulse();
+      return false;
+    }
+  }
+
+  function renderTask(){
+    var fill = root.querySelector('#ml-progress-fill');
+    var label = root.querySelector('#ml-progress-label');
+    var card = root.querySelector('#ml-task-card');
+    var labelEl = root.querySelector('#ml-task-label');
+    var textEl = root.querySelector('#ml-task-text');
+    var hintEl = root.querySelector('#ml-task-hint');
+    var sectionEl = root.querySelector('#ml-section-header');
+    var scopeEl = root.querySelector('#ml-scope');
+    var promptEl = root.querySelector('#ml-prompt-scope');
+    var completionArea = root.querySelector('#ml-completion-area');
+
+    var pct = (currentTaskIndex / tasks.length) * 100;
+    fill.style.width = pct + '%';
+    label.textContent = 'Task ' + Math.min(currentTaskIndex + 1, tasks.length) + ' of ' + tasks.length;
+
+    if (currentTaskIndex >= tasks.length) {
+      card.className = 'task-card complete';
+      labelEl.textContent = 'Complete';
+      scopeEl.className = 'ml-scope none'; scopeEl.textContent = 'done';
+      textEl.textContent = 'You placed objects in all five segments and predicted where each belongs. Scope and lifetime — not syntax — decide the home. The map you just filled is the one your final exam will ask you to reason about.';
+      hintEl.textContent = '';
+      sectionEl.textContent = 'All done';
+      fill.style.width = '100%';
+      label.textContent = 'All tasks complete';
+      promptEl.textContent = 'free>';
+      completionArea.innerHTML = '';
+      cs210RenderCompletion(completionArea);
+      return;
+    }
+    completionArea.innerHTML = '';
+    card.className = 'task-card';
+    var t = tasks[currentTaskIndex];
+    if (t.section) sectionEl.textContent = t.section;
+    labelEl.textContent = t.label;
+    textEl.textContent = t.text;
+    hintEl.textContent = '';
+    var sc = t.scope === 'main' ? 'main' : (t.scope === 'file' ? 'file' : 'none');
+    scopeEl.className = 'ml-scope ' + sc;
+    scopeEl.textContent = sc === 'main' ? 'inside main()' : (sc === 'file' ? 'file scope' : 'predict');
+    promptEl.textContent = (sc === 'main' ? 'main' : (sc === 'file' ? 'file' : 'predict')) + '>';
+  }
+
+  function showHint(){ if (currentTaskIndex >= tasks.length) return; var t=tasks[currentTaskIndex];
+    root.querySelector('#ml-task-hint').textContent = 'Hint: ' + (t.hint || ''); hideHintPulse(); }
+  function showHintPulse(){ root.querySelector('#ml-hint-btn').classList.add('pulse'); }
+  function hideHintPulse(){ root.querySelector('#ml-hint-btn').classList.remove('pulse'); }
+
+  function setMode(newMode){
+    mode = newMode;
+    var btn = root.querySelector('#ml-mode-btn');
+    var input = root.querySelector('#ml-input');
+    var promptEl = root.querySelector('#ml-prompt-scope');
+    if (mode === 'free') {
+      btn.textContent = 'Return to walkthrough';
+      input.placeholder = 'free mode: any declaration, malloc, or free()';
+      promptEl.textContent = 'free>';
+    } else {
+      btn.textContent = 'Switch to free mode';
+      input.placeholder = 'type the declaration the task asks for';
+      renderTask();
+    }
+  }
+
+  function reset(){
+    objects = []; lastAddedIds = []; currentTaskIndex = 0; consecutiveFails = 0;
+    hideHintPulse(); mode = 'walkthrough';
+    root.querySelector('#ml-mode-btn').textContent = 'Switch to free mode';
+    termEl.innerHTML = '';
+    termLine('Memory map walkthrough. The right pane is one process\'s address space.', 'dim');
+    termLine('Each task names a scope (file or inside main). Decide the segment, then type the declaration.', 'dim');
+    termLine('', 'out');
+    renderMap();
+    renderTask();
+  }
+
+  // ---- completion overlay ----
+  function cs210FallbackCopy(text){ var ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
+    root.appendChild(ta); ta.select(); try{ document.execCommand('copy'); }catch(e){} root.removeChild(ta); }
+  function cs210RenderCompletion(area){
+    if (!area) return;
+    if (root.querySelector('#ml-cs210-completion-overlay')) return;
+    var now = new Date();
+    var ts = now.toLocaleString('en-US', { dateStyle:'medium', timeStyle:'short' });
+    var safeName = (cs210CadetName || 'Cadet').replace(/[<>&"']/g, function(c){ return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]; });
+    area.innerHTML =
+      '<div class="completion-screen">' +
+        '<div class="cs-heading">Memory map complete</div>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block"><div><div class="cs-code-label">Completion code</div>' +
+        '<div class="cs-code-value">' + CS210_CODE + '</div></div></div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+      '</div>';
+    var overlay = document.createElement('div');
+    overlay.id = 'ml-cs210-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.style.background = 'rgba(27,94,32,.5)';
+    overlay.innerHTML =
+      '<div class="name-modal" style="border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">Memory map complete</h2>' +
+        '<p>Screenshot this box. You need the code and a visual of this screen for the Lesson 38 reflection.</p>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block"><div><div class="cs-code-label">Completion code</div>' +
+        '<div class="cs-code-value" id="ml-cs-code-value">' + CS210_CODE + '</div></div>' +
+        '<button class="cs-copy-btn" id="ml-cs-copy-btn" type="button">Copy code</button></div>' +
+        '<div class="cs-timestamp" style="margin-bottom:12px;">Completed: ' + ts + '</div>' +
+        '<div class="cs-reminder" style="margin-bottom:14px;"><strong>Next step:</strong> open the Lesson 38 reflection in Blackboard, enter this code, answer the prompt, and attach your screenshot.</div>' +
+        '<button class="name-modal-btn" id="ml-cs-overlay-close" type="button" style="background:#2E7D32;">Got it — close this</button>' +
+      '</div>';
+    root.appendChild(overlay);
+    overlay.querySelector('#ml-cs-overlay-close').addEventListener('click', function(){ overlay.style.display='none'; });
+    var copyBtn = overlay.querySelector('#ml-cs-copy-btn');
+    copyBtn.addEventListener('click', function(){
+      var ok=function(){ copyBtn.textContent='Copied'; copyBtn.classList.add('copied'); setTimeout(function(){ copyBtn.textContent='Copy code'; copyBtn.classList.remove('copied'); },1500); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(CS210_CODE).then(ok, function(){ cs210FallbackCopy(CS210_CODE); ok(); });
+      else { cs210FallbackCopy(CS210_CODE); ok(); }
+    });
+  }
+
+  // ---- name modal ----
+  (function setupNameModal(){
+    var backdrop = root.querySelector('#ml-name-modal-backdrop');
+    var input = root.querySelector('#ml-cadet-name-input');
+    var btn = root.querySelector('#ml-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+    try { var stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length >= 2) { cs210CadetName = stored.trim(); backdrop.style.display='none'; return; } } catch(e){}
+    function upd(){ btn.disabled = input.value.trim().length < 2; }
+    upd(); input.addEventListener('input', upd);
+    input.addEventListener('keydown', function(e){ if (e.key==='Enter' && !btn.disabled){ e.preventDefault(); btn.click(); } });
+    btn.addEventListener('click', function(){ var name=input.value.trim(); if (name.length<2) return; cs210CadetName=name;
+      try{ window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); }catch(e){}
+      backdrop.style.display='none'; var cli=root.querySelector('#ml-input'); if (cli) cli.focus(); });
+    setTimeout(function(){ input.focus(); }, 50);
+  })();
+
+  // ---- wiring ----
+  var input = root.querySelector('#ml-input');
+  input.addEventListener('keydown', function(e){ if (e.key==='Enter'){ var v=input.value; if (!v.trim()) return; checkTask(v); input.value=''; } });
+  root.querySelector('#ml-hint-btn').addEventListener('click', showHint);
+  root.querySelector('#ml-mode-btn').addEventListener('click', function(){ setMode(mode==='free'?'walkthrough':'free'); });
+  root.querySelector('#ml-reset-btn').addEventListener('click', reset);
+
+  reset();
+})();
+</script>
+</div>
+
+
+    </div>
+  </details>
+
+  <!-- ===================== 6. AFTER CLASS ===================== -->
+  <details id="after-class" style="margin-bottom: 24px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      6. After Class
+    </summary>
+    <div style="padding: 18px 22px;">
+      <ul style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Keep working the capstone lab. It is due at Lesson 40; get to a clean valgrind run before you submit.</li>
+        <li style="margin-bottom: 6px;">Complete the Lesson 38 reflection in Blackboard. Use your completion code from the walkthrough and attach your screenshot.</li>
+        <li style="margin-bottom: 6px;">Replay the walkthrough in free mode. Try your own declarations and allocations and predict the segment before you press Enter.</li>
+        <li style="margin-bottom: 0;">Heads up: team PEX presentations are at Lesson 39, then review at Lesson 40 and the final at Lesson 41. The memory map is fair game on the final.</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== HELP NOTE ===================== -->
+  <div style="background: #F5F7FA; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 3px; font-size: 13.5px; color: #4A5568;">
+    <strong style="color: #00205B;">Need help?</strong> Schedule EI with your instructor. For the capstone, bring your <code style="background: #F0F2F5; padding: 1px 4px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12px;">shelter.c</code>, the exact compiler or valgrind message you do not understand, and the line it points at. Specific questions get unstuck quickly.
+  </div>
+
+</div>

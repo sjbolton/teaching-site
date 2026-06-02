@@ -1,0 +1,1873 @@
+<!-- ============================================================
+     CS210 — Lesson 14
+     Pass by Value vs Pass by Pointer
+     Self-contained: all CSS inline. Native <details> for collapsing.
+     Call-frame walkthrough widget embedded inline in section 5.
+     Paste into Blackboard Ultra via Document → Add HTML block.
+     ============================================================ -->
+
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 980px; margin: 0 auto; line-height: 1.6;">
+
+  <!-- ===================== LIGHT HEADER ===================== -->
+  <div style="border-left: 5px solid #003087; padding: 8px 0 8px 18px; margin-bottom: 24px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 2px;">CS210 &middot; Block 2 &middot; Lesson 14</div>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 600; color: #00205B;">Pass by Value vs Pass by Pointer</h1>
+    <div style="font-size: 14px; color: #4A5568; margin-top: 4px;">Stack frames &middot; Pass-by-value semantics &middot; Pass-by-pointer semantics &middot; Multiple output parameters &middot; Why scanf needs &amp;</div>
+  </div>
+
+  <!-- ===================== AT A GLANCE ===================== -->
+  <div style="background: #F5F7FA; border-left: 4px solid #B5B7BA; padding: 14px 18px; margin-bottom: 22px; font-size: 14px;">
+    <strong style="color: #00205B;">At a glance:</strong> The third and final pointers introduction lesson. So far you have learned what a pointer is (Lesson 12) and how pointer arithmetic walks through arrays (Lesson 13). Today the payoff: pointers as function parameters. You will see why a function cannot modify its caller's variables without one, why <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">scanf</code> has demanded an <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;</code> since Lesson 3, and how to write functions that return more than one value. Two short labs cement the mechanics; the call-frame walkthrough in Section 5 makes it visible.
+  </div>
+
+  <!-- ===================== TABLE OF CONTENTS ===================== -->
+  <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 20px; margin-bottom: 24px; border-radius: 3px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Contents</div>
+    <ol style="margin: 0; padding-left: 22px; font-size: 14px;">
+      <li style="margin-bottom: 4px;"><a href="#objectives" style="color: #003087; text-decoration: none;">Lesson Objectives</a></li>
+      <li style="margin-bottom: 4px;"><a href="#readings" style="color: #003087; text-decoration: none;">Assigned Readings</a></li>
+      <li style="margin-bottom: 4px;"><a href="#pre-class" style="color: #003087; text-decoration: none;">Pre-Class Work</a></li>
+      <li style="margin-bottom: 4px;"><a href="#materials" style="color: #003087; text-decoration: none;">Lesson Materials and Overview</a></li>
+      <li style="margin-bottom: 4px;"><a href="#in-class" style="color: #003087; text-decoration: none;">In-Class Work</a></li>
+      <li style="margin-bottom: 0;"><a href="#after-class" style="color: #003087; text-decoration: none;">After Class</a></li>
+    </ol>
+  </div>
+
+  <!-- ===================== 1. OBJECTIVES ===================== -->
+  <details id="objectives" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      1. Lesson Objectives
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 10px 0; font-style: italic;">By the end of this lesson, cadets will be able to:</p>
+      <ol style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Distinguish pass-by-value from pass-by-pointer semantics. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+        <li style="margin-bottom: 6px;">Write functions that modify their caller's variables through pointer parameters. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+        <li style="margin-bottom: 0;">Explain why functions like <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">scanf</code> require the address-of operator. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 2. READINGS ===================== -->
+  <details id="readings" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      2. Assigned Readings
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 12px 0;">Complete before class. Today's reading revisits two earlier chapters: Beej Chapter 5 (Pointers) for the function-argument section, and Beej Chapter 4 (Functions) for pass-by-value.</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <thead>
+          <tr style="background: #E8EDF5; color: #00205B;">
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 130px;">Source</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9;">Sections</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 220px;">Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;"><a href="https://beej.us/guide/bgc/" style="color: #003087; text-decoration: underline;">Beej-C</a></td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Chapter 5 (Pointers): §5.3 (Dereferencing), §5.4 (Passing Pointers as Arguments)</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">The core mechanism for today. Read 5.4 carefully &mdash; this is the section where pointers stop being a curiosity and start being useful.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 9px 12px;"><a href="https://beej.us/guide/bgc/" style="color: #003087; text-decoration: underline;">Beej-C</a></td>
+            <td style="padding: 9px 12px;">Chapter 4 (Functions): §4.1 (Passing by Value) &mdash; review</td>
+            <td style="padding: 9px 12px; color: #4A5568;">A short refresher. Today's lesson is built on the contrast between 4.1 and 5.4, so come in clear on both.</td>
+          </tr>
+          <tr>
+            <td style="padding: 9px 12px;"><a href="https://beej.us/guide/bgc/" style="color: #003087; text-decoration: underline;">Beej-C</a></td>
+            <td style="padding: 9px 12px;">Chapter 5 (Pointers): §5.5 (The NULL Pointer) &mdash; review</td>
+            <td style="padding: 9px 12px; color: #4A5568;">Quick refresher from Lesson 12. Functions that take pointer parameters should check for NULL.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <!-- ===================== 3. PRE-CLASS WORK ===================== -->
+  <details id="pre-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      3. Pre-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 18px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #6B5300; font-size: 14px; margin-bottom: 4px;">Heads up</div>
+        <div style="font-size: 14px; color: #5A4B00;">Quiz 5 covers Lesson 12 (pointers introduction). Review your Lesson 12 notes and replay the pointer walkthrough if it has been a few days. Quiz timing is at the instructor's discretion.</div>
+      </div>
+
+      <div style="background: #FBEFE9; border-left: 4px solid #C44A2C; padding: 14px 18px; margin-bottom: 18px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #8B2E18; font-size: 14px; margin-bottom: 4px;">PEX1 due today</div>
+        <div style="font-size: 14px; color: #6B2412;">Late penalties follow the syllabus policy.</div>
+      </div>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 0 0 10px 0;">Pre-Class Checklist</h3>
+
+      <!-- Step 1: Reading -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">1</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Read Beej-C 5.3, 5.4, and 4.1</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">Re-read these three sections in order. Be ready to explain in your own words:</div>
+            <ul style="font-size: 13.5px; margin: 0 0 6px 0; padding-left: 20px;">
+              <li style="margin-bottom: 3px;">What does a function actually receive when you pass an argument to it?</li>
+              <li style="margin-bottom: 3px;">Why can a function not change a caller's <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">int</code> just by writing to its parameter?</li>
+              <li style="margin-bottom: 0;">What does passing a pointer let the function do that passing an int does not?</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Quiz 5 review -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">2</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Review for Quiz 5</div>
+            <div style="font-size: 14px;">Quiz 5 covers Lesson 12: pointer declarations, the address-of operator, the dereference operator, NULL pointers, and the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">int *p, q;</code> declaration trap. Twenty minutes max. Replay the Lesson 12 pointer walkthrough if you want a fast refresher.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Self-check -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 0; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">3</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Predict before you arrive</div>
+            <div style="font-size: 14px;">Beej 4.1 ends with a small example where a function called <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">increment</code> tries to modify its parameter. Before class, predict what the program prints. Then predict what changes if you rewrite it to take a pointer. If you can answer both without running code, you are ready for today.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ===================== 4. LESSON MATERIALS ===================== -->
+  <details id="materials" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      4. Lesson Materials and Overview
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 18px; margin-bottom: 22px; border-radius: 3px;">
+        <div style="font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">Jump to</div>
+        <div style="font-size: 13.5px;">
+          <a href="#slides" style="color: #003087; text-decoration: none; margin-right: 14px;">Slides</a>
+          <a href="#pbv-review" style="color: #003087; text-decoration: none; margin-right: 14px;">Pass-by-Value</a>
+          <a href="#pbp-mechanics" style="color: #003087; text-decoration: none; margin-right: 14px;">Pass-by-Pointer</a>
+          <a href="#multiple-outputs" style="color: #003087; text-decoration: none; margin-right: 14px;">Multiple Outputs</a>
+          <a href="#scanf-payoff" style="color: #003087; text-decoration: none; margin-right: 14px;">Why scanf Needs &amp;</a>
+          <a href="#decomposition" style="color: #003087; text-decoration: none;">Decomposition of State</a>
+        </div>
+      </div>
+
+      <!-- Slides -->
+      <h3 id="slides" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0; scroll-margin-top: 16px;">Slides</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">The Lesson 14 deck walks through pass-by-value, the limitation it imposes, how pass-by-pointer overcomes it, and the multiple-output-parameter pattern. The slides are the spine of the lecture; the call-frame walkthrough is where you watch the mechanics in motion.</p>
+
+      <!-- =========================================================
+           EDIT ME: Lesson 14 slide deck link
+           Replace href="#" below with the SharePoint share URL once the
+           deck is published. Leave target="_blank" and rel="noopener".
+           ========================================================= -->
+      <p style="margin: 0 0 18px 0;">
+        <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 10px 20px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 14px;">Open Lesson 14 slides &rarr;</a>
+      </p>
+
+      <!-- Pass-by-value review -->
+      <h3 id="pbv-review" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Pass-by-value: what your functions have actually been doing</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Every function you have written so far receives <em>copies</em> of its arguments. The caller has variables; the function has parameters; the parameters are filled with the values from the caller's variables at the moment of the call. After that, they are independent.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">void</span> <span style="color: #DCDCAA;">increment</span>(<span style="color: #569CD6;">int</span> n) {<br>
+        &nbsp;&nbsp;n = n + <span style="color: #B5CEA8;">1</span>;&nbsp;&nbsp;<span style="color: #6B7280;">// modifies the copy</span><br>
+        }<br><br>
+        <span style="color: #569CD6;">int</span> <span style="color: #DCDCAA;">main</span>(<span style="color: #569CD6;">void</span>) {<br>
+        &nbsp;&nbsp;<span style="color: #569CD6;">int</span> x = <span style="color: #B5CEA8;">10</span>;<br>
+        &nbsp;&nbsp;<span style="color: #DCDCAA;">increment</span>(x);<br>
+        &nbsp;&nbsp;<span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"%d\n"</span>, x);&nbsp;&nbsp;<span style="color: #6B7280;">// prints 10, not 11</span><br>
+        }
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">The function received a copy. Modifying the copy did nothing to <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">x</code> back in <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">main</code>. This is pass-by-value, and it is the only thing C does. There is no other mode. Every parameter is a fresh local variable initialized from the argument.</p>
+
+      <!-- Pass-by-pointer mechanics -->
+      <h3 id="pbp-mechanics" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Pass-by-pointer: passing the address instead</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">If you want a function to modify a caller's variable, you cannot hand it the value. You have to hand it the <em>location</em>. Pass the address, and the function dereferences the pointer to read or write through it.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">void</span> <span style="color: #DCDCAA;">increment</span>(<span style="color: #569CD6;">int</span> *p) {<br>
+        &nbsp;&nbsp;*p = *p + <span style="color: #B5CEA8;">1</span>;&nbsp;&nbsp;<span style="color: #6B7280;">// writes through the pointer</span><br>
+        }<br><br>
+        <span style="color: #569CD6;">int</span> <span style="color: #DCDCAA;">main</span>(<span style="color: #569CD6;">void</span>) {<br>
+        &nbsp;&nbsp;<span style="color: #569CD6;">int</span> x = <span style="color: #B5CEA8;">10</span>;<br>
+        &nbsp;&nbsp;<span style="color: #DCDCAA;">increment</span>(&amp;x);&nbsp;&nbsp;<span style="color: #6B7280;">// pass the address of x</span><br>
+        &nbsp;&nbsp;<span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"%d\n"</span>, x);&nbsp;&nbsp;<span style="color: #6B7280;">// prints 11</span><br>
+        }
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Notice the three changes from the value version. The parameter type became <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">int *</code>. The body dereferences with <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">*p</code> instead of using <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">n</code> directly. The call site uses <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;x</code> to hand over the address.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">Pass-by-value is still happening. The function receives a copy &mdash; but the copy is a copy of an <em>address</em>, and the address still points to <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">x</code>. Two pieces of paper now have the same address written on them. Either piece of paper can be used to find and modify the house.</p>
+
+      <!-- Multiple output parameters -->
+      <h3 id="multiple-outputs" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Returning more than one value</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">A C function can return exactly one value. That is a real constraint. When a function naturally produces two or more results, you have two choices: return a struct (Lesson 18) or use pointer parameters as output channels. Today we use pointers.</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #6B7280;">// Split an angle in degrees into degrees, arc-minutes, arc-seconds.</span><br>
+        <span style="color: #569CD6;">void</span> <span style="color: #DCDCAA;">split_angle</span>(<span style="color: #569CD6;">double</span> degrees, <span style="color: #569CD6;">int</span> *deg, <span style="color: #569CD6;">int</span> *min, <span style="color: #569CD6;">int</span> *sec) {<br>
+        &nbsp;&nbsp;*deg = (<span style="color: #569CD6;">int</span>)degrees;<br>
+        &nbsp;&nbsp;<span style="color: #569CD6;">double</span> remainder = (degrees - *deg) * <span style="color: #B5CEA8;">60.0</span>;<br>
+        &nbsp;&nbsp;*min = (<span style="color: #569CD6;">int</span>)remainder;<br>
+        &nbsp;&nbsp;*sec = (<span style="color: #569CD6;">int</span>)((remainder - *min) * <span style="color: #B5CEA8;">60.0</span>);<br>
+        }<br><br>
+        <span style="color: #6B7280;">// Caller:</span><br>
+        <span style="color: #569CD6;">int</span> d, m, s;<br>
+        <span style="color: #DCDCAA;">split_angle</span>(<span style="color: #B5CEA8;">38.7625</span>, &amp;d, &amp;m, &amp;s);<br>
+        <span style="color: #6B7280;">// Now d, m, s are filled in.</span>
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">The function returns <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">void</code>. Its actual outputs travel back through the three pointer parameters. This is the pattern Lab 2 uses today, and it is one of the most common things you will see in real C code: an input value goes in, several derived results come out through pointers.</p>
+
+      <!-- scanf payoff -->
+      <h3 id="scanf-payoff" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Why scanf needs &amp;</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Since Lesson 3 you have been writing <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">scanf("%d", &amp;x)</code> without a real explanation for the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;</code>. We called it a syntactic ritual. Now the ritual ends.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">scanf</code> reads a value from input and has to store it somewhere &mdash; namely, in one of your variables. To store into your variable, it needs to know the variable's address. So it takes a pointer parameter, and you have to give it an address. That is what <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;</code> does.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">If you wrote <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">scanf("%d", x)</code> by mistake, you would hand <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">scanf</code> the <em>value</em> of <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">x</code> (uninitialized garbage), it would treat that garbage as an address, and it would try to write to that random memory location. The result is undefined behavior and, usually, a crash. The compiler will warn you with <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">-Wall</code> enabled. Read the warning.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">Exception: when you read a string with <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">%s</code>, you pass the array name itself with no <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&amp;</code>. That is because an array name already <em>is</em> an address &mdash; the array-pointer duality from Lesson 13. Same mechanism, just a different surface.</p>
+
+      <!-- Decomposition of state -->
+      <h3 id="decomposition" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Decomposition of state: function boundaries</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Every function call draws a boundary. On the caller's side: local variables, the caller's frame. On the callee's side: parameters and the callee's locals. The question pass-by-pointer answers is: what crosses that boundary?</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">With pass-by-value, only the value crosses. The caller's variable is invisible to the callee; the caller's state is protected. With pass-by-pointer, an address crosses, and through that address the callee can reach back into the caller's frame and modify what is there.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">This is a design decision, not just a syntactic one. When you write a function, decide first what it needs: does it need to know a value, or does it need to be able to <em>change</em> a value? The answer chooses the parameter type. Pass-by-value when the function should compute and return. Pass-by-pointer when the function legitimately needs to modify what the caller owns &mdash; or when it needs to return more than one result.</p>
+
+    </div>
+  </details>
+
+  <!-- ===================== 5. IN-CLASS WORK ===================== -->
+  <details id="in-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      5. In-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 16px 0;">Four things in class today. Use the checklist to track your progress.</p>
+
+      <ul style="list-style: none; padding: 0; margin: 0 0 24px 0; font-size: 14.5px;">
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Take Quiz 5 (Pointers Introduction).</strong>
+          <span style="color: #4A5568;">Twenty minutes max. Covers Lesson 12 content. Instructor will tell you when to start.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Work through the call-frame walkthrough below.</strong>
+          <span style="color: #4A5568;">Nine tasks across three sections: pass-by-value, pass-by-pointer, and the multi-output pattern. About 20 minutes.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Complete Lab 14-1: Swap by Value vs by Pointer.</strong>
+          <span style="color: #4A5568;">Implement two functions that try to swap two integers &mdash; one by value, one by pointer &mdash; and compare what happens. Auto-graded through GitHub Classroom.</span>
+          <!-- =========================================================
+               EDIT ME: Lab 14-1 GitHub Classroom assignment link
+               Replace href="#" with the classroom.github.com/a/... invite
+               URL once the assignment is published.
+               ========================================================= -->
+          <div style="margin-top: 8px; margin-left: 28px;">
+            <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 6px 14px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 13px;">Accept Lab 14-1 on GitHub Classroom &rarr;</a>
+          </div>
+        </li>
+        <li style="margin-bottom: 0; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Complete Lab 14-2: Make Change.</strong>
+          <span style="color: #4A5568;">Write a function that calculates how many quarters, dimes, nickels, and pennies make up a given number of cents, returning all four counts through pointer parameters. Auto-graded through GitHub Classroom.</span>
+          <!-- =========================================================
+               EDIT ME: Lab 14-2 GitHub Classroom assignment link
+               Replace href="#" with the classroom.github.com/a/... invite
+               URL once the assignment is published.
+               ========================================================= -->
+          <div style="margin-top: 8px; margin-left: 28px;">
+            <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 6px 14px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 13px;">Accept Lab 14-2 on GitHub Classroom &rarr;</a>
+          </div>
+        </li>
+      </ul>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 18px 0 10px 0;">Call-Frame Walkthrough</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Nine tasks across three sections. Watch two memory frames side-by-side as functions are called: the caller's frame on the left, the callee's frame on the right. See pass-by-value copying values and pass-by-pointer reaching back through arrows.</p>
+
+<!-- ============================================================
+     CS210 Lesson 14 - Call-Frame Walkthrough Widget
+     Pass by value vs pass by pointer, plus multi-output pointers.
+     Template-aligned style. Native HTML/CSS + scoped JS.
+     ============================================================ -->
+<style>
+.cs210-frame * { box-sizing: border-box; }
+.cs210-frame {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-frame h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-frame .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 22px;
+}
+.cs210-frame .progress-bar {
+  background: #E5E7EB;
+  border-radius: 3px;
+  height: 8px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.cs210-frame .progress-fill {
+  background: #003087;
+  height: 100%;
+  transition: width 0.3s ease;
+}
+.cs210-frame .progress-label {
+  font-size: 12px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-frame .section-header {
+  background: #E8EDF5;
+  color: #00205B;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.cs210-frame .task-card {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  border-radius: 3px;
+}
+.cs210-frame .task-card.complete {
+  background: #E6F4EA;
+  border-left-color: #2E7D32;
+}
+.cs210-frame .task-label {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B5300;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.cs210-frame .task-card.complete .task-label { color: #1B5E20; }
+.cs210-frame .task-text { font-size: 15px; color: #1a1a1a; }
+.cs210-frame .task-hint {
+  font-size: 12.5px; color: #6B7280; margin-top: 6px; font-style: italic;
+  display: none;
+}
+.cs210-frame .task-hint.revealed { display: block; }
+.cs210-frame .task-hint-btn {
+  background: #ffffff; color: #6B5300;
+  border: 1px solid #D0D5DD; padding: 5px 11px; border-radius: 3px;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  margin-top: 8px;
+}
+.cs210-frame .task-hint-btn:hover { background: #F5F7FA; }
+.cs210-frame .task-hint-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.cs210-frame .task-hint-btn.pulse {
+  background: #FFF8E1; border-color: #F0B92C; color: #6B5300;
+  animation: cs210-frame-hint-pulse 1.5s infinite;
+}
+@keyframes cs210-frame-hint-pulse {
+  0%   { box-shadow: 0 0 0 0   rgba(240, 185, 44, 0.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(240, 185, 44, 0); }
+  100% { box-shadow: 0 0 0 0   rgba(240, 185, 44, 0); }
+}
+.cs210-frame .task-input-row {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.cs210-frame .task-input {
+  flex: 1;
+  min-width: 180px;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 14px;
+  padding: 7px 10px;
+  border: 1px solid #C7CFD9;
+  border-radius: 3px;
+  background: #ffffff;
+}
+.cs210-frame .task-input:focus { outline: 2px solid #003087; outline-offset: -1px; }
+.cs210-frame .task-input.textarea {
+  resize: vertical;
+  min-height: 56px;
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-frame .task-btn {
+  background: #003087; color: #ffffff;
+  border: none; padding: 7px 16px; border-radius: 3px;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.cs210-frame .task-btn:hover { background: #00205B; }
+.cs210-frame .task-btn:disabled { background: #9CA3AF; cursor: not-allowed; }
+.cs210-frame .task-feedback {
+  margin-top: 8px; font-size: 13px;
+}
+.cs210-frame .task-feedback.ok { color: #1B5E20; }
+.cs210-frame .task-feedback.bad { color: #8B2E18; }
+
+.cs210-frame .stage-wrap {
+  position: relative;
+  margin-bottom: 14px;
+}
+.cs210-frame .frames {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  position: relative;
+}
+.cs210-frame .frame {
+  background: #F8FAFC;
+  border: 1px solid #D0D5DD;
+  border-radius: 3px;
+  padding: 12px 14px 14px;
+  min-height: 180px;
+  position: relative;
+  z-index: 2;
+}
+.cs210-frame .frame.inactive {
+  background: #ECEFF4;
+  border-color: #D0D5DD;
+  opacity: 0.55;
+}
+.cs210-frame .frame-title {
+  font-size: 12px;
+  letter-spacing: 1.2px;
+  color: #00205B;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.cs210-frame .frame-subtitle {
+  font-size: 11.5px;
+  color: #6B7280;
+  margin-bottom: 10px;
+}
+.cs210-frame .frame-vars {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cs210-frame .var-row {
+  display: grid;
+  grid-template-columns: 96px 1fr 56px;
+  gap: 8px;
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 3px;
+  padding: 7px 10px;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13px;
+  align-items: center;
+}
+.cs210-frame .var-row.just-updated {
+  background: #FFF8E1;
+  border-color: #F0B92C;
+  animation: cs210-frame-flash 0.7s ease;
+}
+@keyframes cs210-frame-flash {
+  0%   { background: #FCE7B5; }
+  100% { background: #FFF8E1; }
+}
+.cs210-frame .var-name {
+  color: #1a1a1a; font-weight: 600;
+}
+.cs210-frame .var-type {
+  color: #6B7280; font-size: 11.5px; text-align: right;
+}
+.cs210-frame .var-value {
+  color: #003087;
+  font-weight: 600;
+  text-align: center;
+  padding: 2px 6px;
+  background: #F0F2F5;
+  border-radius: 2px;
+}
+.cs210-frame .var-value.ptr {
+  color: #8B2E18;
+  background: #FBEFE9;
+}
+.cs210-frame .var-empty {
+  font-size: 12px; color: #9CA3AF;
+  font-style: italic;
+  text-align: center;
+  padding: 14px 0;
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-frame .arrow-svg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 3;
+}
+.cs210-frame .code-pane {
+  background: #1E2A3A;
+  color: #E8EDF5;
+  padding: 14px 18px;
+  border-radius: 3px;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.55;
+  margin-bottom: 14px;
+  overflow-x: auto;
+}
+.cs210-frame .code-line {
+  display: block;
+  padding: 1px 6px;
+  border-radius: 2px;
+  white-space: pre;
+}
+.cs210-frame .code-line.current {
+  background: rgba(240, 185, 44, 0.22);
+  border-left: 3px solid #F0B92C;
+  margin-left: -9px;
+  padding-left: 6px;
+}
+.cs210-frame .code-comment { color: #6B7280; }
+.cs210-frame .code-kw { color: #569CD6; }
+.cs210-frame .code-fn { color: #DCDCAA; }
+.cs210-frame .code-num { color: #B5CEA8; }
+.cs210-frame .code-str { color: #CE9178; }
+
+.cs210-frame .controls {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+  align-items: center;
+}
+.cs210-frame .ctrl-btn {
+  background: #003087; color: #ffffff;
+  border: none; padding: 9px 18px; border-radius: 3px;
+  font-size: 13.5px; font-weight: 600; cursor: pointer;
+}
+.cs210-frame .ctrl-btn:hover { background: #00205B; }
+.cs210-frame .ctrl-btn.secondary {
+  background: #ffffff; color: #003087;
+  border: 1px solid #003087;
+}
+.cs210-frame .ctrl-btn.secondary:hover { background: #F0F2F5; }
+.cs210-frame .ctrl-btn:disabled { background: #9CA3AF; color: #ffffff; border-color: #9CA3AF; cursor: not-allowed; }
+
+.cs210-frame .narration {
+  background: #F8FAFC;
+  border-left: 4px solid #003087;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  font-size: 13.5px;
+  color: #1a1a1a;
+  min-height: 22px;
+  border-radius: 0 3px 3px 0;
+}
+.cs210-frame .step-info {
+  font-size: 12px;
+  color: #6B7280;
+  align-self: center;
+}
+
+/* Name modal */
+.cs210-frame .name-modal-backdrop {
+  position: absolute; inset: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+}
+.cs210-frame .name-modal {
+  background: #ffffff;
+  border-radius: 4px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  border-top: 6px solid #003087;
+}
+.cs210-frame .name-modal h2 {
+  margin: 0 0 8px 0; color: #00205B; font-size: 20px;
+}
+.cs210-frame .name-modal p {
+  margin: 0 0 16px 0; font-size: 14px; color: #4A5568;
+}
+.cs210-frame .name-modal-input {
+  width: 100%; padding: 9px 12px;
+  font-size: 15px; border: 1px solid #C7CFD9;
+  border-radius: 3px; margin-bottom: 14px;
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-frame .name-modal-input:focus { outline: 2px solid #003087; outline-offset: -1px; }
+.cs210-frame .name-modal-btn {
+  background: #003087; color: #ffffff; border: none;
+  padding: 9px 20px; border-radius: 3px;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  width: 100%;
+}
+.cs210-frame .name-modal-btn:hover:not(:disabled) { background: #00205B; }
+.cs210-frame .name-modal-btn:disabled { background: #9CA3AF; cursor: not-allowed; }
+
+/* Completion screen and overlay */
+.cs210-frame .completion-screen {
+  margin-top: 16px;
+  background: #E6F4EA;
+  border: 1px solid #A5D6A7;
+  border-left: 4px solid #2E7D32;
+  border-radius: 3px;
+  padding: 16px 20px;
+}
+.cs210-frame .completion-screen .cs-heading {
+  color: #1B5E20; font-size: 16px; font-weight: 700; margin-bottom: 6px;
+}
+.cs210-frame .cs-name-line { font-size: 14px; margin-bottom: 8px; color: #1a1a1a; }
+.cs210-frame .cs-code-block {
+  display: flex; align-items: center; gap: 14px;
+  background: #ffffff; padding: 10px 14px;
+  border-radius: 3px; margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.cs210-frame .cs-code-label {
+  font-size: 11px; letter-spacing: 1.2px; color: #6B7280;
+  text-transform: uppercase; font-weight: 600;
+}
+.cs210-frame .cs-code-value {
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 22px; font-weight: 700; color: #00205B;
+  letter-spacing: 2px;
+}
+.cs210-frame .cs-copy-btn {
+  background: #003087; color: #ffffff; border: none;
+  padding: 6px 12px; border-radius: 3px;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+}
+.cs210-frame .cs-copy-btn:hover { background: #00205B; }
+.cs210-frame .cs-copy-btn.copied { background: #2E7D32; }
+.cs210-frame .cs-timestamp { font-size: 12px; color: #6B7280; margin-bottom: 10px; }
+.cs210-frame .cs-reminder {
+  font-size: 13px; color: #1a1a1a; padding: 10px 12px;
+  background: #FFF8E1; border-left: 3px solid #F0B92C;
+  border-radius: 3px;
+}
+</style>
+
+<div class="cs210-frame" id="cs210-frame-root">
+
+  <!-- Name modal -->
+  <div class="name-modal-backdrop" id="name-modal-backdrop">
+    <div class="name-modal">
+      <h2>Before you begin</h2>
+      <p>Enter your name (first and last). It will appear on your completion screen so the screenshot is linked to you.</p>
+      <input type="text" class="name-modal-input" id="cadet-name-input" placeholder="e.g. Pat Cadet" autocomplete="off">
+      <button class="name-modal-btn" id="cadet-name-btn" disabled>Start the walkthrough</button>
+    </div>
+  </div>
+
+  <h1>Call-Frame Walkthrough</h1>
+  <div class="subtitle">Watch what crosses the boundary when a function is called. Pass-by-value, pass-by-pointer, and multi-output pointers, with a stack-frame view that makes the difference visible.</div>
+
+  <div class="progress-bar"><div class="progress-fill" id="cs210-progress-fill" style="width: 0%;"></div></div>
+  <div class="progress-label" id="cs210-progress-label">Task 1 of 9</div>
+
+  <div class="section-header" id="cs210-section-header">Section 1: Pass by Value</div>
+
+  <div class="task-card" id="cs210-task-card">
+    <div class="task-label" id="cs210-task-label">Task 1</div>
+    <div class="task-text" id="cs210-task-text">Loading task...</div>
+    <div class="task-input-row" id="cs210-task-input-row" style="display: none;">
+      <input type="text" class="task-input" id="cs210-task-input">
+      <button class="task-btn" id="cs210-task-submit">Check</button>
+    </div>
+    <button class="task-hint-btn" id="cs210-task-hint-btn" type="button" style="display: none;">Show hint</button>
+    <div class="task-hint" id="cs210-task-hint"></div>
+    <div class="task-feedback" id="cs210-task-feedback"></div>
+  </div>
+
+  <div class="narration" id="cs210-narration">Press <strong>Step</strong> to begin executing the program.</div>
+
+  <div class="code-pane" id="cs210-code-pane"></div>
+
+  <div class="stage-wrap">
+    <div class="frames" id="cs210-frames-container">
+      <div class="frame" id="cs210-caller-frame">
+        <div class="frame-title">Caller frame</div>
+        <div class="frame-subtitle">main()</div>
+        <div class="frame-vars" id="cs210-caller-vars"></div>
+      </div>
+      <div class="frame inactive" id="cs210-callee-frame">
+        <div class="frame-title">Callee frame</div>
+        <div class="frame-subtitle" id="cs210-callee-subtitle">(not called yet)</div>
+        <div class="frame-vars" id="cs210-callee-vars"></div>
+      </div>
+    </div>
+    <svg class="arrow-svg" id="cs210-arrow-svg"></svg>
+  </div>
+
+  <div class="controls">
+    <button class="ctrl-btn" id="cs210-step-btn">Step &rarr;</button>
+    <button class="ctrl-btn secondary" id="cs210-restart-btn">Restart scenario</button>
+    <span class="step-info" id="cs210-step-info">Step 0 of 0</span>
+  </div>
+
+  <div id="cs210-completion-area"></div>
+
+</div>
+
+<script>
+(function() {
+  const root = document.getElementById('cs210-frame-root');
+  if (!root) return;
+
+  // ---------- Completion code (FNV-1a, base-32 alphabet) ----------
+  const CS210_SALT = 'lesson14_callframe_completed';
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  // ---------- Name modal ----------
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#name-modal-backdrop');
+    const input = root.querySelector('#cadet-name-input');
+    const btn = root.querySelector('#cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored) input.value = stored;
+    } catch (e) {}
+    function updateBtn() { btn.disabled = input.value.trim().length < 2; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', function() {
+      const name = input.value.trim();
+      if (name.length < 2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+    });
+    setTimeout(function() { input.focus(); }, 50);
+  })();
+
+  // ---------- Hint button (one-time wiring) ----------
+  (function setupHintButton() {
+    const hintBtn = root.querySelector('#cs210-task-hint-btn');
+    if (!hintBtn) return;
+    hintBtn.addEventListener('click', function() {
+      const hintEl = root.querySelector('#cs210-task-hint');
+      if (hintEl) hintEl.classList.add('revealed');
+      hintBtn.classList.remove('pulse');
+      hintBtn.disabled = true;
+      hintBtn.textContent = 'Hint shown';
+    });
+  })();
+
+  // ---------- Completion overlay ----------
+  function cs210RenderCompletion(area) {
+    if (!area) return;
+    if (root.querySelector('#cs210-completion-overlay')) return;
+    const now = new Date();
+    const ts = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const safeName = (cs210CadetName || 'Cadet').replace(/[<>&"']/g, function(c) {
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+    area.innerHTML =
+      '<div class="completion-screen">' +
+        '<div class="cs-heading">Walkthrough complete</div>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value">' + CS210_CODE + '</div></div>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+      '</div>';
+    const overlay = document.createElement('div');
+    overlay.id = 'cs210-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.style.background = 'rgba(27, 94, 32, 0.55)';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">Walkthrough complete</h2>' +
+        '<p>Take a screenshot of this box. You will need the code and a visual of this screen for the Lesson 14 reflection.</p>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value" id="cs-code-value">' + CS210_CODE + '</div></div>' +
+          '<button class="cs-copy-btn" id="cs-copy-btn" type="button">Copy code</button>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+        '<div class="cs-reminder" style="margin-bottom:14px;">' +
+          '<strong>Next step:</strong> Open the Lesson 14 reflection in Blackboard. Enter this code, answer the reflection prompt, and attach your screenshot.' +
+        '</div>' +
+        '<button class="name-modal-btn" id="cs-overlay-close" type="button" style="background:#2E7D32;">Got it &mdash; close this</button>' +
+      '</div>';
+    root.appendChild(overlay);
+    const closeBtn = overlay.querySelector('#cs-overlay-close');
+    if (closeBtn) closeBtn.addEventListener('click', function() { overlay.style.display = 'none'; });
+    const copyBtn = overlay.querySelector('#cs-copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function() {
+        const text = CS210_CODE;
+        const ok = function() {
+          copyBtn.textContent = 'Copied';
+          copyBtn.classList.add('copied');
+          setTimeout(function() {
+            copyBtn.textContent = 'Copy code';
+            copyBtn.classList.remove('copied');
+          }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(ok, function() { cs210FallbackCopy(text); ok(); });
+        } else {
+          cs210FallbackCopy(text); ok();
+        }
+      });
+    }
+  }
+  function cs210FallbackCopy(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
+  // ============================================================
+  // Scenario definitions.
+  //
+  // Each scenario has:
+  //   - title:     shown in the section header
+  //   - calleeName: shown as the callee frame subtitle
+  //   - codeLines: array of {text, html}; html is the syntax-colored line
+  //   - initialCaller: starting caller variables
+  //   - steps:    sequence of mutations. Each step has:
+  //       lineIdx:   which codeLines line to highlight
+  //       narration: text shown in the narration box
+  //       caller:    [optional] full replacement caller var list
+  //       callee:    [optional] full replacement callee var list (or null = clear)
+  //       arrows:    [optional] array of {fromFrame, fromVar, toFrame, toVar}
+  //       updated:   [optional] {frame, varName} marking the just-updated var
+  //
+  // Each task has:
+  //   - section:       1, 2, or 3
+  //   - afterStep:     step index after which the task is presented (0-based)
+  //   - kind:          'predict' or 'reflect'
+  //   - prompt:        the question text
+  //   - hint:          [optional] short hint shown below the prompt
+  //   - inputType:     'num', 'text', or 'longtext'
+  //   - answer:        for 'predict': expected answer (string compared after .trim().toLowerCase())
+  //                    for 'predict' with alternates: array of acceptable answers
+  //                    for 'reflect': minimum character count (number)
+  //   - feedbackOk:    text to show on correct answer
+  //   - feedbackBad:   text to show on wrong answer
+  // ============================================================
+
+  // Helper for code-line html. Manually colored to avoid runtime tokenizing.
+  const KW = (s) => '<span class="code-kw">' + s + '</span>';
+  const FN = (s) => '<span class="code-fn">' + s + '</span>';
+  const NUM = (s) => '<span class="code-num">' + s + '</span>';
+  const STR = (s) => '<span class="code-str">' + s + '</span>';
+  const C = (s) => '<span class="code-comment">' + s + '</span>';
+
+  const SCENARIO_PBV = {
+    title: 'Section 1: Pass by Value',
+    calleeName: 'swap_v(int a, int b)',
+    codeLines: [
+      { html: KW('void') + ' ' + FN('swap_v') + '(' + KW('int') + ' a, ' + KW('int') + ' b) {' },
+      { html: '  ' + KW('int') + ' tmp = a;' },
+      { html: '  a = b;' },
+      { html: '  b = tmp;' },
+      { html: '}' },
+      { html: '' },
+      { html: KW('int') + ' ' + FN('main') + '(' + KW('void') + ') {' },
+      { html: '  ' + KW('int') + ' x = ' + NUM('5') + ', y = ' + NUM('10') + ';' },
+      { html: '  ' + FN('swap_v') + '(x, y);' },
+      { html: '  ' + FN('printf') + '(' + STR('"x=%d y=%d\\n"') + ', x, y);' },
+      { html: '}' },
+    ],
+    initialCaller: [],
+    steps: [
+      {
+        lineIdx: 7,
+        narration: 'main starts. Declare x = 5 and y = 10 in the caller frame.',
+        caller: [
+          { name: 'x', type: 'int', value: '5' },
+          { name: 'y', type: 'int', value: '10' },
+        ],
+        callee: null,
+        updated: { frame: 'caller', varName: 'y' },
+      },
+      {
+        lineIdx: 8,
+        narration: 'About to call swap_v(x, y). The caller hands over the values of x and y by copying them into the parameters.',
+        caller: [
+          { name: 'x', type: 'int', value: '5' },
+          { name: 'y', type: 'int', value: '10' },
+        ],
+        callee: null,
+      },
+      {
+        lineIdx: 0,
+        narration: 'Enter swap_v. Parameters a and b are fresh local variables, initialized to copies of 5 and 10. They are not x and y; they are new variables that happen to hold the same values.',
+        caller: [
+          { name: 'x', type: 'int', value: '5' },
+          { name: 'y', type: 'int', value: '10' },
+        ],
+        callee: [
+          { name: 'a', type: 'int', value: '5' },
+          { name: 'b', type: 'int', value: '10' },
+        ],
+      },
+      {
+        lineIdx: 1,
+        narration: 'int tmp = a; declares tmp and copies a into it.',
+        caller: [
+          { name: 'x', type: 'int', value: '5' },
+          { name: 'y', type: 'int', value: '10' },
+        ],
+        callee: [
+          { name: 'a', type: 'int', value: '5' },
+          { name: 'b', type: 'int', value: '10' },
+          { name: 'tmp', type: 'int', value: '5' },
+        ],
+        updated: { frame: 'callee', varName: 'tmp' },
+      },
+      {
+        lineIdx: 2,
+        narration: 'a = b; now the callee\'s a holds 10.',
+        caller: [
+          { name: 'x', type: 'int', value: '5' },
+          { name: 'y', type: 'int', value: '10' },
+        ],
+        callee: [
+          { name: 'a', type: 'int', value: '10' },
+          { name: 'b', type: 'int', value: '10' },
+          { name: 'tmp', type: 'int', value: '5' },
+        ],
+        updated: { frame: 'callee', varName: 'a' },
+      },
+      {
+        lineIdx: 3,
+        narration: 'b = tmp; now the callee\'s b holds 5. The swap inside swap_v is done.',
+        caller: [
+          { name: 'x', type: 'int', value: '5' },
+          { name: 'y', type: 'int', value: '10' },
+        ],
+        callee: [
+          { name: 'a', type: 'int', value: '10' },
+          { name: 'b', type: 'int', value: '5' },
+          { name: 'tmp', type: 'int', value: '5' },
+        ],
+        updated: { frame: 'callee', varName: 'b' },
+      },
+      {
+        lineIdx: 4,
+        narration: 'swap_v returns. Its frame is destroyed. a, b, and tmp no longer exist. Look at the caller: x and y are unchanged.',
+        caller: [
+          { name: 'x', type: 'int', value: '5' },
+          { name: 'y', type: 'int', value: '10' },
+        ],
+        callee: null,
+      },
+      {
+        lineIdx: 9,
+        narration: 'Back in main. printf reads x and y from the caller frame. They are still 5 and 10. The swap was lost.',
+        caller: [
+          { name: 'x', type: 'int', value: '5' },
+          { name: 'y', type: 'int', value: '10' },
+        ],
+        callee: null,
+      },
+    ],
+  };
+
+  const SCENARIO_PBP = {
+    title: 'Section 2: Pass by Pointer',
+    calleeName: 'swap_p(int *a, int *b)',
+    codeLines: [
+      { html: KW('void') + ' ' + FN('swap_p') + '(' + KW('int') + ' *a, ' + KW('int') + ' *b) {' },
+      { html: '  ' + KW('int') + ' tmp = *a;' },
+      { html: '  *a = *b;' },
+      { html: '  *b = tmp;' },
+      { html: '}' },
+      { html: '' },
+      { html: KW('int') + ' ' + FN('main') + '(' + KW('void') + ') {' },
+      { html: '  ' + KW('int') + ' x = ' + NUM('5') + ', y = ' + NUM('10') + ';' },
+      { html: '  ' + FN('swap_p') + '(&x, &y);' },
+      { html: '  ' + FN('printf') + '(' + STR('"x=%d y=%d\\n"') + ', x, y);' },
+      { html: '}' },
+    ],
+    initialCaller: [],
+    steps: [
+      {
+        lineIdx: 7,
+        narration: 'main starts. Declare x = 5 and y = 10 in the caller frame.',
+        caller: [
+          { name: 'x', type: 'int', value: '5' },
+          { name: 'y', type: 'int', value: '10' },
+        ],
+        callee: null,
+        updated: { frame: 'caller', varName: 'y' },
+      },
+      {
+        lineIdx: 8,
+        narration: 'About to call swap_p(&x, &y). The caller hands over the addresses of x and y instead of their values.',
+        caller: [
+          { name: 'x', type: 'int', value: '5' },
+          { name: 'y', type: 'int', value: '10' },
+        ],
+        callee: null,
+      },
+      {
+        lineIdx: 0,
+        narration: 'Enter swap_p. Parameters a and b are pointers. They hold the addresses of x and y, drawn as arrows reaching back to the caller frame.',
+        caller: [
+          { name: 'x', type: 'int', value: '5' },
+          { name: 'y', type: 'int', value: '10' },
+        ],
+        callee: [
+          { name: 'a', type: 'int *', value: '&rarr;', isPtr: true },
+          { name: 'b', type: 'int *', value: '&rarr;', isPtr: true },
+        ],
+        arrows: [
+          { fromFrame: 'callee', fromVar: 'a', toFrame: 'caller', toVar: 'x' },
+          { fromFrame: 'callee', fromVar: 'b', toFrame: 'caller', toVar: 'y' },
+        ],
+      },
+      {
+        lineIdx: 1,
+        narration: 'int tmp = *a; dereferences a to read x\'s value (5) and stores it in tmp.',
+        caller: [
+          { name: 'x', type: 'int', value: '5' },
+          { name: 'y', type: 'int', value: '10' },
+        ],
+        callee: [
+          { name: 'a', type: 'int *', value: '&rarr;', isPtr: true },
+          { name: 'b', type: 'int *', value: '&rarr;', isPtr: true },
+          { name: 'tmp', type: 'int', value: '5' },
+        ],
+        arrows: [
+          { fromFrame: 'callee', fromVar: 'a', toFrame: 'caller', toVar: 'x' },
+          { fromFrame: 'callee', fromVar: 'b', toFrame: 'caller', toVar: 'y' },
+        ],
+        updated: { frame: 'callee', varName: 'tmp' },
+      },
+      {
+        lineIdx: 2,
+        narration: '*a = *b; reads y\'s value (10) and writes it through a into x. Watch the caller: x is now 10.',
+        caller: [
+          { name: 'x', type: 'int', value: '10' },
+          { name: 'y', type: 'int', value: '10' },
+        ],
+        callee: [
+          { name: 'a', type: 'int *', value: '&rarr;', isPtr: true },
+          { name: 'b', type: 'int *', value: '&rarr;', isPtr: true },
+          { name: 'tmp', type: 'int', value: '5' },
+        ],
+        arrows: [
+          { fromFrame: 'callee', fromVar: 'a', toFrame: 'caller', toVar: 'x' },
+          { fromFrame: 'callee', fromVar: 'b', toFrame: 'caller', toVar: 'y' },
+        ],
+        updated: { frame: 'caller', varName: 'x' },
+      },
+      {
+        lineIdx: 3,
+        narration: '*b = tmp; writes tmp (5) through b into y. Watch the caller again: y is now 5. The swap is complete.',
+        caller: [
+          { name: 'x', type: 'int', value: '10' },
+          { name: 'y', type: 'int', value: '5' },
+        ],
+        callee: [
+          { name: 'a', type: 'int *', value: '&rarr;', isPtr: true },
+          { name: 'b', type: 'int *', value: '&rarr;', isPtr: true },
+          { name: 'tmp', type: 'int', value: '5' },
+        ],
+        arrows: [
+          { fromFrame: 'callee', fromVar: 'a', toFrame: 'caller', toVar: 'x' },
+          { fromFrame: 'callee', fromVar: 'b', toFrame: 'caller', toVar: 'y' },
+        ],
+        updated: { frame: 'caller', varName: 'y' },
+      },
+      {
+        lineIdx: 4,
+        narration: 'swap_p returns. The callee frame is destroyed. Look at the caller: x and y are now actually swapped.',
+        caller: [
+          { name: 'x', type: 'int', value: '10' },
+          { name: 'y', type: 'int', value: '5' },
+        ],
+        callee: null,
+      },
+      {
+        lineIdx: 9,
+        narration: 'Back in main. printf prints x=10 y=5. The swap survived because the function wrote through pointers, not into copies.',
+        caller: [
+          { name: 'x', type: 'int', value: '10' },
+          { name: 'y', type: 'int', value: '5' },
+        ],
+        callee: null,
+      },
+    ],
+  };
+
+  const SCENARIO_MULTI = {
+    title: 'Section 3: Multiple Output Parameters',
+    calleeName: 'split_change(33, &q, &d, &n, &p)',
+    codeLines: [
+      { html: KW('void') + ' ' + FN('split_change') + '(' + KW('int') + ' cents,' },
+      { html: '                  ' + KW('int') + ' *q, ' + KW('int') + ' *d, ' + KW('int') + ' *n, ' + KW('int') + ' *p) {' },
+      { html: '  *q = cents / ' + NUM('25') + ';  cents %= ' + NUM('25') + ';' },
+      { html: '  *d = cents / ' + NUM('10') + ';  cents %= ' + NUM('10') + ';' },
+      { html: '  *n = cents / ' + NUM('5') + ';   cents %= ' + NUM('5') + ';' },
+      { html: '  *p = cents;' },
+      { html: '}' },
+      { html: '' },
+      { html: KW('int') + ' ' + FN('main') + '(' + KW('void') + ') {' },
+      { html: '  ' + KW('int') + ' q = ' + NUM('0') + ', d = ' + NUM('0') + ', n = ' + NUM('0') + ', p = ' + NUM('0') + ';' },
+      { html: '  ' + FN('split_change') + '(' + NUM('33') + ', &q, &d, &n, &p);' },
+      { html: '  ' + FN('printf') + '(' + STR('"%d %d %d %d\\n"') + ', q, d, n, p);' },
+      { html: '}' },
+    ],
+    initialCaller: [],
+    steps: [
+      {
+        lineIdx: 9,
+        narration: 'main starts. Declare q, d, n, p all initialized to 0. These will receive the four results.',
+        caller: [
+          { name: 'q', type: 'int', value: '0' },
+          { name: 'd', type: 'int', value: '0' },
+          { name: 'n', type: 'int', value: '0' },
+          { name: 'p', type: 'int', value: '0' },
+        ],
+        callee: null,
+      },
+      {
+        lineIdx: 10,
+        narration: 'About to call split_change(33, &q, &d, &n, &p). One value goes in; four addresses go in as output channels.',
+        caller: [
+          { name: 'q', type: 'int', value: '0' },
+          { name: 'd', type: 'int', value: '0' },
+          { name: 'n', type: 'int', value: '0' },
+          { name: 'p', type: 'int', value: '0' },
+        ],
+        callee: null,
+      },
+      {
+        lineIdx: 0,
+        narration: 'Enter split_change. cents = 33 (copied by value). q, d, n, p are pointers to the caller\'s variables.',
+        caller: [
+          { name: 'q', type: 'int', value: '0' },
+          { name: 'd', type: 'int', value: '0' },
+          { name: 'n', type: 'int', value: '0' },
+          { name: 'p', type: 'int', value: '0' },
+        ],
+        callee: [
+          { name: 'cents', type: 'int', value: '33' },
+          { name: 'q', type: 'int *', value: '&rarr;', isPtr: true },
+          { name: 'd', type: 'int *', value: '&rarr;', isPtr: true },
+          { name: 'n', type: 'int *', value: '&rarr;', isPtr: true },
+          { name: 'p', type: 'int *', value: '&rarr;', isPtr: true },
+        ],
+        arrows: [
+          { fromFrame: 'callee', fromVar: 'q', toFrame: 'caller', toVar: 'q' },
+          { fromFrame: 'callee', fromVar: 'd', toFrame: 'caller', toVar: 'd' },
+          { fromFrame: 'callee', fromVar: 'n', toFrame: 'caller', toVar: 'n' },
+          { fromFrame: 'callee', fromVar: 'p', toFrame: 'caller', toVar: 'p' },
+        ],
+      },
+      {
+        lineIdx: 2,
+        narration: '*q = 33/25 = 1. Write 1 through q into the caller. cents becomes 33 % 25 = 8.',
+        caller: [
+          { name: 'q', type: 'int', value: '1' },
+          { name: 'd', type: 'int', value: '0' },
+          { name: 'n', type: 'int', value: '0' },
+          { name: 'p', type: 'int', value: '0' },
+        ],
+        callee: [
+          { name: 'cents', type: 'int', value: '8' },
+          { name: 'q', type: 'int *', value: '&rarr;', isPtr: true },
+          { name: 'd', type: 'int *', value: '&rarr;', isPtr: true },
+          { name: 'n', type: 'int *', value: '&rarr;', isPtr: true },
+          { name: 'p', type: 'int *', value: '&rarr;', isPtr: true },
+        ],
+        arrows: [
+          { fromFrame: 'callee', fromVar: 'q', toFrame: 'caller', toVar: 'q' },
+          { fromFrame: 'callee', fromVar: 'd', toFrame: 'caller', toVar: 'd' },
+          { fromFrame: 'callee', fromVar: 'n', toFrame: 'caller', toVar: 'n' },
+          { fromFrame: 'callee', fromVar: 'p', toFrame: 'caller', toVar: 'p' },
+        ],
+        updated: { frame: 'caller', varName: 'q' },
+      },
+      {
+        lineIdx: 3,
+        narration: '*d = 8/10 = 0. Write 0 through d. cents stays at 8.',
+        caller: [
+          { name: 'q', type: 'int', value: '1' },
+          { name: 'd', type: 'int', value: '0' },
+          { name: 'n', type: 'int', value: '0' },
+          { name: 'p', type: 'int', value: '0' },
+        ],
+        callee: [
+          { name: 'cents', type: 'int', value: '8' },
+          { name: 'q', type: 'int *', value: '&rarr;', isPtr: true },
+          { name: 'd', type: 'int *', value: '&rarr;', isPtr: true },
+          { name: 'n', type: 'int *', value: '&rarr;', isPtr: true },
+          { name: 'p', type: 'int *', value: '&rarr;', isPtr: true },
+        ],
+        arrows: [
+          { fromFrame: 'callee', fromVar: 'q', toFrame: 'caller', toVar: 'q' },
+          { fromFrame: 'callee', fromVar: 'd', toFrame: 'caller', toVar: 'd' },
+          { fromFrame: 'callee', fromVar: 'n', toFrame: 'caller', toVar: 'n' },
+          { fromFrame: 'callee', fromVar: 'p', toFrame: 'caller', toVar: 'p' },
+        ],
+        updated: { frame: 'caller', varName: 'd' },
+      },
+      {
+        lineIdx: 4,
+        narration: '*n = 8/5 = 1. Write 1 through n. cents becomes 8 % 5 = 3.',
+        caller: [
+          { name: 'q', type: 'int', value: '1' },
+          { name: 'd', type: 'int', value: '0' },
+          { name: 'n', type: 'int', value: '1' },
+          { name: 'p', type: 'int', value: '0' },
+        ],
+        callee: [
+          { name: 'cents', type: 'int', value: '3' },
+          { name: 'q', type: 'int *', value: '&rarr;', isPtr: true },
+          { name: 'd', type: 'int *', value: '&rarr;', isPtr: true },
+          { name: 'n', type: 'int *', value: '&rarr;', isPtr: true },
+          { name: 'p', type: 'int *', value: '&rarr;', isPtr: true },
+        ],
+        arrows: [
+          { fromFrame: 'callee', fromVar: 'q', toFrame: 'caller', toVar: 'q' },
+          { fromFrame: 'callee', fromVar: 'd', toFrame: 'caller', toVar: 'd' },
+          { fromFrame: 'callee', fromVar: 'n', toFrame: 'caller', toVar: 'n' },
+          { fromFrame: 'callee', fromVar: 'p', toFrame: 'caller', toVar: 'p' },
+        ],
+        updated: { frame: 'caller', varName: 'n' },
+      },
+      {
+        lineIdx: 5,
+        narration: '*p = cents = 3. Write 3 through p. All four caller variables are now filled in.',
+        caller: [
+          { name: 'q', type: 'int', value: '1' },
+          { name: 'd', type: 'int', value: '0' },
+          { name: 'n', type: 'int', value: '1' },
+          { name: 'p', type: 'int', value: '3' },
+        ],
+        callee: [
+          { name: 'cents', type: 'int', value: '3' },
+          { name: 'q', type: 'int *', value: '&rarr;', isPtr: true },
+          { name: 'd', type: 'int *', value: '&rarr;', isPtr: true },
+          { name: 'n', type: 'int *', value: '&rarr;', isPtr: true },
+          { name: 'p', type: 'int *', value: '&rarr;', isPtr: true },
+        ],
+        arrows: [
+          { fromFrame: 'callee', fromVar: 'q', toFrame: 'caller', toVar: 'q' },
+          { fromFrame: 'callee', fromVar: 'd', toFrame: 'caller', toVar: 'd' },
+          { fromFrame: 'callee', fromVar: 'n', toFrame: 'caller', toVar: 'n' },
+          { fromFrame: 'callee', fromVar: 'p', toFrame: 'caller', toVar: 'p' },
+        ],
+        updated: { frame: 'caller', varName: 'p' },
+      },
+      {
+        lineIdx: 6,
+        narration: 'split_change returns. The callee frame is gone. The caller has q=1, d=0, n=1, p=3.',
+        caller: [
+          { name: 'q', type: 'int', value: '1' },
+          { name: 'd', type: 'int', value: '0' },
+          { name: 'n', type: 'int', value: '1' },
+          { name: 'p', type: 'int', value: '3' },
+        ],
+        callee: null,
+      },
+      {
+        lineIdx: 11,
+        narration: 'Back in main. printf prints 1 0 1 3 &mdash; one quarter, zero dimes, one nickel, three pennies. Four output values returned through four pointers.',
+        caller: [
+          { name: 'q', type: 'int', value: '1' },
+          { name: 'd', type: 'int', value: '0' },
+          { name: 'n', type: 'int', value: '1' },
+          { name: 'p', type: 'int', value: '3' },
+        ],
+        callee: null,
+      },
+    ],
+  };
+
+  const SCENARIOS = [SCENARIO_PBV, SCENARIO_PBP, SCENARIO_MULTI];
+
+  // ---------- Tasks ----------
+  // Each task has section (1-3, matches SCENARIOS index+1), and afterStep is
+  // the step index after which the task pops up. The task must be answered
+  // before further stepping in that scenario.
+  const TASKS = [
+    // Section 1: PBV
+    {
+      section: 1, afterStep: 1,
+      kind: 'predict', inputType: 'text',
+      prompt: 'About to enter swap_v(x, y). When swap_v\'s parameter a is created, what value will it hold?',
+      hint: 'How does C connect the caller\'s argument to the callee\'s parameter? You read about this in Beej 4.1.',
+      answer: '5',
+      feedbackOk: 'Correct. a is initialized with a copy of x\'s value at the moment of the call. Step in to see it appear.',
+      feedbackBad: 'Not quite. a is a fresh local variable in the callee frame, initialized with a copy of x\'s value. x is 5, so a will be 5.',
+    },
+    {
+      section: 1, afterStep: 6,
+      kind: 'predict', inputType: 'text',
+      prompt: 'swap_v just returned. What does the next line, printf("x=%d y=%d\\n", x, y), output?',
+      hint: 'Look at the caller frame. printf reads x and y from there.',
+      answer: ['x=5 y=10', '5 10', '5, 10', 'x=5, y=10'],
+      feedbackOk: 'Correct. The caller\'s x and y were never touched. The swap happened only on the callee\'s copies, which are now gone.',
+      feedbackBad: 'Look at the caller frame: x and y are still their original values. Format your answer like "x=5 y=10".',
+    },
+    {
+      section: 1, afterStep: 7,
+      kind: 'reflect', inputType: 'longtext',
+      prompt: 'In one or two sentences: why didn\'t the swap inside swap_v change the caller\'s x and y?',
+      hint: 'Think about what swap_v actually had access to.',
+      answer: 25,
+      feedbackOk: 'Good. The function only saw copies, so any changes happened to those copies and were lost when the function returned.',
+      feedbackBad: 'Write a real answer (at least 25 characters). Reflect on what the function had access to.',
+    },
+    // Section 2: PBP
+    {
+      section: 2, afterStep: 2,
+      kind: 'predict', inputType: 'text',
+      prompt: 'You just entered swap_p. The parameter a is a pointer. What is the value of *a (the int that a points to) right now?',
+      hint: 'a holds an address. Whose address? Then: what integer lives at that address?',
+      answer: '5',
+      feedbackOk: 'Correct. a is a pointer to x. Dereferencing a (*a) gives x\'s value, which is still 5 at this moment.',
+      feedbackBad: 'a is a pointer that points to x in the caller. *a reads through that arrow and gives you x\'s current value, which is 5.',
+    },
+    {
+      section: 2, afterStep: 6,
+      kind: 'predict', inputType: 'text',
+      prompt: 'swap_p just returned. What does printf("x=%d y=%d\\n", x, y) output?',
+      hint: 'When swap_p wrote through *a and *b, did those writes land on copies, or on the caller\'s variables themselves?',
+      answer: ['x=10 y=5', '10 5', '10, 5', 'x=10, y=5'],
+      feedbackOk: 'Correct. The pointer writes inside swap_p went through the arrows and modified the caller\'s actual x and y. The swap survives the return.',
+      feedbackBad: 'Look at the caller frame: x is now 10 and y is now 5. Format your answer like "x=10 y=5".',
+    },
+    {
+      section: 2, afterStep: 7,
+      kind: 'reflect', inputType: 'longtext',
+      prompt: 'In one or two sentences: what crossed the function boundary in swap_p that did not cross in swap_v? Why does that change everything?',
+      hint: 'Compare the callee frame in both scenarios: what was sitting there?',
+      answer: 30,
+      feedbackOk: 'Good. In swap_v only values crossed; in swap_p addresses crossed, and addresses can be followed back into the caller.',
+      feedbackBad: 'Write a real answer (at least 30 characters). The difference is what arrived in the callee frame as parameters.',
+    },
+    // Section 3: Multi-output
+    {
+      section: 3, afterStep: 2,
+      kind: 'predict', inputType: 'text',
+      prompt: 'You just entered split_change. The pointer parameter q points back at which caller variable?',
+      hint: 'The caller wrote split_change(33, &q, &d, &n, &p). Which caller variable corresponds to the first pointer argument?',
+      answer: ['q', 'main\'s q', "main's q"],
+      feedbackOk: 'Correct. The caller passed &q, so the callee\'s q parameter holds the address of the caller\'s q variable.',
+      feedbackBad: 'The caller called split_change(33, &q, &d, &n, &p). The first pointer argument is &q, so the callee\'s q parameter points back at the caller\'s q.',
+    },
+    {
+      section: 3, afterStep: 7,
+      kind: 'predict', inputType: 'text',
+      prompt: 'split_change just returned. What four values does printf print for q, d, n, p (in that order)?',
+      hint: 'Greedy: start with 33. Take as many of the biggest coin as fit, then move to the next coin with what is left.',
+      answer: ['1 0 1 3', '1, 0, 1, 3'],
+      feedbackOk: 'Correct. 33 = 1 quarter (25) + 0 dimes + 1 nickel (5) + 3 pennies. Four output values, returned through four pointer parameters.',
+      feedbackBad: 'Look at the caller frame after the return: q=1, d=0, n=1, p=3. Enter as four numbers separated by spaces.',
+    },
+    {
+      section: 3, afterStep: 8,
+      kind: 'reflect', inputType: 'longtext',
+      prompt: 'In one or two sentences: why couldn\'t split_change just return the four values normally? What does pass-by-pointer give us that a single return value cannot?',
+      hint: 'What syntactic limit does C place on the return statement of a function?',
+      answer: 30,
+      feedbackOk: 'Good. C functions return exactly one value. Pass-by-pointer lets a function deliver multiple results through parameters.',
+      feedbackBad: 'Write a real answer (at least 30 characters). The key fact is what a C function is allowed to return.',
+    },
+  ];
+
+  // ============================================================
+  // State and rendering
+  // ============================================================
+  let currentScenarioIdx = 0;
+  let currentStepIdx = -1; // -1 = pre-execution; show initialCaller
+  let currentTaskState = {
+    pendingTaskIdx: null,  // index into TASKS for the task currently displayed
+    answered: TASKS.map(() => false),
+    wrongAttempts: 0,      // consecutive wrong submits on the current task
+  };
+
+  function getCurrentScenario() { return SCENARIOS[currentScenarioIdx]; }
+  function getCurrentStep() {
+    const scen = getCurrentScenario();
+    if (currentStepIdx < 0) return null;
+    return scen.steps[currentStepIdx];
+  }
+
+  // Compute progress: count of answered tasks out of total.
+  function answeredCount() {
+    return currentTaskState.answered.filter(Boolean).length;
+  }
+
+  // ---------- Rendering ----------
+  function renderFrame(frameEl, varsEl, vars, isActive, justUpdated) {
+    if (isActive) {
+      frameEl.classList.remove('inactive');
+    } else {
+      frameEl.classList.add('inactive');
+    }
+    varsEl.innerHTML = '';
+    if (!vars || vars.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'var-empty';
+      empty.textContent = isActive ? '(no variables yet)' : '(frame not active)';
+      varsEl.appendChild(empty);
+      return;
+    }
+    vars.forEach(function(v) {
+      const row = document.createElement('div');
+      row.className = 'var-row';
+      row.setAttribute('data-var-name', v.name);
+      if (justUpdated && justUpdated.varName === v.name) {
+        row.classList.add('just-updated');
+      }
+      const name = document.createElement('div');
+      name.className = 'var-name';
+      name.textContent = v.name;
+      const value = document.createElement('div');
+      value.className = 'var-value' + (v.isPtr ? ' ptr' : '');
+      value.innerHTML = v.value;
+      const type = document.createElement('div');
+      type.className = 'var-type';
+      type.textContent = v.type;
+      row.appendChild(name);
+      row.appendChild(value);
+      row.appendChild(type);
+      varsEl.appendChild(row);
+    });
+  }
+
+  function renderCodePane(scenario, currentLineIdx) {
+    const pane = root.querySelector('#cs210-code-pane');
+    pane.innerHTML = '';
+    scenario.codeLines.forEach(function(line, i) {
+      const span = document.createElement('span');
+      span.className = 'code-line' + (i === currentLineIdx ? ' current' : '');
+      // Empty line: use a non-breaking space so layout is preserved
+      span.innerHTML = line.html.length > 0 ? line.html : '&nbsp;';
+      pane.appendChild(span);
+    });
+  }
+
+  function renderArrows(arrows) {
+    const svg = root.querySelector('#cs210-arrow-svg');
+    svg.innerHTML = '';
+    if (!arrows || arrows.length === 0) return;
+    const stageRect = svg.parentElement.getBoundingClientRect();
+    if (stageRect.width === 0) return; // not visible yet
+
+    // Set the SVG's viewport to its actual rendered size so we can use pixel coords directly.
+    svg.setAttribute('viewBox', '0 0 ' + stageRect.width + ' ' + stageRect.height);
+    svg.setAttribute('width', stageRect.width);
+    svg.setAttribute('height', stageRect.height);
+
+    // Build an arrow-marker definition
+    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+    defs.innerHTML =
+      '<marker id="cs210-frame-arrowhead" markerWidth="10" markerHeight="10" ' +
+      'refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse">' +
+      '<path d="M0,0 L10,5 L0,10 Z" fill="#8B2E18"/></marker>';
+    svg.appendChild(defs);
+
+    arrows.forEach(function(arr) {
+      const fromRow = getVarRowEl(arr.fromFrame, arr.fromVar);
+      const toRow = getVarRowEl(arr.toFrame, arr.toVar);
+      if (!fromRow || !toRow) return;
+      const fromRect = fromRow.getBoundingClientRect();
+      const toRect = toRow.getBoundingClientRect();
+
+      // Decide which edge to start/end on. Callee->Caller goes RIGHT-to-LEFT, so:
+      //   fromX = fromRect.left (left edge of source)
+      //   toX   = toRect.right  (right edge of target)
+      // Caller->Callee (rare) would reverse.
+      let fromX, fromY, toX, toY;
+      if (arr.fromFrame === 'callee' && arr.toFrame === 'caller') {
+        fromX = fromRect.left - stageRect.left;
+        toX   = toRect.right - stageRect.left;
+      } else if (arr.fromFrame === 'caller' && arr.toFrame === 'callee') {
+        fromX = fromRect.right - stageRect.left;
+        toX   = toRect.left - stageRect.left;
+      } else {
+        // Same frame: just connect midpoints
+        fromX = (fromRect.left + fromRect.right) / 2 - stageRect.left;
+        toX   = (toRect.left + toRect.right) / 2 - stageRect.left;
+      }
+      fromY = (fromRect.top + fromRect.bottom) / 2 - stageRect.top;
+      toY   = (toRect.top + toRect.bottom) / 2 - stageRect.top;
+
+      // Draw a curved path between the two points using a quadratic bezier
+      // with control point pulled out to one side.
+      const midX = (fromX + toX) / 2;
+      const dropY = Math.min(fromY, toY) - 18;
+      const ctrlX = midX;
+      const ctrlY = dropY;
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      const d = 'M ' + fromX + ' ' + fromY +
+                ' Q ' + ctrlX + ' ' + ctrlY +
+                ' ' + toX + ' ' + toY;
+      path.setAttribute('d', d);
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', '#8B2E18');
+      path.setAttribute('stroke-width', '2');
+      path.setAttribute('marker-end', 'url(#cs210-frame-arrowhead)');
+      svg.appendChild(path);
+    });
+  }
+
+  function getVarRowEl(frame, varName) {
+    const frameEl = (frame === 'caller') ?
+      root.querySelector('#cs210-caller-vars') :
+      root.querySelector('#cs210-callee-vars');
+    if (!frameEl) return null;
+    return frameEl.querySelector('[data-var-name="' + varName + '"]');
+  }
+
+  // ---------- Main render: full redraw of frames + code + narration ----------
+  function renderStage() {
+    const scen = getCurrentScenario();
+    const callerVarsEl = root.querySelector('#cs210-caller-vars');
+    const calleeFrame = root.querySelector('#cs210-callee-frame');
+    const calleeVarsEl = root.querySelector('#cs210-callee-vars');
+    const calleeSub = root.querySelector('#cs210-callee-subtitle');
+    const narration = root.querySelector('#cs210-narration');
+    const sectionHeader = root.querySelector('#cs210-section-header');
+    const stepInfo = root.querySelector('#cs210-step-info');
+
+    sectionHeader.textContent = scen.title;
+
+    if (currentStepIdx < 0) {
+      // pre-execution
+      renderFrame(root.querySelector('#cs210-caller-frame'), callerVarsEl, scen.initialCaller, true, null);
+      renderFrame(calleeFrame, calleeVarsEl, null, false, null);
+      calleeSub.textContent = '(not called yet)';
+      renderCodePane(scen, -1);
+      narration.innerHTML = 'Press <strong>Step</strong> to begin executing the program.';
+      stepInfo.textContent = 'Step 0 of ' + scen.steps.length;
+      renderArrows(null);
+      return;
+    }
+
+    const step = scen.steps[currentStepIdx];
+    renderFrame(root.querySelector('#cs210-caller-frame'), callerVarsEl, step.caller, true,
+      step.updated && step.updated.frame === 'caller' ? step.updated : null);
+    const calleeActive = step.callee !== null && step.callee !== undefined;
+    renderFrame(calleeFrame, calleeVarsEl, step.callee, calleeActive,
+      step.updated && step.updated.frame === 'callee' ? step.updated : null);
+    calleeSub.textContent = calleeActive ? scen.calleeName : '(not called yet)';
+    renderCodePane(scen, step.lineIdx);
+    narration.innerHTML = step.narration;
+    stepInfo.textContent = 'Step ' + (currentStepIdx + 1) + ' of ' + scen.steps.length;
+
+    // Defer arrow draw to next frame so rects are settled.
+    requestAnimationFrame(function() { renderArrows(step.arrows); });
+  }
+
+  // ---------- Task rendering ----------
+  function renderTask() {
+    const card = root.querySelector('#cs210-task-card');
+    const label = root.querySelector('#cs210-task-label');
+    const text = root.querySelector('#cs210-task-text');
+    const hint = root.querySelector('#cs210-task-hint');
+    const inputRow = root.querySelector('#cs210-task-input-row');
+    const input = root.querySelector('#cs210-task-input');
+    const submit = root.querySelector('#cs210-task-submit');
+    const feedback = root.querySelector('#cs210-task-feedback');
+    const progFill = root.querySelector('#cs210-progress-fill');
+    const progLabel = root.querySelector('#cs210-progress-label');
+
+    feedback.textContent = '';
+    feedback.className = 'task-feedback';
+
+    const answered = answeredCount();
+    progFill.style.width = (answered / TASKS.length * 100) + '%';
+    progLabel.textContent = 'Task ' + Math.min(answered + 1, TASKS.length) + ' of ' + TASKS.length;
+
+    if (currentTaskState.pendingTaskIdx === null) {
+      // No pending task. Show a placeholder telling user to step.
+      card.classList.remove('complete');
+      label.textContent = 'Next';
+      text.textContent = 'Press Step to advance the program. A question will pop up when you reach a checkpoint.';
+      hint.textContent = '';
+      hint.classList.remove('revealed');
+      const hintBtnHide = root.querySelector('#cs210-task-hint-btn');
+      if (hintBtnHide) {
+        hintBtnHide.style.display = 'none';
+        hintBtnHide.classList.remove('pulse');
+      }
+      inputRow.style.display = 'none';
+      return;
+    }
+
+    const t = TASKS[currentTaskState.pendingTaskIdx];
+    card.classList.remove('complete');
+    label.innerHTML = 'Task ' + (currentTaskState.pendingTaskIdx + 1) + ' of ' + TASKS.length + ' &mdash; ' + (t.kind === 'predict' ? 'PREDICT' : 'REFLECT');
+    text.textContent = t.prompt;
+    hint.textContent = t.hint || '';
+    hint.classList.remove('revealed');
+
+    // Hint button: reset state for this task.
+    const hintBtn = root.querySelector('#cs210-task-hint-btn');
+    if (hintBtn) {
+      hintBtn.style.display = t.hint ? 'inline-block' : 'none';
+      hintBtn.classList.remove('pulse');
+      hintBtn.disabled = false;
+      hintBtn.textContent = 'Show hint';
+    }
+    currentTaskState.wrongAttempts = 0;
+
+    // Reset/replace input element so 'textarea' vs 'input' types swap correctly.
+    inputRow.style.display = 'flex';
+    inputRow.innerHTML = '';
+    let newInput;
+    if (t.inputType === 'longtext') {
+      newInput = document.createElement('textarea');
+      newInput.className = 'task-input textarea';
+      newInput.rows = 3;
+      newInput.placeholder = 'Write your answer here...';
+    } else {
+      newInput = document.createElement('input');
+      newInput.type = 'text';
+      newInput.className = 'task-input';
+      newInput.placeholder = t.inputType === 'num' ? 'e.g. 5' : 'Your answer';
+    }
+    newInput.id = 'cs210-task-input';
+    inputRow.appendChild(newInput);
+
+    const newSubmit = document.createElement('button');
+    newSubmit.className = 'task-btn';
+    newSubmit.id = 'cs210-task-submit';
+    newSubmit.textContent = t.kind === 'reflect' ? 'Submit reflection' : 'Check answer';
+    inputRow.appendChild(newSubmit);
+
+    newInput.addEventListener('keydown', function(e) {
+      if (t.inputType !== 'longtext' && e.key === 'Enter') {
+        e.preventDefault();
+        newSubmit.click();
+      }
+    });
+    newSubmit.addEventListener('click', function() {
+      submitTaskAnswer(newInput.value);
+    });
+
+    setTimeout(function() { newInput.focus(); }, 30);
+  }
+
+  function submitTaskAnswer(raw) {
+    const idx = currentTaskState.pendingTaskIdx;
+    if (idx === null) return;
+    const t = TASKS[idx];
+    const feedback = root.querySelector('#cs210-task-feedback');
+    const card = root.querySelector('#cs210-task-card');
+
+    let ok = false;
+    const trimmed = (raw || '').trim();
+
+    if (t.kind === 'reflect') {
+      ok = trimmed.length >= t.answer;
+    } else {
+      // 'predict' — compare against answer (string or array of strings)
+      const norm = trimmed.toLowerCase().replace(/\s+/g, ' ');
+      const accept = Array.isArray(t.answer) ? t.answer : [t.answer];
+      for (let i = 0; i < accept.length; i++) {
+        if (norm === String(accept[i]).toLowerCase().replace(/\s+/g, ' ')) {
+          ok = true;
+          break;
+        }
+      }
+    }
+
+    if (ok) {
+      feedback.className = 'task-feedback ok';
+      feedback.textContent = t.feedbackOk;
+      currentTaskState.answered[idx] = true;
+      currentTaskState.pendingTaskIdx = null;
+      card.classList.add('complete');
+      // Update progress
+      const progFill = root.querySelector('#cs210-progress-fill');
+      const progLabel = root.querySelector('#cs210-progress-label');
+      const answered = answeredCount();
+      progFill.style.width = (answered / TASKS.length * 100) + '%';
+      progLabel.textContent = answered >= TASKS.length ?
+        'All ' + TASKS.length + ' tasks complete' :
+        'Task ' + (answered + 1) + ' of ' + TASKS.length;
+      // Disable input
+      const newSubmit = root.querySelector('#cs210-task-submit');
+      const newInput = root.querySelector('#cs210-task-input');
+      if (newSubmit) newSubmit.disabled = true;
+      if (newInput) newInput.disabled = true;
+      // Re-enable the step button
+      root.querySelector('#cs210-step-btn').disabled = false;
+      // Check for whole-widget completion
+      if (answered >= TASKS.length) {
+        cs210RenderCompletion(root.querySelector('#cs210-completion-area'));
+      }
+    } else {
+      feedback.className = 'task-feedback bad';
+      feedback.textContent = t.feedbackBad;
+      currentTaskState.wrongAttempts += 1;
+      if (currentTaskState.wrongAttempts >= 2) {
+        const hb = root.querySelector('#cs210-task-hint-btn');
+        const hintEl = root.querySelector('#cs210-task-hint');
+        if (hb && hb.style.display !== 'none' &&
+            !hb.classList.contains('pulse') &&
+            hintEl && !hintEl.classList.contains('revealed')) {
+          hb.classList.add('pulse');
+        }
+      }
+    }
+  }
+
+  // ---------- Stepping logic ----------
+  function stepForward() {
+    // If a task is pending, block.
+    if (currentTaskState.pendingTaskIdx !== null) return;
+
+    const scen = getCurrentScenario();
+    if (currentStepIdx < scen.steps.length - 1) {
+      currentStepIdx++;
+      renderStage();
+      checkTaskTrigger();
+    } else {
+      // End of this scenario's steps. Move to next scenario if any.
+      if (currentScenarioIdx < SCENARIOS.length - 1) {
+        currentScenarioIdx++;
+        currentStepIdx = -1;
+        renderStage();
+      } else {
+        // Already at end of final scenario. Disable step.
+        root.querySelector('#cs210-step-btn').disabled = true;
+      }
+    }
+  }
+
+  function checkTaskTrigger() {
+    // Find the first unanswered task in the current scenario that matches afterStep.
+    for (let i = 0; i < TASKS.length; i++) {
+      if (currentTaskState.answered[i]) continue;
+      const t = TASKS[i];
+      if (t.section !== currentScenarioIdx + 1) continue;
+      if (t.afterStep === currentStepIdx) {
+        currentTaskState.pendingTaskIdx = i;
+        renderTask();
+        // Block step until answered
+        root.querySelector('#cs210-step-btn').disabled = true;
+        return;
+      }
+    }
+  }
+
+  function restartScenario() {
+    // Reset current scenario only. Mark its tasks as not-yet-shown but keep answered state.
+    currentStepIdx = -1;
+    currentTaskState.pendingTaskIdx = null;
+    root.querySelector('#cs210-step-btn').disabled = false;
+    renderStage();
+    renderTask();
+  }
+
+  // ---------- Wire up controls ----------
+  root.querySelector('#cs210-step-btn').addEventListener('click', stepForward);
+  root.querySelector('#cs210-restart-btn').addEventListener('click', restartScenario);
+
+  // Re-draw arrows on window resize (positions change)
+  window.addEventListener('resize', function() {
+    const step = getCurrentStep();
+    if (step && step.arrows) {
+      renderArrows(step.arrows);
+    }
+  });
+
+  // ---------- Boot ----------
+  renderStage();
+  renderTask();
+
+})();
+</script>
+
+
+    </div>
+  </details>
+
+  <!-- ===================== 6. AFTER CLASS ===================== -->
+  <details id="after-class" style="margin-bottom: 24px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      6. After Class
+    </summary>
+    <div style="padding: 18px 22px;">
+      <ul style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;"><strong style="color: #8B2E18;">PEX1 is due today.</strong> If you have not submitted yet, push your final commit and submit through GitHub Classroom before the deadline on the syllabus.</li>
+        <li style="margin-bottom: 6px;">Finish Labs 14-1 and 14-2 if you did not complete them in class. Submit through GitHub Classroom before Lesson 15.</li>
+        <li style="margin-bottom: 6px;">Submit the Lesson 14 reflection in Blackboard. Enter your completion code from the call-frame walkthrough and answer the reflection prompt.</li>
+        <li style="margin-bottom: 6px;">Read Beej-C Chapter 12 (Manual Memory Allocation) for Lesson 15. We move from stack-allocated variables to heap-allocated memory.</li>
+        <li style="margin-bottom: 0;">Heads up: Quiz 6 at Lesson 16 covers pointer arithmetic (Lesson 13) and pass-by-pointer (today). GR2 / Midterm is Lesson 17.</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== HELP NOTE ===================== -->
+  <div style="background: #F5F7FA; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 3px; font-size: 13.5px; color: #4A5568;">
+    <strong style="color: #00205B;">Need help?</strong> Schedule EI with your instructor. Bring specific code or specific screenshots, and the exact error message or output you do not understand. Specific questions get unstuck quickly.
+  </div>
+
+</div>

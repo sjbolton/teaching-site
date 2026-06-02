@@ -1,0 +1,1106 @@
+<!-- ============================================================
+     CS210 - Lesson 33
+     Recursion vs Iteration: Weighing the Tradeoffs
+     Self-contained: all CSS inline. Native <details> for collapsing.
+     recursion_cost walkthrough widget embedded inline in Section 5.
+     Paste into Blackboard Ultra via Document -> Add HTML block.
+     ============================================================ -->
+
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 980px; margin: 0 auto; line-height: 1.6;">
+
+  <!-- ===================== LIGHT HEADER ===================== -->
+  <div style="border-left: 5px solid #003087; padding: 8px 0 8px 18px; margin-bottom: 24px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 2px;">CS210 &middot; Block 4 &middot; Lesson 33</div>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 600; color: #00205B;">Recursion vs Iteration: Weighing the Tradeoffs</h1>
+    <div style="font-size: 14px; color: #4A5568; margin-top: 4px;">Clarity vs cost &middot; Stack growth &middot; Stack overflow &middot; When recursion wins &middot; When to loop</div>
+  </div>
+
+  <!-- ===================== AT A GLANCE ===================== -->
+  <div style="background: #F5F7FA; border-left: 4px solid #B5B7BA; padding: 14px 18px; margin-bottom: 22px; font-size: 14px;">
+    <strong style="color: #00205B;">At a glance:</strong> Lesson 32 left a question open: when is recursion actually the right choice? This lesson answers it. The same function can be written as a loop or as recursion and return the same answer, so the choice comes down to two axes: how clearly the code reads, and what it costs on the stack. You will see where a recursive forward walk runs out of stack and crashes, and where recursion is the cleaner, more practical option. The in-class widget runs both side by side; the lab has you convert the forward walks to iteration and keep the one case where recursion wins.
+  </div>
+
+  <!-- ===================== TABLE OF CONTENTS ===================== -->
+  <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 20px; margin-bottom: 24px; border-radius: 3px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Contents</div>
+    <ol style="margin: 0; padding-left: 22px; font-size: 14px;">
+      <li style="margin-bottom: 4px;"><a href="#objectives" style="color: #003087; text-decoration: none;">Lesson Objectives</a></li>
+      <li style="margin-bottom: 4px;"><a href="#readings" style="color: #003087; text-decoration: none;">Assigned Readings</a></li>
+      <li style="margin-bottom: 4px;"><a href="#pre-class" style="color: #003087; text-decoration: none;">Pre-Class Work</a></li>
+      <li style="margin-bottom: 4px;"><a href="#materials" style="color: #003087; text-decoration: none;">Lesson Materials and Overview</a></li>
+      <li style="margin-bottom: 4px;"><a href="#in-class" style="color: #003087; text-decoration: none;">In-Class Work</a></li>
+      <li style="margin-bottom: 0;"><a href="#after-class" style="color: #003087; text-decoration: none;">After Class</a></li>
+    </ol>
+  </div>
+
+  <!-- ===================== 1. OBJECTIVES ===================== -->
+  <details id="objectives" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      1. Lesson Objectives
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 10px 0; font-style: italic;">By the end of this lesson, cadets will be able to:</p>
+      <ol style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Compare iterative and recursive solutions to the same problem. <span style="color: #6B7280; font-size: 12px;">(Outcomes 1, 3)</span></li>
+        <li style="margin-bottom: 6px;">Evaluate tradeoffs in clarity, performance, and stack usage between the two approaches. <span style="color: #6B7280; font-size: 12px;">(Outcome 3)</span></li>
+        <li style="margin-bottom: 0;">Recognize situations where recursion risks stack overflow in C. <span style="color: #6B7280; font-size: 12px;">(Outcomes 3, 7)</span></li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 2. READINGS ===================== -->
+  <details id="readings" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      2. Assigned Readings
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 12px 0;">Complete before class. There is no Beej chapter for this lesson; the instructor notes are the source and they are short.</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <thead>
+          <tr style="background: #E8EDF5; color: #00205B;">
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 200px;">Source</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9;">Sections</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 240px;">Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Lesson 33 supplementary notes (instructor-written)</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">All of it</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">The two axes, stack overflow, and when recursion wins. This is the reading.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 9px 12px;">Lesson 32 notes and widget</td>
+            <td style="padding: 9px 12px;">The deferred-operation model</td>
+            <td style="padding: 9px 12px; color: #4A5568;">Optional review. Today builds directly on every suspended frame holding a deferred operation.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <!-- ===================== 3. PRE-CLASS WORK ===================== -->
+  <details id="pre-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      3. Pre-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 18px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #6B5300; font-size: 14px; margin-bottom: 4px;">Do this first</div>
+        <div style="font-size: 14px; color: #5A4B00;">Plan on about 20 minutes for the reading. It is short on purpose. Come ready to make a judgment call, not just to watch a demo.</div>
+      </div>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 0 0 10px 0;">Pre-Class Checklist</h3>
+
+      <!-- Step 1: Reading -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">1</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Read the Lesson 33 supplementary notes</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">Make sure you can answer these before class:</div>
+            <ul style="font-size: 13.5px; margin: 0 0 6px 0; padding-left: 20px;">
+              <li style="margin-bottom: 3px;">What are the two axes you weigh when choosing between a loop and recursion?</li>
+              <li style="margin-bottom: 3px;">Why does a recursive forward traversal use O(N) stack space while the loop uses O(1)?</li>
+              <li style="margin-bottom: 3px;">What is a stack overflow, and what does it look like in C?</li>
+              <li style="margin-bottom: 0;">Why can a single forward loop not print a singly linked list in reverse?</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Recall L32 -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">2</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Recall the Lesson 32 model</div>
+            <div style="font-size: 14px;">In Lesson 32 every suspended recursive frame held a deferred operation, like <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">num + ?</code>, while it waited for the call beneath it. Today that picture explains the cost: every deferred frame is real memory on the stack. If that idea is fuzzy, replay the Lesson 32 widget.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Skim widget -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 8px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">3</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Skim the In-Class section below</div>
+            <div style="font-size: 14px;">You will see an interactive widget that runs an iterative and a recursive version of the same function side by side. No need to use it yet; just know it is there.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ===================== 4. LESSON MATERIALS AND OVERVIEW ===================== -->
+  <details id="materials" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      4. Lesson Materials and Overview
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 18px 0;">By now you can write a traversal either way. This lesson is about choosing. The reference material below is the spine of the in-class discussion; the widget is where you see the two axes pull against each other on real code.</p>
+
+      <!-- Subsection navigation -->
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 18px; margin-bottom: 22px; border-radius: 3px;">
+        <div style="font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">Jump to</div>
+        <div style="font-size: 13.5px;">
+          <a href="#slides" style="color: #003087; text-decoration: none; margin-right: 14px;">Slides</a>
+          <a href="#two-axes" style="color: #003087; text-decoration: none; margin-right: 14px;">The Two Axes</a>
+          <a href="#stack-cost" style="color: #003087; text-decoration: none; margin-right: 14px;">Stack Cost</a>
+          <a href="#overflow" style="color: #003087; text-decoration: none; margin-right: 14px;">Stack Overflow</a>
+          <a href="#recursion-wins" style="color: #003087; text-decoration: none; margin-right: 14px;">When Recursion Wins</a>
+          <a href="#deciding" style="color: #003087; text-decoration: none; margin-right: 14px;">Deciding</a>
+          <a href="#dfcs" style="color: #003087; text-decoration: none;">Style</a>
+        </div>
+      </div>
+
+      <!-- Slides -->
+      <h3 id="slides" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0; scroll-margin-top: 16px;">Slides</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">The Lesson 33 deck walks through the two axes, the stack-cost picture, the overflow demo, the case where recursion wins, and how to decide. The slides are the spine of the in-class discussion; the widget is where you practice the judgment hands-on.</p>
+
+      <!-- =========================================================
+           EDIT ME: Lesson 33 slide deck link
+           Replace href="#" below with the SharePoint share URL once the
+           deck is published. Leave target="_blank" and rel="noopener".
+           ========================================================= -->
+      <p style="margin: 0 0 18px 0;">
+        <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 10px 20px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 14px;">Open Lesson 33 slides &rarr;</a>
+      </p>
+
+      <!-- The two axes -->
+      <h3 id="two-axes" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">The two axes</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Take any traversal you wrote recursively in Lesson 32 and you can write it as a loop instead. Both return the same answer, so correctness does not separate them. Two things do. The first is <strong>clarity</strong>: how easily the next reader can see the code is correct. The second is <strong>cost</strong>: what the code consumes on the call stack while it runs. Every recursion-vs-iteration choice is a weighing of these two.</p>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">For a function like total time, clarity is close to a tie. The recursive version reads as "this split plus the total of the rest," which mirrors how a list is defined; the loop is an ordinary accumulator that any C programmer reads at a glance. When clarity ties, cost decides.</p>
+
+      <!-- Stack cost -->
+      <h3 id="stack-cost" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Stack cost: O(1) vs O(N)</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">The iterative version keeps one stack frame and updates its variables in place, no matter how long the list. That is O(1) space on the stack. The recursive version adds a frame per element, because each call must call again before it can finish, and none of those frames can be freed until the base case at the bottom. That is O(N) space on the stack. Each of those frames holds a deferred operation, exactly the Lesson 32 picture, and each one is real memory.</p>
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; margin-bottom: 18px;">
+        <span style="color: #6B7280;">// iterative: one frame, walks with a moving pointer</span><br>
+        <span style="color: #569CD6;">int</span> <span style="color: #DCDCAA;">total_time</span>(<span style="color: #569CD6;">const node_t</span> *head) {<br>
+        &nbsp;&nbsp;<span style="color: #569CD6;">int</span> total = <span style="color: #B5CEA8;">0</span>;<br>
+        &nbsp;&nbsp;<span style="color: #569CD6;">const node_t</span> *cur = head;<br>
+        &nbsp;&nbsp;<span style="color: #C586C0;">while</span> (cur != <span style="color: #569CD6;">NULL</span>) { total += cur-&gt;num; cur = cur-&gt;next; }<br>
+        &nbsp;&nbsp;<span style="color: #C586C0;">return</span> total;<br>
+        }
+      </div>
+
+      <!-- Stack overflow -->
+      <h3 id="overflow" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Stack overflow</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">The call stack is a fixed region, often around 8 megabytes. As long as all live frames fit, you are fine. When they do not, the program crashes; that is a <strong>stack overflow</strong>, and in C it usually shows up as a segmentation fault before your function can return anything. A recursive forward walk over a few hundred thousand nodes will exhaust the stack and crash. The iterative version walks the same list in one frame and returns the right answer. This is the main practical reason to prefer iteration for traversals that could run long; it is not that the recursive code was worse to read.</p>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">A note for the curious: a "tail call," where the recursive call is the last thing the function does, can sometimes be optimized into a loop. C does not guarantee this, and an accumulating function like total time is not in that shape anyway. Treat deep recursion in C as a real overflow risk.</p>
+
+      <!-- When recursion wins -->
+      <h3 id="recursion-wins" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">When recursion wins</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">If cost were the whole story you would always loop. It is not. Consider printing a list in reverse, tail first. A singly linked list has no pointer back toward the head, so a single forward loop physically cannot reach the tail first. To print in reverse with a loop you would make two passes or build your own stack of pointers. Recursion gets it almost for free:</p>
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">void</span> <span style="color: #DCDCAA;">print_reverse</span>(<span style="color: #569CD6;">const node_t</span> *head) {<br>
+        &nbsp;&nbsp;<span style="color: #C586C0;">if</span> (head == <span style="color: #569CD6;">NULL</span>) <span style="color: #C586C0;">return</span>;<br>
+        &nbsp;&nbsp;<span style="color: #DCDCAA;">print_reverse</span>(head-&gt;next);&nbsp;&nbsp;<span style="color: #6B7280;">// go to the tail first</span><br>
+        &nbsp;&nbsp;<span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"%s\n"</span>, head-&gt;word);&nbsp;&nbsp;<span style="color: #6B7280;">// print on the way back up</span><br>
+        }
+      </div>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">The recursive call comes before the print, so every frame descends to the tail before anything prints, and the deferred prints fire in reverse as the stack unwinds. The call stack does the bookkeeping you would otherwise build by hand. This is the honest case for recursion, and it is the same reason <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">free_list</code> and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">collect_reverse</code> recursed in Lesson 32.</p>
+
+      <!-- Deciding -->
+      <h3 id="deciding" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Deciding</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">So the decision is never "recursion good" or "recursion bad." For a plain forward walk that might run long (length, sum, search, total), clarity ties and stack cost breaks it toward iteration: write the loop. For work the structure forces to happen tail first, recursion is clearer and more practical: write the recursion. And the cost axis only bites when the input can actually get large; a recursive function over a guaranteed small, bounded input is a perfectly defensible choice, because there clarity gets to decide on its own.</p>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">A useful habit when unsure: ask how long the input can get and whether the recursion stacks a frame per element. If the input is unbounded and the answer is yes, that is your signal to write the loop.</p>
+
+      <!-- Style / DFCS -->
+      <h3 id="dfcs" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">A note on style</h3>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">No new section of the DFCS C Programming Standard is introduced today. Because these functions are short, the inline-comment guidance (<strong>&sect;2.4</strong>) applies lightly: a comment explaining why <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">print_reverse</code> recurses before printing earns its place; a comment restating what an obvious loop does not. Keep naming and formatting consistent with what the tooling has enforced since Lesson 7.</p>
+
+    </div>
+  </details>
+
+  <!-- ===================== 5. IN-CLASS WORK ===================== -->
+  <details id="in-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      5. In-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 16px 0;">Two things to do in class. Use the checklist to track your progress.</p>
+
+      <ul style="list-style: none; padding: 0; margin: 0 0 24px 0; font-size: 14.5px;">
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Work through the recursion-vs-iteration widget below.</strong>
+          <span style="color: #4A5568;">Five guided tasks: run both versions of a function side by side, watch the stack grow and overflow, see the case where recursion wins, then make a judgment call. About 20 minutes.</span>
+        </li>
+        <li style="margin-bottom: 0; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Complete Lab 33: Splits, Two Ways.</strong>
+          <span style="color: #4A5568;">Convert three Lesson 32 traversals to iteration, keep one recursive, and meet the autograder's large-list test. Auto-graded through GitHub Classroom. Full instructions in the lab repo.</span>
+          <!-- =========================================================
+               EDIT ME: Lab 33 GitHub Classroom assignment link
+               Replace href="#" with the classroom.github.com/a/... invite
+               URL once the assignment is published.
+               ========================================================= -->
+          <div style="margin-top: 8px; margin-left: 28px;">
+            <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 6px 14px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 13px;">Accept Lab 33 on GitHub Classroom &rarr;</a>
+          </div>
+        </li>
+      </ul>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 18px 0 10px 0;">Recursion vs Iteration Walkthrough</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Five tasks. Pick a function and a list length, run both versions, and weigh clarity against cost. The last task is a judgment call, not a demo.</p>
+
+<!-- ============================================================
+     CS210 Lesson 33 - Recursion vs Iteration: weighing the tradeoffs
+     Visualization-style walkthrough widget (binary_walkthrough pattern).
+     Theme: speedrun splits stored in a linked list.
+     Two functions: total_time (recursion loses, overflows on a long
+     list) and print_reverse (the honest tail-to-head win).
+     Self-contained: all CSS + JS inline, scoped to .cs210-rcost.
+     Paste into Blackboard Ultra via Document -> Add HTML block.
+     ============================================================ -->
+<style>
+.cs210-rcost * { box-sizing: border-box; }
+.cs210-rcost {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-rcost h1 { color: #00205B; font-size: 24px; margin: 0 0 6px 0; }
+.cs210-rcost .subtitle { color: #4A5568; font-size: 14px; margin-bottom: 22px; }
+
+.cs210-rcost .progress-bar { background: #E5E7EB; border-radius: 3px; height: 8px; overflow: hidden; margin-bottom: 6px; }
+.cs210-rcost .progress-fill { background: #003087; height: 100%; transition: width 0.3s ease; width: 0%; }
+.cs210-rcost .progress-label { font-size: 12px; color: #6B7280; margin-bottom: 18px; }
+
+.cs210-rcost .section-header {
+  background: #E8EDF5; color: #00205B; padding: 8px 14px; border-radius: 3px;
+  font-size: 13px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px;
+}
+.cs210-rcost .task-card {
+  background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 14px; border-radius: 3px;
+}
+.cs210-rcost .task-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #8a6d00; margin-bottom: 4px; font-weight: 600; }
+.cs210-rcost .task-text { font-size: 15px; color: #3a3000; }
+.cs210-rcost .task-hint { font-size: 13.5px; color: #6B5300; margin-top: 8px; display: none; }
+.cs210-rcost .task-hint.show { display: block; }
+.cs210-rcost .task-card.pulse { animation: rc-pulse 0.8s ease; }
+@keyframes rc-pulse { 0% { box-shadow: 0 0 0 0 rgba(240,185,44,0.7); } 100% { box-shadow: 0 0 0 12px rgba(240,185,44,0); } }
+
+/* Controls */
+.cs210-rcost .ctrl-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+.cs210-rcost .ctrl-group { display: flex; align-items: center; gap: 6px; background: #F5F7FA; border: 1px solid #D0D5DD; border-radius: 4px; padding: 6px 10px; }
+.cs210-rcost .ctrl-group .lbl { font-size: 12px; color: #4A5568; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+.cs210-rcost .nbtn, .cs210-rcost .fnbtn {
+  background: #ffffff; border: 1px solid #B5B7BA; color: #00205B; border-radius: 3px;
+  padding: 5px 11px; font-size: 13px; cursor: pointer; font-family: inherit; font-weight: 600;
+}
+.cs210-rcost .nbtn:hover, .cs210-rcost .fnbtn:hover { background: #E8EDF5; }
+.cs210-rcost .nbtn.active, .cs210-rcost .fnbtn.active { background: #003087; color: #ffffff; border-color: #003087; }
+.cs210-rcost .btn {
+  background: #003087; color: #ffffff; border: none; border-radius: 4px; padding: 8px 16px;
+  font-size: 13.5px; font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.cs210-rcost .btn:hover { background: #00205B; }
+.cs210-rcost .btn.ghost { background: #ffffff; color: #00205B; border: 1px solid #B5B7BA; }
+.cs210-rcost .btn.ghost:hover { background: #E8EDF5; }
+.cs210-rcost .btn:disabled { background: #A0AEC0; cursor: not-allowed; }
+
+/* Two-pane comparison */
+.cs210-rcost .panes { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+@media (max-width: 760px) { .cs210-rcost .panes { grid-template-columns: 1fr; } }
+.cs210-rcost .pane { border: 1px solid #D0D5DD; border-radius: 5px; overflow: hidden; background: #ffffff; }
+.cs210-rcost .pane-head { padding: 9px 14px; font-weight: 600; font-size: 14px; color: #ffffff; display: flex; justify-content: space-between; align-items: center; }
+.cs210-rcost .pane.iter .pane-head { background: #2E7D32; }
+.cs210-rcost .pane.rec .pane-head { background: #003087; }
+.cs210-rcost .pane-head .tag { font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; opacity: 0.85; }
+.cs210-rcost .code {
+  background: #1E2A3A; color: #E8EEF7; font-family: 'Consolas','Courier New',monospace;
+  font-size: 12.5px; line-height: 1.5; padding: 12px 14px; white-space: pre; overflow-x: auto; margin: 0;
+}
+.cs210-rcost .code .cur { background: #36506e; display: block; }
+.cs210-rcost .code .cmt { color: #7c98b5; }
+.cs210-rcost .code .kw { color: #6fb3ff; }
+.cs210-rcost .code .fn { color: #ffd479; }
+
+/* Stack meter area */
+.cs210-rcost .stack-area { padding: 12px 14px; min-height: 230px; }
+.cs210-rcost .meter-line { display: flex; align-items: baseline; gap: 8px; font-size: 13px; color: #4A5568; margin-bottom: 8px; }
+.cs210-rcost .meter-line .big { font-size: 22px; font-weight: 700; color: #00205B; font-family: 'Consolas',monospace; }
+.cs210-rcost .pane.iter .meter-line .big { color: #1B5E20; }
+.cs210-rcost .frames { display: flex; flex-direction: column-reverse; gap: 4px; margin-top: 6px; }
+.cs210-rcost .frame {
+  border: 1px solid #B9C4D4; background: #EEF3FA; border-radius: 3px; padding: 5px 9px;
+  font-family: 'Consolas',monospace; font-size: 12px; color: #1a2a3a;
+  display: flex; justify-content: space-between; gap: 8px;
+  animation: rc-slidein 0.18s ease;
+}
+.cs210-rcost .pane.iter .frame { background: #E8F5E9; border-color: #A5D6A7; }
+.cs210-rcost .frame.base { background: #E3E8EF; color: #6B7280; }
+.cs210-rcost .frame .deferred { color: #B8002F; font-weight: 600; }
+.cs210-rcost .frame .resolved { color: #1B5E20; font-weight: 600; }
+@keyframes rc-slidein { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+.cs210-rcost .more-band {
+  text-align: center; font-size: 12px; color: #6B7280; font-style: italic;
+  border: 1px dashed #B9C4D4; border-radius: 3px; padding: 4px; background: #F8FAFC;
+}
+.cs210-rcost .empty-frames { color: #9AA3B2; font-size: 13px; font-style: italic; padding: 18px 4px; }
+
+.cs210-rcost .overflow-banner {
+  background: #FDECEC; border: 1px solid #B8002F; color: #8a0021; border-radius: 4px;
+  padding: 10px 12px; font-size: 13px; margin-top: 8px;
+}
+.cs210-rcost .overflow-banner strong { color: #B8002F; }
+.cs210-rcost .note-band {
+  background: #FFF8E1; border-left: 3px solid #F0B92C; color: #6B5300; border-radius: 3px;
+  padding: 9px 12px; font-size: 12.5px; margin-top: 8px;
+}
+.cs210-rcost .output-line { font-family: 'Consolas',monospace; font-size: 12.5px; color: #003087; margin-top: 10px; padding-top: 8px; border-top: 1px dashed #D0D5DD; }
+.cs210-rcost .output-line .lbl { color: #6B7280; }
+
+/* Clarity strip under each code block */
+.cs210-rcost .clarity-strip {
+  background: #11202E; color: #cfe0f2; font-size: 12px; padding: 6px 14px;
+  display: flex; align-items: center; gap: 10px; border-top: 1px solid #2a3c4f;
+}
+.cs210-rcost .clarity-strip .ax { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: #7c98b5; font-weight: 600; }
+.cs210-rcost .clarity-strip .lines { font-family: 'Consolas',monospace; font-weight: 700; color: #ffd479; }
+.cs210-rcost .clarity-strip .read { color: #cfe0f2; }
+
+/* Balanced verdict: clarity vs cost/safety, then a verdict line */
+.cs210-rcost .verdict-wrap { margin-bottom: 16px; }
+.cs210-rcost .verdict { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 10px; }
+@media (max-width: 760px) { .cs210-rcost .verdict { grid-template-columns: 1fr; } }
+.cs210-rcost .verdict .cell { border-radius: 4px; padding: 10px 14px; font-size: 13px; line-height: 1.5; }
+.cs210-rcost .verdict .cell.clarity { background: #F3F0FA; border: 1px solid #C6B8E0; color: #3d2c5c; }
+.cs210-rcost .verdict .cell.safety { background: #EEF3FA; border: 1px solid #B9C4D4; color: #1a2a3a; }
+.cs210-rcost .verdict .cell .k { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; margin-bottom: 4px; font-weight: 600; }
+.cs210-rcost .verdict-line {
+  background: #00205B; color: #ffffff; border-radius: 4px; padding: 11px 16px; font-size: 13.5px; line-height: 1.5;
+}
+.cs210-rcost .verdict-line strong { color: #F0B92C; }
+
+/* Decision panel (final task) */
+.cs210-rcost .decision { background: #ffffff; border: 2px solid #003087; border-radius: 6px; padding: 16px 18px; margin-bottom: 16px; }
+.cs210-rcost .decision-q { font-size: 14.5px; color: #00205B; font-weight: 600; margin-bottom: 12px; }
+.cs210-rcost .decision-opts { display: flex; flex-direction: column; gap: 8px; }
+.cs210-rcost .decision-opt {
+  text-align: left; background: #F5F7FA; border: 1px solid #B5B7BA; border-radius: 4px; padding: 10px 14px;
+  font-size: 13.5px; color: #1a2a3a; cursor: pointer; font-family: inherit; line-height: 1.45;
+}
+.cs210-rcost .decision-opt:hover { background: #E8EDF5; border-color: #003087; }
+.cs210-rcost .decision-opt.picked-best { background: #E6F4EA; border-color: #2E7D32; }
+.cs210-rcost .decision-opt.picked-other { background: #FFF8E1; border-color: #F0B92C; }
+.cs210-rcost .decision-fb { font-size: 13.5px; line-height: 1.5; margin-top: 12px; display: none; }
+.cs210-rcost .decision-fb.show { display: block; }
+.cs210-rcost .decision-fb.best { color: #1B5E20; }
+.cs210-rcost .decision-fb.other { color: #6B5300; }
+
+.cs210-rcost .help-note {
+  background: #F5F7FA; border-left: 4px solid #B5B7BA; padding: 12px 16px; font-size: 13px; color: #4A5568; border-radius: 3px; margin-top: 8px;
+}
+.cs210-rcost .help-note strong { color: #00205B; }
+
+
+/* Name modal overlay (scoped, absolute) */
+.cs210-rcost .name-modal-backdrop {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,32,91,0.55); display: flex; align-items: center; justify-content: center; z-index: 9999;
+}
+.cs210-rcost .name-modal {
+  background: #ffffff; border-radius: 6px; padding: 28px 32px; max-width: 460px; width: 90%;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.25); font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-rcost .name-modal h2 { color: #00205B; font-size: 20px; margin: 0 0 10px 0; }
+.cs210-rcost .name-modal p { color: #4A5568; font-size: 14px; line-height: 1.5; margin: 0 0 16px 0; }
+.cs210-rcost .name-modal input { width: 100%; padding: 10px 12px; font-size: 15px; border: 1px solid #CBD5E0; border-radius: 4px; margin-bottom: 14px; font-family: inherit; }
+.cs210-rcost .name-modal input:focus { outline: none; border-color: #003087; box-shadow: 0 0 0 2px rgba(0,48,135,0.15); }
+.cs210-rcost .name-modal-btn { background: #003087; color: #fff; border: none; padding: 10px 20px; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.cs210-rcost .name-modal-btn:disabled { background: #A0AEC0; cursor: not-allowed; }
+.cs210-rcost .name-modal-btn:not(:disabled):hover { background: #00205B; }
+
+/* Completion screen */
+.cs210-rcost .completion-screen { background: #ffffff; border: 2px solid #2E7D32; border-radius: 6px; padding: 24px 28px; margin-top: 16px; }
+.cs210-rcost .completion-screen .cs-heading { color: #1B5E20; font-size: 20px; font-weight: 600; margin: 0 0 6px 0; }
+.cs210-rcost .completion-screen .cs-name-line { font-size: 15px; color: #1a1a1a; margin-bottom: 16px; }
+.cs210-rcost .completion-screen .cs-name-line strong { color: #00205B; }
+.cs210-rcost .completion-screen .cs-code-block { background: #F0F4FA; border: 1px solid #003087; border-radius: 4px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+.cs210-rcost .completion-screen .cs-code-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: #4A5568; margin-bottom: 4px; }
+.cs210-rcost .completion-screen .cs-code-value { font-family: 'Consolas','Courier New',monospace; font-size: 28px; font-weight: 700; color: #00205B; letter-spacing: 3px; }
+.cs210-rcost .completion-screen .cs-copy-btn { background: #003087; color: #fff; border: none; padding: 8px 14px; border-radius: 3px; font-size: 13px; cursor: pointer; font-family: inherit; }
+.cs210-rcost .completion-screen .cs-copy-btn:hover { background: #00205B; }
+.cs210-rcost .completion-screen .cs-copy-btn.copied { background: #2E7D32; }
+.cs210-rcost .completion-screen .cs-timestamp { font-size: 13px; color: #6B7280; margin-bottom: 18px; }
+.cs210-rcost .completion-screen .cs-reminder { background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 12px 16px; border-radius: 3px; font-size: 14px; color: #6B5300; line-height: 1.5; }
+.cs210-rcost .completion-screen .cs-reminder strong { color: #4A3A00; }
+</style>
+
+<div class="cs210-rcost">
+
+<div class="name-modal-backdrop" id="rc-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Blackboard reflection quiz.</p>
+    <input type="text" id="rc-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="rc-cadet-name-btn" disabled>Start the walkthrough</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 33 &middot; Recursion vs Iteration: weighing the tradeoffs</h1>
+<div class="subtitle">Same speedrun, stored as a linked list of level splits. For each function, two versions return the same answer. They differ on two axes: how clearly the code reads, and what it costs to run. Neither axis decides on its own. The right call depends on which pressures matter for the problem in front of you.</div>
+
+<div class="progress-bar"><div class="progress-fill" id="rc-progress-fill"></div></div>
+<div class="progress-label" id="rc-progress-label">Task 0 of 5</div>
+
+<div class="section-header" id="rc-section-header">Two axes: clarity and cost</div>
+
+<div class="task-card" id="rc-task-card">
+  <div class="task-label">Current task</div>
+  <div class="task-text" id="rc-task-text">Loading...</div>
+  <div class="task-hint" id="rc-task-hint"></div>
+</div>
+
+<div class="ctrl-row">
+  <div class="ctrl-group">
+    <span class="lbl">Function</span>
+    <button class="fnbtn active" data-fn="total_time">total_time</button>
+    <button class="fnbtn" data-fn="print_reverse">print_reverse</button>
+  </div>
+  <div class="ctrl-group">
+    <span class="lbl">Splits (N)</span>
+    <button class="nbtn active" data-n="3">3</button>
+    <button class="nbtn" data-n="6">6</button>
+    <button class="nbtn" data-n="12">12</button>
+    <button class="nbtn" data-n="200000">200,000</button>
+  </div>
+  <button class="btn" id="rc-run-btn">Run both</button>
+  <button class="btn ghost" id="rc-reset-btn">Reset</button>
+</div>
+
+<div class="panes">
+  <div class="pane iter">
+    <div class="pane-head">Iterative <span class="tag">loop</span></div>
+    <pre class="code" id="rc-iter-code"></pre>
+    <div class="clarity-strip" id="rc-iter-clarity"><span class="ax">clarity</span> <span class="lines" id="rc-iter-lines">--</span> <span class="read" id="rc-iter-read">--</span></div>
+    <div class="stack-area">
+      <div class="meter-line">peak frames alive: <span class="big" id="rc-iter-peak">--</span></div>
+      <div class="frames" id="rc-iter-frames"></div>
+      <div id="rc-iter-extra"></div>
+      <div class="output-line" id="rc-iter-out"><span class="lbl">output:</span> <span id="rc-iter-out-val">--</span></div>
+    </div>
+  </div>
+  <div class="pane rec">
+    <div class="pane-head">Recursive <span class="tag">self-call</span></div>
+    <pre class="code" id="rc-rec-code"></pre>
+    <div class="clarity-strip" id="rc-rec-clarity"><span class="ax">clarity</span> <span class="lines" id="rc-rec-lines">--</span> <span class="read" id="rc-rec-read">--</span></div>
+    <div class="stack-area">
+      <div class="meter-line">peak frames alive: <span class="big" id="rc-rec-peak">--</span></div>
+      <div class="frames" id="rc-rec-frames"></div>
+      <div id="rc-rec-extra"></div>
+      <div class="output-line" id="rc-rec-out"><span class="lbl">output:</span> <span id="rc-rec-out-val">--</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="verdict-wrap">
+  <div class="verdict">
+    <div class="cell clarity">
+      <div class="k">Clarity</div>
+      <div id="rc-verdict-clarity">Run a function to compare.</div>
+    </div>
+    <div class="cell safety">
+      <div class="k">Cost &amp; safety</div>
+      <div id="rc-verdict-safety">Run a function to compare.</div>
+    </div>
+  </div>
+  <div class="verdict-line" id="rc-verdict-line">No version is better in the abstract. Pick a function and run both to see which pressures decide it.</div>
+</div>
+
+<div class="decision" id="rc-decision" style="display:none;">
+  <div class="decision-q" id="rc-decision-q"></div>
+  <div class="decision-opts" id="rc-decision-opts"></div>
+  <div class="decision-fb" id="rc-decision-fb"></div>
+</div>
+
+<div class="ctrl-row">
+  <button class="btn ghost" id="rc-hint-btn">Show hint</button>
+  <button class="btn ghost" id="rc-mode-btn">Switch to free mode</button>
+  <button class="btn" id="rc-finish-btn" style="display:none;">Finish &amp; get code</button>
+</div>
+
+<div class="help-note">
+  <strong>How this works:</strong> Pick a function and a list length, then run both versions. Every run reports two things: how clearly each version reads, and what it costs in stack frames. For a long forward walk the recursive code may read just as cleanly, yet its growing stack makes it the riskier choice in C, and at a large enough N it overflows. For tail-to-head work the recursive code is the cleaner and more practical option, because the loop would need a second pass or its own stack. The lesson is the tension, not a winner.
+</div>
+
+<div id="rc-completion-area"></div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-rcost');
+  if (!root) return;
+
+  // ============================================================
+  // CS210 widget completion utilities (shared pattern)
+  // Salt -> deterministic 6-char code via FNV-1a.
+  // ============================================================
+  const CS210_SALT = "lesson33_recursion_cost_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) { out += CS210_ALPHABET[Number(pool & 31n)]; pool >>= 5n; }
+    return out;
+  }
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#rc-name-modal-backdrop');
+    const input = root.querySelector('#rc-cadet-name-input');
+    const btn = root.querySelector('#rc-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length >= 2) { cs210CadetName = stored.trim(); backdrop.style.display = 'none'; return; }
+    } catch (e) {}
+    function updateBtn() { btn.disabled = input.value.trim().length < 2; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', function(e) { if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); } });
+    btn.addEventListener('click', function() {
+      const name = input.value.trim();
+      if (name.length < 2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+      const siblings = document.querySelectorAll('#name-modal-backdrop, #bw-name-modal-backdrop, #ptrmath-name-modal-backdrop, #duality-name-modal-backdrop');
+      siblings.forEach(function(m) { m.style.display = 'none'; });
+    });
+    setTimeout(function() { input.focus(); }, 50);
+  })();
+
+  function cs210FallbackCopy(text) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+    } catch (e) {}
+  }
+  function cs210RenderCompletion(area) {
+    if (!area) return;
+    if (root.querySelector('#rc-cs210-completion-overlay')) return;
+    const now = new Date();
+    const ts = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const safeName = (cs210CadetName || 'Cadet').replace(/[<>&"']/g, function(c) {
+      return { '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;' }[c];
+    });
+    area.innerHTML =
+      '<div class="completion-screen">' +
+        '<div class="cs-heading">Walkthrough complete</div>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block"><div><div class="cs-code-label">Completion code</div>' +
+        '<div class="cs-code-value">' + CS210_CODE + '</div></div></div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+      '</div>';
+    const overlay = document.createElement('div');
+    overlay.id = 'rc-cs210-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.style.background = 'rgba(27,94,32,0.55)';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">Walkthrough complete</h2>' +
+        '<p>Take a screenshot of this box. You will need the code and a visual of this screen for the Blackboard reflection quiz.</p>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block"><div><div class="cs-code-label">Completion code</div>' +
+        '<div class="cs-code-value" id="rc-cs-code-value">' + CS210_CODE + '</div></div>' +
+        '<button class="cs-copy-btn" id="rc-cs-copy-btn" type="button">Copy code</button></div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+        '<div class="cs-reminder" style="margin-bottom:14px;"><strong>Next step:</strong> Open the Lesson 33 reflection quiz in Blackboard. Enter this code, answer the reflection prompt, and attach your screenshot.</div>' +
+        '<button class="name-modal-btn" id="rc-cs-overlay-close" type="button" style="background:#2E7D32;">Got it &mdash; close this</button>' +
+      '</div>';
+    root.appendChild(overlay);
+    const closeBtn = overlay.querySelector('#rc-cs-overlay-close');
+    if (closeBtn) closeBtn.addEventListener('click', function() { overlay.style.display = 'none'; });
+    const copyBtn = overlay.querySelector('#rc-cs-copy-btn');
+    if (copyBtn) copyBtn.addEventListener('click', function() {
+      const ok = function() { copyBtn.textContent = 'Copied'; copyBtn.classList.add('copied'); setTimeout(function() { copyBtn.textContent = 'Copy code'; copyBtn.classList.remove('copied'); }, 1500); };
+      if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(CS210_CODE).then(ok, function() { cs210FallbackCopy(CS210_CODE); ok(); }); }
+      else { cs210FallbackCopy(CS210_CODE); ok(); }
+    });
+  }
+
+  // ============================================================
+  // Data + cost model
+  // ============================================================
+  // Generic speedrun level names (not tied to any real game).
+  const SPLITS = [
+    { word: "Intro Skip",   num: 41 },
+    { word: "Sewer Route",  num: 58 },
+    { word: "Rooftop Dash", num: 47 },
+    { word: "Vault Glitch", num: 73 },
+    { word: "Boss Rush",    num: 39 },
+    { word: "Cargo Climb",  num: 66 },
+    { word: "Reactor Core", num: 52 },
+    { word: "Final Split",  num: 28 }
+  ];
+  const VISUAL_CAP = 7;        // render at most this many recursive frames
+  const BYTES_PER_FRAME = 64;  // rough estimate used for the memory note
+  const STACK_BYTES = 8 * 1024 * 1024;            // typical 8 MB thread stack
+  const OVERFLOW_FRAMES = Math.floor(STACK_BYTES / BYTES_PER_FRAME); // ~131072
+
+  // Build a working list of length n (cycles through SPLITS for display).
+  function makeList(n) {
+    const arr = [];
+    for (let i = 0; i < Math.min(n, SPLITS.length); i++) arr.push(SPLITS[i]);
+    return arr; // only the first up-to-8 are ever shown; n drives the cost model
+  }
+
+  const FN_META = {
+    total_time: {
+      label: "total_time",
+      iterCode:
+        '<span class="kw">int</span> <span class="fn">total_time</span>(node_t *cur) {\n' +
+        '  <span class="kw">int</span> total = 0;\n' +
+        '  <span class="kw">while</span> (cur != NULL) {\n' +
+        '    total += cur->num;\n' +
+        '    cur = cur->next;\n' +
+        '  }\n' +
+        '  <span class="kw">return</span> total;\n' +
+        '}',
+      recCode:
+        '<span class="kw">int</span> <span class="fn">total_time</span>(node_t *cur) {\n' +
+        '  <span class="kw">if</span> (cur == NULL) <span class="kw">return</span> 0;   <span class="cmt">// base case</span>\n' +
+        '  <span class="kw">return</span> cur->num\n' +
+        '       + <span class="fn">total_time</span>(cur->next); <span class="cmt">// deferred +</span>\n' +
+        '}',
+      iterLines: 8, iterRead: "a plain accumulator loop, easy to follow",
+      recLines: 5, recRead: "shorter, and mirrors the list's own shape",
+      clarity: "Close call. The recursive version is a few lines shorter and reads as \"this split plus the total of the rest,\" which mirrors how the list is defined. The loop is just as clear to most readers. Call it a tie on clarity.",
+      verdictLine: "A genuine tie on clarity, and both return the same total. In C the stack cost is the tiebreaker: a forward walk that could get long is safer as a loop. Recursion here is clean code that happens to be the riskier choice."
+    },
+    print_reverse: {
+      label: "print_reverse",
+      iterCode:
+        '<span class="kw">void</span> <span class="fn">print_reverse</span>(node_t *cur) {\n' +
+        '  <span class="cmt">// a forward loop prints in ORDER.</span>\n' +
+        '  <span class="cmt">// to go tail-to-head you must</span>\n' +
+        '  <span class="cmt">// reverse the list first, or push</span>\n' +
+        '  <span class="cmt">// every node onto your own stack,</span>\n' +
+        '  <span class="cmt">// then pop. No -&gt;prev to walk back.</span>\n' +
+        '}',
+      recCode:
+        '<span class="kw">void</span> <span class="fn">print_reverse</span>(node_t *cur) {\n' +
+        '  <span class="kw">if</span> (cur == NULL) <span class="kw">return</span>;       <span class="cmt">// base case</span>\n' +
+        '  <span class="fn">print_reverse</span>(cur->next); <span class="cmt">// recurse first</span>\n' +
+        '  printf("%s\\n", cur->word);  <span class="cmt">// then print</span>\n' +
+        '}',
+      iterLines: "many", iterRead: "needs a second pass or its own stack",
+      recLines: 3, recRead: "tail-to-head for free, three lines",
+      clarity: "Not close. The recursive version is three lines and says exactly what it does. The loop cannot reach the tail first on a singly linked list, so it has to build its own stack or reverse the list and walk it twice. Recursion is far cleaner here.",
+      verdictLine: "This is where recursion earns its keep. The call stack already does the tail-to-head bookkeeping the loop would have to reinvent. Cleaner and more practical, with a stack cost no worse than the loop's own stack would be."
+    }
+  };
+
+  // Final judgment scenario: the takeaway is that recursion is situational,
+  // not bad. A bounded-short input neutralizes the stack-cost axis.
+  const DECISION = {
+    q: 'A teammate wrote total_time recursively. It runs only on single game sessions, which are capped at 50 splits. In code review, do you ask them to rewrite it as a loop?',
+    opts: [
+      { text: 'Yes. Recursion risks stack overflow, so a loop is the safe default.', best: false,
+        fb: 'Too absolute. The overflow risk only bites on long lists. At a hard cap of 50 frames the stack cost is a rounding error, so the rewrite buys you nothing and the recursive version is already clean and correct.' },
+      { text: 'No. At a 50-split cap the stack cost is negligible, and the recursive version is clean and correct as written.', best: true,
+        fb: 'This is the call. A small, bounded input neutralizes the one axis recursion loses on, so clarity gets to decide. Recursion is not bad here; this is the kind of situation that makes it the right tool.' },
+      { text: 'Only if a profiler shows total_time is a performance bottleneck.', best: false,
+        fb: 'Reasonable instinct, wrong axis. This is a stack-safety question, not a speed one, and the 50-split cap already answers it. No profiling needed.' }
+    ]
+  };
+
+  // ============================================================
+  // State
+  // ============================================================
+  const state = {
+    fn: 'total_time',
+    n: 3,
+    ranAtN: null,        // n value of the last completed run
+    lastRunFn: null,
+    sawOverflow: false,
+    mode: 'walkthrough', // or 'free'
+    taskIndex: 0,
+    decisionMade: false,
+    finished: false
+  };
+
+  // ============================================================
+  // Tasks (walkthrough mode). Each has a checker over `state`.
+  // ============================================================
+  const TASKS = [
+    {
+      text: 'Run total_time at N = 3. Same answer both ways. Read both versions: the clarity strips call it a tie, and the recursive one is arguably the cleaner expression of "this split plus the rest."',
+      hint: 'Function is already total_time. Make sure 3 is selected, then press "Run both". Look at the clarity strip under each code block.',
+      done: function(s) { return s.fn === 'total_time' && s.ranAtN === 3 && !s.sawOverflow; }
+    },
+    {
+      text: 'Now the other axis. Set N = 6 and run. The recursive code did not get worse to read, but watch the frame count: it grows one per split while the loop holds at one. Clean code, growing cost. That is the tension this lesson is about.',
+      hint: 'Click the 6 button, then "Run both". Compare the two peak-frames numbers, then re-read the verdict below.',
+      done: function(s) { return s.fn === 'total_time' && s.ranAtN === 6; }
+    },
+    {
+      text: 'Push the cost axis to its limit: set N = 200,000 and run. Each frame is real memory, and a long enough forward walk runs the stack out. This is why, in C, we lean toward iteration for traversals that could get long, not because the recursive code was worse to read.',
+      hint: 'Click 200,000, then "Run both". Watch the recursive pane hit the stack ceiling while the loop returns cleanly.',
+      done: function(s) { return s.fn === 'total_time' && s.ranAtN === 200000 && s.sawOverflow; }
+    },
+    {
+      text: 'Flip it around. Switch to print_reverse and run at N = 6. Here the tradeoff points the other way: the loop cannot reach the tail first on a singly linked list, so it needs its own stack. Recursion is both the cleaner read and the more practical choice.',
+      hint: 'Click print_reverse, set N back to 6, then "Run both". Read the iterative clarity strip: there is no clean single pass.',
+      done: function(s) { return s.fn === 'print_reverse' && s.ranAtN === 6; }
+    },
+    {
+      text: 'Last one is a judgment call, not a demo. Read the scenario below and pick the answer you would defend in code review.',
+      hint: 'There is a defensible best answer. Click an option to see why it holds up or does not.',
+      done: function(s) { return s.decisionMade; }
+    }
+  ];
+
+  // ============================================================
+  // Rendering
+  // ============================================================
+  const el = function(id) { return root.querySelector('#' + id); };
+
+  function renderCode() {
+    const m = FN_META[state.fn];
+    el('rc-iter-code').innerHTML = m.iterCode;
+    el('rc-rec-code').innerHTML = m.recCode;
+    el('rc-iter-lines').textContent = m.iterLines + ' lines';
+    el('rc-iter-read').textContent = m.iterRead;
+    el('rc-rec-lines').textContent = m.recLines + ' lines';
+    el('rc-rec-read').textContent = m.recRead;
+  }
+
+  function setVerdict() {
+    const m = FN_META[state.fn];
+    el('rc-verdict-clarity').textContent = m.clarity;
+    if (state.fn === 'total_time') {
+      const n = state.ranAtN;
+      let safety = 'Iteration holds at one frame for any length: O(1) stack, safe at any N. Recursion uses one frame per split: O(N) stack.';
+      if (n != null) {
+        if (state.sawOverflow) safety += ' At N = ' + fmt(n) + ' that is past the stack ceiling, so the recursive version crashes while the loop returns ' + fmt(computeTotal(n)) + ' cleanly.';
+        else safety += ' At N = ' + fmt(n) + ' both finish, but the recursive frame count climbs with the list.';
+      }
+      el('rc-verdict-safety').textContent = safety;
+    } else {
+      el('rc-verdict-safety').textContent = 'Both approaches hold state proportional to the list length: the recursive call frames, or the explicit stack the loop has to build. Comparable cost, so safety does not break the tie here.';
+    }
+    el('rc-verdict-line').innerHTML = m.verdictLine;
+  }
+
+  function clearOutputs() {
+    el('rc-iter-frames').innerHTML = '';
+    el('rc-rec-frames').innerHTML = '';
+    el('rc-iter-extra').innerHTML = '';
+    el('rc-rec-extra').innerHTML = '';
+    el('rc-iter-peak').textContent = '--';
+    el('rc-rec-peak').textContent = '--';
+    el('rc-iter-out-val').textContent = '--';
+    el('rc-rec-out-val').textContent = '--';
+  }
+
+  function frameEl(html, cls) {
+    const d = document.createElement('div');
+    d.className = 'frame' + (cls ? ' ' + cls : '');
+    d.innerHTML = html;
+    return d;
+  }
+
+  function computeTotal(n) {
+    // sum of the cycled split times over n nodes
+    let t = 0;
+    for (let i = 0; i < n; i++) t += SPLITS[i % SPLITS.length].num;
+    return t;
+  }
+
+  function fmt(n) { return n.toLocaleString('en-US'); }
+
+  function runTotalTime() {
+    const n = state.n;
+    const overflow = n >= OVERFLOW_FRAMES;
+    clearOutputs();
+
+    // ---- iterative pane: always one frame, always returns the real total ----
+    const total = computeTotal(n);
+    el('rc-iter-peak').textContent = '1';
+    const iterFrames = el('rc-iter-frames');
+    iterFrames.appendChild(frameEl(
+      '<span>total_time(cur)</span><span class="resolved">total = ' + fmt(total) + '</span>'
+    ));
+    el('rc-iter-out-val').textContent = fmt(total);
+    if (overflow) {
+      const inote = document.createElement('div');
+      inote.className = 'note-band';
+      inote.innerHTML = 'The loop ran ' + fmt(n) + ' times in a single frame and returned cleanly. Long input is no problem for iteration.';
+      el('rc-iter-extra').appendChild(inote);
+    }
+
+    // ---- recursive pane: a frame per split, capped visually ----
+    const recFrames = el('rc-rec-frames');
+    el('rc-rec-peak').textContent = fmt(n + 1);
+    const shown = Math.min(n, VISUAL_CAP);
+    for (let i = 0; i < shown; i++) {
+      const s = SPLITS[i % SPLITS.length];
+      recFrames.appendChild(frameEl(
+        '<span>total_time(split ' + (i + 1) + ')</span><span class="deferred">' + s.num + ' + ?</span>'
+      ));
+    }
+    if (n > VISUAL_CAP) {
+      const more = document.createElement('div');
+      more.className = 'more-band';
+      more.textContent = '+ ' + fmt(n + 1 - VISUAL_CAP) + ' more frames below (one per remaining split, plus the base call)';
+      recFrames.appendChild(more);
+    } else {
+      recFrames.appendChild(frameEl('<span>total_time(NULL)</span><span class="resolved">return 0</span>', 'base'));
+    }
+
+    if (overflow) {
+      state.sawOverflow = true;
+      const banner = document.createElement('div');
+      banner.className = 'overflow-banner';
+      banner.innerHTML = '<strong>Stack overflow.</strong> ' + fmt(n + 1) + ' frames at about ' +
+        BYTES_PER_FRAME + ' bytes each is roughly ' + fmt(Math.round((n + 1) * BYTES_PER_FRAME / 1048576)) +
+        ' MB, past a typical 8 MB stack. In real C this program crashes (commonly a segmentation fault) before it can return.';
+      el('rc-rec-extra').appendChild(banner);
+      el('rc-rec-out-val').innerHTML = '<span style="color:#B8002F;font-weight:600;">crash &mdash; no value returned</span>';
+    } else {
+      el('rc-rec-out-val').textContent = fmt(computeTotal(n));
+      const note = document.createElement('div');
+      note.className = 'note-band';
+      note.innerHTML = 'Each frame holds a deferred <strong>+</strong>. The answer assembles on the way back up, exactly the Lesson 32 picture.';
+      el('rc-rec-extra').appendChild(note);
+    }
+  }
+
+  function runPrintReverse() {
+    const n = state.n;
+    clearOutputs();
+
+    // iterative pane: no clean single-pass answer
+    el('rc-iter-peak').textContent = '1';
+    el('rc-iter-frames').appendChild(frameEl('<span>print_reverse(cur)</span><span>loops forward</span>'));
+    const inote = document.createElement('div');
+    inote.className = 'note-band';
+    inote.innerHTML = 'A forward loop prints <strong>head to tail</strong>. With no <code>-&gt;prev</code> pointer, going tail-to-head iteratively means a second pass or building your own stack. The recursive version gets it for free.';
+    el('rc-iter-extra').appendChild(inote);
+    el('rc-iter-out-val').innerHTML = '<span style="color:#8a6d00;">needs extra machinery</span>';
+
+    // recursive pane: descend, then print on the way back up (reverse order)
+    const recFrames = el('rc-rec-frames');
+    el('rc-rec-peak').textContent = fmt(n + 1);
+    const shown = Math.min(n, VISUAL_CAP);
+    for (let i = 0; i < shown; i++) {
+      const s = SPLITS[i % SPLITS.length];
+      recFrames.appendChild(frameEl('<span>print_reverse(split ' + (i + 1) + ')</span><span class="deferred">print "' + s.word + '" after</span>'));
+    }
+    if (n > VISUAL_CAP) {
+      const more = document.createElement('div');
+      more.className = 'more-band';
+      more.textContent = '+ ' + fmt(n + 1 - VISUAL_CAP) + ' more frames below';
+      recFrames.appendChild(more);
+    } else {
+      recFrames.appendChild(frameEl('<span>print_reverse(NULL)</span><span class="resolved">return</span>', 'base'));
+    }
+
+    // reverse-order output (printed as the stack unwinds)
+    const order = [];
+    for (let i = Math.min(n, SPLITS.length) - 1; i >= 0; i--) order.push(SPLITS[i].word);
+    el('rc-rec-out-val').textContent = order.join('  >  ') + (n > SPLITS.length ? '  (then the rest)' : '');
+    const note = document.createElement('div');
+    note.className = 'note-band';
+    note.innerHTML = 'Recurse to the tail first, print on the way back up. The deferred work (the print) is what produces reverse order. This is the honest case <strong>for</strong> recursion.';
+    el('rc-rec-extra').appendChild(note);
+  }
+
+  function doRun() {
+    if (state.fn === 'total_time') runTotalTime();
+    else runPrintReverse();
+    state.ranAtN = state.n;
+    state.lastRunFn = state.fn;
+    setVerdict();
+    advanceTasks();
+  }
+
+  function doReset() {
+    clearOutputs();
+    state.ranAtN = null;
+    setVerdict();
+  }
+
+  // Decision panel (final task): builds once, gates completion on the best answer.
+  let decisionBuilt = false;
+  function buildDecision() {
+    if (decisionBuilt) return;
+    decisionBuilt = true;
+    el('rc-decision-q').textContent = DECISION.q;
+    const opts = el('rc-decision-opts');
+    opts.innerHTML = '';
+    DECISION.opts.forEach(function(o) {
+      const b = document.createElement('button');
+      b.className = 'decision-opt';
+      b.type = 'button';
+      b.textContent = o.text;
+      b.addEventListener('click', function() {
+        root.querySelectorAll('.decision-opt').forEach(function(x) { x.classList.remove('picked-best', 'picked-other'); });
+        b.classList.add(o.best ? 'picked-best' : 'picked-other');
+        const fb = el('rc-decision-fb');
+        fb.textContent = o.fb;
+        fb.className = 'decision-fb show ' + (o.best ? 'best' : 'other');
+        if (o.best) { state.decisionMade = true; advanceTasks(); }
+      });
+      opts.appendChild(b);
+    });
+  }
+  function showDecision(on) {
+    el('rc-decision').style.display = on ? 'block' : 'none';
+    if (on) buildDecision();
+  }
+
+  // ============================================================
+  // Task progression
+  // ============================================================
+  function renderTask() {
+    if (state.mode === 'free') {
+      el('rc-section-header').textContent = 'Free mode';
+      el('rc-task-text').textContent = 'Explore freely: pick either function and any N, and run both sides. Switch back to the walkthrough any time.';
+      el('rc-task-hint').classList.remove('show');
+      el('rc-progress-label').textContent = 'Free mode';
+      el('rc-progress-fill').style.width = '100%';
+      el('rc-finish-btn').style.display = state.finished ? 'none' : 'inline-block';
+      showDecision(false);
+      return;
+    }
+    const done = state.taskIndex;
+    el('rc-progress-fill').style.width = Math.round((done / TASKS.length) * 100) + '%';
+    el('rc-progress-label').textContent = 'Task ' + Math.min(done + 1, TASKS.length) + ' of ' + TASKS.length;
+    el('rc-finish-btn').style.display = 'none';
+    if (state.taskIndex >= TASKS.length) {
+      el('rc-section-header').textContent = 'Complete';
+      el('rc-task-text').textContent = 'All tasks done. You weighed clarity against cost on both sides and made the call. Your completion code is below.';
+      el('rc-task-hint').classList.remove('show');
+      showDecision(false);
+      return;
+    }
+    const t = TASKS[state.taskIndex];
+    el('rc-section-header').textContent = 'Two axes: clarity and cost';
+    el('rc-task-text').textContent = t.text;
+    el('rc-task-hint').textContent = t.hint;
+    el('rc-task-hint').classList.remove('show');
+    // The last task is the judgment call: reveal the decision panel.
+    showDecision(state.taskIndex === TASKS.length - 1);
+  }
+
+  function advanceTasks() {
+    if (state.mode === 'free') return;
+    let advanced = false;
+    while (state.taskIndex < TASKS.length && TASKS[state.taskIndex].done(state)) {
+      state.taskIndex++;
+      advanced = true;
+    }
+    renderTask();
+    if (advanced) {
+      const card = el('rc-task-card');
+      card.classList.remove('pulse'); void card.offsetWidth; card.classList.add('pulse');
+    }
+    if (state.taskIndex >= TASKS.length) {
+      cs210RenderCompletion(el('rc-completion-area'));
+    }
+  }
+
+  // ============================================================
+  // Wiring
+  // ============================================================
+  root.querySelectorAll('.fnbtn').forEach(function(b) {
+    b.addEventListener('click', function() {
+      root.querySelectorAll('.fnbtn').forEach(function(x) { x.classList.remove('active'); });
+      b.classList.add('active');
+      state.fn = b.getAttribute('data-fn');
+      renderCode();
+      doReset();
+    });
+  });
+  root.querySelectorAll('.nbtn').forEach(function(b) {
+    b.addEventListener('click', function() {
+      root.querySelectorAll('.nbtn').forEach(function(x) { x.classList.remove('active'); });
+      b.classList.add('active');
+      state.n = parseInt(b.getAttribute('data-n'), 10);
+      doReset();
+    });
+  });
+  el('rc-run-btn').addEventListener('click', doRun);
+  el('rc-reset-btn').addEventListener('click', doReset);
+  el('rc-hint-btn').addEventListener('click', function() {
+    el('rc-task-hint').classList.toggle('show');
+  });
+  el('rc-finish-btn').addEventListener('click', function() {
+    state.finished = true;
+    advanceTasks();
+    if (state.mode === 'free') cs210RenderCompletion(el('rc-completion-area'));
+  });
+  el('rc-mode-btn').addEventListener('click', function() {
+    if (state.mode === 'walkthrough') {
+      state.mode = 'free';
+      el('rc-mode-btn').textContent = 'Switch to walkthrough';
+    } else {
+      state.mode = 'walkthrough';
+      el('rc-mode-btn').textContent = 'Switch to free mode';
+      advanceTasks();
+    }
+    renderTask();
+  });
+
+  // ============================================================
+  // Init
+  // ============================================================
+  renderCode();
+  doReset();
+  renderTask();
+})();
+</script>
+
+
+    </div>
+  </details>
+
+  <!-- ===================== 6. AFTER CLASS ===================== -->
+  <details id="after-class" style="margin-bottom: 24px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      6. After Class
+    </summary>
+    <div style="padding: 18px 22px;">
+      <ul style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Finish Lab 33 if you did not complete it in class. Submit through GitHub Classroom before Lesson 34.</li>
+        <li style="margin-bottom: 6px;">Complete the Lesson 33 reflection in Blackboard: enter your widget completion code and answer the reflection prompt.</li>
+        <li style="margin-bottom: 6px;">Replay the widget in free mode. Push the list length up and watch where the recursive version crashes; try both functions.</li>
+        <li style="margin-bottom: 0;">Heads up: Quiz 10 at Lesson 34 is the final quiz and covers Recursion II and III together (Lessons 32 and 33).</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== HELP NOTE ===================== -->
+  <div style="background: #F5F7FA; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 3px; font-size: 13.5px; color: #4A5568;">
+    <strong style="color: #00205B;">Need help?</strong> Schedule EI with your instructor. Bring your specific code and the exact error message or output you do not understand. If your code crashes on the large list, bring the function that crashed. Specific questions get unstuck quickly.
+  </div>
+
+</div>

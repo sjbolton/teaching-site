@@ -1,0 +1,2663 @@
+<!-- ============================================================
+     CS210 — Lesson 22
+     Command-Line Arguments and the Outside Environment
+     Self-contained: all CSS inline. Native <details> for collapsing.
+     argv walkthrough and argv quiz widgets embedded inline in section 5.
+     Paste into Blackboard Ultra via Document → Add HTML block.
+     ============================================================ -->
+
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 980px; margin: 0 auto; line-height: 1.6;">
+
+  <!-- ===================== LIGHT HEADER ===================== -->
+  <div style="border-left: 5px solid #003087; padding: 8px 0 8px 18px; margin-bottom: 24px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 2px;">CS210 &middot; Block 3 &middot; Lesson 22</div>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 600; color: #00205B;">Command-Line Arguments and the Outside Environment</h1>
+    <div style="font-size: 14px; color: #4A5568; margin-top: 4px;">argc &middot; argv &middot; Argument validation &middot; Exit status &middot; Environment variables</div>
+  </div>
+
+  <!-- ===================== AT A GLANCE ===================== -->
+  <div style="background: #F5F7FA; border-left: 4px solid #B5B7BA; padding: 14px 18px; margin-bottom: 22px; font-size: 14px;">
+    <strong style="color: #00205B;">At a glance:</strong> Every C program you have written so far has been a closed box. Today the outside world starts talking to your code in three places: at launch through <code style="background:#E8EDF5;padding:1px 4px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">argc</code> and <code style="background:#E8EDF5;padding:1px 4px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">argv</code>, at termination through the return value of <code style="background:#E8EDF5;padding:1px 4px;border-radius:2px;font-family:Consolas,monospace;font-size:12.5px;">main</code>, and through the shell with environment variables. Heads up: today is also Quiz 8 (File I/O) and the Team PEX is assigned.
+  </div>
+
+  <!-- ===================== TABLE OF CONTENTS ===================== -->
+  <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 20px; margin-bottom: 24px; border-radius: 3px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Contents</div>
+    <ol style="margin: 0; padding-left: 22px; font-size: 14px;">
+      <li style="margin-bottom: 4px;"><a href="#objectives" style="color: #003087; text-decoration: none;">Lesson Objectives</a></li>
+      <li style="margin-bottom: 4px;"><a href="#readings" style="color: #003087; text-decoration: none;">Assigned Readings</a></li>
+      <li style="margin-bottom: 4px;"><a href="#pre-class" style="color: #003087; text-decoration: none;">Pre-Class Work</a></li>
+      <li style="margin-bottom: 4px;"><a href="#materials" style="color: #003087; text-decoration: none;">Lesson Materials and Overview</a></li>
+      <li style="margin-bottom: 4px;"><a href="#in-class" style="color: #003087; text-decoration: none;">In-Class Work</a></li>
+      <li style="margin-bottom: 0;"><a href="#after-class" style="color: #003087; text-decoration: none;">After Class</a></li>
+    </ol>
+  </div>
+
+  <!-- ===================== 1. OBJECTIVES ===================== -->
+  <details id="objectives" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      1. Lesson Objectives
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 10px 0; font-style: italic;">By the end of this lesson, cadets will be able to:</p>
+      <ol style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Access command-line arguments through <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">argc</code> and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">argv</code>. <span style="color: #6B7280; font-size: 12px;">(Outcome 2)</span></li>
+        <li style="margin-bottom: 6px;">Parse and validate command-line input in a C program. <span style="color: #6B7280; font-size: 12px;">(Outcome 3)</span></li>
+        <li style="margin-bottom: 6px;">Use <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">main</code>'s return value to communicate program status to the calling shell. <span style="color: #6B7280; font-size: 12px;">(Outcomes 2, 7)</span></li>
+        <li style="margin-bottom: 0;">Read environment variables with <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">getenv</code> to let the runtime environment configure program behavior. <span style="color: #6B7280; font-size: 12px;">(Outcomes 2, 7)</span></li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 2. READINGS ===================== -->
+  <details id="readings" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      2. Assigned Readings
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 12px 0;">Complete before class. These set the vocabulary we will use.</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <thead>
+          <tr style="background: #E8EDF5; color: #00205B;">
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 130px;">Source</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9;">Sections</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 220px;">Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;"><a href="https://beej.us/guide/bgc/html/split/the-outside-environment.html" style="color: #003087; text-decoration: underline;">Beej-C</a></td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Chapter 18 (The Outside Environment)</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">argc, argv, exit status, environment variables</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <!-- ===================== 3. PRE-CLASS WORK ===================== -->
+  <details id="pre-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      3. Pre-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 18px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #6B5300; font-size: 14px; margin-bottom: 4px;">Do this first</div>
+        <div style="font-size: 14px; color: #5A4B00;">Plan on 25 to 35 minutes. Today is a lean content day because Quiz 8 (File I/O) is also today; come ready to write a small command-line program quickly.</div>
+      </div>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 0 0 10px 0;">Pre-Class Checklist</h3>
+
+      <!-- Step 1: Reading -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">1</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Read Beej-C Chapter 18</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">Beej covers the three things on the menu today: argc and argv (Section 18.1), exit status (18.2), and environment variables (18.3). Skim Section 18.1.2 (the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">char **argv</code> alternate notation) for now; we will revisit the equivalence in slides.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Try one prediction -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">2</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Predict the output before reading the answer</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">Suppose you compile and run:</div>
+            <div style="background: #1E2A3A; color: #E8EDF5; padding: 10px 14px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.5; margin-bottom: 8px;">
+              <span style="color: #7FB3D5;">$</span> ./prog "one two" three 4
+            </div>
+            <div style="font-size: 14px; margin-bottom: 6px;">What is <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">argc</code>? What is each cell of <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">argv</code> (including the sentinel at the end)? Try the in-class walkthrough widget to confirm.</div>
+            <details style="font-size: 13.5px; color: #003087; margin-top: 6px;">
+              <summary style="cursor: pointer; color: #003087; font-weight: 600;">Click for the answer</summary>
+              <div style="margin-top: 6px; color: #1a1a1a; font-size: 13.5px;">argc is 4. argv[0]="./prog", argv[1]="one two" (the quotes group those two words into one argument), argv[2]="three", argv[3]="4" (a string, not a number), and argv[4]=NULL.</div>
+            </details>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Skim widget -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 8px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">3</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Skim the In-Class section below</div>
+            <div style="font-size: 14px;">Two widgets today: a guided walkthrough through argv, exit status, and getenv, and a self-check quiz. The lab is a Strava-style activity log filter that pulls all three together.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ===================== 4. LESSON MATERIALS AND OVERVIEW ===================== -->
+  <details id="materials" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      4. Lesson Materials and Overview
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 18px 0;">Three ways the world talks to your program. Read each subsection below; the slides cover the same material at the front of class, and the walkthrough widget gives you hands-on practice with each one.</p>
+
+      <!-- Subsection navigation -->
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 18px; margin-bottom: 22px; border-radius: 3px;">
+        <div style="font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">Jump to</div>
+        <div style="font-size: 13.5px;">
+          <a href="#slides" style="color: #003087; text-decoration: none; margin-right: 14px;">Slides</a>
+          <a href="#shape-of-argv" style="color: #003087; text-decoration: none; margin-right: 14px;">Shape of argv</a>
+          <a href="#parsing-validating" style="color: #003087; text-decoration: none; margin-right: 14px;">Parsing and Validating</a>
+          <a href="#exit-status" style="color: #003087; text-decoration: none; margin-right: 14px;">Exit Status</a>
+          <a href="#env-vars" style="color: #003087; text-decoration: none; margin-right: 14px;">Environment Variables</a>
+          <a href="#getopt" style="color: #003087; text-decoration: none;">Where this goes next: getopt</a>
+        </div>
+      </div>
+
+      <!-- Slides -->
+      <h3 id="slides" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0; scroll-margin-top: 16px;">Slides</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">The Lesson 22 deck covers argv shape, parsing and validating, exit status, environment variables, and a brief glance at getopt as the standard idiom you will meet again in CS220.</p>
+
+      <!-- =========================================================
+           EDIT ME: Lesson 22 slide deck link
+           Replace href="#" below with the SharePoint share URL once the
+           deck is published. Leave target="_blank" and rel="noopener".
+           ========================================================= -->
+      <p style="margin: 0 0 18px 0;">
+        <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 10px 20px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 14px;">Open Lesson 22 slides &rarr;</a>
+      </p>
+
+      <!-- Shape of argv -->
+      <h3 id="shape-of-argv" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">The shape of argv</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">When the shell launches your program, it hands main two parameters. The signature changes from the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">int main(void)</code> you have been writing to:</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">int</span> <span style="color: #DCDCAA;">main</span>(<span style="color: #569CD6;">int</span> argc, <span style="color: #569CD6;">char</span> *argv[]) {<br>
+        &nbsp;&nbsp;<span style="color: #6B7280;">// argc = how many arguments, including the program name</span><br>
+        &nbsp;&nbsp;<span style="color: #6B7280;">// argv[0] = program name as the shell invoked it</span><br>
+        &nbsp;&nbsp;<span style="color: #6B7280;">// argv[1] .. argv[argc-1] = user-supplied arguments</span><br>
+        &nbsp;&nbsp;<span style="color: #6B7280;">// argv[argc] = NULL (guaranteed by the C standard)</span><br>
+        &nbsp;&nbsp;<span style="color: #569CD6;">return</span> <span style="color: #B5CEA8;">0</span>;<br>
+        }
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">If you run <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">./prog hello 42</code>, then <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">argc</code> is 3 (the program name counts) and argv looks like this:</p>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 13.5px; margin-bottom: 14px;">
+        <thead>
+          <tr style="background: #00205B; color: #ffffff;">
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; width: 120px;">Index</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600;">Value (a string)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 7px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">argv[0]</td>
+            <td style="padding: 7px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">"./prog"</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 7px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">argv[1]</td>
+            <td style="padding: 7px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">"hello"</td>
+          </tr>
+          <tr>
+            <td style="padding: 7px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">argv[2]</td>
+            <td style="padding: 7px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">"42"  <span style="color: #6B7280;">// still a string, not a number</span></td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 7px 12px; font-family: Consolas, monospace; font-size: 13px;">argv[3]</td>
+            <td style="padding: 7px 12px; font-family: Consolas, monospace; font-size: 13px;">NULL  <span style="color: #6B7280;">// sentinel; guaranteed by the standard</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">Quoting groups: <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">./prog "hello world" 5</code> gives argc=3, not argc=4. The shell sees the double quotes and packs the whole phrase into one argv cell.</p>
+
+      <!-- Parsing and validating -->
+      <h3 id="parsing-validating" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Parsing and validating</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">argv elements are strings. To use them as numbers, you convert:</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #6B7280;">// Quick conversion, no error reporting</span><br>
+        <span style="color: #569CD6;">int</span> n = <span style="color: #DCDCAA;">atoi</span>(argv[<span style="color: #B5CEA8;">1</span>]);<br>
+        <span style="color: #569CD6;">double</span> d = <span style="color: #DCDCAA;">atof</span>(argv[<span style="color: #B5CEA8;">2</span>]);
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><strong style="color: #00205B;">The trap:</strong> <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">atoi</code> returns <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">0</code> for both <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">"0"</code> and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">"banana"</code>. There is no error flag. For inputs you cannot trust, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">strtol</code> reports parse failures through an end-pointer and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">errno</code>. For CS210 labs, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">atoi</code> is usually fine; the lab spec will tell you when validation is part of the grade.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><strong style="color: #00205B;">Validate before you index.</strong> Always check <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">argc</code> before reading from <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">argv</code>. The pattern:</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">if</span> (argc &lt; <span style="color: #B5CEA8;">3</span>) {<br>
+        &nbsp;&nbsp;<span style="color: #DCDCAA;">fprintf</span>(stderr, <span style="color: #CE9178;">"usage: %s &lt;file&gt; &lt;threshold&gt;\n"</span>, argv[<span style="color: #B5CEA8;">0</span>]);<br>
+        &nbsp;&nbsp;<span style="color: #569CD6;">return</span> EXIT_FAILURE;<br>
+        }
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">Usage messages and errors go to <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">stderr</code>, not <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">stdout</code>. The reason: if your program is piped to another (<code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">./prog file.txt | sort</code>), stdout becomes the next program's input. Errors on stdout would corrupt the data; errors on stderr still land on the terminal where the user can see them.</p>
+
+      <!-- Exit status -->
+      <h3 id="exit-status" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Exit status</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">The integer your <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">main</code> returns is captured by the shell as the program's exit status. Zero means success; any non-zero value means failure. The <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&lt;stdlib.h&gt;</code> macros make the intent obvious:</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">return</span> EXIT_SUCCESS;&nbsp;&nbsp;<span style="color: #6B7280;">// same as return 0;</span><br>
+        <span style="color: #569CD6;">return</span> EXIT_FAILURE;&nbsp;&nbsp;<span style="color: #6B7280;">// 1 on every Unix you'll meet</span>
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">After your program ends, the shell exposes the exit code as <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">$?</code>:</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 10px 14px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.5; margin-bottom: 18px;">
+        <span style="color: #7FB3D5;">$</span> ./prog file.txt<br>
+        <span style="color: #7FB3D5;">$</span> echo $?<br>
+        0<br>
+        <span style="color: #7FB3D5;">$</span> ./prog<br>
+        usage: ./prog &lt;file&gt; &lt;threshold&gt;<br>
+        <span style="color: #7FB3D5;">$</span> echo $?<br>
+        1
+      </div>
+
+      <!-- Environment variables -->
+      <h3 id="env-vars" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Environment variables</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Beyond what gets passed at launch, the shell also gives your program a set of environment variables: key-value pairs like <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">USER=cadet22</code> and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">HOME=/home/cadet22</code> that any process inherits. You read them with <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">getenv</code>:</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #569CD6;">char</span> *user = <span style="color: #DCDCAA;">getenv</span>(<span style="color: #CE9178;">"USER"</span>);<br>
+        <span style="color: #569CD6;">if</span> (user == <span style="color: #569CD6;">NULL</span>) {<br>
+        &nbsp;&nbsp;<span style="color: #DCDCAA;">fprintf</span>(stderr, <span style="color: #CE9178;">"USER not set\n"</span>);<br>
+        } <span style="color: #569CD6;">else</span> {<br>
+        &nbsp;&nbsp;<span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"hello, %s\n"</span>, user);<br>
+        }
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">getenv</code> returns a pointer to the value string, or <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">NULL</code> if the variable is not set. Always check for NULL before using the result. The returned string belongs to the environment, not to you, so do not free it and do not modify it.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">Why this matters: environment variables let you change your program's behavior without recompiling. The lab uses <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">STRAVA_QUIET</code> as a small example: when set, the filter suppresses its summary line.</p>
+
+      <!-- Looking ahead: getopt -->
+      <h3 id="getopt" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Where this goes next: getopt</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Real Unix command-line tools (<code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">grep -i pattern file</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">gcc -Wall -Werror file.c</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">ls -la</code>) accept option flags in standard shapes. The standard library function that recognizes these patterns is <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">getopt</code>. A taste:</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #6B7280;">// recognize -v (verbose flag) and -n NUM (option with value)</span><br>
+        <span style="color: #569CD6;">int</span> c;<br>
+        <span style="color: #569CD6;">while</span> ((c = <span style="color: #DCDCAA;">getopt</span>(argc, argv, <span style="color: #CE9178;">"vn:"</span>)) != -<span style="color: #B5CEA8;">1</span>) {<br>
+        &nbsp;&nbsp;<span style="color: #569CD6;">switch</span> (c) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #569CD6;">case</span> <span style="color: #CE9178;">'v'</span>: verbose = <span style="color: #B5CEA8;">1</span>; <span style="color: #569CD6;">break</span>;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #569CD6;">case</span> <span style="color: #CE9178;">'n'</span>: n = <span style="color: #DCDCAA;">atoi</span>(optarg); <span style="color: #569CD6;">break</span>;<br>
+        &nbsp;&nbsp;}<br>
+        }
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;">You will not write <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">getopt</code> in CS210; the lab uses simple positional arguments. But you will see this idiom in any real command-line tool you read, and in CS220.</p>
+
+    </div>
+  </details>
+
+  <!-- ===================== 5. IN-CLASS WORK ===================== -->
+  <details id="in-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      5. In-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 16px 0;">Four things to do in class. Use the checklist to track your progress.</p>
+
+      <ul style="list-style: none; padding: 0; margin: 0 0 24px 0; font-size: 14.5px;">
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Quiz 8: File I/O.</strong>
+          <span style="color: #4A5568;">Closed-resource, about 15 minutes. Covers Lesson 21 content (fopen/fclose, fscanf, sscanf, error handling). Your instructor will tell you when to take it.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Work through the argv walkthrough below.</strong>
+          <span style="color: #4A5568;">Twelve guided tasks covering argv shape, indexing, exit status, and environment variables. About 25 minutes.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Take the argv self-check.</strong>
+          <span style="color: #4A5568;">Eight questions covering argc/argv mechanics, the NULL sentinel, atoi traps, exit status, and getenv. About 10 minutes.</span>
+        </li>
+        <li style="margin-bottom: 0; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Complete Lab 22: Strava Activity Filter.</strong>
+          <span style="color: #4A5568;">Auto-graded through GitHub Classroom. Full instructions in the lab repo.</span>
+          <!-- =========================================================
+               EDIT ME: Lab 22 GitHub Classroom assignment link
+               Replace href="#" with the classroom.github.com/a/... invite
+               URL once the assignment is published.
+               ========================================================= -->
+          <div style="margin-top: 8px; margin-left: 28px;">
+            <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 6px 14px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 13px;">Accept Lab 22 on GitHub Classroom &rarr;</a>
+          </div>
+        </li>
+      </ul>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 18px 0 10px 0;">argv Walkthrough</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Twelve tasks across four sections. Type each shell invocation or C call at the prompt. The terminal shows what happened; the right pane shows the current argv array, exit status, and any environment variables you read.</p>
+
+<!-- ============================================================
+     CS210 Lesson 22 - argv Walkthrough Widget
+     Cadets type fake shell invocations and C statements; the right
+     pane shows the resulting argv array, exit status, and any
+     environment variables touched. Twelve guided tasks.
+     ============================================================ -->
+<style>
+.cs210-argv * { box-sizing: border-box; }
+.cs210-argv {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-argv h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-argv .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 22px;
+}
+.cs210-argv .progress-bar {
+  background: #E5E7EB;
+  border-radius: 3px;
+  height: 8px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.cs210-argv .progress-fill {
+  background: #003087;
+  height: 100%;
+  transition: width 0.3s ease;
+}
+.cs210-argv .progress-label {
+  font-size: 12px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-argv .section-header {
+  background: #E8EDF5;
+  color: #00205B;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.cs210-argv .task-card {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  border-radius: 3px;
+}
+.cs210-argv .task-card.complete {
+  background: #E6F4EA;
+  border-left-color: #2E7D32;
+}
+.cs210-argv .task-label {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B5300;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.cs210-argv .task-card.complete .task-label {
+  color: #1B5E20;
+}
+.cs210-argv .task-text {
+  font-size: 15px;
+  color: #1a1a1a;
+}
+.cs210-argv .task-text code {
+  background: #FBEFC4;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+}
+.cs210-argv .task-card.complete .task-text code {
+  background: #C8E6C9;
+}
+.cs210-argv .task-hint {
+  font-size: 12.5px;
+  color: #6B7280;
+  margin-top: 6px;
+  font-style: italic;
+}
+
+/* Two-pane area: terminal left, state right */
+.cs210-argv .panes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+@media (max-width: 760px) {
+  .cs210-argv .panes { grid-template-columns: 1fr; }
+}
+.cs210-argv .terminal {
+  background: #1E2A3A;
+  color: #E8EDF5;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13.5px;
+  line-height: 1.5;
+  border-radius: 4px;
+  padding: 14px 18px;
+  min-height: 380px;
+  max-height: 440px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.cs210-argv .terminal .prompt { color: #7FB3D5; }
+.cs210-argv .terminal .typed { color: #FFFFFF; }
+.cs210-argv .terminal .out { color: #B5BEC8; }
+.cs210-argv .terminal .note { color: #F0B92C; }
+.cs210-argv .terminal .err { color: #F47A7A; }
+.cs210-argv .terminal .ok { color: #7FD17F; }
+.cs210-argv .terminal .dim { color: #6B7280; }
+
+.cs210-argv .state-pane {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  padding: 14px 16px;
+  min-height: 380px;
+  max-height: 440px;
+  overflow-y: auto;
+}
+.cs210-argv .state-pane-header {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #E5E7EB;
+}
+.cs210-argv .state-empty {
+  color: #6B7280;
+  font-style: italic;
+  font-size: 13px;
+  text-align: center;
+  padding: 40px 10px;
+}
+.cs210-argv .argc-line {
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  color: #00205B;
+  margin-bottom: 8px;
+}
+.cs210-argv .argc-line strong {
+  color: #003087;
+  font-weight: 700;
+}
+.cs210-argv .argv-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.cs210-argv .argv-cell {
+  background: #F8FAFC;
+  border: 1px solid #C7CFD9;
+  border-radius: 3px;
+  padding: 6px 8px;
+  font-family: Consolas, monospace;
+  font-size: 12px;
+  min-width: 60px;
+  text-align: center;
+}
+.cs210-argv .argv-cell .idx {
+  display: block;
+  font-size: 10px;
+  color: #6B7280;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.cs210-argv .argv-cell .val {
+  display: block;
+  color: #00205B;
+  font-weight: 600;
+  word-break: break-all;
+}
+.cs210-argv .argv-cell.argv0 {
+  background: #FFF8E1;
+  border-color: #F0B92C;
+}
+.cs210-argv .argv-cell.null {
+  background: #1E2A3A;
+  border-color: #1E2A3A;
+}
+.cs210-argv .argv-cell.null .val {
+  color: #E8EDF5;
+}
+.cs210-argv .argv-cell.null .idx {
+  color: #B5BEC8;
+}
+.cs210-argv .argv-cell.flag {
+  background: #E8EDF5;
+  border-color: #003087;
+}
+.cs210-argv .argv-cell.highlight {
+  background: #FFF8E1;
+  border-color: #F0B92C;
+  animation: cs210-argv-flash 0.6s ease;
+}
+@keyframes cs210-argv-flash {
+  0%   { background: #F0B92C; }
+  100% { background: #FFF8E1; }
+}
+
+.cs210-argv .section-divider {
+  border-top: 1px dashed #D0D5DD;
+  margin: 14px 0 10px 0;
+  font-size: 11px;
+  color: #6B7280;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding-top: 8px;
+}
+
+.cs210-argv .parsed-card {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 3px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  font-family: Consolas, monospace;
+  font-size: 12px;
+}
+.cs210-argv .parsed-card .label {
+  font-size: 10px;
+  color: #6B7280;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+.cs210-argv .parsed-card .val {
+  color: #00205B;
+  font-weight: 600;
+}
+.cs210-argv .parsed-card .val.warn { color: #B8002F; }
+
+.cs210-argv .exit-status {
+  font-family: Consolas, monospace;
+  font-size: 18px;
+  font-weight: 700;
+  padding: 8px 12px;
+  border-radius: 3px;
+  text-align: center;
+  margin-bottom: 6px;
+}
+.cs210-argv .exit-status.ok {
+  background: #E6F4EA;
+  border: 1px solid #2E7D32;
+  color: #1B5E20;
+}
+.cs210-argv .exit-status.fail {
+  background: #FBE6E6;
+  border: 1px solid #B8002F;
+  color: #6B0000;
+}
+.cs210-argv .exit-status-label {
+  font-size: 11px;
+  color: #6B7280;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.cs210-argv .env-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: Consolas, monospace;
+  font-size: 12px;
+}
+.cs210-argv .env-table th {
+  background: #E8EDF5;
+  color: #00205B;
+  text-align: left;
+  padding: 4px 8px;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.cs210-argv .env-table td {
+  padding: 4px 8px;
+  border-bottom: 1px solid #E5E7EB;
+  color: #00205B;
+}
+.cs210-argv .env-table td.null {
+  color: #B8002F;
+  font-style: italic;
+}
+
+.cs210-argv .input-row {
+  display: flex;
+  background: #1E2A3A;
+  border-radius: 4px;
+  padding: 8px 14px;
+  margin-bottom: 14px;
+  border: 1px solid #003087;
+}
+.cs210-argv .input-prompt {
+  color: #7FB3D5;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  margin-right: 8px;
+  align-self: center;
+  white-space: nowrap;
+}
+.cs210-argv .input-row input {
+  flex: 1;
+  background: transparent;
+  color: #FFFFFF;
+  border: none;
+  outline: none;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  padding: 4px 0;
+}
+.cs210-argv .controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.cs210-argv .btn {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  padding: 6px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #00205B;
+  font-family: inherit;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.cs210-argv .btn:hover { background: #F5F7FA; }
+@keyframes cs210-argv-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(240, 185, 44, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0); }
+}
+.cs210-argv .btn.pulse {
+  background: #FFF8E1;
+  border-color: #F0B92C;
+  color: #6B5300;
+  font-weight: 600;
+  animation: cs210-argv-pulse 1.5s infinite;
+}
+.cs210-argv .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #4A5568;
+  margin-top: 12px;
+}
+.cs210-argv .help-note strong { color: #00205B; }
+
+/* Name modal overlay */
+.cs210-argv .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.cs210-argv .name-modal {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+.cs210-argv .name-modal h2 {
+  color: #00205B;
+  font-size: 20px;
+  margin: 0 0 10px 0;
+}
+.cs210-argv .name-modal p {
+  color: #4A5568;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+.cs210-argv .name-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-argv .name-modal input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-argv .name-modal-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-argv .name-modal-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-argv .name-modal-btn:not(:disabled):hover {
+  background: #00205B;
+}
+
+/* Completion screen */
+.cs210-argv .completion-screen {
+  background: #ffffff;
+  border: 2px solid #2E7D32;
+  border-radius: 6px;
+  padding: 24px 28px;
+  margin-top: 16px;
+}
+.cs210-argv .completion-screen .cs-heading {
+  color: #1B5E20;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 6px 0;
+}
+.cs210-argv .completion-screen .cs-name-line {
+  font-size: 15px;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+}
+.cs210-argv .completion-screen .cs-name-line strong {
+  color: #00205B;
+}
+.cs210-argv .completion-screen .cs-code-block {
+  background: #F0F4FA;
+  border: 1px solid #003087;
+  border-radius: 4px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.cs210-argv .completion-screen .cs-code-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #4A5568;
+  margin-bottom: 4px;
+}
+.cs210-argv .completion-screen .cs-code-value {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 28px;
+  font-weight: 700;
+  color: #00205B;
+  letter-spacing: 3px;
+}
+.cs210-argv .completion-screen .cs-copy-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-argv .completion-screen .cs-copy-btn:hover {
+  background: #00205B;
+}
+.cs210-argv .completion-screen .cs-copy-btn.copied {
+  background: #2E7D32;
+}
+.cs210-argv .completion-screen .cs-timestamp {
+  font-size: 13px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-argv .completion-screen .cs-reminder {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 14px;
+  color: #6B5300;
+  line-height: 1.5;
+}
+.cs210-argv .completion-screen .cs-reminder strong {
+  color: #4A3A00;
+}
+</style>
+
+<div class="cs210-argv">
+
+<div class="name-modal-backdrop" id="argv-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Lesson 22 reflection.</p>
+    <input type="text" id="argv-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="argv-cadet-name-btn" disabled>Start the walkthrough</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 22 &middot; argv Walkthrough</h1>
+<div class="subtitle">A guided tour through command-line arguments, exit status, and environment variables. Type each invocation or C statement at the prompt. The terminal shows what happened; the right pane shows the current argv array, exit status, and any environment variables you read.</div>
+
+<div class="progress-bar"><div class="progress-fill" id="argv-progress-fill" style="width: 0%;"></div></div>
+<div class="progress-label" id="argv-progress-label">Task 0 of 12</div>
+
+<div class="section-header" id="argv-section-header">Section 1: The shape of argv</div>
+
+<div class="task-card" id="argv-task-card">
+  <div class="task-label" id="argv-task-label">Current task</div>
+  <div class="task-text" id="argv-task-text">Loading...</div>
+  <div class="task-hint" id="argv-task-hint"></div>
+</div>
+
+<div class="panes">
+  <div class="terminal" id="argv-terminal"></div>
+  <div class="state-pane">
+    <div class="state-pane-header">Program State</div>
+    <div id="argv-state-area">
+      <div class="state-empty">No invocation yet.<br>Type a fake command on the left.</div>
+    </div>
+  </div>
+</div>
+
+<div class="input-row">
+  <span class="input-prompt">$</span>
+  <input type="text" id="argv-cli-input" autocomplete="off" spellcheck="false" placeholder="try: ./prog hello world">
+</div>
+
+<div class="controls">
+  <button class="btn" id="argv-hint-btn">Show hint</button>
+  <button class="btn" id="argv-reset-btn">Reset</button>
+  <button class="btn" id="argv-mode-btn">Switch to free mode</button>
+</div>
+
+<div class="help-note">
+  <strong>How this works:</strong> This widget simulates a shell launching a C program. Type a fake invocation like <code style="font-family:Consolas,monospace;background:#fff;padding:1px 4px;border-radius:2px;">./prog hello 42</code> and watch the resulting argv array appear. Some tasks ask you to type a C statement instead (like <code style="font-family:Consolas,monospace;background:#fff;padding:1px 4px;border-radius:2px;">atoi(argv[1])</code>) to see what would happen inside main. Only the expected input will advance the walkthrough. Mistype twice and the hint button will pulse. Free mode unlocks at the end.
+</div>
+
+<div id="argv-completion-area"></div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-argv');
+  if (!root) return;
+
+  // ============================================================
+  // CS210 widget completion utilities
+  // Salt -> deterministic 6-char code via FNV-1a.
+  // Alphabet excludes 0, 1, O, I.
+  // ============================================================
+  const CS210_SALT = "lesson22_argv_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  // Name modal
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#argv-name-modal-backdrop');
+    const input = root.querySelector('#argv-cadet-name-input');
+    const btn = root.querySelector('#argv-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length >= 2) {
+        cs210CadetName = stored.trim();
+        backdrop.style.display = 'none';
+        return;
+      }
+    } catch (e) { /* localStorage may be disabled */ }
+
+    function updateBtn() {
+      btn.disabled = input.value.trim().length < 2;
+    }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', function() {
+      const name = input.value.trim();
+      if (name.length < 2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+      const cli = root.querySelector('#argv-cli-input');
+      if (cli) cli.focus();
+    });
+    setTimeout(function() { input.focus(); }, 50);
+  })();
+
+  function cs210RenderCompletion(area) {
+    if (!area) return;
+    if (root.querySelector('#cs210-argv-completion-overlay')) return;
+    const now = new Date();
+    const ts = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const safeName = (cs210CadetName || 'Cadet').replace(/[<>&"']/g, function(c) {
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+    // Inline footer
+    area.innerHTML =
+      '<div class="completion-screen">' +
+        '<div class="cs-heading">Walkthrough complete</div>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value">' + CS210_CODE + '</div></div>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+      '</div>';
+    // Overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'cs210-argv-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.style.background = 'rgba(27, 94, 32, 0.55)';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">Walkthrough complete</h2>' +
+        '<p>Take a screenshot of this box. You will need the code and a visual of this screen for the Lesson 22 reflection.</p>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value" id="argv-cs-code-value">' + CS210_CODE + '</div></div>' +
+          '<button class="cs-copy-btn" id="argv-cs-copy-btn" type="button">Copy code</button>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+        '<div class="cs-reminder" style="margin-bottom:14px;">' +
+          '<strong>Next step:</strong> Open the Lesson 22 reflection in Blackboard. Enter this code, answer the reflection prompt, and attach your screenshot.' +
+        '</div>' +
+        '<button class="name-modal-btn" id="argv-cs-overlay-close" type="button" style="background:#2E7D32;">Got it &mdash; close this</button>' +
+      '</div>';
+    root.appendChild(overlay);
+    const closeBtn = overlay.querySelector('#argv-cs-overlay-close');
+    if (closeBtn) closeBtn.addEventListener('click', function() { overlay.style.display = 'none'; });
+    const copyBtn = overlay.querySelector('#argv-cs-copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function() {
+        const text = CS210_CODE;
+        const ok = function() {
+          copyBtn.textContent = 'Copied';
+          copyBtn.classList.add('copied');
+          setTimeout(function() {
+            copyBtn.textContent = 'Copy code';
+            copyBtn.classList.remove('copied');
+          }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(ok, function() {
+            cs210FallbackCopy(text); ok();
+          });
+        } else {
+          cs210FallbackCopy(text); ok();
+        }
+      });
+    }
+  }
+  function cs210FallbackCopy(text) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e) {}
+  }
+
+  // ============================================================
+  // Simulated environment - tasks can populate, getenv reads.
+  // ============================================================
+  const SIM_ENV = {
+    "USER": "cadet22",
+    "HOME": "/home/cadet22",
+    "STRAVA_QUIET": null   // not set initially
+  };
+
+  // ============================================================
+  // State
+  // ============================================================
+  let argvState = null;     // { argc, argv: [strings], programName }
+  let parsedResults = [];   // last few atoi/strtol results to show
+  let envLookups = [];      // [{name, value}] of getenv calls
+  let exitStatus = null;    // null | 0 | non-zero
+  let currentTaskIndex = 0;
+  let consecutiveFails = 0;
+  let mode = "walkthrough";
+
+  // ============================================================
+  // Shell argument tokenizer
+  // Handles double-quoted args; everything else is whitespace-split.
+  // ============================================================
+  function tokenizeShellLine(line) {
+    const toks = [];
+    let i = 0;
+    while (i < line.length) {
+      while (i < line.length && /\s/.test(line[i])) i++;
+      if (i >= line.length) break;
+      if (line[i] === '"') {
+        i++;
+        let s = '';
+        while (i < line.length && line[i] !== '"') { s += line[i]; i++; }
+        if (i < line.length && line[i] === '"') i++;
+        toks.push(s);
+      } else {
+        let s = '';
+        while (i < line.length && !/\s/.test(line[i])) { s += line[i]; i++; }
+        toks.push(s);
+      }
+    }
+    return toks;
+  }
+
+  // ============================================================
+  // Parsers
+  // ============================================================
+  function isShellInvocation(line) {
+    return /^\s*\.\//.test(line);
+  }
+  function tryParseAtoi(line) {
+    // atoi(argv[N])  or  atoi("literal")
+    const t = line.trim().replace(/;?\s*$/, '');
+    let m = t.match(/^atoi\s*\(\s*argv\s*\[\s*(\d+)\s*\]\s*\)$/);
+    if (m) return { kind: 'argv', index: parseInt(m[1], 10) };
+    m = t.match(/^atoi\s*\(\s*"([^"]*)"\s*\)$/);
+    if (m) return { kind: 'literal', text: m[1] };
+    return null;
+  }
+  function tryParseGetenv(line) {
+    const t = line.trim().replace(/;?\s*$/, '');
+    const m = t.match(/^getenv\s*\(\s*"([^"]+)"\s*\)$/);
+    if (m) return { name: m[1] };
+    return null;
+  }
+  function tryParseReturn(line) {
+    const t = line.trim().replace(/;?\s*$/, '');
+    let m = t.match(/^return\s+(-?\d+)$/);
+    if (m) return { value: parseInt(m[1], 10) };
+    m = t.match(/^return\s+EXIT_SUCCESS$/);
+    if (m) return { value: 0 };
+    m = t.match(/^return\s+EXIT_FAILURE$/);
+    if (m) return { value: 1 };
+    return null;
+  }
+  function tryParseExport(line) {
+    // export VAR=value   or   export VAR="value"
+    const t = line.trim();
+    let m = t.match(/^export\s+([A-Z_][A-Z0-9_]*)\s*=\s*"([^"]*)"\s*$/i);
+    if (m) return { name: m[1], value: m[2] };
+    m = t.match(/^export\s+([A-Z_][A-Z0-9_]*)\s*=\s*(\S+)\s*$/i);
+    if (m) return { name: m[1], value: m[2] };
+    return null;
+  }
+
+  // ============================================================
+  // Command execution (records state changes)
+  // ============================================================
+  function runShellInvocation(line) {
+    const toks = tokenizeShellLine(line);
+    if (toks.length === 0) return { kind: 'error', msg: 'empty invocation' };
+    argvState = {
+      argc: toks.length,
+      argv: toks.slice(),
+      programName: toks[0],
+    };
+    // Reset per-run state
+    parsedResults = [];
+    envLookups = [];
+    exitStatus = null;
+    return { kind: 'invocation', argc: toks.length, argv: toks };
+  }
+  function runAtoi(parsed) {
+    if (parsed.kind === 'argv') {
+      if (!argvState) return { kind: 'error', msg: 'no program running yet; launch one with ./prog ... first' };
+      if (parsed.index < 0 || parsed.index >= argvState.argc) {
+        return { kind: 'error', msg: 'argv[' + parsed.index + '] is out of bounds (argc is ' + argvState.argc + ')' };
+      }
+      const text = argvState.argv[parsed.index];
+      const result = atoiSim(text);
+      const entry = { source: 'argv[' + parsed.index + ']', input: text, result: result };
+      parsedResults.push(entry);
+      return { kind: 'atoi', entry: entry };
+    } else {
+      const result = atoiSim(parsed.text);
+      const entry = { source: '"' + parsed.text + '"', input: parsed.text, result: result };
+      parsedResults.push(entry);
+      return { kind: 'atoi', entry: entry };
+    }
+  }
+  function atoiSim(text) {
+    // atoi: parses leading optional sign and digits; stops at first non-digit; returns 0 for "banana"
+    const m = String(text).match(/^\s*([+-]?\d+)/);
+    if (!m) return 0;
+    return parseInt(m[1], 10);
+  }
+  function runGetenv(parsed) {
+    const value = (parsed.name in SIM_ENV) ? SIM_ENV[parsed.name] : null;
+    envLookups.push({ name: parsed.name, value: value });
+    return { kind: 'getenv', name: parsed.name, value: value };
+  }
+  function runReturn(parsed) {
+    exitStatus = parsed.value;
+    return { kind: 'return', value: parsed.value };
+  }
+  function runExport(parsed) {
+    SIM_ENV[parsed.name] = parsed.value;
+    return { kind: 'export', name: parsed.name, value: parsed.value };
+  }
+
+  // ============================================================
+  // Generic command dispatch
+  // ============================================================
+  function execute(line) {
+    const trimmed = line.trim();
+    if (!trimmed) return null;
+    if (isShellInvocation(trimmed)) {
+      return runShellInvocation(trimmed);
+    }
+    const exp = tryParseExport(trimmed);
+    if (exp) return runExport(exp);
+    const ge = tryParseGetenv(trimmed);
+    if (ge) return runGetenv(ge);
+    const ai = tryParseAtoi(trimmed);
+    if (ai) return runAtoi(ai);
+    const ret = tryParseReturn(trimmed);
+    if (ret) return runReturn(ret);
+    return { kind: 'error', msg: 'this widget understands shell invocations starting with ./, plus C calls: atoi(argv[N]), atoi("text"), getenv("VAR"), return N, return EXIT_SUCCESS, return EXIT_FAILURE, and export VAR=value' };
+  }
+
+  // ============================================================
+  // Terminal output
+  // ============================================================
+  const terminalEl = root.querySelector('#argv-terminal');
+  function termLine(text, cls) {
+    const div = document.createElement('div');
+    div.className = cls || 'out';
+    div.textContent = text;
+    terminalEl.appendChild(div);
+    terminalEl.scrollTop = terminalEl.scrollHeight;
+  }
+  function echoCommand(line) {
+    const div = document.createElement('div');
+    div.innerHTML = '<span class="prompt">$</span> <span class="typed"></span>';
+    div.querySelector('.typed').textContent = line;
+    terminalEl.appendChild(div);
+    terminalEl.scrollTop = terminalEl.scrollHeight;
+  }
+
+  // ============================================================
+  // State pane rendering
+  // ============================================================
+  function renderState() {
+    const area = root.querySelector('#argv-state-area');
+    if (!argvState && envLookups.length === 0 && exitStatus === null) {
+      area.innerHTML = '<div class="state-empty">No invocation yet.<br>Type a fake command on the left.</div>';
+      return;
+    }
+    let html = '';
+    if (argvState) {
+      html += '<div class="argc-line">argc = <strong>' + argvState.argc + '</strong></div>';
+      html += '<div class="argv-row">';
+      for (let i = 0; i < argvState.argv.length; i++) {
+        const v = argvState.argv[i];
+        let cls = 'argv-cell';
+        if (i === 0) cls += ' argv0';
+        else if (v.startsWith('-')) cls += ' flag';
+        html += '<div class="' + cls + '">' +
+                '<span class="idx">argv[' + i + ']</span>' +
+                '<span class="val">' + escapeHtml(v) + '</span>' +
+                '</div>';
+      }
+      // NULL sentinel
+      html += '<div class="argv-cell null">' +
+              '<span class="idx">argv[' + argvState.argc + ']</span>' +
+              '<span class="val">NULL</span>' +
+              '</div>';
+      html += '</div>';
+    }
+    if (parsedResults.length > 0) {
+      html += '<div class="section-divider">Parsed values</div>';
+      for (const r of parsedResults) {
+        const isWeird = (r.result === 0 && !/^\s*[+-]?0+\s*$/.test(r.input));
+        html += '<div class="parsed-card">' +
+                '<div class="label">atoi(' + escapeHtml(r.source) + ')</div>' +
+                '<div>input: <span class="val">"' + escapeHtml(r.input) + '"</span></div>' +
+                '<div>result: <span class="val ' + (isWeird ? 'warn' : '') + '">' + r.result + '</span>' +
+                (isWeird ? '  <small style="color:#B8002F;">&larr; silent zero</small>' : '') +
+                '</div>' +
+                '</div>';
+      }
+    }
+    if (envLookups.length > 0) {
+      html += '<div class="section-divider">Environment lookups</div>';
+      html += '<table class="env-table"><tr><th>getenv(...)</th><th>returned</th></tr>';
+      for (const e of envLookups) {
+        if (e.value === null) {
+          html += '<tr><td>"' + escapeHtml(e.name) + '"</td><td class="null">NULL</td></tr>';
+        } else {
+          html += '<tr><td>"' + escapeHtml(e.name) + '"</td><td>"' + escapeHtml(e.value) + '"</td></tr>';
+        }
+      }
+      html += '</table>';
+    }
+    if (exitStatus !== null) {
+      html += '<div class="section-divider">Exit status</div>';
+      const cls = (exitStatus === 0) ? 'ok' : 'fail';
+      html += '<div class="exit-status ' + cls + '">' + exitStatus + '</div>';
+      html += '<div class="exit-status-label">($? would print ' + exitStatus + ')</div>';
+    }
+    area.innerHTML = html;
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  // ============================================================
+  // Tasks
+  // ============================================================
+  const tasks = [
+    // Section 1: The shape of argv
+    {
+      section: 'Section 1: The shape of argv',
+      label: 'Task 1 of 12',
+      text: 'Launch a program with no extra arguments. Type the shell command exactly: ./prog',
+      hint: './prog',
+      match: (cmd) => /^\s*\.\/prog\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (t === 'prog' || t === './prog ') return "Close. Type exactly './prog' (with the dot-slash, no trailing arguments).";
+        if (!/^\.\//.test(t)) return "Shell invocations in this widget start with './' (like './prog' or './foo'). Without that, the widget cannot tell apart a command from a C call.";
+        return null;
+      },
+      note: 'Even with no arguments, argc is 1: the program name itself is always argv[0]. argv[argc] (here, argv[1]) is NULL by C standard guarantee.'
+    },
+    {
+      label: 'Task 2 of 12',
+      text: 'Launch with three plain arguments. Type: ./prog hello world 42',
+      hint: './prog hello world 42',
+      match: (cmd) => /^\s*\.\/prog\s+hello\s+world\s+42\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        if (/^\.\/prog\s+/.test(cmd.trim())) return "You launched a program; check that the three arguments are exactly 'hello', 'world', '42' in that order.";
+        return null;
+      },
+      note: 'argc is 4. argv[0] is the program name ("./prog"); argv[1] through argv[3] are the cadet-supplied arguments. Strings, not numbers, even though "42" looks like one.'
+    },
+    {
+      label: 'Task 3 of 12',
+      text: 'Quoting groups words. Type: ./prog "hello world" 5  (use double quotes around the two-word string)',
+      hint: './prog "hello world" 5',
+      match: (cmd) => /^\s*\.\/prog\s+"hello\s+world"\s+5\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^\.\/prog\s+hello\s+world\s+5\s*$/.test(t)) return "Without quotes the shell sees three separate arguments. Wrap 'hello world' in double quotes so it becomes one argv entry.";
+        return null;
+      },
+      note: 'argc is 3, not 4. The double quotes tell the shell that "hello world" is one argument, so it lands in a single argv[1] cell with the space inside.'
+    },
+
+    // Section 2: Indexing and the NULL sentinel
+    {
+      section: 'Section 2: Indexing and the NULL sentinel',
+      label: 'Task 4 of 12',
+      text: 'Launch with one numeric argument: ./prog 42',
+      hint: './prog 42',
+      match: (cmd) => /^\s*\.\/prog\s+42\s*$/.test(cmd),
+      diagnose: (cmd) => null,
+      note: 'argc is 2. The string "42" is in argv[1]. It is still a string at this point. We need to convert it before we can use it as a number.'
+    },
+    {
+      label: 'Task 5 of 12',
+      text: 'Convert argv[1] to an int. Type: atoi(argv[1])',
+      hint: 'atoi(argv[1])',
+      match: (cmd) => /^\s*atoi\s*\(\s*argv\s*\[\s*1\s*\]\s*\)\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^\s*atoi\s*\(\s*"42"\s*\)\s*;?\s*$/.test(t)) return "Close. The task wants you to read argv[1], not pass the literal string. Try atoi(argv[1]).";
+        return null;
+      },
+      note: 'atoi parses leading digits and returns the int. For "42" that is 42. atoi is fine when you trust the input; for hostile input, strtol gives you better error reporting.'
+    },
+    {
+      label: 'Task 6 of 12',
+      text: 'Now relaunch with a non-numeric argument and try atoi again. First, launch: ./prog banana',
+      hint: './prog banana',
+      match: (cmd) => /^\s*\.\/prog\s+banana\s*$/.test(cmd),
+      diagnose: (cmd) => null,
+      note: 'argv[1] is now the string "banana". It looks nothing like a number. Watch what atoi does with that.'
+    },
+    {
+      label: 'Task 7 of 12',
+      text: 'Now call: atoi(argv[1])',
+      hint: 'atoi(argv[1])',
+      match: (cmd) => /^\s*atoi\s*\(\s*argv\s*\[\s*1\s*\]\s*\)\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => null,
+      note: 'TRAP! atoi returns 0 silently. There is no error indicator. If your code does "if (atoi(argv[1]) == 0)" you cannot tell whether the user passed "0" or "banana". This is why strtol exists.'
+    },
+
+    // Section 3: Exit status
+    {
+      section: 'Section 3: Exit status',
+      label: 'Task 8 of 12',
+      text: 'A program signals success by returning 0 from main. Type: return EXIT_SUCCESS',
+      hint: 'return EXIT_SUCCESS',
+      match: (cmd) => /^\s*return\s+EXIT_SUCCESS\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^\s*return\s+0\s*;?\s*$/.test(t)) return "EXIT_SUCCESS expands to 0, so the effect is the same. But this task wants the named macro to make the intent obvious. Try: return EXIT_SUCCESS";
+        return null;
+      },
+      note: 'EXIT_SUCCESS lives in <stdlib.h>. It is the same value as 0 but reads as intent: "I am declaring success." Bash captures this in $? right after the program ends.'
+    },
+    {
+      label: 'Task 9 of 12',
+      text: 'Programs signal failure with a non-zero exit code. Type: return EXIT_FAILURE',
+      hint: 'return EXIT_FAILURE',
+      match: (cmd) => /^\s*return\s+EXIT_FAILURE\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => null,
+      note: 'EXIT_FAILURE is 1 on virtually every Unix system. Convention: 0 means success, any positive number means a kind of failure. Shell scripts read this to decide whether to keep going.'
+    },
+
+    // Section 4: Environment variables
+    {
+      section: 'Section 4: Environment variables',
+      label: 'Task 10 of 12',
+      text: 'Programs can read shell variables with getenv. Type: getenv("USER")',
+      hint: 'getenv("USER")',
+      match: (cmd) => /^\s*getenv\s*\(\s*"USER"\s*\)\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^\s*getenv\s*\(\s*USER\s*\)\s*;?\s*$/.test(t)) return "getenv takes a string. Wrap USER in double quotes: getenv(\"USER\").";
+        return null;
+      },
+      note: 'getenv returns a pointer to the value string, or NULL if the variable is not set. The string belongs to the environment, not to you, so do not free it and do not modify it.'
+    },
+    {
+      label: 'Task 11 of 12',
+      text: 'What does getenv return for an unset variable? Type: getenv("FROTZ")',
+      hint: 'getenv("FROTZ")',
+      match: (cmd) => /^\s*getenv\s*\(\s*"FROTZ"\s*\)\s*;?\s*$/.test(cmd),
+      diagnose: (cmd) => null,
+      note: 'NULL. Always check the return value before dereferencing it. The pattern is: char *val = getenv("X"); if (val == NULL) { /* not set */ } else { /* use val */ }.'
+    },
+    {
+      label: 'Task 12 of 12',
+      text: 'Now set FROTZ in the shell, then read it again. First type: export FROTZ="hello"',
+      hint: 'export FROTZ="hello"',
+      match: (cmd) => /^\s*export\s+FROTZ\s*=\s*"hello"\s*$/.test(cmd),
+      diagnose: (cmd) => {
+        const t = cmd.trim();
+        if (/^\s*export\s+FROTZ\s*=\s*hello\s*$/.test(t)) return "Close. The task wants the value in double quotes: export FROTZ=\"hello\".";
+        return null;
+      },
+      note: 'After this, any program your shell launches will see FROTZ in its environment. Try the same getenv call again and notice that the answer changes without recompiling or relaunching anything in your C code. This is how programs become configurable at runtime.'
+    },
+  ];
+
+  // ============================================================
+  // Walkthrough controller
+  // ============================================================
+  function checkTask(rawCmd) {
+    if (mode === "free" || currentTaskIndex >= tasks.length) return null;
+    const t = tasks[currentTaskIndex];
+    if (t.match(rawCmd)) {
+      process(rawCmd);
+      if (t.note) {
+        termLine('', 'out');
+        termLine('  ' + t.note, 'note');
+      }
+      currentTaskIndex++;
+      consecutiveFails = 0;
+      hideHintPulse();
+      renderTask();
+      if (currentTaskIndex >= tasks.length) {
+        setMode("free");
+        termLine('', 'out');
+        termLine('  Walkthrough complete. Free mode unlocked. Type any supported invocation or C call to keep exploring.', 'note');
+      }
+      return true;
+    } else {
+      echoCommand(rawCmd);
+      const diag = (t.diagnose && t.diagnose(rawCmd)) || null;
+      if (diag) {
+        termLine('  ' + diag, 'err');
+      } else {
+        termLine("  Not what this task is asking for. Look at the task card above, or click 'Show hint'.", 'err');
+      }
+      consecutiveFails++;
+      if (consecutiveFails >= 2) showHintPulse();
+      return false;
+    }
+  }
+  function renderTask() {
+    const fill = root.querySelector('#argv-progress-fill');
+    const label = root.querySelector('#argv-progress-label');
+    const card = root.querySelector('#argv-task-card');
+    const labelEl = root.querySelector('#argv-task-label');
+    const textEl = root.querySelector('#argv-task-text');
+    const hintEl = root.querySelector('#argv-task-hint');
+    const sectionEl = root.querySelector('#argv-section-header');
+    const completionArea = root.querySelector('#argv-completion-area');
+
+    const pct = (currentTaskIndex / tasks.length) * 100;
+    fill.style.width = pct + '%';
+    label.textContent = 'Task ' + Math.min(currentTaskIndex + 1, tasks.length) + ' of ' + tasks.length;
+
+    if (currentTaskIndex >= tasks.length) {
+      card.className = 'task-card complete';
+      labelEl.textContent = 'Complete';
+      textEl.textContent = "You worked through every key concept of Lesson 22: argc/argv shape, indexing and the NULL sentinel, exit status, and environment variables. Lab 22 is next.";
+      hintEl.textContent = '';
+      fill.style.width = '100%';
+      label.textContent = 'All tasks complete';
+      sectionEl.textContent = 'All done';
+      completionArea.innerHTML = '';
+      cs210RenderCompletion(completionArea);
+      return;
+    }
+
+    completionArea.innerHTML = '';
+    card.className = 'task-card';
+    const t = tasks[currentTaskIndex];
+    if (t.section) sectionEl.textContent = t.section;
+    labelEl.innerHTML = t.label;
+    textEl.innerHTML = t.text.replace(/`([^`]+)`/g, '<code>$1</code>');
+    hintEl.textContent = '';
+  }
+  function showHint() {
+    if (currentTaskIndex >= tasks.length) return;
+    const t = tasks[currentTaskIndex];
+    root.querySelector('#argv-task-hint').textContent = 'Hint: ' + (t.hint || '');
+    hideHintPulse();
+  }
+  function showHintPulse() { root.querySelector('#argv-hint-btn').classList.add('pulse'); }
+  function hideHintPulse() { root.querySelector('#argv-hint-btn').classList.remove('pulse'); }
+
+  function reset() {
+    argvState = null;
+    parsedResults = [];
+    envLookups = [];
+    exitStatus = null;
+    SIM_ENV["STRAVA_QUIET"] = null;
+    SIM_ENV["FROTZ"] = undefined;
+    delete SIM_ENV["FROTZ"];
+    currentTaskIndex = 0;
+    consecutiveFails = 0;
+    hideHintPulse();
+    setMode("walkthrough");
+    terminalEl.innerHTML = '';
+    termLine('Welcome to the argv walkthrough.', 'dim');
+    termLine('Follow the task card above. Shell invocations start with ./; C calls do not.', 'dim');
+    termLine('', 'out');
+    renderState();
+    renderTask();
+  }
+
+  function process(line) {
+    echoCommand(line);
+    const r = execute(line);
+    if (!r) return;
+    if (r.kind === 'error') {
+      termLine('  ' + r.msg, 'err');
+      return;
+    }
+    if (r.kind === 'invocation') {
+      const arglist = r.argv.map((v, i) => 'argv[' + i + ']="' + v + '"').join(', ');
+      termLine('  launched: argc=' + r.argc + ', ' + arglist + ', argv[' + r.argc + ']=NULL', 'out');
+    } else if (r.kind === 'atoi') {
+      const e = r.entry;
+      const isWeird = (e.result === 0 && !/^\s*[+-]?0+\s*$/.test(e.input));
+      if (isWeird) {
+        termLine('  atoi("' + e.input + '") = ' + e.result + '  (silent zero -- atoi cannot tell you parsing failed)', 'err');
+      } else {
+        termLine('  atoi("' + e.input + '") = ' + e.result, 'out');
+      }
+    } else if (r.kind === 'getenv') {
+      if (r.value === null) {
+        termLine('  getenv("' + r.name + '") = NULL  (variable not set)', 'err');
+      } else {
+        termLine('  getenv("' + r.name + '") = "' + r.value + '"', 'out');
+      }
+    } else if (r.kind === 'return') {
+      const tag = (r.value === 0) ? 'ok' : 'err';
+      termLine('  program exited with status ' + r.value + (r.value === 0 ? '  (success)' : '  (failure)'), tag);
+    } else if (r.kind === 'export') {
+      termLine('  shell variable set: ' + r.name + '="' + r.value + '"', 'out');
+      termLine('  any program launched from this shell will now see it in its environment.', 'dim');
+    }
+    renderState();
+  }
+
+  function setMode(newMode) {
+    mode = newMode;
+    const btn = root.querySelector('#argv-mode-btn');
+    if (mode === "free") {
+      btn.textContent = 'Return to walkthrough';
+      btn.style.background = '#E6F4EA';
+      btn.style.borderColor = '#2E7D32';
+      btn.style.color = '#1B5E20';
+      const placeholderInput = root.querySelector('#argv-cli-input');
+      placeholderInput.placeholder = 'free mode: try any shell invocation or C call';
+    } else {
+      btn.textContent = 'Switch to free mode';
+      btn.style.background = '';
+      btn.style.borderColor = '';
+      btn.style.color = '';
+      const placeholderInput = root.querySelector('#argv-cli-input');
+      placeholderInput.placeholder = 'follow the task above';
+    }
+  }
+
+  // ============================================================
+  // Input wiring
+  // ============================================================
+  const inputEl = root.querySelector('#argv-cli-input');
+  inputEl.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      const v = inputEl.value;
+      inputEl.value = '';
+      if (!v.trim()) return;
+      if (mode === "walkthrough") {
+        checkTask(v);
+      } else {
+        process(v);
+      }
+    }
+  });
+  root.querySelector('#argv-hint-btn').addEventListener('click', showHint);
+  root.querySelector('#argv-reset-btn').addEventListener('click', reset);
+  root.querySelector('#argv-mode-btn').addEventListener('click', function() {
+    if (mode === "walkthrough") {
+      setMode("free");
+      termLine('', 'out');
+      termLine('  Free mode. Try any shell invocation (./...) or C call (atoi(...), getenv(...), return ...).', 'note');
+    } else {
+      setMode("walkthrough");
+      termLine('', 'out');
+      termLine('  Back to walkthrough mode. State preserved.', 'note');
+    }
+  });
+
+  // Boot
+  reset();
+})();
+</script>
+
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 28px 0 10px 0;">argv Self-Check Quiz</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Eight questions. Pass at 70% or above; below that, take it again after reviewing the materials and replaying the walkthrough.</p>
+
+<!-- ============================================================
+     CS210 Lesson 22 - argv Self-Check Quiz Widget
+     Card/slide flow: one question per card, Submit + Next/Back.
+     Score card at end with per-question recap and two-salt
+     completion code (passing >= 70% uses _completed salt;
+     non-passing uses _incomplete salt).
+     ============================================================ -->
+<style>
+.cs210-argv-quiz * { box-sizing: border-box; }
+.cs210-argv-quiz {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-argv-quiz h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-argv-quiz .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+
+.cs210-argv-quiz .dots {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+.cs210-argv-quiz .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #E5E7EB;
+  border: 1px solid #C7CFD9;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.cs210-argv-quiz .dot.current {
+  background: #003087;
+  border-color: #00205B;
+  transform: scale(1.25);
+}
+.cs210-argv-quiz .dot.correct {
+  background: #2E7D32;
+  border-color: #1B5E20;
+}
+.cs210-argv-quiz .dot.incorrect {
+  background: #B8002F;
+  border-color: #6B0000;
+}
+.cs210-argv-quiz .dot.score {
+  width: 16px;
+  height: 12px;
+  border-radius: 3px;
+  background: #F0B92C;
+  border-color: #6B5300;
+}
+
+.cs210-argv-quiz .card {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 6px;
+  padding: 22px 24px;
+  margin-bottom: 14px;
+}
+.cs210-argv-quiz .q-label {
+  font-size: 11.5px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.cs210-argv-quiz .q-text {
+  font-size: 15.5px;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+}
+.cs210-argv-quiz .q-text code {
+  background: #F0F2F5;
+  padding: 1px 6px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13.5px;
+}
+.cs210-argv-quiz pre.q-code {
+  background: #1E2A3A;
+  color: #E8EDF5;
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 0 0 16px 0;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.cs210-argv-quiz .choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.cs210-argv-quiz .choice {
+  display: block;
+  padding: 10px 14px;
+  border: 1px solid #C7CFD9;
+  border-radius: 4px;
+  background: #ffffff;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: inherit;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  text-align: left;
+  width: 100%;
+}
+.cs210-argv-quiz .choice:hover { background: #F5F7FA; }
+.cs210-argv-quiz .choice.selected {
+  background: #E8EDF5;
+  border-color: #003087;
+}
+.cs210-argv-quiz .choice.locked { cursor: default; }
+.cs210-argv-quiz .choice.locked:hover { background: inherit; }
+.cs210-argv-quiz .choice.correct {
+  background: #E6F4EA;
+  border-color: #2E7D32;
+  color: #1B5E20;
+  font-weight: 600;
+}
+.cs210-argv-quiz .choice.incorrect {
+  background: #FCE7EA;
+  border-color: #B8002F;
+  color: #6B0000;
+  font-weight: 600;
+}
+.cs210-argv-quiz .choice code {
+  background: #F0F2F5;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+}
+
+.cs210-argv-quiz .text-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: Consolas, monospace;
+}
+.cs210-argv-quiz .text-input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-argv-quiz .text-input:disabled {
+  background: #F5F7FA;
+  color: #4A5568;
+}
+
+.cs210-argv-quiz .feedback {
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  margin-bottom: 14px;
+  display: none;
+}
+.cs210-argv-quiz .feedback.visible { display: block; }
+.cs210-argv-quiz .feedback.correct {
+  background: #E6F4EA;
+  border-left: 4px solid #2E7D32;
+  color: #1B5E20;
+}
+.cs210-argv-quiz .feedback.incorrect {
+  background: #FCE7EA;
+  border-left: 4px solid #B8002F;
+  color: #6B0000;
+}
+.cs210-argv-quiz .feedback code {
+  background: rgba(255,255,255,0.6);
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+}
+
+.cs210-argv-quiz .btn-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+.cs210-argv-quiz .submit-btn,
+.cs210-argv-quiz .nav-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 9px 18px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-argv-quiz .submit-btn:hover,
+.cs210-argv-quiz .nav-btn:hover { background: #00205B; }
+.cs210-argv-quiz .submit-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-argv-quiz .nav-btn.back {
+  background: #ffffff;
+  color: #003087;
+  border: 1px solid #C7CFD9;
+}
+.cs210-argv-quiz .nav-btn.back:hover { background: #F5F7FA; color: #00205B; }
+.cs210-argv-quiz .nav-row { display: flex; gap: 8px; }
+
+/* Score card */
+.cs210-argv-quiz .score-card { text-align: center; }
+.cs210-argv-quiz .score-big {
+  font-size: 48px;
+  font-weight: 700;
+  color: #003087;
+  margin: 10px 0 4px 0;
+}
+.cs210-argv-quiz .score-card.full-correct .score-big { color: #1B5E20; }
+.cs210-argv-quiz .score-card.passing .score-big      { color: #2E7D32; }
+.cs210-argv-quiz .score-card.not-passing .score-big  { color: #6B0000; }
+.cs210-argv-quiz .score-label {
+  font-size: 13px;
+  color: #6B7280;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.cs210-argv-quiz .score-message {
+  font-size: 15px;
+  color: #4A5568;
+  margin-bottom: 18px;
+}
+.cs210-argv-quiz .score-message.good-job {
+  color: #1B5E20;
+  font-weight: 600;
+}
+.cs210-argv-quiz .recap {
+  text-align: left;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #E5E7EB;
+}
+.cs210-argv-quiz .recap-title {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.cs210-argv-quiz .recap-item {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #F0F2F5;
+}
+.cs210-argv-quiz .recap-item:last-child { border-bottom: none; }
+.cs210-argv-quiz .recap-icon {
+  flex: 0 0 22px;
+  font-size: 16px;
+  font-weight: 700;
+}
+.cs210-argv-quiz .recap-icon.correct { color: #2E7D32; }
+.cs210-argv-quiz .recap-icon.incorrect { color: #B8002F; }
+.cs210-argv-quiz .recap-body { flex: 1; font-size: 13.5px; }
+.cs210-argv-quiz .recap-question { color: #1a1a1a; margin-bottom: 3px; }
+.cs210-argv-quiz .recap-explanation { color: #4A5568; font-size: 13px; }
+.cs210-argv-quiz .recap-explanation code {
+  background: #F0F2F5;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 12.5px;
+}
+.cs210-argv-quiz .reset-row {
+  margin-top: 18px;
+  display: flex;
+  justify-content: center;
+}
+.cs210-argv-quiz .reset-btn {
+  background: #ffffff;
+  border: 1px solid #003087;
+  color: #003087;
+  padding: 8px 18px;
+  border-radius: 4px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-argv-quiz .reset-btn:hover { background: #F5F7FA; }
+
+.cs210-argv-quiz .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #4A5568;
+  margin-top: 12px;
+}
+.cs210-argv-quiz .help-note strong { color: #00205B; }
+
+/* Completion code block on the score card */
+.cs210-argv-quiz .code-block {
+  background: #F0F4FA;
+  border: 1px solid #003087;
+  border-radius: 4px;
+  padding: 14px 18px;
+  margin: 14px 0 6px 0;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.cs210-argv-quiz .code-block.fail {
+  background: #FFF1F3;
+  border-color: #B8002F;
+}
+.cs210-argv-quiz .code-block .code-left { text-align: left; }
+.cs210-argv-quiz .code-block .code-label {
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #4A5568;
+}
+.cs210-argv-quiz .code-block .code-value {
+  font-family: Consolas, monospace;
+  font-size: 26px;
+  font-weight: 700;
+  color: #00205B;
+  letter-spacing: 3px;
+}
+.cs210-argv-quiz .code-block.fail .code-value { color: #6B0000; }
+.cs210-argv-quiz .code-block .copy-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-argv-quiz .code-block .copy-btn:hover { background: #00205B; }
+.cs210-argv-quiz .code-block .copy-btn.copied { background: #2E7D32; }
+.cs210-argv-quiz .code-block.fail .copy-btn { background: #6B0000; }
+.cs210-argv-quiz .inline-code-footer {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 8px 12px;
+  border-radius: 3px;
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: #4A5568;
+  font-family: Consolas, monospace;
+}
+
+/* Name modal overlay */
+.cs210-argv-quiz .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.cs210-argv-quiz .name-modal {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+.cs210-argv-quiz .name-modal h2 {
+  color: #00205B;
+  font-size: 20px;
+  margin: 0 0 10px 0;
+}
+.cs210-argv-quiz .name-modal p {
+  color: #4A5568;
+  font-size: 14px;
+  margin: 0 0 16px 0;
+}
+.cs210-argv-quiz .name-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-argv-quiz .name-modal input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-argv-quiz .name-modal-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-argv-quiz .name-modal-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-argv-quiz .name-modal-btn:not(:disabled):hover {
+  background: #00205B;
+}
+</style>
+
+<div class="cs210-argv-quiz">
+
+<div class="name-modal-backdrop" id="argv-quiz-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the score card so you can include it in your screenshot for the Lesson 22 reflection.</p>
+    <input type="text" id="argv-quiz-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="argv-quiz-cadet-name-btn" disabled>Start the quiz</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 22 &middot; argv Self-Check</h1>
+<div class="subtitle">Eight questions covering argc, argv, the NULL sentinel, atoi traps, exit status, and getenv. Pass at 70% or above; below that, take it again after reviewing.</div>
+
+<div class="dots" id="argv-quiz-dots"></div>
+
+<div id="argv-quiz-card-area"></div>
+
+<div class="help-note">
+  <strong>How this works:</strong> One question per card. Pick or type your answer and click Submit. Feedback appears, then click Next to move on. Answers lock once submitted, so think before you submit. After all eight, you get a score, a completion code, and a per-question recap.
+</div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-argv-quiz');
+  if (!root) return;
+
+  // ============================================================
+  // Completion code generation (two-salt scheme: pass vs. fail)
+  // ============================================================
+  const CS210_SALT_PASS = "lesson22_argv_quiz_completed";
+  const CS210_SALT_FAIL = "lesson22_argv_quiz_incomplete";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const PASSING_THRESHOLD = 0.70;
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE_PASS = cs210CodeFromSalt(CS210_SALT_PASS);
+  const CS210_CODE_FAIL = cs210CodeFromSalt(CS210_SALT_FAIL);
+  let cadetName = '';
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+  function cs210Copy(text) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch (e) {}
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      return true;
+    } catch (e) { return false; }
+  }
+
+  // ============================================================
+  // Name modal
+  // ============================================================
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#argv-quiz-name-modal-backdrop');
+    const input = root.querySelector('#argv-quiz-cadet-name-input');
+    const btn = root.querySelector('#argv-quiz-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length > 0) {
+        cadetName = stored.trim();
+        backdrop.style.display = 'none';
+        return;
+      }
+    } catch (e) {}
+    function updateBtn() { btn.disabled = input.value.trim().length < 2; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', function() {
+      const name = input.value.trim();
+      if (name.length < 2) return;
+      cadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+    });
+    setTimeout(function() { input.focus(); }, 50);
+  })();
+
+  // ============================================================
+  // Questions
+  // ============================================================
+  const questions = [
+    {
+      id: 'q1',
+      type: 'choice',
+      text: 'When you run <code>./grep -i hello file.txt</code> from the shell, what is <code>argv[0]</code> inside the program?',
+      options: [
+        'The string <code>"-i"</code>, the first flag.',
+        'The string <code>"./grep"</code>, the program name as invoked.',
+        'The string <code>"hello"</code>, the first non-flag argument.',
+        '<code>NULL</code>. argv starts counting at 1.',
+      ],
+      correct: 1,
+      correctFeedback: 'Right. argv[0] is the program name as the shell launched it. argv[1] through argv[argc-1] are the user-supplied arguments.',
+      incorrectFeedback: 'The correct answer is <code>"./grep"</code>. argv[0] is always the program name (as invoked); the actual user-supplied arguments start at argv[1].',
+      shortLabel: 'What is argv[0]?',
+    },
+    {
+      id: 'q2',
+      type: 'choice',
+      text: 'What is the value of <code>argv[argc]</code>, always?',
+      options: [
+        'The last user-supplied argument.',
+        'An empty string <code>""</code>.',
+        '<code>NULL</code>.',
+        'Undefined; reading it is undefined behavior.',
+      ],
+      correct: 2,
+      correctFeedback: 'Right. The C standard guarantees argv[argc] == NULL. This lets you walk argv with a pointer until you hit NULL, instead of indexing by count.',
+      incorrectFeedback: 'The correct answer is <code>NULL</code>. The C standard guarantees argv[argc] == NULL as a sentinel. The valid indices are 0 through argc-1; the cell at argv[argc] is the NULL terminator.',
+      shortLabel: 'What is argv[argc]?',
+    },
+    {
+      id: 'q3',
+      type: 'text',
+      text: 'A program is launched as <code>./prog "alpha bravo" charlie</code>. What is <code>argc</code>? Type just the number.',
+      correct: ['3'],
+      normalize: s => s.trim(),
+      placeholder: 'e.g. 4',
+      correctFeedback: 'Right. The shell sees three tokens: "./prog", the quoted "alpha bravo" (one argument), and "charlie". So argc is 3.',
+      incorrectFeedback: 'The correct answer is <code>3</code>. The double quotes group "alpha bravo" into a single argument. The shell sees three tokens: "./prog", "alpha bravo", "charlie".',
+      shortLabel: 'argc for ./prog "alpha bravo" charlie',
+    },
+    {
+      id: 'q4',
+      type: 'choice',
+      text: 'A cadet writes <code>int n = atoi(argv[1]);</code> and runs <code>./prog banana</code>. What is <code>n</code>?',
+      options: [
+        'Undefined; <code>atoi</code> aborts on non-numeric input.',
+        '<code>0</code>. <code>atoi</code> returns 0 silently when it cannot parse a number.',
+        '<code>-1</code>. <code>atoi</code> uses -1 as the parse-failure sentinel.',
+        '<code>atoi</code> sets <code>errno</code> and returns <code>EOF</code>.',
+      ],
+      correct: 1,
+      correctFeedback: 'Right. atoi returns 0 with no error indicator. This is why "is the number 0" and "did the parse fail" look identical from your code. Use strtol when you need to tell the two apart.',
+      incorrectFeedback: 'The correct answer is the second one. <code>atoi</code> returns <code>0</code> for any input it cannot parse as a number, and there is no error flag. That is the silent-failure trap: <code>n == 0</code> could mean the user typed "0", or it could mean they typed "banana".',
+      shortLabel: 'atoi("banana") result',
+    },
+    {
+      id: 'q5',
+      type: 'text',
+      text: 'A C program returns <code>EXIT_FAILURE</code> from main. The shell then runs <code>echo $?</code>. What number does the shell print? Type just the number.',
+      correct: ['1'],
+      normalize: s => s.trim(),
+      placeholder: 'e.g. 0',
+      correctFeedback: 'Right. EXIT_FAILURE expands to 1 on every Unix system you will encounter. EXIT_SUCCESS is 0.',
+      incorrectFeedback: 'The correct answer is <code>1</code>. <code>EXIT_FAILURE</code> is defined as <code>1</code> in <code>&lt;stdlib.h&gt;</code> on Unix systems. <code>echo $?</code> prints the most recent exit code.',
+      shortLabel: 'echo $? after EXIT_FAILURE',
+    },
+    {
+      id: 'q6',
+      type: 'choice',
+      text: 'You call <code>char *val = getenv("NOPE");</code> and the variable <code>NOPE</code> is not set. What is <code>val</code>?',
+      options: [
+        'An empty string <code>""</code>.',
+        'The string <code>"NOPE"</code>, echoing the variable name.',
+        '<code>NULL</code>.',
+        '<code>getenv</code> aborts the program.',
+      ],
+      correct: 2,
+      correctFeedback: 'Right. getenv returns NULL when the variable is not set. Always check before dereferencing the result.',
+      incorrectFeedback: 'The correct answer is <code>NULL</code>. <code>getenv</code> returns a pointer to the value string when the variable exists, and <code>NULL</code> when it does not. Always check before dereferencing.',
+      shortLabel: 'getenv on an unset variable',
+    },
+    {
+      id: 'q7',
+      type: 'choice',
+      text: 'Where should usage and error messages be written, and why?',
+      options: [
+        '<code>stdout</code> via <code>printf</code>, so the user sees them clearly.',
+        '<code>stderr</code> via <code>fprintf(stderr, ...)</code>, so they stay separate from the program\'s normal output and from anything being piped to another program.',
+        'A file named <code>error.log</code>, so they are saved for later.',
+        'It does not matter; <code>stdout</code> and <code>stderr</code> always go to the same place.',
+      ],
+      correct: 1,
+      correctFeedback: 'Right. stderr exists for diagnostic output. If your program is piped (./prog | sort), error messages on stdout would get mixed into the data stream; error messages on stderr stay on the terminal where the user can see them.',
+      incorrectFeedback: 'The correct answer is <code>stderr</code>. <code>stdout</code> and <code>stderr</code> are separate streams. When your program is piped (e.g. <code>./prog | sort</code>), <code>stdout</code> becomes the input to <code>sort</code>; errors going to <code>stdout</code> would corrupt the data. Errors on <code>stderr</code> still appear on the terminal.',
+      shortLabel: 'Where should errors go?',
+    },
+    {
+      id: 'q8',
+      type: 'choice',
+      text: 'Look at this code:<pre class="q-code">int main(int argc, char **argv) {\n    int n = atoi(argv[1]);\n    printf("%d\\n", n * 2);\n    return 0;\n}</pre>What validation is missing?',
+      options: [
+        'It does not check that <code>argv[1]</code> exists before reading it. If the user runs <code>./prog</code> with no arguments, the program reads past the end of argv.',
+        'It does not call <code>free</code> on <code>argv</code>.',
+        'It does not include <code>&lt;string.h&gt;</code>.',
+        'Nothing is missing; this is correct code.',
+      ],
+      correct: 0,
+      correctFeedback: 'Right. The fix is to check argc >= 2 before reading argv[1]; otherwise the program reads memory it does not own. This is the most common command-line bug and the §8.2 "do not trust input" rule applies.',
+      incorrectFeedback: 'The correct answer is the first one. Without checking <code>argc &gt;= 2</code>, the program reads <code>argv[1]</code> when the user supplies no arguments. argv[1] would be NULL (the sentinel), and <code>atoi(NULL)</code> is undefined behavior. The fix: <code>if (argc &lt; 2) { fprintf(stderr, "usage: ..."); return EXIT_FAILURE; }</code> before the read.',
+      shortLabel: 'Missing validation in argv read',
+    },
+  ];
+
+  // ============================================================
+  // State
+  // ============================================================
+  const state = questions.map(() => ({ answered: false, correct: false, choice: null, value: '' }));
+  let currentIndex = 0;
+
+  const dotsArea = root.querySelector('#argv-quiz-dots');
+  const cardArea = root.querySelector('#argv-quiz-card-area');
+
+  // ============================================================
+  // Rendering: dots
+  // ============================================================
+  function renderDots() {
+    dotsArea.innerHTML = '';
+    for (let i = 0; i < questions.length; i++) {
+      const d = document.createElement('div');
+      d.className = 'dot';
+      if (i === currentIndex) d.classList.add('current');
+      if (state[i].answered) {
+        d.classList.add(state[i].correct ? 'correct' : 'incorrect');
+      }
+      dotsArea.appendChild(d);
+    }
+    const scoreDot = document.createElement('div');
+    scoreDot.className = 'dot score';
+    if (currentIndex === questions.length) scoreDot.classList.add('current');
+    dotsArea.appendChild(scoreDot);
+  }
+
+  // ============================================================
+  // Rendering: question card
+  // ============================================================
+  function buildQuestionCard(i) {
+    const q = questions[i];
+    const s = state[i];
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    const label = document.createElement('div');
+    label.className = 'q-label';
+    label.textContent = 'Question ' + (i + 1) + ' of ' + questions.length;
+    card.appendChild(label);
+
+    const text = document.createElement('div');
+    text.className = 'q-text';
+    text.innerHTML = q.text;
+    card.appendChild(text);
+
+    // Answer surface
+    let getAnswer;
+    if (q.type === 'choice') {
+      const choices = document.createElement('div');
+      choices.className = 'choices';
+      const buttons = [];
+      q.options.forEach((opt, idx) => {
+        const b = document.createElement('button');
+        b.className = 'choice';
+        b.innerHTML = opt;
+        b.type = 'button';
+        b.addEventListener('click', () => {
+          if (s.answered) return;
+          buttons.forEach(x => x.classList.remove('selected'));
+          b.classList.add('selected');
+          s.choice = idx;
+          submitBtn.disabled = false;
+        });
+        if (s.choice === idx) b.classList.add('selected');
+        if (s.answered) {
+          b.classList.add('locked');
+          if (idx === q.correct) b.classList.add('correct');
+          else if (idx === s.choice) b.classList.add('incorrect');
+        }
+        choices.appendChild(b);
+        buttons.push(b);
+      });
+      card.appendChild(choices);
+      getAnswer = () => s.choice;
+    } else {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'text-input';
+      input.placeholder = q.placeholder || '';
+      input.value = s.value || '';
+      input.spellcheck = false;
+      input.autocomplete = 'off';
+      input.addEventListener('input', () => {
+        if (s.answered) return;
+        s.value = input.value;
+        submitBtn.disabled = input.value.trim().length === 0;
+      });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !s.answered && input.value.trim().length > 0) {
+          e.preventDefault();
+          submitBtn.click();
+        }
+      });
+      if (s.answered) input.disabled = true;
+      card.appendChild(input);
+      getAnswer = () => input.value;
+      setTimeout(() => { try { input.focus(); } catch (e) {} }, 50);
+    }
+
+    // Feedback
+    const fb = document.createElement('div');
+    fb.className = 'feedback';
+    if (s.answered) {
+      fb.classList.add('visible');
+      fb.classList.add(s.correct ? 'correct' : 'incorrect');
+      fb.innerHTML = s.correct ? q.correctFeedback : q.incorrectFeedback;
+    }
+    card.appendChild(fb);
+
+    // Button row
+    const row = document.createElement('div');
+    row.className = 'btn-row';
+
+    const navL = document.createElement('div');
+    navL.className = 'nav-row';
+    if (i > 0) {
+      const back = document.createElement('button');
+      back.className = 'nav-btn back';
+      back.type = 'button';
+      back.innerHTML = '&larr; Back';
+      back.addEventListener('click', () => { currentIndex = i - 1; render(); });
+      navL.appendChild(back);
+    }
+    row.appendChild(navL);
+
+    const submitBtn = document.createElement('button');
+    submitBtn.type = 'button';
+    if (s.answered) {
+      submitBtn.className = 'nav-btn';
+      submitBtn.innerHTML = (i === questions.length - 1) ? 'See score &rarr;' : 'Next &rarr;';
+      submitBtn.addEventListener('click', () => { currentIndex = i + 1; render(); });
+    } else {
+      submitBtn.className = 'submit-btn';
+      submitBtn.textContent = 'Submit';
+      if (q.type === 'choice') submitBtn.disabled = (s.choice === null);
+      else submitBtn.disabled = (!s.value || s.value.trim().length === 0);
+      submitBtn.addEventListener('click', () => {
+        const ans = getAnswer();
+        let correct = false;
+        if (q.type === 'choice') {
+          correct = (ans === q.correct);
+        } else {
+          const v = q.normalize ? q.normalize(ans) : ans;
+          correct = q.correct.some(c => (q.normalize ? q.normalize(c) : c) === v);
+        }
+        s.answered = true;
+        s.correct = correct;
+        render();
+      });
+    }
+    row.appendChild(submitBtn);
+    card.appendChild(row);
+
+    return card;
+  }
+
+  // ============================================================
+  // Rendering: score card
+  // ============================================================
+  function buildScoreCard() {
+    const card = document.createElement('div');
+    card.className = 'card score-card';
+    const correctCount = state.filter(s => s.correct).length;
+    const pct = correctCount / questions.length;
+    const passed = pct >= PASSING_THRESHOLD;
+
+    if (correctCount === questions.length) card.classList.add('full-correct');
+    else if (passed) card.classList.add('passing');
+    else card.classList.add('not-passing');
+
+    const label = document.createElement('div');
+    label.className = 'q-label';
+    label.textContent = 'Quiz complete';
+    card.appendChild(label);
+
+    const msg = document.createElement('div');
+    msg.className = 'score-message';
+    if (correctCount === questions.length) {
+      msg.className = 'score-message good-job';
+      msg.textContent = 'Perfect score. argv discipline locked in.';
+    } else if (passed) {
+      msg.className = 'score-message good-job';
+      msg.textContent = 'Passed.';
+    } else {
+      msg.style.color = '#6B0000';
+      msg.textContent = 'Below the 70% threshold. Review and try again.';
+    }
+    card.appendChild(msg);
+
+    const scoreBig = document.createElement('div');
+    scoreBig.className = 'score-big';
+    scoreBig.textContent = correctCount + ' / ' + questions.length;
+    card.appendChild(scoreBig);
+
+    const scoreLabel = document.createElement('div');
+    scoreLabel.className = 'score-label';
+    scoreLabel.textContent = 'questions correct (' + Math.round(pct * 100) + '%)';
+    card.appendChild(scoreLabel);
+
+    const detail = document.createElement('div');
+    detail.className = 'score-message';
+    if (correctCount === questions.length) {
+      detail.textContent = 'You have argv, exit status, and getenv down. Move on to Lab 22.';
+    } else if (passed) {
+      detail.textContent = 'You crossed the threshold. Review the questions you missed below before the lab.';
+    } else {
+      detail.textContent = 'Re-read the argv section in the lesson materials, then replay the argv walkthrough. The validation rule (check argc, check getenv return) is the part the lab will exercise hardest.';
+    }
+    card.appendChild(detail);
+
+    // Completion code block
+    const code = passed ? CS210_CODE_PASS : CS210_CODE_FAIL;
+    const codeBlock = document.createElement('div');
+    codeBlock.className = 'code-block' + (passed ? '' : ' fail');
+    const left = document.createElement('div');
+    left.className = 'code-left';
+    const codeLabel = document.createElement('div');
+    codeLabel.className = 'code-label';
+    codeLabel.textContent = passed ? 'Passing code' : 'Non-passing code';
+    left.appendChild(codeLabel);
+    const codeValue = document.createElement('div');
+    codeValue.className = 'code-value';
+    codeValue.textContent = code;
+    left.appendChild(codeValue);
+    codeBlock.appendChild(left);
+    const copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.className = 'copy-btn';
+    copyBtn.textContent = 'Copy';
+    copyBtn.addEventListener('click', () => {
+      const ok = cs210Copy(code);
+      copyBtn.textContent = ok ? 'Copied!' : 'Copy failed';
+      if (ok) copyBtn.classList.add('copied');
+      setTimeout(() => { copyBtn.textContent = 'Copy'; copyBtn.classList.remove('copied'); }, 1500);
+    });
+    codeBlock.appendChild(copyBtn);
+    card.appendChild(codeBlock);
+
+    const now = new Date();
+    const pad = (n) => n.toString().padStart(2, '0');
+    const ts = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate()) +
+               ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+
+    const footer = document.createElement('div');
+    footer.className = 'inline-code-footer';
+    footer.innerHTML = '<strong>' + escapeHtml(cadetName || '(name not set)') + '</strong> &middot; ' + ts +
+                       (passed ? ' &middot; passing' : ' &middot; non-passing');
+    card.appendChild(footer);
+
+    // Recap
+    const recap = document.createElement('div');
+    recap.className = 'recap';
+    const recapTitle = document.createElement('div');
+    recapTitle.className = 'recap-title';
+    recapTitle.textContent = 'Question recap';
+    recap.appendChild(recapTitle);
+
+    state.forEach((s, i) => {
+      const item = document.createElement('div');
+      item.className = 'recap-item';
+      const icon = document.createElement('div');
+      icon.className = 'recap-icon ' + (s.correct ? 'correct' : 'incorrect');
+      icon.textContent = s.correct ? '\u2713' : '\u2717';
+      item.appendChild(icon);
+      const body = document.createElement('div');
+      body.className = 'recap-body';
+      const q = questions[i];
+      const qLine = document.createElement('div');
+      qLine.className = 'recap-question';
+      qLine.innerHTML = '<strong>Q' + (i + 1) + '.</strong> ' + q.shortLabel;
+      body.appendChild(qLine);
+      if (!s.correct) {
+        const exp = document.createElement('div');
+        exp.className = 'recap-explanation';
+        exp.innerHTML = q.incorrectFeedback;
+        body.appendChild(exp);
+      }
+      item.appendChild(body);
+      recap.appendChild(item);
+    });
+    card.appendChild(recap);
+
+    const resetRow = document.createElement('div');
+    resetRow.className = 'reset-row';
+    const resetBtn = document.createElement('button');
+    resetBtn.type = 'button';
+    resetBtn.className = 'reset-btn';
+    resetBtn.textContent = 'Take the quiz again';
+    resetBtn.addEventListener('click', reset);
+    resetRow.appendChild(resetBtn);
+    card.appendChild(resetRow);
+
+    return card;
+  }
+
+  function render() {
+    renderDots();
+    cardArea.innerHTML = '';
+    if (currentIndex >= questions.length) {
+      cardArea.appendChild(buildScoreCard());
+    } else {
+      cardArea.appendChild(buildQuestionCard(currentIndex));
+    }
+  }
+
+  function reset() {
+    state.forEach(s => { s.answered = false; s.correct = false; s.choice = null; s.value = ''; });
+    currentIndex = 0;
+    render();
+  }
+
+  // Boot
+  render();
+})();
+</script>
+
+
+    </div>
+  </details>
+
+  <!-- ===================== 6. AFTER CLASS ===================== -->
+  <details id="after-class" style="margin-bottom: 24px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      6. After Class
+    </summary>
+    <div style="padding: 18px 22px;">
+      <ul style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Finish Lab 22 if you did not complete it in class. Submit through GitHub Classroom before Lesson 23.</li>
+        <li style="margin-bottom: 6px;">Submit the Lesson 22 reflection in Blackboard. Include the completion codes from both widgets and your screenshot.</li>
+        <li style="margin-bottom: 6px;">Team PEX was assigned today. Review the topic list and start thinking about which one fits your team's interests. Topic proposal is due at Lesson 23; the full PEX is due at Lesson 39.</li>
+        <li style="margin-bottom: 6px;">Read the supplementary notes for Lesson 23 (Software Design from Requirements) before next class.</li>
+        <li style="margin-bottom: 0;">Heads up: GR3 at Lesson 28 covers Block 3 content. argv, exit status, and getenv are fair game.</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== HELP NOTE ===================== -->
+  <div style="background: #F5F7FA; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 3px; font-size: 13.5px; color: #4A5568;">
+    <strong style="color: #00205B;">Need help?</strong> Schedule EI with your instructor. Bring specific code or specific terminal output, and the exact error message or behavior you do not understand. Specific questions get unstuck quickly.
+  </div>
+
+</div>

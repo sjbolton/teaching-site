@@ -1,0 +1,1345 @@
+<!-- ============================================================
+     CS210 — Lesson 27
+     Ethics: The ACM Code of Ethics and Professional Conduct
+     Self-contained: all CSS inline. Native <details> for collapsing.
+     Ethics self-check quiz embedded inline in Section 5.
+     Paste into Blackboard Ultra via Document → Add HTML block.
+     ============================================================ -->
+
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 980px; margin: 0 auto; line-height: 1.6;">
+
+  <!-- ===================== HEADER ===================== -->
+  <div style="border-left: 5px solid #003087; padding: 8px 0 8px 18px; margin-bottom: 24px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 2px;">CS210 &middot; Block 3 &middot; Lesson 27</div>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 600; color: #00205B;">Ethics</h1>
+    <div style="font-size: 14px; color: #4A5568; margin-top: 4px;">ACM Code of Ethics &middot; Case analysis &middot; Reasoned positions &middot; Graded discussion</div>
+  </div>
+
+  <!-- ===================== AT A GLANCE ===================== -->
+  <div style="background: #F5F7FA; border-left: 4px solid #B5B7BA; padding: 14px 18px; margin-bottom: 22px; font-size: 14px;">
+    <strong style="color: #00205B;">At a glance:</strong> Today you step away from C and pick up a skill every computing professional needs: reasoning carefully about the ethical weight of what you build. You will learn the ACM Code of Ethics as a working framework, watch one real case analyzed end to end, and begin the graded ethics discussion where you analyze an issue of your own.
+  </div>
+
+  <!-- ===================== TABLE OF CONTENTS ===================== -->
+  <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 20px; margin-bottom: 24px; border-radius: 3px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Contents</div>
+    <ol style="margin: 0; padding-left: 22px; font-size: 14px;">
+      <li style="margin-bottom: 4px;"><a href="#objectives" style="color: #003087; text-decoration: none;">Lesson Objectives</a></li>
+      <li style="margin-bottom: 4px;"><a href="#readings" style="color: #003087; text-decoration: none;">Assigned Readings</a></li>
+      <li style="margin-bottom: 4px;"><a href="#pre-class" style="color: #003087; text-decoration: none;">Pre-Class Work</a></li>
+      <li style="margin-bottom: 4px;"><a href="#materials" style="color: #003087; text-decoration: none;">Lesson Materials and Overview</a></li>
+      <li style="margin-bottom: 4px;"><a href="#in-class" style="color: #003087; text-decoration: none;">In-Class Work</a></li>
+      <li style="margin-bottom: 0;"><a href="#after-class" style="color: #003087; text-decoration: none;">After Class</a></li>
+    </ol>
+  </div>
+
+  <!-- ===================== 1. OBJECTIVES ===================== -->
+  <details id="objectives" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      1. Lesson Objectives
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 10px 0; font-style: italic;">By the end of this lesson, cadets will be able to:</p>
+      <ol style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Summarize the principles of the ACM Code of Ethics and Professional Conduct. <span style="color: #6B7280; font-size: 12px;">(Outcome 5)</span></li>
+        <li style="margin-bottom: 6px;">Analyze a contemporary ethical issue in computing using the ACM Code as a framework. <span style="color: #6B7280; font-size: 12px;">(Outcome 5)</span></li>
+        <li style="margin-bottom: 0;">Articulate a reasoned position on an ethical question in computing. <span style="color: #6B7280; font-size: 12px;">(Outcomes 4, 5)</span></li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 2. READINGS ===================== -->
+  <details id="readings" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      2. Assigned Readings
+    </summary>
+    <div style="padding: 18px 22px;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <thead>
+          <tr style="background: #00205B; color: #ffffff;">
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 32%;">Source</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 30%;">Sections</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600;">Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;"><a href="https://www.acm.org/code-of-ethics" style="color: #003087;">ACM Code of Ethics and Professional Conduct</a></td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Preamble and Sections 1&ndash;4 (all 28 principles)</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">The framework you will apply in the discussion. Read the principles and skim the guidance under each.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;"><a href="https://www.acm.org/code-of-ethics/case-studies" style="color: #003087;">ACM &ldquo;Using the Code: Case Studies&rdquo;</a></td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Any one or two cases</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Optional. Worked examples of applying the Code to real situations, written by the task force that wrote the Code. A good model for your own analysis.</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px;"><a href="https://ethics.csc.ncsu.edu/" style="color: #003087;">Ethics in Computing (NC State)</a></td>
+            <td style="padding: 8px 12px;">Browse the case catalog</td>
+            <td style="padding: 8px 12px;">Optional. A browsable catalog of real computing cases to help you choose an issue to write about.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <!-- ===================== 3. PRE-CLASS ===================== -->
+  <details id="pre-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      3. Pre-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 12px 16px; margin-bottom: 18px; border-radius: 3px;">
+        <strong style="color: #7A5A00;">Do this first.</strong> <span style="font-size: 14px;">About 30 minutes. Read the Code, then come to class with an issue in mind.</span>
+      </div>
+
+      <!-- Card 1 -->
+      <div style="border-left: 4px solid #003087; background: #F8FAFC; padding: 14px 16px 14px 14px; margin-bottom: 14px; border-radius: 3px; display: flex; gap: 14px;">
+        <div style="flex: 0 0 30px; height: 30px; border-radius: 50%; background: #003087; color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 15px;">1</div>
+        <div style="flex: 1;">
+          <div style="font-weight: 600; color: #00205B; margin-bottom: 4px;">Read the ACM Code of Ethics, all four sections.</div>
+          <p style="font-size: 14px; margin: 0 0 8px 0;">Read it once, start to finish. You do not need to memorize the numbers. The goal is to recognize the shape of the Code so that when you read about a real issue, the relevant principles come to mind.</p>
+          <details style="font-size: 13.5px;">
+            <summary style="cursor: pointer; color: #003087; font-weight: 600;">Click for a quick orientation to the four sections</summary>
+            <div style="padding: 8px 4px 2px 4px; color: #4A5568;">
+              <p style="margin: 0 0 6px 0;"><strong style="color: #00205B;">Section 1, General Ethical Principles.</strong> The foundation: contribute to society, avoid harm, be honest, be fair, respect others&rsquo; work, respect privacy, honor confidentiality. Most everyday cases land here.</p>
+              <p style="margin: 0 0 6px 0;"><strong style="color: #00205B;">Section 2, Professional Responsibilities.</strong> What it means to do the work well: quality, competence, knowing the rules, accepting review, evaluating risks and impacts, secure design.</p>
+              <p style="margin: 0 0 6px 0;"><strong style="color: #00205B;">Section 3, Professional Leadership Principles.</strong> For those who lead teams or systems: keep the public good central, care for systems that become part of society&rsquo;s infrastructure.</p>
+              <p style="margin: 0;"><strong style="color: #00205B;">Section 4, Compliance with the Code.</strong> Upholding the Code and treating violations seriously.</p>
+            </div>
+          </details>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div style="border-left: 4px solid #003087; background: #F8FAFC; padding: 14px 16px 14px 14px; margin-bottom: 14px; border-radius: 3px; display: flex; gap: 14px;">
+        <div style="flex: 0 0 30px; height: 30px; border-radius: 50%; background: #003087; color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 15px;">2</div>
+        <div style="flex: 1;">
+          <div style="font-weight: 600; color: #00205B; margin-bottom: 4px;">Come to class with an issue in mind.</div>
+          <p style="font-size: 14px; margin: 0;">You will write your discussion post about a real computing ethics issue. Have one or two candidates ready. The discussion handout lists starting points (algorithmic decisions in criminal justice, automated hiring, large data breaches, location data from fitness apps, smart-city surveillance, dual-use research, and more), or browse the optional case catalogs in the readings.</p>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div style="border-left: 4px solid #003087; background: #F8FAFC; padding: 14px 16px 14px 14px; margin-bottom: 0; border-radius: 3px; display: flex; gap: 14px;">
+        <div style="flex: 0 0 30px; height: 30px; border-radius: 50%; background: #003087; color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 15px;">3</div>
+        <div style="flex: 1;">
+          <div style="font-weight: 600; color: #00205B; margin-bottom: 4px;">Skim the discussion assignment and its rubric.</div>
+          <p style="font-size: 14px; margin: 0;">Open the Ethics Discussion in Blackboard and read what is being asked: one main post and two replies, graded together out of 40 points. Knowing where the points are before you draft makes the whole thing easier.</p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ===================== 4. MATERIALS ===================== -->
+  <details id="materials" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      4. Lesson Materials and Overview
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <!-- Jump-to nav -->
+      <div style="font-size: 13px; color: #6B7280; margin-bottom: 18px;">
+        Jump to:
+        <a href="#m-slides" style="color: #003087; text-decoration: none;">Slides</a> &middot;
+        <a href="#m-why" style="color: #003087; text-decoration: none;">Why ethics</a> &middot;
+        <a href="#m-structure" style="color: #003087; text-decoration: none;">The ACM Code</a> &middot;
+        <a href="#m-method" style="color: #003087; text-decoration: none;">Applying a principle</a> &middot;
+        <a href="#m-worked" style="color: #003087; text-decoration: none;">Worked example</a> &middot;
+        <a href="#m-discussion" style="color: #003087; text-decoration: none;">The discussion</a>
+      </div>
+
+      <!-- Slides -->
+      <h3 id="m-slides" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0; scroll-margin-top: 16px;">Slides</h3>
+      <!-- EDIT ME: replace href="#" with the deployed slide deck URL after upload -->
+      <a href="#" style="display: inline-block; background: #003087; color: #fff; text-decoration: none; padding: 9px 18px; border-radius: 4px; font-size: 14px; font-weight: 600; margin-bottom: 20px;">Lesson 27 Slides (PDF)</a>
+
+      <!-- Why ethics -->
+      <h3 id="m-why" style="color: #00205B; font-size: 16px; margin: 8px 0 10px 0; scroll-margin-top: 16px;">Why ethics in computing</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">The systems you will build decide who gets a loan, what a feed shows a teenager, whether a sensor flags the right person, and how a hospital records survive a crash. Computing professionals sit at the controls of technology that touches nearly everyone, often invisibly. That position carries responsibility, and &ldquo;it compiled and shipped&rdquo; is not the same as &ldquo;it was the right thing to build.&rdquo; The goal today is not to make you feel guilty about technology. It is to give you a shared, professional vocabulary for spotting the ethical stakes in a situation and reasoning about them clearly enough to defend a position.</p>
+
+      <!-- The ACM Code structure -->
+      <h3 id="m-structure" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">The ACM Code of Ethics</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">The Association for Computing Machinery is the largest professional body in computing, and its Code of Ethics and Professional Conduct (adopted in 2018) is the standard reference for the field. The Code is not a rulebook that decides cases for you. As its own preamble says, it is a basis for ethical decision-making: most real situations touch several principles, and different principles carry different weight depending on the facts. The public good is always the primary consideration.</p>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">The Code has four sections, 28 numbered principles in all. Here is the full map for reference. Read the actual text and guidance on the <a href="https://www.acm.org/code-of-ethics" style="color: #003087;">ACM site</a>; this is just the skeleton.</p>
+
+      <div style="border: 1px solid #D0D5DD; border-radius: 4px; padding: 4px 0; margin-bottom: 16px; font-size: 13.5px;">
+        <div style="background: #00205B; color: #fff; padding: 8px 14px; font-weight: 600; font-size: 13px;">Section 1 &middot; General Ethical Principles</div>
+        <div style="padding: 10px 14px; color: #2D3748;">
+          1.1 Contribute to society and to human well-being &middot;
+          1.2 Avoid harm &middot;
+          1.3 Be honest and trustworthy &middot;
+          1.4 Be fair and take action not to discriminate &middot;
+          1.5 Respect the work required to produce new ideas, inventions, creative works, and computing artifacts &middot;
+          1.6 Respect privacy &middot;
+          1.7 Honor confidentiality
+        </div>
+        <div style="background: #00205B; color: #fff; padding: 8px 14px; font-weight: 600; font-size: 13px;">Section 2 &middot; Professional Responsibilities</div>
+        <div style="padding: 10px 14px; color: #2D3748;">
+          2.1 Strive to achieve high quality in processes and products &middot;
+          2.2 Maintain high standards of professional competence, conduct, and ethical practice &middot;
+          2.3 Know and respect existing rules pertaining to professional work &middot;
+          2.4 Accept and provide appropriate professional review &middot;
+          2.5 Give comprehensive and thorough evaluations of systems and their impacts, including possible risks &middot;
+          2.6 Perform work only in areas of competence &middot;
+          2.7 Foster public awareness and understanding of computing &middot;
+          2.8 Access computing and communication resources only when authorized or compelled by the public good &middot;
+          2.9 Design and implement systems that are robustly and usably secure
+        </div>
+        <div style="background: #00205B; color: #fff; padding: 8px 14px; font-weight: 600; font-size: 13px;">Section 3 &middot; Professional Leadership Principles</div>
+        <div style="padding: 10px 14px; color: #2D3748;">
+          3.1 Ensure that the public good is the central concern &middot;
+          3.2 Articulate, encourage acceptance of, and evaluate fulfillment of social responsibilities &middot;
+          3.3 Manage personnel and resources to enhance the quality of working life &middot;
+          3.4 Articulate, apply, and support policies and processes that reflect the Code &middot;
+          3.5 Create opportunities for members of the group to grow as professionals &middot;
+          3.6 Use care when modifying or retiring systems &middot;
+          3.7 Recognize and take special care of systems that become integrated into the infrastructure of society
+        </div>
+        <div style="background: #00205B; color: #fff; padding: 8px 14px; font-weight: 600; font-size: 13px;">Section 4 &middot; Compliance with the Code</div>
+        <div style="padding: 10px 14px; color: #2D3748;">
+          4.1 Uphold, promote, and respect the principles of the Code &middot;
+          4.2 Treat violations of the Code as inconsistent with membership in the ACM
+        </div>
+      </div>
+
+      <!-- Applying a principle -->
+      <h3 id="m-method" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Applying a principle: the method</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Naming a principle is the easy part and earns almost nothing. The skill the discussion grades, and the skill that matters in practice, is <em>application</em>. For each principle you choose, do four things:</p>
+      <ol style="font-size: 14.5px; margin: 0 0 12px 0; padding-left: 22px;">
+        <li style="margin-bottom: 5px;"><strong style="color: #00205B;">Name</strong> the principle and what it requires, in your own words.</li>
+        <li style="margin-bottom: 5px;"><strong style="color: #00205B;">Connect</strong> it to the specific facts of your issue. Which detail of this case does the principle speak to?</li>
+        <li style="margin-bottom: 5px;"><strong style="color: #00205B;">Draw the implication.</strong> Given the principle, what should have been done differently, or what should happen going forward?</li>
+        <li style="margin-bottom: 0;"><strong style="color: #00205B;">Take a position.</strong> Once both principles are applied, state where you land and why, grounded in them.</li>
+      </ol>
+      <p style="font-size: 14.5px; margin: 0 0 0 0;">A useful test: if a sentence in your post would read the same no matter which issue you were writing about, it is not application yet. Application is specific to your facts.</p>
+
+      <!-- Worked example -->
+      <h3 id="m-worked" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Worked example: a fitness app&rsquo;s heatmap</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><strong style="color: #00205B;">The issue.</strong> A popular fitness app let users share their workouts and then published a global &ldquo;heatmap&rdquo; built from everyone&rsquo;s aggregated GPS tracks. The data was anonymized and aggregated, so the company saw little risk. But in remote areas where almost the only people exercising were soldiers, the bright lines on the otherwise dark map traced the perimeters, internal roads, and patrol routes of military sites that were not supposed to be on any public map. Analysts spotted it within days.</p>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><strong style="color: #00205B;">Principle 1.6, Respect privacy.</strong> The company treated &ldquo;aggregated and anonymized&rdquo; as equivalent to &ldquo;safe to publish.&rdquo; The privacy principle asks more than that: it calls for understanding the forms privacy can take and preventing re-identification. Here, aggregating sparse data in an empty region did not hide individuals or the pattern of their movements; it spotlighted them. Applying 1.6, the company should have evaluated whether the published product could expose sensitive patterns about identifiable groups and places, not just whether individual names were attached.</p>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;"><strong style="color: #00205B;">Principle 1.2, Avoid harm.</strong> The exposure was not merely embarrassing; it created a foreseeable physical-security risk to people at those sites. Avoiding harm requires anticipating the consequences of a design choice, including consequences the designers did not intend. A pre-release review asking &ldquo;who could be hurt if this data were read by an adversary?&rdquo; would have surfaced the risk. Applying 1.2, the responsible move was to assess and mitigate that harm, for example by excluding sparse or sensitive regions, before publishing rather than after the story broke.</p>
+      <p style="font-size: 14.5px; margin: 0 0 18px 0;"><strong style="color: #00205B;">A reasoned position.</strong> Publishing the heatmap as designed was an ethical lapse, not because the engineers acted maliciously, but because they reasoned about privacy and harm too narrowly. &ldquo;No individual is named&rdquo; is not the same as &ldquo;no one is exposed,&rdquo; and &ldquo;we did not intend harm&rdquo; is not the same as &ldquo;we took care to avoid it.&rdquo; The two principles together point to the same fix: a consequences-and-stakeholders review before release, with the public good, including the safety of people who never opted into being mapped, treated as the primary consideration. Notice that this analysis used exactly two principles, tied each to specific facts, and ended somewhere. That is the shape of a strong main post.</p>
+
+      <!-- The discussion -->
+      <h3 id="m-discussion" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">The graded discussion</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Your assessment for this lesson is a graded discussion in Blackboard, worth 40 points. It has three parts, graded together:</p>
+      <ul style="font-size: 14.5px; margin: 0 0 12px 0; padding-left: 22px;">
+        <li style="margin-bottom: 5px;">One <strong>main post</strong> of at least 300 words analyzing a computing ethics issue using <strong>exactly two</strong> ACM principles, ending in a reasoned position and a short references list.</li>
+        <li style="margin-bottom: 5px;">Two <strong>reply posts</strong> of at least 200 words each, responding substantively to two different classmates by extending, complicating, or connecting their analysis.</li>
+        <li style="margin-bottom: 0;">A <strong>documentation statement</strong> at the end of your main post describing any help you received, or stating &ldquo;None.&rdquo;</li>
+      </ul>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">The worked example above is a model for the main post: state the issue, apply two principles to the specific facts, take a position, cite your sources. Two well-developed principles beat three shallow ones.</p>
+      <div style="background: #FFF1F3; border-left: 4px solid #B8002F; padding: 12px 16px; border-radius: 3px; font-size: 14px; margin-bottom: 6px;">
+        <strong style="color: #6B0000;">Generative AI:</strong> This assignment may use an LLM only as a grammar or spell checker. It may not write your post or replies, and you must document any help you receive. Read the help and documentation policies in the discussion handout before you start.
+      </div>
+      <p style="font-size: 13.5px; color: #4A5568; margin: 8px 0 0 0;">Full instructions, the example issue list, and the point breakdown are in the
+        <!-- EDIT ME: replace href="#" with the Ethics Discussion board URL in Blackboard -->
+        <a href="#" style="color: #003087;">Ethics Discussion board</a> on Blackboard.</p>
+
+    </div>
+  </details>
+
+  <!-- ===================== 5. IN-CLASS WORK ===================== -->
+  <details id="in-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      5. In-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 16px 0;">Three things to do in class. There is no coding lab today; the graded artifact is the ethics discussion. Use the checklist to track your progress.</p>
+
+      <ul style="list-style: none; padding: 0; margin: 0 0 24px 0; font-size: 14.5px;">
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Take the ACM Code self-check below.</strong>
+          <span style="color: #4A5568;">Ten scenario questions that drill matching issues to principles, the analysis method, and the discussion rules. About 15 minutes. It ends with a score, a completion code, and a per-question recap.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Pick your issue and choose your two principles.</strong>
+          <span style="color: #4A5568;">Settle on the issue you will write about and the two ACM principles that most sharply illuminate it. Sketch, in a sentence each, how each principle connects to the facts.</span>
+        </li>
+        <li style="margin-bottom: 0; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Start drafting your main post.</strong>
+          <span style="color: #4A5568;">Begin the post in the
+            <!-- EDIT ME: replace href="#" with the Ethics Discussion board URL in Blackboard -->
+            <a href="#" style="color: #003087;">Ethics Discussion board</a>. You do not have to finish in class, but leave with a working outline. The main post is due 5 Nov, 2300.</span>
+        </li>
+      </ul>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 18px 0 10px 0;">ACM Code Self-Check</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Ten questions. Read each scenario and pick the principle or answer that fits, then click Submit. This is practice for the discussion, not a graded item, but it is the fastest way to get the Code into working memory.</p>
+
+<!-- ============================================================
+     CS210 Lesson 27 - Ethics Self-Check Quiz Widget
+     Card/slide flow: one question per card, Submit + Next/Back.
+     Score card at the end with per-question recap and two-salt
+     completion code (passing >= 70% uses _completed salt;
+     non-passing uses _incomplete salt).
+     ============================================================ -->
+<style>
+.cs210-ethics-quiz * { box-sizing: border-box; }
+.cs210-ethics-quiz {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-ethics-quiz h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-ethics-quiz .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+
+.cs210-ethics-quiz .dots {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+.cs210-ethics-quiz .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #E5E7EB;
+  border: 1px solid #C7CFD9;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.cs210-ethics-quiz .dot.current {
+  background: #003087;
+  border-color: #00205B;
+  transform: scale(1.25);
+}
+.cs210-ethics-quiz .dot.correct {
+  background: #2E7D32;
+  border-color: #1B5E20;
+}
+.cs210-ethics-quiz .dot.incorrect {
+  background: #B8002F;
+  border-color: #6B0000;
+}
+.cs210-ethics-quiz .dot.score {
+  width: 16px;
+  height: 12px;
+  border-radius: 3px;
+  background: #F0B92C;
+  border-color: #6B5300;
+}
+
+.cs210-ethics-quiz .card {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 6px;
+  padding: 22px 24px;
+  margin-bottom: 14px;
+}
+.cs210-ethics-quiz .q-label {
+  font-size: 11.5px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.cs210-ethics-quiz .q-text {
+  font-size: 15.5px;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+}
+.cs210-ethics-quiz .q-text code {
+  background: #F0F2F5;
+  padding: 1px 6px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13.5px;
+}
+.cs210-ethics-quiz pre.q-code {
+  background: #1E2A3A;
+  color: #E8EDF5;
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 0 0 16px 0;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.cs210-ethics-quiz .choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.cs210-ethics-quiz .choice {
+  display: block;
+  padding: 10px 14px;
+  border: 1px solid #C7CFD9;
+  border-radius: 4px;
+  background: #ffffff;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: inherit;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.cs210-ethics-quiz .choice:hover { background: #F5F7FA; }
+.cs210-ethics-quiz .choice.selected {
+  background: #E8EDF5;
+  border-color: #003087;
+}
+.cs210-ethics-quiz .choice.locked { cursor: default; }
+.cs210-ethics-quiz .choice.locked:hover { background: inherit; }
+.cs210-ethics-quiz .choice.correct {
+  background: #E6F4EA;
+  border-color: #2E7D32;
+  color: #1B5E20;
+  font-weight: 600;
+}
+.cs210-ethics-quiz .choice.incorrect {
+  background: #FCE7EA;
+  border-color: #B8002F;
+  color: #6B0000;
+  font-weight: 600;
+}
+.cs210-ethics-quiz .choice code {
+  background: #F0F2F5;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+}
+
+.cs210-ethics-quiz .text-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: Consolas, monospace;
+}
+.cs210-ethics-quiz .text-input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-ethics-quiz .text-input:disabled {
+  background: #F5F7FA;
+  color: #4A5568;
+}
+
+.cs210-ethics-quiz .feedback {
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  margin-bottom: 14px;
+  display: none;
+}
+.cs210-ethics-quiz .feedback.visible { display: block; }
+.cs210-ethics-quiz .feedback.correct {
+  background: #E6F4EA;
+  border-left: 4px solid #2E7D32;
+  color: #1B5E20;
+}
+.cs210-ethics-quiz .feedback.incorrect {
+  background: #FCE7EA;
+  border-left: 4px solid #B8002F;
+  color: #6B0000;
+}
+.cs210-ethics-quiz .feedback code {
+  background: rgba(255,255,255,0.6);
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+}
+
+.cs210-ethics-quiz .btn-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+.cs210-ethics-quiz .submit-btn,
+.cs210-ethics-quiz .nav-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 9px 18px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-ethics-quiz .submit-btn:hover,
+.cs210-ethics-quiz .nav-btn:hover { background: #00205B; }
+.cs210-ethics-quiz .submit-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-ethics-quiz .nav-btn.back {
+  background: #ffffff;
+  color: #003087;
+  border: 1px solid #C7CFD9;
+}
+.cs210-ethics-quiz .nav-btn.back:hover { background: #F5F7FA; color: #00205B; }
+.cs210-ethics-quiz .nav-row { display: flex; gap: 8px; }
+
+/* Score card */
+.cs210-ethics-quiz .score-card { text-align: center; }
+.cs210-ethics-quiz .score-big {
+  font-size: 48px;
+  font-weight: 700;
+  color: #003087;
+  margin: 10px 0 4px 0;
+}
+.cs210-ethics-quiz .score-card.full-correct .score-big { color: #1B5E20; }
+.cs210-ethics-quiz .score-card.passing .score-big      { color: #2E7D32; }
+.cs210-ethics-quiz .score-card.not-passing .score-big  { color: #6B0000; }
+.cs210-ethics-quiz .score-label {
+  font-size: 13px;
+  color: #6B7280;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.cs210-ethics-quiz .score-message {
+  font-size: 15px;
+  color: #4A5568;
+  margin-bottom: 18px;
+}
+.cs210-ethics-quiz .score-message.good-job {
+  color: #1B5E20;
+  font-weight: 600;
+}
+.cs210-ethics-quiz .recap {
+  text-align: left;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #E5E7EB;
+}
+.cs210-ethics-quiz .recap-title {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.cs210-ethics-quiz .recap-item {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #F0F2F5;
+}
+.cs210-ethics-quiz .recap-item:last-child { border-bottom: none; }
+.cs210-ethics-quiz .recap-icon {
+  flex: 0 0 22px;
+  font-size: 16px;
+  font-weight: 700;
+}
+.cs210-ethics-quiz .recap-icon.correct { color: #2E7D32; }
+.cs210-ethics-quiz .recap-icon.incorrect { color: #B8002F; }
+.cs210-ethics-quiz .recap-body { flex: 1; font-size: 13.5px; }
+.cs210-ethics-quiz .recap-question { color: #1a1a1a; margin-bottom: 3px; }
+.cs210-ethics-quiz .recap-explanation { color: #4A5568; font-size: 13px; }
+.cs210-ethics-quiz .recap-explanation code {
+  background: #F0F2F5;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 12.5px;
+}
+.cs210-ethics-quiz .reset-row {
+  margin-top: 18px;
+  display: flex;
+  justify-content: center;
+}
+.cs210-ethics-quiz .reset-btn {
+  background: #ffffff;
+  border: 1px solid #003087;
+  color: #003087;
+  padding: 8px 18px;
+  border-radius: 4px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-ethics-quiz .reset-btn:hover { background: #F5F7FA; }
+
+.cs210-ethics-quiz .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #4A5568;
+  margin-top: 12px;
+}
+.cs210-ethics-quiz .help-note strong { color: #00205B; }
+
+/* Completion code block on the score card */
+.cs210-ethics-quiz .code-block {
+  background: #F0F4FA;
+  border: 1px solid #003087;
+  border-radius: 4px;
+  padding: 14px 18px;
+  margin: 14px 0 6px 0;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.cs210-ethics-quiz .code-block.fail {
+  background: #FFF1F3;
+  border-color: #B8002F;
+}
+.cs210-ethics-quiz .code-block .code-left { text-align: left; }
+.cs210-ethics-quiz .code-block .code-label {
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #4A5568;
+}
+.cs210-ethics-quiz .code-block .code-value {
+  font-family: Consolas, monospace;
+  font-size: 26px;
+  font-weight: 700;
+  color: #00205B;
+  letter-spacing: 3px;
+}
+.cs210-ethics-quiz .code-block.fail .code-value { color: #6B0000; }
+.cs210-ethics-quiz .code-block .copy-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-ethics-quiz .code-block .copy-btn:hover { background: #00205B; }
+.cs210-ethics-quiz .code-block .copy-btn.copied { background: #2E7D32; }
+.cs210-ethics-quiz .code-block.fail .copy-btn { background: #6B0000; }
+.cs210-ethics-quiz .inline-code-footer {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 8px 12px;
+  border-radius: 3px;
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: #4A5568;
+  font-family: Consolas, monospace;
+}
+
+/* Name modal overlay */
+.cs210-ethics-quiz .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.cs210-ethics-quiz .name-modal {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-ethics-quiz .name-modal h2 {
+  color: #00205B;
+  font-size: 20px;
+  margin: 0 0 10px 0;
+}
+.cs210-ethics-quiz .name-modal p {
+  color: #4A5568;
+  font-size: 14px;
+  margin: 0 0 16px 0;
+}
+.cs210-ethics-quiz .name-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-ethics-quiz .name-modal input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-ethics-quiz .name-modal-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-ethics-quiz .name-modal-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-ethics-quiz .name-modal-btn:not(:disabled):hover {
+  background: #00205B;
+}
+</style>
+
+<div class="cs210-ethics-quiz">
+
+<div class="name-modal-backdrop" id="ethics-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the score card so you have a record of your work if you want to screenshot it.</p>
+    <input type="text" id="ethics-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="ethics-cadet-name-btn" disabled>Start the quiz</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 27 &middot; ACM Code Self-Check</h1>
+<div class="subtitle">Ten questions on matching computing scenarios to ACM Code principles, the analysis method, and the discussion rules. Pass at 70% or above; below that, take it again after reviewing.</div>
+
+<div class="dots" id="ethics-dots"></div>
+
+<div id="ethics-card-area"></div>
+
+<div class="help-note">
+  <strong>How this works:</strong> One question per card. Pick your answer and click Submit. Feedback appears, then click Next to move on. Answers lock once submitted, so think before you submit. After all ten, you get a score, a completion code, and a per-question recap. This is practice, not the graded discussion &mdash; it is here to get the ACM Code into working memory before you draft your post.
+</div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-ethics-quiz');
+  if (!root) return;
+
+  // ============================================================
+  // Completion code generation (two-salt scheme: pass vs. fail)
+  // ============================================================
+  const CS210_SALT_PASS = "lesson27_ethicsquiz_completed";
+  const CS210_SALT_FAIL = "lesson27_ethicsquiz_incomplete";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const PASSING_THRESHOLD = 0.70;
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE_PASS = cs210CodeFromSalt(CS210_SALT_PASS);
+  const CS210_CODE_FAIL = cs210CodeFromSalt(CS210_SALT_FAIL);
+  let cadetName = '';
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+  function cs210Copy(text) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch (e) {}
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      return true;
+    } catch (e) { return false; }
+  }
+
+  // ============================================================
+  // Name modal
+  // ============================================================
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#ethics-name-modal-backdrop');
+    const input = root.querySelector('#ethics-cadet-name-input');
+    const btn = root.querySelector('#ethics-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length > 0) {
+        // Name already known from a previous widget or visit. Skip the modal.
+        cadetName = stored.trim();
+        backdrop.style.display = 'none';
+        return;
+      }
+    } catch (e) {}
+    function updateBtn() { btn.disabled = input.value.trim().length === 0; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', () => {
+      const n = input.value.trim();
+      if (!n) return;
+      cadetName = n;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', n); } catch (e) {}
+      backdrop.style.display = 'none';
+      // Dismiss any sibling widget modals on the same page.
+      const siblings = document.querySelectorAll(
+        '#name-modal-backdrop, #bw-name-modal-backdrop, #ptrmath-name-modal-backdrop, #ethics-name-modal-backdrop'
+      );
+      siblings.forEach(function(m) { m.style.display = 'none'; });
+    });
+    setTimeout(() => { try { input.focus(); } catch (e) {} }, 50);
+  })();
+
+  // ============================================================
+  // Questions
+  // ============================================================
+  const questions = [
+    {
+      id: 'q1',
+      type: 'choice',
+      text: 'A fitness app publishes a global heatmap built from aggregated user GPS activity. Because almost no one exercises inside remote military outposts, the few bright tracks there reveal the size, layout, and patrol patterns of otherwise secret installations. Which pair of principles most directly bears on this?',
+      options: [
+        '<strong>1.6</strong> Respect privacy &nbsp;+&nbsp; <strong>1.2</strong> Avoid harm',
+        '<strong>1.5</strong> Respect the work of others &nbsp;+&nbsp; <strong>1.7</strong> Honor confidentiality',
+        '<strong>2.4</strong> Accept and provide appropriate professional review &nbsp;+&nbsp; <strong>3.3</strong> Manage personnel and resources',
+        '<strong>1.3</strong> Be honest and trustworthy &nbsp;+&nbsp; <strong>2.6</strong> Perform work only in areas of competence',
+      ],
+      correct: 0,
+      correctFeedback: 'Right. Aggregated data was published without protecting against re-identification of sensitive locations, a privacy failure (<strong>1.6</strong>), and the exposure creates real physical risk to people at those sites (<strong>1.2</strong>).',
+      incorrectFeedback: 'The strongest pair is <strong>1.6</strong> and <strong>1.2</strong>. The activity data was not protected against re-identification (privacy), and publishing it created foreseeable physical risk (avoid harm). The other principles touch the case only indirectly.',
+      shortLabel: 'Fitness heatmap exposing base layouts',
+    },
+    {
+      id: 'q2',
+      type: 'choice',
+      text: 'A risk-assessment tool used in criminal sentencing produces higher false-positive rates &mdash; labeling someone high-risk who does not go on to reoffend &mdash; for defendants of one race than another. Which single principle is most directly implicated?',
+      options: [
+        '<strong>1.6</strong> Respect privacy',
+        '<strong>1.4</strong> Be fair and take action not to discriminate',
+        '<strong>2.8</strong> Access computing resources only when authorized',
+        '<strong>3.5</strong> Create opportunities for members of the group to grow as professionals',
+      ],
+      correct: 1,
+      correctFeedback: 'Right. A system that distributes its errors unequally across racial groups is a discrimination problem. Note that <strong>1.4</strong> asks you to <em>take action</em> against discrimination, not merely to avoid intending it.',
+      incorrectFeedback: 'It is <strong>1.4</strong>. Unequal error rates across protected groups are a fairness and nondiscrimination issue, and <strong>1.4</strong> requires taking action against discrimination, not just lacking discriminatory intent.',
+      shortLabel: 'Unequal error rates in a sentencing tool',
+    },
+    {
+      id: 'q3',
+      type: 'choice',
+      text: 'A team knows its model performs poorly for one subgroup of users but ships it anyway, markets it as &ldquo;accurate for everyone,&rdquo; and discloses nothing about the limitation. Which principle does this most directly violate?',
+      options: [
+        '<strong>1.3</strong> Be honest and trustworthy',
+        '<strong>1.5</strong> Respect the work required to produce new ideas',
+        '<strong>2.2</strong> Maintain high standards of professional competence',
+        '<strong>4.1</strong> Uphold, promote, and respect the principles of the Code',
+      ],
+      correct: 0,
+      correctFeedback: 'Right. The 2018 Code&rsquo;s honesty principle explicitly covers transparency about a system&rsquo;s limitations. Hiding a known limitation while overstating accuracy is a failure of <strong>1.3</strong>.',
+      incorrectFeedback: 'It is <strong>1.3</strong>. The honesty principle in the 2018 Code calls for transparency about system limitations and capabilities. Marketing a known-flawed system as accurate for everyone is a misrepresentation.',
+      shortLabel: 'Hiding a known model limitation',
+    },
+    {
+      id: 'q4',
+      type: 'choice',
+      text: 'A company trains an automated resume screener on a decade of its own hiring decisions. It later emerges that the tool downranks applicants from certain schools and one gender, mirroring past bias &mdash; and that no one evaluated the tool for this before deployment. Which pair of principles best frames a strong analysis?',
+      options: [
+        '<strong>1.7</strong> Honor confidentiality &nbsp;+&nbsp; <strong>2.8</strong> Access resources only when authorized',
+        '<strong>1.4</strong> Be fair and take action not to discriminate &nbsp;+&nbsp; <strong>2.5</strong> Give comprehensive evaluations including possible risks',
+        '<strong>1.5</strong> Respect the work of others &nbsp;+&nbsp; <strong>3.6</strong> Use care when modifying or retiring systems',
+        '<strong>2.3</strong> Know and respect existing rules &nbsp;+&nbsp; <strong>4.2</strong> Treat violations as inconsistent with membership',
+      ],
+      correct: 1,
+      correctFeedback: 'Right. The discriminatory outcome engages <strong>1.4</strong>; the failure to evaluate the system for foreseeable bias before deploying it engages <strong>2.5</strong>, which calls for thorough evaluation of impacts and risks.',
+      incorrectFeedback: 'The strongest pair is <strong>1.4</strong> (the tool discriminates) and <strong>2.5</strong> (no one ran the risk and impact evaluation that would have caught it). <strong>2.5</strong> is what turns &ldquo;bad luck&rdquo; into a professional failure.',
+      shortLabel: 'Biased hiring tool, no risk evaluation',
+    },
+    {
+      id: 'q5',
+      type: 'choice',
+      text: 'Your main post names principle <strong>1.2</strong> (Avoid harm) for your issue. Which of these is the <em>application</em> the rubric is looking for, not just a mention?',
+      options: [
+        'Quoting the full text of <strong>1.2</strong> from the ACM site so the reader has the exact wording.',
+        'Explaining what specific harm the situation causes or risks, and what <strong>1.2</strong> implies should have been done differently.',
+        'Listing <strong>1.2</strong> alongside four other principles that also seem relevant.',
+        'Stating that you personally feel the situation was wrong.',
+      ],
+      correct: 1,
+      correctFeedback: 'Right. Applying a principle means tying it to the specific facts and drawing out what it implies for the case. Naming, quoting, or listing principles is not application.',
+      incorrectFeedback: 'Application means connecting the principle to the specific facts and saying what it implies for how the situation should be handled. Quoting, listing, or asserting a feeling does not do that work. This is exactly what the two 8-point rubric rows reward.',
+      shortLabel: 'What &ldquo;applying a principle&rdquo; means',
+    },
+    {
+      id: 'q6',
+      type: 'choice',
+      text: 'How many ACM principles should your main post analyze?',
+      options: [
+        'As many as plausibly apply &mdash; more principles means more coverage.',
+        'Exactly two, each developed in depth.',
+        'One, analyzed exhaustively.',
+        'At least three, to show breadth.',
+      ],
+      correct: 1,
+      correctFeedback: 'Right. The prompt asks for exactly two well-developed principles. Two sharp applications beat three shallow ones.',
+      incorrectFeedback: 'Exactly two, each developed in depth. The prompt is explicit that two well-developed principles are better than three shallow ones. Choose the two that most sharply illuminate your issue.',
+      shortLabel: 'How many principles in the main post',
+    },
+    {
+      id: 'q7',
+      type: 'choice',
+      text: 'Each of your two replies must be at least 200 words and substantive. Which reply clears that bar?',
+      options: [
+        '&ldquo;Strong analysis &mdash; I completely agree with your position.&rdquo;',
+        'A faithful summary of your classmate&rsquo;s post in your own words.',
+        'A reasoned counterpoint that names a case their analysis does not account for, or a new principle that applies, engaging their specific argument.',
+        'A note pointing out two typos and a citation-formatting issue.',
+      ],
+      correct: 2,
+      correctFeedback: 'Right. A substantive reply extends, complicates, or connects &mdash; and could not have been written without reading that specific post. Agreement, summary, and proofreading do not clear the bar.',
+      incorrectFeedback: 'The bar is substantive engagement: extend with a new principle, raise a reasoned counterpoint, or connect to a related case, always engaging the specifics. Agreeing, summarizing, or proofreading does not.',
+      shortLabel: 'What makes a reply substantive',
+    },
+    {
+      id: 'q8',
+      type: 'choice',
+      text: 'Under the help policy for this discussion, how may you use an LLM such as ChatGPT?',
+      options: [
+        'To draft the post, as long as you edit it afterward.',
+        'For researching your issue, but not for the replies.',
+        'Only as a grammar or spell checker. It may not write your post or replies.',
+        'Not at all, including for spelling.',
+      ],
+      correct: 2,
+      correctFeedback: 'Right. This assignment is at the GenAI policy level that limits LLMs to grammar and spell checking; they may not generate your reasoning or your prose. Document any help you receive.',
+      incorrectFeedback: 'Correct use is grammar and spell check only &mdash; an LLM may not write your post or replies. Drafting with an LLM and then editing is not permitted. Document any assistance you do receive.',
+      shortLabel: 'GenAI policy for the discussion',
+    },
+    {
+      id: 'q9',
+      type: 'choice',
+      text: 'An app tells users their data is deleted when they close their account. Internally, the company keeps that data indefinitely and uses it to train new features. Which pair of principles is most directly engaged?',
+      options: [
+        '<strong>2.6</strong> Perform work only in areas of competence &nbsp;+&nbsp; <strong>3.7</strong> Special care for systems integrated into infrastructure',
+        '<strong>1.6</strong> Respect privacy &nbsp;+&nbsp; <strong>1.3</strong> Be honest and trustworthy',
+        '<strong>1.5</strong> Respect the work of others &nbsp;+&nbsp; <strong>2.4</strong> Accept and provide professional review',
+        '<strong>3.3</strong> Manage personnel and resources &nbsp;+&nbsp; <strong>4.1</strong> Uphold the principles of the Code',
+      ],
+      correct: 1,
+      correctFeedback: 'Right. Retaining and repurposing data users believe was deleted violates privacy (<strong>1.6</strong>, which in the 2018 Code includes honoring users&rsquo; removal of their data) and is a deception (<strong>1.3</strong>).',
+      incorrectFeedback: 'The strongest pair is <strong>1.6</strong> (the 2018 privacy principle covers letting users remove their data) and <strong>1.3</strong> (telling users it was deleted when it was not is dishonest).',
+      shortLabel: 'Keeping &ldquo;deleted&rdquo; user data',
+    },
+    {
+      id: 'q10',
+      type: 'choice',
+      text: 'A single volunteer maintains a tiny open-source library that, unknown to most, sits deep inside banking, hospital, and power-grid software. Frustrated, the maintainer pushes a breaking rewrite overnight with no warning, taking down systems worldwide. Which principle most directly speaks to the responsibility this case highlights?',
+      options: [
+        '<strong>1.5</strong> Respect the work required to produce new ideas',
+        '<strong>2.8</strong> Access computing resources only when authorized',
+        '<strong>3.7</strong> Recognize and take special care of systems that become integrated into the infrastructure of society',
+        '<strong>4.2</strong> Treat violations of the Code as inconsistent with membership in ACM',
+      ],
+      correct: 2,
+      correctFeedback: 'Right. <strong>3.7</strong> was added in the 2018 Code precisely for systems that quietly become critical infrastructure. A strong companion here is <strong>3.6</strong>, use care when modifying or retiring systems.',
+      incorrectFeedback: 'It is <strong>3.7</strong>, added in the 2018 Code for systems that become woven into society&rsquo;s infrastructure. A close companion is <strong>3.6</strong>, use care when modifying or retiring systems.',
+      shortLabel: 'A tiny library holding up critical systems',
+    },
+  ];
+
+  // ============================================================
+  // State
+  // ============================================================
+  const state = questions.map(() => ({ answered: false, correct: false, choice: null, value: '' }));
+  let currentIndex = 0;
+
+  const dotsArea = root.querySelector('#ethics-dots');
+  const cardArea = root.querySelector('#ethics-card-area');
+
+  // ============================================================
+  // Rendering: dots
+  // ============================================================
+  function renderDots() {
+    dotsArea.innerHTML = '';
+    for (let i = 0; i < questions.length; i++) {
+      const d = document.createElement('div');
+      d.className = 'dot';
+      if (i === currentIndex) d.classList.add('current');
+      if (state[i].answered) {
+        d.classList.add(state[i].correct ? 'correct' : 'incorrect');
+      }
+      dotsArea.appendChild(d);
+    }
+    const scoreDot = document.createElement('div');
+    scoreDot.className = 'dot score';
+    if (currentIndex === questions.length) scoreDot.classList.add('current');
+    dotsArea.appendChild(scoreDot);
+  }
+
+  // ============================================================
+  // Rendering: question card
+  // ============================================================
+  function buildQuestionCard(i) {
+    const q = questions[i];
+    const s = state[i];
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    const label = document.createElement('div');
+    label.className = 'q-label';
+    label.textContent = 'Question ' + (i + 1) + ' of ' + questions.length;
+    card.appendChild(label);
+
+    const text = document.createElement('div');
+    text.className = 'q-text';
+    text.innerHTML = q.text;
+    card.appendChild(text);
+
+    if (q.code) {
+      const pre = document.createElement('pre');
+      pre.className = 'q-code';
+      pre.textContent = q.code;
+      card.appendChild(pre);
+    }
+
+    // Answer surface
+    let getAnswer; // closure returning chosen index (choice) or string (text)
+    if (q.type === 'choice') {
+      const choices = document.createElement('div');
+      choices.className = 'choices';
+      const buttons = [];
+      q.options.forEach((opt, idx) => {
+        const b = document.createElement('button');
+        b.className = 'choice';
+        b.innerHTML = opt;
+        b.type = 'button';
+        b.addEventListener('click', () => {
+          if (s.answered) return;
+          buttons.forEach(x => x.classList.remove('selected'));
+          b.classList.add('selected');
+          s.choice = idx;
+          submitBtn.disabled = false;
+        });
+        if (s.choice === idx) b.classList.add('selected');
+        if (s.answered) {
+          b.classList.add('locked');
+          if (idx === q.correct) b.classList.add('correct');
+          else if (idx === s.choice) b.classList.add('incorrect');
+        }
+        choices.appendChild(b);
+        buttons.push(b);
+      });
+      card.appendChild(choices);
+      getAnswer = () => s.choice;
+    } else {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'text-input';
+      input.placeholder = q.placeholder || '';
+      input.value = s.value || '';
+      input.spellcheck = false;
+      input.autocomplete = 'off';
+      input.addEventListener('input', () => {
+        if (s.answered) return;
+        s.value = input.value;
+        submitBtn.disabled = input.value.trim().length === 0;
+      });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !s.answered && input.value.trim().length > 0) {
+          e.preventDefault();
+          submitBtn.click();
+        }
+      });
+      if (s.answered) input.disabled = true;
+      card.appendChild(input);
+      getAnswer = () => input.value;
+      setTimeout(() => { try { input.focus(); } catch (e) {} }, 50);
+    }
+
+    // Feedback
+    const fb = document.createElement('div');
+    fb.className = 'feedback';
+    if (s.answered) {
+      fb.classList.add('visible');
+      fb.classList.add(s.correct ? 'correct' : 'incorrect');
+      fb.innerHTML = s.correct ? q.correctFeedback : q.incorrectFeedback;
+    }
+    card.appendChild(fb);
+
+    // Button row
+    const row = document.createElement('div');
+    row.className = 'btn-row';
+
+    const navL = document.createElement('div');
+    navL.className = 'nav-row';
+    if (i > 0) {
+      const back = document.createElement('button');
+      back.className = 'nav-btn back';
+      back.type = 'button';
+      back.innerHTML = '&larr; Back';
+      back.addEventListener('click', () => { currentIndex = i - 1; render(); });
+      navL.appendChild(back);
+    }
+    row.appendChild(navL);
+
+    const submitBtn = document.createElement('button');
+    submitBtn.type = 'button';
+    if (s.answered) {
+      submitBtn.className = 'nav-btn';
+      submitBtn.innerHTML = (i === questions.length - 1) ? 'See score &rarr;' : 'Next &rarr;';
+      submitBtn.addEventListener('click', () => { currentIndex = i + 1; render(); });
+    } else {
+      submitBtn.className = 'submit-btn';
+      submitBtn.textContent = 'Submit';
+      // Enable state
+      if (q.type === 'choice') submitBtn.disabled = (s.choice === null);
+      else submitBtn.disabled = (!s.value || s.value.trim().length === 0);
+      submitBtn.addEventListener('click', () => {
+        const ans = getAnswer();
+        let correct = false;
+        if (q.type === 'choice') {
+          correct = (ans === q.correct);
+        } else {
+          const v = q.normalize ? q.normalize(ans) : ans;
+          correct = q.correct.some(c => (q.normalize ? q.normalize(c) : c) === v);
+        }
+        s.answered = true;
+        s.correct = correct;
+        render();
+      });
+    }
+    row.appendChild(submitBtn);
+    card.appendChild(row);
+
+    return card;
+  }
+
+  // ============================================================
+  // Rendering: score card
+  // ============================================================
+  function buildScoreCard() {
+    const card = document.createElement('div');
+    card.className = 'card score-card';
+    const correctCount = state.filter(s => s.correct).length;
+    const pct = correctCount / questions.length;
+    const passed = pct >= PASSING_THRESHOLD;
+
+    if (correctCount === questions.length) card.classList.add('full-correct');
+    else if (passed) card.classList.add('passing');
+    else card.classList.add('not-passing');
+
+    const label = document.createElement('div');
+    label.className = 'q-label';
+    label.textContent = 'Quiz complete';
+    card.appendChild(label);
+
+    const msg = document.createElement('div');
+    msg.className = 'score-message';
+    if (correctCount === questions.length) {
+      msg.className = 'score-message good-job';
+      msg.textContent = 'Perfect score. You have the ACM Code at your fingertips.';
+    } else if (passed) {
+      msg.className = 'score-message good-job';
+      msg.textContent = 'Passed.';
+    } else {
+      msg.style.color = '#6B0000';
+      msg.textContent = 'Below the 70% threshold. Review and try again.';
+    }
+    card.appendChild(msg);
+
+    const scoreBig = document.createElement('div');
+    scoreBig.className = 'score-big';
+    scoreBig.textContent = correctCount + ' / ' + questions.length;
+    card.appendChild(scoreBig);
+
+    const scoreLabel = document.createElement('div');
+    scoreLabel.className = 'score-label';
+    scoreLabel.textContent = 'questions correct (' + Math.round(pct * 100) + '%)';
+    card.appendChild(scoreLabel);
+
+    // Detail message
+    const detail = document.createElement('div');
+    detail.className = 'score-message';
+    if (correctCount === questions.length) {
+      detail.textContent = 'You can match issues to principles and you know the discussion rules. You are ready to pick your issue and draft your post.';
+    } else if (passed) {
+      detail.textContent = 'You crossed the threshold. Review the questions you missed below before you start drafting.';
+    } else {
+      detail.textContent = 'Re-read the ACM Code structure and the worked example in the lesson materials, then take the quiz again. Matching issues to principles is the core skill for the discussion.';
+    }
+    card.appendChild(detail);
+
+    // Completion code block — passing vs non-passing salt
+    const code = passed ? CS210_CODE_PASS : CS210_CODE_FAIL;
+    const codeBlock = document.createElement('div');
+    codeBlock.className = 'code-block' + (passed ? '' : ' fail');
+    const left = document.createElement('div');
+    left.className = 'code-left';
+    const codeLabel = document.createElement('div');
+    codeLabel.className = 'code-label';
+    codeLabel.textContent = passed ? 'Passing code' : 'Non-passing code';
+    left.appendChild(codeLabel);
+    const codeValue = document.createElement('div');
+    codeValue.className = 'code-value';
+    codeValue.textContent = code;
+    left.appendChild(codeValue);
+    codeBlock.appendChild(left);
+    const copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.className = 'copy-btn';
+    copyBtn.textContent = 'Copy';
+    copyBtn.addEventListener('click', () => {
+      const ok = cs210Copy(code);
+      copyBtn.textContent = ok ? 'Copied!' : 'Copy failed';
+      if (ok) copyBtn.classList.add('copied');
+      setTimeout(() => { copyBtn.textContent = 'Copy'; copyBtn.classList.remove('copied'); }, 1500);
+    });
+    codeBlock.appendChild(copyBtn);
+    card.appendChild(codeBlock);
+
+    const now = new Date();
+    const pad = (n) => n.toString().padStart(2, '0');
+    const ts = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate()) +
+               ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+
+    const footer = document.createElement('div');
+    footer.className = 'inline-code-footer';
+    footer.innerHTML = '<strong>' + escapeHtml(cadetName || '(name not set)') + '</strong> &middot; ' + ts +
+                       (passed ? ' &middot; passing' : ' &middot; non-passing');
+    card.appendChild(footer);
+
+    // Recap
+    const recap = document.createElement('div');
+    recap.className = 'recap';
+    const recapTitle = document.createElement('div');
+    recapTitle.className = 'recap-title';
+    recapTitle.textContent = 'Question recap';
+    recap.appendChild(recapTitle);
+
+    state.forEach((s, i) => {
+      const item = document.createElement('div');
+      item.className = 'recap-item';
+      const icon = document.createElement('div');
+      icon.className = 'recap-icon ' + (s.correct ? 'correct' : 'incorrect');
+      icon.textContent = s.correct ? '\u2713' : '\u2717';
+      item.appendChild(icon);
+      const body = document.createElement('div');
+      body.className = 'recap-body';
+      const q = questions[i];
+      const qLine = document.createElement('div');
+      qLine.className = 'recap-question';
+      qLine.innerHTML = '<strong>Q' + (i + 1) + '.</strong> ' + q.shortLabel;
+      body.appendChild(qLine);
+      if (!s.correct) {
+        const exp = document.createElement('div');
+        exp.className = 'recap-explanation';
+        exp.innerHTML = q.incorrectFeedback;
+        body.appendChild(exp);
+      }
+      item.appendChild(body);
+      recap.appendChild(item);
+    });
+    card.appendChild(recap);
+
+    const resetRow = document.createElement('div');
+    resetRow.className = 'reset-row';
+    const resetBtn = document.createElement('button');
+    resetBtn.type = 'button';
+    resetBtn.className = 'reset-btn';
+    resetBtn.textContent = 'Take the quiz again';
+    resetBtn.addEventListener('click', reset);
+    resetRow.appendChild(resetBtn);
+    card.appendChild(resetRow);
+
+    return card;
+  }
+
+  function render() {
+    renderDots();
+    cardArea.innerHTML = '';
+    if (currentIndex >= questions.length) {
+      cardArea.appendChild(buildScoreCard());
+    } else {
+      cardArea.appendChild(buildQuestionCard(currentIndex));
+    }
+  }
+
+  function reset() {
+    state.forEach(s => { s.answered = false; s.correct = false; s.choice = null; s.value = ''; });
+    currentIndex = 0;
+    render();
+  }
+
+  // Boot
+  render();
+})();
+</script>
+
+    </div>
+  </details>
+
+  <!-- ===================== 6. AFTER CLASS ===================== -->
+  <details id="after-class" style="margin-bottom: 24px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      6. After Class
+    </summary>
+    <div style="padding: 18px 22px;">
+      <ul style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Finish and post your main post to the Ethics Discussion board. <strong>Main post due 5 Nov, 2300.</strong></li>
+        <li style="margin-bottom: 6px;">After the main-post deadline, read your classmates&rsquo; posts and write your two substantive replies. <strong>Replies due 9 Nov, 2300</strong> (both M-day and T-day sections).</li>
+        <li style="margin-bottom: 6px;">Include a documentation statement at the end of your main post. If you received no help, it must say &ldquo;None.&rdquo; Vague statements incur a deduction.</li>
+        <li style="margin-bottom: 0;">Heads up: Lesson 28 is GR3, covering Lessons 18&ndash;27. Use the review materials to prepare; there is no new reading for the next lesson.</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== HELP NOTE ===================== -->
+  <div style="background: #F5F7FA; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 3px; font-size: 13.5px; color: #4A5568;">
+    <strong style="color: #00205B;">Need help?</strong> Schedule EI with your instructor. Bring the issue you are considering and your two candidate principles, or a draft paragraph you are unsure about. The most useful question is &ldquo;here is how I applied this principle to these facts, is the reasoning sound?&rdquo; Specific drafts get specific feedback. The Resources section has the full ACM Code if you want to consult it first.
+  </div>
+
+</div>

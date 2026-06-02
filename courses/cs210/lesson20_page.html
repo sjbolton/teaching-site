@@ -1,0 +1,2769 @@
+<!-- ============================================================
+     CS210 — Lesson 20
+     Organizing Multi-file C Code
+     Self-contained: all CSS inline. Native <details> for collapsing.
+     Header File Walkthrough widget and Linker Error Diagnostic
+     quiz both embedded inline in section 5.
+     Paste into Blackboard Ultra via Document → Add HTML block.
+     ============================================================ -->
+
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 980px; margin: 0 auto; line-height: 1.6;">
+
+  <!-- ===================== LIGHT HEADER ===================== -->
+  <div style="border-left: 5px solid #003087; padding: 8px 0 8px 18px; margin-bottom: 24px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 2px;">CS210 &middot; Block 4 &middot; Lesson 20</div>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 600; color: #00205B;">Organizing Multi-file C Code</h1>
+    <div style="font-size: 14px; color: #4A5568; margin-top: 4px;">Headers and .c files &middot; The preprocessor &middot; Include guards &middot; static and visibility &middot; Reading linker errors</div>
+  </div>
+
+  <!-- ===================== AT A GLANCE ===================== -->
+  <div style="background: #F5F7FA; border-left: 4px solid #B5B7BA; padding: 14px 18px; margin-bottom: 22px; font-size: 14px;">
+    <strong style="color: #00205B;">At a glance:</strong> Your code has been growing. Today we split it across files. You learn the rules the preprocessor and linker care about, why headers look the way they do, and how to read the linker errors that show up when you get the rules wrong. The header file walkthrough in Section 5 makes the rules concrete; the lab applies all of it to a flight-statistics utility.
+  </div>
+
+  <!-- ===================== TABLE OF CONTENTS ===================== -->
+  <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 20px; margin-bottom: 24px; border-radius: 3px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Contents</div>
+    <ol style="margin: 0; padding-left: 22px; font-size: 14px;">
+      <li style="margin-bottom: 4px;"><a href="#objectives" style="color: #003087; text-decoration: none;">Lesson Objectives</a></li>
+      <li style="margin-bottom: 4px;"><a href="#readings" style="color: #003087; text-decoration: none;">Assigned Readings</a></li>
+      <li style="margin-bottom: 4px;"><a href="#pre-class" style="color: #003087; text-decoration: none;">Pre-Class Work</a></li>
+      <li style="margin-bottom: 4px;"><a href="#materials" style="color: #003087; text-decoration: none;">Lesson Materials and Overview</a></li>
+      <li style="margin-bottom: 4px;"><a href="#in-class" style="color: #003087; text-decoration: none;">In-Class Work</a></li>
+      <li style="margin-bottom: 0;"><a href="#after-class" style="color: #003087; text-decoration: none;">After Class</a></li>
+    </ol>
+  </div>
+
+  <!-- ===================== 1. OBJECTIVES ===================== -->
+  <details id="objectives" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      1. Lesson Objectives
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 10px 0; font-style: italic;">By the end of this lesson, cadets will be able to:</p>
+      <ol style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Organize a C program across multiple source and header files, with each function in the right place. <span style="color: #6B7280; font-size: 12px;">(Outcomes 2, 4)</span></li>
+        <li style="margin-bottom: 6px;">Apply include guards to prevent duplicate inclusion. <span style="color: #6B7280; font-size: 12px;">(Outcome 4)</span></li>
+        <li style="margin-bottom: 6px;">Use preprocessor directives appropriately: <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">#include</code>, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">#define</code>, conditional compilation. <span style="color: #6B7280; font-size: 12px;">(Outcome 4)</span></li>
+        <li style="margin-bottom: 6px;">Apply <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">static</code> at file scope to limit visibility of helpers. <span style="color: #6B7280; font-size: 12px;">(Outcomes 2, 4)</span></li>
+        <li style="margin-bottom: 6px;">Read four common linker errors and map each to its cause. <span style="color: #6B7280; font-size: 12px;">(Outcome 3)</span></li>
+        <li style="margin-bottom: 0;">Write at least three self-tests, each covering a different edge case, in <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">tests.c</code>. <span style="color: #6B7280; font-size: 12px;">(Outcomes 3, 7)</span></li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 2. READINGS ===================== -->
+  <details id="readings" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      2. Assigned Readings
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 12px 0;">Complete before class. These give you the vocabulary we will use in lecture.</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <thead>
+          <tr style="background: #E8EDF5; color: #00205B;">
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 130px;">Source</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9;">Sections</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 220px;">Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;"><a href="https://beej.us/guide/bgc/" style="color: #003087; text-decoration: underline;">Beej-C</a></td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Chapter 17 (Multifile Projects) sections 1 through 4</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">The canonical practical walkthrough</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 9px 12px;">Beej-C</td>
+            <td style="padding: 9px 12px;">Chapter 19 (The C Preprocessor) sections 1 through 3</td>
+            <td style="padding: 9px 12px; color: #4A5568;">#include, #define, and include guards</td>
+          </tr>
+          <tr>
+            <td style="padding: 9px 12px;">King, <em>C Programming: A Modern Approach</em></td>
+            <td style="padding: 9px 12px;">Chapter 15 (Writing Large Programs)</td>
+            <td style="padding: 9px 12px; color: #4A5568;">Optional; deeper treatment of file organization</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <!-- ===================== 3. PRE-CLASS WORK ===================== -->
+  <details id="pre-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      3. Pre-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 18px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #6B5300; font-size: 14px; margin-bottom: 4px;">Do this first</div>
+        <div style="font-size: 14px; color: #5A4B00;">Plan on 30 to 40 minutes. The reading sets up the vocabulary; the practice exercise primes you for the in-class walkthrough.</div>
+      </div>
+
+      <div style="background: #FCE7EA; border-left: 4px solid #B8002F; padding: 14px 18px; margin-bottom: 18px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #6B0000; font-size: 14px; margin-bottom: 4px;">Heads up: Quiz 7 today</div>
+        <div style="font-size: 14px; color: #6B0000;">Quiz 7 (Structs) is given at the start of class today. It covers Lessons 18 and 19. Review the struct material before you come in.</div>
+      </div>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 0 0 10px 0;">Pre-Class Checklist</h3>
+
+      <!-- Step 1: Reading -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">1</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px;">Read Beej-C Chapter 17 (Multifile Projects), sections 1 through 4</div>
+            <div style="font-size: 13.5px; color: #4A5568; margin-top: 4px;">Skim if you have read it before. Notice the words <em>declaration</em>, <em>definition</em>, <em>translation unit</em>, and <em>linker</em> &mdash; we will use all four in lecture.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Reading 2 -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">2</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px;">Read Beej-C Chapter 19 (The C Preprocessor), sections 1 through 3</div>
+            <div style="font-size: 13.5px; color: #4A5568; margin-top: 4px;">The preprocessor is a separate program from the compiler. Understanding what it does to your source before the compiler ever sees it is the prerequisite for understanding include guards.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Predict -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">3</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px;">Predict, then verify</div>
+            <div style="font-size: 13.5px; color: #4A5568; margin-top: 4px;">Take any earlier lab where your <code style="background: #F0F2F5; padding: 1px 4px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">main.c</code> has more than two helper functions. On paper, sketch how you would split that program into a <code style="background: #F0F2F5; padding: 1px 4px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">main.c</code> plus a header and a second <code style="background: #F0F2F5; padding: 1px 4px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">.c</code>. Which functions go where? Which become <code style="background: #F0F2F5; padding: 1px 4px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">static</code>? You will revise your answer in class.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ===================== 4. LESSON MATERIALS ===================== -->
+  <details id="materials" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      4. Lesson Materials and Overview
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <!-- Jump-to nav strip (Section 4 has 6 h3 subsections) -->
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 8px 14px; margin-bottom: 18px; border-radius: 3px; font-size: 12px;">
+        <span style="color: #6B7280; letter-spacing: 1px; text-transform: uppercase; font-weight: 600; margin-right: 8px;">Jump to:</span>
+        <a href="#materials-slides" style="color: #003087; text-decoration: none; margin-right: 12px;">Slides</a>
+        <a href="#materials-overview" style="color: #003087; text-decoration: none; margin-right: 12px;">Overview</a>
+        <a href="#materials-errors" style="color: #003087; text-decoration: none; margin-right: 12px;">Four errors</a>
+        <a href="#materials-vocab" style="color: #003087; text-decoration: none; margin-right: 12px;">Vocabulary</a>
+        <a href="#materials-testing" style="color: #003087; text-decoration: none; margin-right: 12px;">Testing</a>
+        <a href="#materials-standard" style="color: #003087; text-decoration: none;">Course standard</a>
+      </div>
+
+      <h3 id="materials-slides" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0;">Slide deck</h3>
+      <!-- EDIT ME: replace the href below with the Blackboard slide deck link once the deck is uploaded -->
+      <p style="font-size: 14px; margin: 0 0 18px 0;">
+        <a href="#" style="color: #003087; text-decoration: underline;">Lesson 20 slides (PDF)</a>
+        &nbsp;&middot;&nbsp; downloadable copy of the in-class deck. The slides are the spine of the in-class lecture; the header file walkthrough is where you practice the moves hands-on.
+      </p>
+
+      <h3 id="materials-overview" style="color: #00205B; font-size: 16px; margin: 16px 0 10px 0;">What this lesson is really about</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">All semester you have been writing one big <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">main.c</code>. That works for small programs. Past a few hundred lines, it starts to hurt: search slows down, recompiles get slower, you can't reuse helpers, two cadets cannot work on the same file at once.</p>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">The fix is to split. But splitting is not a mechanical chore. Every split is a design decision: <em>which</em> file does this function belong in? <em>What</em> does the header expose, and what stays private? When you make those decisions well, the next person who reads your code (which is often you, six weeks from now) finds what they need immediately.</p>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">Today's content is the rules the preprocessor and linker enforce so that splitting actually works, and the design judgment you need to apply on top of those rules.</p>
+      <p style="font-size: 14px; margin: 0;">This is functional decomposition, the same skill you have been practicing since Lesson 6, one level up. At L6 you decided which lines of <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">main</code> should become a helper function. Today you decide which helper functions belong in which file. The judgment is the same; the granularity is bigger.</p>
+
+      <h3 id="materials-errors" style="color: #00205B; font-size: 16px; margin: 18px 0 10px 0;">The four common errors</h3>
+      <p style="font-size: 14px; margin: 0 0 8px 0;">When you get the rules wrong, the linker (or compiler) tells you. There are basically four patterns to recognize:</p>
+      <ul style="font-size: 14px; margin: 0 0 12px 0; padding-left: 22px;">
+        <li style="margin-bottom: 4px;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">undefined reference</code> &mdash; the linker can't find a function's definition</li>
+        <li style="margin-bottom: 4px;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">multiple definition</code> &mdash; the linker found <em>too many</em> definitions</li>
+        <li style="margin-bottom: 4px;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">implicit declaration</code> &mdash; the compiler reached a call site with no prototype</li>
+        <li style="margin-bottom: 0;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">conflicting types</code> &mdash; the prototype and the definition disagree</li>
+      </ul>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">Each of these has a different fix, and learning to map error&nbsp;&rarr;&nbsp;cause is the diagnostic skill we are after today. The <a href="./linker_error_reference.html" style="color: #003087; text-decoration: underline;">linker error reference card</a> walks through all four patterns with worked examples. Keep it open while you work the lab.</p>
+
+      <h3 id="materials-vocab" style="color: #00205B; font-size: 16px; margin: 18px 0 10px 0;">Vocabulary that will appear in lecture</h3>
+      <table style="width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 6px;">
+        <tbody>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; width: 200px; font-family: Consolas, monospace; color: #00205B; vertical-align: top;">declaration</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">A promise: "a function (or variable) named X exists somewhere with this signature." Lives in headers.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; color: #00205B; vertical-align: top;">definition</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">The body. Lives in a .c. There must be exactly one definition per non-static function.</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; color: #00205B; vertical-align: top;">translation unit</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">One .c file plus every header it includes, fully expanded by the preprocessor. The compiler eats one of these at a time.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; color: #00205B; vertical-align: top;">linker</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">The program that runs after the compiler and stitches your .o files together into one executable. Most multi-file errors come from the linker, not the compiler.</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; color: #00205B; vertical-align: top;">include guard</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">An <code>#ifndef / #define / #endif</code> wrapper around a header that prevents it from being pasted twice into the same translation unit.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; font-family: Consolas, monospace; color: #00205B; vertical-align: top;">static (at file scope)</td>
+            <td style="padding: 8px 12px; color: #4A5568;">Marks a function as private to its .c. The linker will refuse to let other files call it.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 id="materials-testing" style="color: #00205B; font-size: 16px; margin: 22px 0 10px 0;">Writing your own tests</h3>
+      <p style="font-size: 14px; margin: 0 0 10px 0;">Today's lab is the first lesson where you write your own test cases, not just consume the autograder's. Your <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">tests.c</code> file lives alongside <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">main.c</code> and your stats module and builds as its own executable. Each test you write needs a one-line comment naming the edge case it covers and why it matters.</p>
+      <p style="font-size: 14px; margin: 0;">We start the habit here in L20; Lesson 26 (Test Planning and Unit Testing) teaches it formally. The goal today is not perfect coverage; it is the shift from "the autograder tests me" to "I test my code."</p>
+
+      <h3 id="materials-standard" style="color: #00205B; font-size: 16px; margin: 22px 0 10px 0;">DFCS C Programming Standard</h3>
+      <p style="font-size: 14px; margin: 0 0 10px 0;">Today's lesson is the first contact with five sections of the DFCS C Programming Standard. These rules apply to your code from this lesson forward.</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 13.5px; margin: 0 0 12px 0;">
+        <tbody>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; width: 80px; font-family: Consolas, monospace; color: #00205B; font-weight: 600; vertical-align: top;">&sect;1.2</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Header file structure: comment block, then guard, then includes, then defines, then typedefs, then prototypes.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; color: #00205B; font-weight: 600; vertical-align: top;">&sect;4.1</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Every header file has an include guard. Macro name is the filename in CAPS with underscores for dots.</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; color: #00205B; font-weight: 600; vertical-align: top;">&sect;4.2</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Include only what you use. Reference a symbol, include the header that declares it directly. No transitive includes.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; color: #00205B; font-weight: 600; vertical-align: top;">&sect;2.1</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Comment header block on every file, including .h files.</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; font-family: Consolas, monospace; color: #00205B; font-weight: 600; vertical-align: top;">&sect;2.2</td>
+            <td style="padding: 8px 12px; color: #4A5568;">Function header blocks in .h files: each prototype gets @brief, @param, @return comments directly above it.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="font-size: 13px; color: #4A5568; margin: 0; font-style: italic;">The full standard is in the Resources section on Blackboard. The lab autograder does not mechanically check these sections, but they are enforced for the rest of the course and surface on every quiz and GR from this point.</p>
+    </div>
+  </details>
+
+  <!-- ===================== 5. IN-CLASS WORK ===================== -->
+  <details id="in-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      5. In-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 0 0 8px 0;">Today's flow</h3>
+      <ol style="font-size: 14px; margin: 0 0 18px 0; padding-left: 22px;">
+        <li style="margin-bottom: 4px;"><strong style="color: #B8002F;">Quiz 7 (Structs)</strong> &mdash; 20-minute quiz at the start of class, covering Lessons 18 and 19.</li>
+        <li style="margin-bottom: 4px;">Lecture: declarations vs definitions, what the preprocessor does, the four linker errors.</li>
+        <li style="margin-bottom: 4px;">Header file walkthrough widget (below). Work through it at your own pace.</li>
+        <li style="margin-bottom: 4px;">Linker error diagnostic quiz (below). Six error blocks; identify the cause.</li>
+        <li style="margin-bottom: 4px;"><!-- EDIT ME: replace href below with the GitHub Classroom invite link --><a href="#" style="color: #003087; text-decoration: underline;">Lab 20 (GitHub Classroom)</a> &mdash; start in class, finish at home if needed.</li>
+        <li style="margin-bottom: 0;">Lesson 20 reflection on Blackboard before the next class.</li>
+      </ol>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 18px 0 10px 0;">Header File Walkthrough</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">A nine-task walkthrough where you organize a small multi-file project. Each command edits the project tree on the right; the errors panel below shows what the linker would say about your current layout. By the end, the errors panel should be clean.</p>
+
+      <!-- WIDGET 1: HEADER FILE WALKTHROUGH -->
+<!-- ============================================================
+     CS210 Lesson 20 - Header File Walkthrough Widget
+     Terminal pane (left) + project tree + errors panel (right).
+     Cadet types commands to organize a multi-file C project:
+     move definitions, add include guards, mark static, fix
+     globals in headers. A small static analyzer recomputes
+     build errors after every command.
+     Template-aligned style. Native HTML/CSS + scoped JS.
+     ============================================================ -->
+<style>
+.cs210-headerfile * { box-sizing: border-box; }
+.cs210-headerfile {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-headerfile h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-headerfile .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 22px;
+}
+.cs210-headerfile .progress-bar {
+  background: #E5E7EB;
+  border-radius: 3px;
+  height: 8px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.cs210-headerfile .progress-fill {
+  background: #003087;
+  height: 100%;
+  transition: width 0.3s ease;
+}
+.cs210-headerfile .progress-label {
+  font-size: 12px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-headerfile .section-header {
+  background: #E8EDF5;
+  color: #00205B;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.cs210-headerfile .task-card {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  border-radius: 3px;
+}
+.cs210-headerfile .task-card.complete {
+  background: #E6F4EA;
+  border-left-color: #2E7D32;
+}
+.cs210-headerfile .task-label {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B5300;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.cs210-headerfile .task-card.complete .task-label { color: #1B5E20; }
+.cs210-headerfile .task-text {
+  font-size: 15px;
+  color: #1a1a1a;
+}
+.cs210-headerfile .task-hint {
+  font-size: 12.5px;
+  color: #6B7280;
+  margin-top: 6px;
+  font-style: italic;
+}
+
+/* Two-pane area: terminal left, project tree right */
+.cs210-headerfile .panes {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+@media (max-width: 760px) {
+  .cs210-headerfile .panes { grid-template-columns: 1fr; }
+}
+.cs210-headerfile .terminal {
+  background: #1E2A3A;
+  color: #E8EDF5;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13.5px;
+  line-height: 1.5;
+  border-radius: 4px;
+  padding: 14px 18px;
+  min-height: 420px;
+  max-height: 460px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.cs210-headerfile .terminal .prompt { color: #7FB3D5; }
+.cs210-headerfile .terminal .typed { color: #FFFFFF; }
+.cs210-headerfile .terminal .out { color: #B5BEC8; }
+.cs210-headerfile .terminal .note { color: #F0B92C; }
+.cs210-headerfile .terminal .err { color: #F47A7A; }
+.cs210-headerfile .terminal .ok { color: #7FD17F; }
+.cs210-headerfile .terminal .dim { color: #6B7280; }
+
+/* Right pane: project tree + errors */
+.cs210-headerfile .right-pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 420px;
+  max-height: 460px;
+}
+.cs210-headerfile .project-tree {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  padding: 12px 14px;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  margin-bottom: 8px;
+}
+.cs210-headerfile .pane-title {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #E5E7EB;
+}
+.cs210-headerfile .file-row {
+  padding: 7px 8px;
+  margin-bottom: 4px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: #F8FAFC;
+  transition: background 0.6s ease, border-color 0.6s ease;
+}
+.cs210-headerfile .file-row.flash {
+  background: #FFF8E1;
+  border-color: #F0B92C;
+}
+.cs210-headerfile .file-name {
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  color: #00205B;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.cs210-headerfile .file-name .tag {
+  font-size: 10px;
+  color: #6B7280;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.cs210-headerfile .file-detail {
+  font-size: 11.5px;
+  color: #4A5568;
+  font-family: Consolas, monospace;
+  margin-top: 3px;
+  padding-left: 4px;
+  line-height: 1.45;
+}
+.cs210-headerfile .file-detail .kw {
+  color: #B8002F;
+  font-weight: 600;
+}
+.cs210-headerfile .file-detail .ok {
+  color: #2E7D32;
+}
+.cs210-headerfile .file-detail .static-tag {
+  color: #8B5A00;
+  font-style: italic;
+}
+
+/* Errors subpanel */
+.cs210-headerfile .errors-panel {
+  background: #FCE7EA;
+  border: 1px solid #B8002F;
+  border-radius: 4px;
+  padding: 10px 12px;
+  flex: 0 0 auto;
+  max-height: 140px;
+  overflow-y: auto;
+}
+.cs210-headerfile .errors-panel.clean {
+  background: #E6F4EA;
+  border-color: #2E7D32;
+}
+.cs210-headerfile .errors-panel .pane-title {
+  color: #6B0000;
+  border-bottom-color: rgba(184, 0, 47, 0.25);
+}
+.cs210-headerfile .errors-panel.clean .pane-title {
+  color: #1B5E20;
+  border-bottom-color: rgba(46, 125, 50, 0.25);
+}
+.cs210-headerfile .err-item {
+  font-family: Consolas, monospace;
+  font-size: 12px;
+  color: #6B0000;
+  padding: 3px 0;
+  border-bottom: 1px solid rgba(184, 0, 47, 0.15);
+}
+.cs210-headerfile .err-item:last-child { border-bottom: none; }
+.cs210-headerfile .err-item .err-kind {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  font-size: 10px;
+  background: #B8002F;
+  color: #ffffff;
+  padding: 1px 5px;
+  border-radius: 2px;
+  margin-right: 5px;
+}
+.cs210-headerfile .errors-panel.clean .no-errors {
+  color: #1B5E20;
+  font-size: 12.5px;
+  font-style: italic;
+}
+
+.cs210-headerfile .input-row {
+  display: flex;
+  background: #1E2A3A;
+  border-radius: 4px;
+  padding: 8px 14px;
+  margin-bottom: 14px;
+  border: 1px solid #003087;
+}
+.cs210-headerfile .input-prompt {
+  color: #7FB3D5;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  margin-right: 8px;
+  align-self: center;
+  white-space: nowrap;
+}
+.cs210-headerfile .input-row input {
+  flex: 1;
+  background: transparent;
+  color: #FFFFFF;
+  border: none;
+  outline: none;
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  padding: 4px 0;
+}
+.cs210-headerfile .controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.cs210-headerfile .btn {
+  background: #ffffff;
+  border: 1px solid #C7CFD9;
+  padding: 6px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #00205B;
+  font-family: inherit;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.cs210-headerfile .btn:hover { background: #F5F7FA; }
+@keyframes cs210-headerfile-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(240, 185, 44, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0); }
+}
+.cs210-headerfile .btn.pulse {
+  background: #FFF8E1;
+  border-color: #F0B92C;
+  color: #6B5300;
+  font-weight: 600;
+  animation: cs210-headerfile-pulse 1.5s infinite;
+}
+.cs210-headerfile .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #4A5568;
+  margin-top: 12px;
+}
+.cs210-headerfile .help-note strong { color: #00205B; }
+
+/* Name modal (matches the cmem reference) */
+.cs210-headerfile .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.cs210-headerfile .name-modal {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-headerfile .name-modal h2 {
+  color: #00205B;
+  font-size: 20px;
+  margin: 0 0 10px 0;
+}
+.cs210-headerfile .name-modal p {
+  color: #4A5568;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+.cs210-headerfile .name-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-headerfile .name-modal input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-headerfile .name-modal-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-headerfile .name-modal-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-headerfile .name-modal-btn:not(:disabled):hover {
+  background: #00205B;
+}
+
+/* Completion screen */
+.cs210-headerfile .completion-screen {
+  background: #ffffff;
+  border: 2px solid #2E7D32;
+  border-radius: 6px;
+  padding: 24px 28px;
+  margin-top: 16px;
+}
+.cs210-headerfile .completion-screen .cs-heading {
+  color: #1B5E20;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 6px 0;
+}
+.cs210-headerfile .completion-screen .cs-name-line {
+  font-size: 15px;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+}
+.cs210-headerfile .completion-screen .cs-name-line strong {
+  color: #00205B;
+}
+.cs210-headerfile .completion-screen .cs-code-block {
+  background: #F0F4FA;
+  border: 1px solid #003087;
+  border-radius: 4px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.cs210-headerfile .completion-screen .cs-code-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #4A5568;
+  margin-bottom: 4px;
+}
+.cs210-headerfile .completion-screen .cs-code-value {
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 28px;
+  font-weight: 700;
+  color: #00205B;
+  letter-spacing: 3px;
+}
+.cs210-headerfile .completion-screen .cs-copy-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-headerfile .completion-screen .cs-copy-btn:hover { background: #00205B; }
+.cs210-headerfile .completion-screen .cs-copy-btn.copied { background: #2E7D32; }
+.cs210-headerfile .completion-screen .cs-timestamp {
+  font-size: 13px;
+  color: #6B7280;
+  margin-bottom: 18px;
+}
+.cs210-headerfile .completion-screen .cs-reminder {
+  background: #FFF8E1;
+  border-left: 4px solid #F0B92C;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 14px;
+  color: #6B5300;
+  line-height: 1.5;
+}
+.cs210-headerfile .completion-screen .cs-reminder strong { color: #4A3A00; }
+</style>
+
+<div class="cs210-headerfile">
+
+<div class="name-modal-backdrop" id="headerfile-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Blackboard reflection.</p>
+    <input type="text" id="headerfile-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="headerfile-cadet-name-btn" disabled>Start the walkthrough</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 20 &middot; Header File Walkthrough</h1>
+<div class="subtitle">Organize a small multi-file project. Type commands at the prompt to move declarations, add include guards, and mark helpers <code>static</code>. The errors panel on the right shows what the linker would say about your current layout.</div>
+
+<div class="progress-bar"><div class="progress-fill" id="hf-progress-fill" style="width: 0%;"></div></div>
+<div class="progress-label" id="hf-progress-label">Task 0 of 9</div>
+
+<div class="section-header" id="hf-section-header">Section 1: Declarations vs definitions</div>
+
+<div class="task-card" id="hf-task-card">
+  <div class="task-label" id="hf-task-label">Current task</div>
+  <div class="task-text" id="hf-task-text">Loading...</div>
+  <div class="task-hint" id="hf-task-hint"></div>
+</div>
+
+<div class="panes">
+  <div class="terminal" id="hf-terminal"></div>
+  <div class="right-pane">
+    <div class="project-tree" id="hf-project-tree">
+      <div class="pane-title">Project: stats/</div>
+      <div id="hf-tree-area"></div>
+    </div>
+    <div class="errors-panel" id="hf-errors-panel">
+      <div class="pane-title">Build errors</div>
+      <div id="hf-errors-area"></div>
+    </div>
+  </div>
+</div>
+
+<div class="input-row">
+  <span class="input-prompt">header&gt;</span>
+  <input type="text" id="hf-cli-input" autocomplete="off" spellcheck="false" placeholder="follow the task above">
+</div>
+
+<div class="controls">
+  <button class="btn" id="hf-hint-btn">Show hint</button>
+  <button class="btn" id="hf-reset-btn">Reset</button>
+  <button class="btn" id="hf-help-btn">List commands</button>
+</div>
+
+<div class="help-note">
+  <strong>How this works:</strong> This is not a Linux shell. It is a teaching tool that simulates how multi-file C projects compile and link. Type a command, and the project tree updates while a small static analyzer recomputes what errors the linker would report. The task card tells you what to do next; the errors panel tells you what to fix.
+</div>
+
+<div id="hf-completion-area"></div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-headerfile');
+  if (!root) return;
+
+  // ============================================================
+  // CS210 widget completion utilities (single-salt walkthrough)
+  // ============================================================
+  const CS210_SALT = "lesson20_headerfile_walkthrough_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cadetName = '';
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  // ============================================================
+  // Name modal
+  // ============================================================
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#headerfile-name-modal-backdrop');
+    const input = root.querySelector('#headerfile-cadet-name-input');
+    const btn = root.querySelector('#headerfile-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length >= 2) {
+        cadetName = stored.trim();
+        backdrop.style.display = 'none';
+        return;
+      }
+    } catch (e) {}
+    function updateBtn() { btn.disabled = input.value.trim().length < 2; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', () => {
+      const n = input.value.trim();
+      if (n.length < 2) return;
+      cadetName = n;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', n); } catch (e) {}
+      backdrop.style.display = 'none';
+      const siblings = document.querySelectorAll(
+        '#name-modal-backdrop, #bw-name-modal-backdrop, #ptrmath-name-modal-backdrop, #duality-name-modal-backdrop, #linkerror-name-modal-backdrop'
+      );
+      siblings.forEach(m => { m.style.display = 'none'; });
+      const cli = root.querySelector('#hf-cli-input');
+      if (cli) cli.focus();
+    });
+    setTimeout(() => { try { input.focus(); } catch (e) {} }, 50);
+  })();
+
+  // ============================================================
+  // PROJECT MODEL
+  // Each file is { kind, lines:[...] }; lines have a type tag so the
+  // static analyzer can compute errors without parsing C properly.
+  // line types: 'include' {target}, 'guard_start' {macro}, 'guard_end' {macro},
+  //   'prototype' {name, signature}, 'definition' {name, signature, isStatic, body},
+  //   'global_def' {name, type, value}, 'global_extern' {name, type},
+  //   'call' {name}, 'comment' {text}, 'pragma' {text}
+  // ============================================================
+  function defaultProject() {
+    return {
+      "main.c": { kind: "source", lines: [
+        { type: "include", target: "stats.h" },
+        { type: "include", target: "units.h" },
+        { type: "include", target: "stdio.h", system: true },
+        { type: "definition", name: "main", signature: "int main(void)", isStatic: false, body: "double m = compute_mean(values, n);" },
+        { type: "call", name: "compute_mean" },
+        { type: "call", name: "compute_max" },
+      ]},
+      "stats.c": { kind: "source", lines: [
+        { type: "include", target: "stats.h" },
+        { type: "definition", name: "compute_max", signature: "double compute_max(double *arr, int n)", isStatic: false },
+        { type: "definition", name: "normalize", signature: "double normalize(double v)", isStatic: false },
+      ]},
+      "stats.h": { kind: "header", lines: [
+        // NOTE: starting "buggy" state -- compute_mean's body is in the header!
+        { type: "definition", name: "compute_mean", signature: "double compute_mean(double *arr, int n)", isStatic: false, body: "/* body */" },
+        { type: "prototype", name: "compute_max", signature: "double compute_max(double *arr, int n)" },
+      ]},
+      "units.h": { kind: "header", lines: [
+        { type: "comment", text: "constants for unit conversions" },
+      ]},
+      "units.c": { kind: "source", lines: [
+        { type: "include", target: "units.h" },
+      ]},
+      "Makefile": { kind: "make", lines: [
+        { type: "comment", text: "sources: main.c stats.c units.c" },
+      ]},
+    };
+  }
+
+  let project = defaultProject();
+  let currentTaskIndex = 0;
+  let consecutiveFails = 0;
+  let snapshot = null; // for `simulate without ...` / `restore`
+
+  // ============================================================
+  // Helpers on the project model
+  // ============================================================
+  function fileExists(name) { return Object.prototype.hasOwnProperty.call(project, name); }
+  function lines(f) { return project[f].lines; }
+  function findLineIndex(file, predicate) { return lines(file).findIndex(predicate); }
+  function findDefinition(file, name) {
+    return lines(file).find(l => l.type === "definition" && l.name === name);
+  }
+  function findPrototype(file, name) {
+    return lines(file).find(l => l.type === "prototype" && l.name === name);
+  }
+  function findGuardStart(file) {
+    return lines(file).find(l => l.type === "guard_start");
+  }
+  function findGlobalDef(file, name) {
+    return lines(file).find(l => l.type === "global_def" && l.name === name);
+  }
+  function findGlobalExtern(file, name) {
+    return lines(file).find(l => l.type === "global_extern" && l.name === name);
+  }
+
+  // Add to end of file
+  function appendLine(file, line) { lines(file).push(line); }
+  // Add at beginning (top of file)
+  function prependLine(file, line) { lines(file).unshift(line); }
+  // Remove first match
+  function removeLine(file, predicate) {
+    const idx = lines(file).findIndex(predicate);
+    if (idx !== -1) lines(file).splice(idx, 1);
+    return idx !== -1;
+  }
+
+  // ============================================================
+  // Static analyzer: walks the project model and produces errors.
+  // We compute, per .c file, what symbols are visible (via includes
+  // recursively, with guard logic) and what gets defined when the
+  // .c file is compiled. Then we look across all object files at
+  // link time for undefined refs and multiple definitions.
+  // ============================================================
+  function analyze() {
+    const errors = [];
+
+    // Resolve included files transitively. Return list of file names included.
+    function resolveIncludes(file, seen) {
+      seen = seen || new Set();
+      const result = [];
+      for (const l of lines(file)) {
+        if (l.type === "include" && !l.system) {
+          if (!fileExists(l.target)) continue;
+          // Header guards: if the included header has a guard, it can only
+          // contribute once per translation unit. We approximate that simply.
+          if (seen.has(l.target)) continue;
+          seen.add(l.target);
+          result.push(l.target);
+          result.push(...resolveIncludes(l.target, seen));
+        }
+      }
+      return result;
+    }
+
+    // For each .c file (translation unit), compute the set of definitions
+    // it emits to its .o file, and the set of declarations visible during
+    // compilation (used for implicit-declaration / conflicting-types).
+    const objectFiles = {}; // name -> {definitions: [{symbol, kind, file}], globals: [...]}
+    const sourceFiles = Object.keys(project).filter(f => project[f].kind === "source");
+
+    for (const sf of sourceFiles) {
+      const included = [sf, ...resolveIncludes(sf)];
+      const visibleProtos = {}; // name -> signature (last seen wins)
+      const emittedDefs = []; // {symbol, kind, originFile, isStatic}
+      const emittedGlobals = []; // {symbol, originFile}
+      const callsMade = new Set();
+
+      for (const fname of included) {
+        if (!fileExists(fname)) continue;
+        for (const l of lines(fname)) {
+          if (l.type === "prototype") {
+            // Check for conflicting types with anything else we've seen
+            if (visibleProtos[l.name] && visibleProtos[l.name] !== l.signature) {
+              errors.push({
+                kind: "conflicting_types",
+                symbol: l.name,
+                file: sf,
+                detail: "prototype in " + fname + " disagrees with earlier declaration",
+              });
+            }
+            visibleProtos[l.name] = l.signature;
+          } else if (l.type === "definition") {
+            // A definition seen in any included file means a body lives there.
+            // We only emit it to *this* object file if it came from this .c
+            // OR from an included header (which would cause multi-def at link).
+            const fromThisC = (fname === sf);
+            const fromHeader = (project[fname].kind === "header");
+            if (fromThisC) {
+              emittedDefs.push({ symbol: l.name, originFile: fname, isStatic: !!l.isStatic, signature: l.signature });
+            } else if (fromHeader) {
+              // The body in the header gets copied into THIS .o
+              emittedDefs.push({ symbol: l.name, originFile: fname, isStatic: !!l.isStatic, signature: l.signature, viaHeader: true });
+            }
+            // Check signature against prior visible prototype
+            if (visibleProtos[l.name] && visibleProtos[l.name] !== l.signature) {
+              errors.push({
+                kind: "conflicting_types",
+                symbol: l.name,
+                file: sf,
+                detail: "definition in " + fname + " disagrees with prototype",
+              });
+            } else {
+              // The definition itself counts as a declaration.
+              visibleProtos[l.name] = l.signature;
+            }
+          } else if (l.type === "global_def") {
+            emittedGlobals.push({ symbol: l.name, originFile: fname, type: l.type_, viaHeader: project[fname].kind === "header" });
+          } else if (l.type === "global_extern") {
+            // Declaration only; no symbol emitted
+          } else if (l.type === "call") {
+            // Calls only matter inside the .c (not in included headers)
+            if (fname === sf) callsMade.add(l.name);
+          }
+        }
+      }
+      // Implicit declaration: a call to a function with no visible prototype OR definition.
+      for (const callName of callsMade) {
+        if (!visibleProtos[callName]) {
+          errors.push({
+            kind: "implicit_declaration",
+            symbol: callName,
+            file: sf,
+            detail: "no prototype visible at the call site",
+          });
+        }
+      }
+      objectFiles[sf] = { definitions: emittedDefs, globals: emittedGlobals, calls: callsMade };
+    }
+
+    // Linker stage: for every symbol called from anywhere, is there exactly
+    // one non-static definition emitted across all object files?
+    // First gather all calls and all definitions.
+    const allDefs = {}; // symbol -> list of {file, isStatic, viaHeader}
+    const allGlobalDefs = {}; // symbol -> list of {file, viaHeader}
+    const allCalls = new Set();
+    for (const sf of sourceFiles) {
+      for (const d of objectFiles[sf].definitions) {
+        const fileDefList = (allDefs[d.symbol] = allDefs[d.symbol] || []);
+        fileDefList.push({ file: sf, isStatic: d.isStatic, viaHeader: d.viaHeader, originFile: d.originFile });
+      }
+      for (const g of objectFiles[sf].globals) {
+        const list = (allGlobalDefs[g.symbol] = allGlobalDefs[g.symbol] || []);
+        list.push({ file: sf, viaHeader: g.viaHeader, originFile: g.originFile });
+      }
+      for (const c of objectFiles[sf].calls) allCalls.add(c);
+    }
+
+    // multiple_definition: more than one non-static definition across object files
+    for (const sym of Object.keys(allDefs)) {
+      const nonStatic = allDefs[sym].filter(d => !d.isStatic);
+      if (nonStatic.length > 1) {
+        // Already emitted as part of a header body case? Identify the cause.
+        const viaHeader = nonStatic.some(d => d.viaHeader);
+        errors.push({
+          kind: "multiple_definition",
+          symbol: sym,
+          detail: viaHeader
+            ? "body lives in a header that is included from multiple .c files"
+            : "defined in " + nonStatic.map(d => d.originFile).join(" and "),
+        });
+      }
+    }
+    for (const sym of Object.keys(allGlobalDefs)) {
+      const all = allGlobalDefs[sym];
+      if (all.length > 1) {
+        const viaHeader = all.some(d => d.viaHeader);
+        errors.push({
+          kind: "multiple_definition",
+          symbol: sym,
+          detail: viaHeader
+            ? "global defined in a header that is included from multiple .c files"
+            : "global defined in " + all.map(d => d.originFile).join(" and "),
+        });
+      }
+    }
+
+    // undefined_reference: a call with no matching non-static definition
+    // visible to that translation unit's link step.
+    for (const sf of sourceFiles) {
+      for (const c of objectFiles[sf].calls) {
+        // Find any non-static def OR a static def in this same .c
+        const defs = allDefs[c] || [];
+        const reachable = defs.find(d => !d.isStatic || d.file === sf);
+        if (!reachable) {
+          // Distinguish from implicit_declaration (already emitted if no proto)
+          // To avoid double-reporting, only emit undefined_reference if a
+          // prototype WAS visible (so it compiled). We re-derive visibility:
+          const included = [sf];
+          const seenInc = new Set();
+          (function walk(file) {
+            for (const l of lines(file)) {
+              if (l.type === "include" && !l.system) {
+                if (seenInc.has(l.target)) continue;
+                seenInc.add(l.target);
+                if (fileExists(l.target)) { included.push(l.target); walk(l.target); }
+              }
+            }
+          })(sf);
+          let hadProto = false;
+          for (const f of included) {
+            for (const l of lines(f)) {
+              if ((l.type === "prototype" || l.type === "definition") && l.name === c) { hadProto = true; break; }
+            }
+            if (hadProto) break;
+          }
+          if (hadProto) {
+            errors.push({
+              kind: "undefined_reference",
+              symbol: c,
+              file: sf,
+              detail: "prototype visible but no non-static definition reaches the linker",
+            });
+          }
+        }
+        // Static-from-other-file violation
+        if (defs.length && defs.every(d => d.isStatic && d.file !== sf)) {
+          errors.push({
+            kind: "undefined_reference",
+            symbol: c,
+            file: sf,
+            detail: c + " is static in " + defs[0].originFile + " and not visible from " + sf,
+          });
+        }
+      }
+    }
+
+    return errors;
+  }
+
+  // ============================================================
+  // Render: project tree
+  // ============================================================
+  function fileStructuralSummary(name) {
+    const f = project[name];
+    const protos = lines(name).filter(l => l.type === "prototype").map(l => l.name);
+    const defs = lines(name).filter(l => l.type === "definition");
+    const includes = lines(name).filter(l => l.type === "include").map(l => l.target);
+    const guard = findGuardStart(name);
+    const globalsDef = lines(name).filter(l => l.type === "global_def").map(l => l.name);
+    const globalsExt = lines(name).filter(l => l.type === "global_extern").map(l => l.name);
+
+    const parts = [];
+    if (includes.length) parts.push('<div class="file-detail">includes: ' + includes.join(", ") + '</div>');
+    if (f.kind === "header") {
+      if (guard) {
+        parts.push('<div class="file-detail"><span class="ok">guard: ' + escapeHtml(guard.macro) + '</span></div>');
+      } else {
+        parts.push('<div class="file-detail"><span class="kw">no include guard</span></div>');
+      }
+    }
+    if (protos.length) parts.push('<div class="file-detail">prototypes: ' + protos.join(", ") + '</div>');
+    if (defs.length) {
+      const labelParts = defs.map(d => {
+        if (d.isStatic) return d.name + ' <span class="static-tag">(static)</span>';
+        // A definition in a header is a bug; highlight it.
+        if (f.kind === "header") return '<span class="kw">' + d.name + ' (body in header!)</span>';
+        return d.name;
+      });
+      parts.push('<div class="file-detail">defines: ' + labelParts.join(", ") + '</div>');
+    }
+    if (globalsDef.length) {
+      const tagged = globalsDef.map(n => {
+        if (f.kind === "header") return '<span class="kw">' + n + ' (global in header!)</span>';
+        return n;
+      });
+      parts.push('<div class="file-detail">global defs: ' + tagged.join(", ") + '</div>');
+    }
+    if (globalsExt.length) parts.push('<div class="file-detail">extern decls: ' + globalsExt.join(", ") + '</div>');
+    return parts.join('');
+  }
+  function fileTag(kind) {
+    if (kind === "source") return "source";
+    if (kind === "header") return "header";
+    if (kind === "make") return "make";
+    return kind;
+  }
+  function renderTree(flashFiles) {
+    const area = root.querySelector('#hf-tree-area');
+    area.innerHTML = '';
+    const files = Object.keys(project).sort();
+    for (const fname of files) {
+      const f = project[fname];
+      const row = document.createElement('div');
+      row.className = 'file-row';
+      if (flashFiles && flashFiles.indexOf(fname) !== -1) row.classList.add('flash');
+      row.dataset.file = fname;
+      const fileLineCount = lines(fname).length;
+      const nameRow = document.createElement('div');
+      nameRow.className = 'file-name';
+      nameRow.innerHTML = '<span>' + escapeHtml(fname) + '</span><span class="tag">' + fileTag(f.kind) + ' &middot; ' + fileLineCount + ' line' + (fileLineCount !== 1 ? 's' : '') + '</span>';
+      row.appendChild(nameRow);
+      const summary = document.createElement('div');
+      summary.innerHTML = fileStructuralSummary(fname);
+      row.appendChild(summary);
+      area.appendChild(row);
+    }
+    // clear flash after ~700ms
+    if (flashFiles && flashFiles.length) {
+      setTimeout(() => {
+        area.querySelectorAll('.file-row.flash').forEach(r => r.classList.remove('flash'));
+      }, 700);
+    }
+  }
+
+  // ============================================================
+  // Render: errors panel
+  // ============================================================
+  function renderErrors(errors) {
+    const panel = root.querySelector('#hf-errors-panel');
+    const area = root.querySelector('#hf-errors-area');
+    area.innerHTML = '';
+    if (!errors || errors.length === 0) {
+      panel.classList.add('clean');
+      area.innerHTML = '<div class="no-errors">No build errors. The project links cleanly.</div>';
+      return;
+    }
+    panel.classList.remove('clean');
+    for (const e of errors) {
+      const item = document.createElement('div');
+      item.className = 'err-item';
+      const niceKind = e.kind.replace(/_/g, ' ');
+      item.innerHTML =
+        '<span class="err-kind">' + escapeHtml(niceKind) + '</span>' +
+        '<strong>' + escapeHtml(e.symbol) + '</strong>' +
+        (e.file ? ' &middot; ' + escapeHtml(e.file) : '') +
+        ' &mdash; ' + escapeHtml(e.detail);
+      area.appendChild(item);
+    }
+  }
+
+  function refresh(flashFiles) {
+    renderTree(flashFiles);
+    renderErrors(analyze());
+  }
+
+  // ============================================================
+  // Terminal output
+  // ============================================================
+  const terminalEl = root.querySelector('#hf-terminal');
+  function termWrite(text, cls) {
+    const span = document.createElement('span');
+    if (cls) span.className = cls;
+    span.textContent = text;
+    terminalEl.appendChild(span);
+  }
+  function termLine(text, cls) {
+    termWrite(text, cls);
+    terminalEl.appendChild(document.createElement('br'));
+    terminalEl.scrollTop = terminalEl.scrollHeight;
+  }
+  function echoCommand(cmd) {
+    termWrite('header> ', 'prompt');
+    termLine(cmd, 'typed');
+  }
+
+  // ============================================================
+  // Command dispatcher
+  // Each command returns { msg: string, ok: bool, flash: [files...] }
+  // or throws an Error if the command is malformed.
+  // ============================================================
+  const commands = [
+    { re: /^move\s+definition\s+(\w+)\s+to\s+(\S+)\s*$/i, run: cmdMoveDefinition },
+    { re: /^move\s+prototype\s+(\w+)\s+to\s+(\S+)\s*$/i, run: cmdMovePrototype },
+    { re: /^add\s+prototype\s+(\w+)\s+to\s+(\S+)\s*$/i, run: cmdAddPrototype },
+    { re: /^add\s+guard\s+(\w+)\s+to\s+(\S+)\s*$/i, run: cmdAddGuard },
+    { re: /^add\s+include\s+(\S+)\s+to\s+(\S+)\s*$/i, run: cmdAddInclude },
+    { re: /^mark\s+(\w+)\s+static\s*$/i, run: cmdMarkStatic },
+    { re: /^unmark\s+(\w+)\s+static\s*$/i, run: cmdUnmarkStatic },
+    { re: /^add\s+global\s+(\w+)\s+to\s+(\S+)\s*$/i, run: cmdAddGlobal },
+    { re: /^convert\s+(\w+)\s+to\s+extern\s+in\s+(\S+)\s*$/i, run: cmdConvertExtern },
+    { re: /^define\s+(\w+)\s+in\s+(\S+)\s*$/i, run: cmdDefineIn },
+    { re: /^remove\s+(\w+)\s+from\s+(\S+)\s*$/i, run: cmdRemoveSymbol },
+    { re: /^list\s+(\S+)\s*$/i, run: cmdListFile },
+    { re: /^explain\s*$/i, run: cmdExplain },
+    { re: /^clear\s*$/i, run: cmdClear },
+    { re: /^help\s*$/i, run: cmdHelp },
+  ];
+
+  function cmdMoveDefinition(m) {
+    const sym = m[1], dest = m[2];
+    if (!fileExists(dest)) throw new Error("file '" + dest + "' does not exist. Files: " + Object.keys(project).join(", "));
+    // Find the definition somewhere in the project
+    let sourceFile = null, defLine = null;
+    for (const f of Object.keys(project)) {
+      const idx = lines(f).findIndex(l => l.type === "definition" && l.name === sym);
+      if (idx !== -1) { sourceFile = f; defLine = lines(f)[idx]; break; }
+    }
+    if (!defLine) throw new Error("no definition of '" + sym + "' found anywhere in the project");
+    if (sourceFile === dest) return { msg: "definition of '" + sym + "' is already in " + dest, ok: true, flash: [] };
+    // Remove from source, add to dest
+    removeLine(sourceFile, l => l.type === "definition" && l.name === sym);
+    appendLine(dest, { type: "definition", name: sym, signature: defLine.signature, isStatic: defLine.isStatic, body: defLine.body || "/* body */" });
+    return { msg: "moved definition of '" + sym + "' from " + sourceFile + " to " + dest, ok: true, flash: [sourceFile, dest] };
+  }
+  function cmdMovePrototype(m) {
+    const sym = m[1], dest = m[2];
+    if (!fileExists(dest)) throw new Error("file '" + dest + "' does not exist");
+    // First check if a definition exists; we can copy its signature into a prototype.
+    let proto = null, fromFile = null;
+    for (const f of Object.keys(project)) {
+      const found = findPrototype(f, sym);
+      if (found) { proto = found; fromFile = f; break; }
+    }
+    if (proto) {
+      if (fromFile === dest) return { msg: "prototype is already in " + dest, ok: true, flash: [] };
+      removeLine(fromFile, l => l.type === "prototype" && l.name === sym);
+      appendLine(dest, { type: "prototype", name: sym, signature: proto.signature });
+      return { msg: "moved prototype of '" + sym + "' from " + fromFile + " to " + dest, ok: true, flash: [fromFile, dest] };
+    }
+    // No prototype yet, but maybe there's a definition we can derive one from.
+    let defLine = null, defFile = null;
+    for (const f of Object.keys(project)) {
+      const d = findDefinition(f, sym);
+      if (d) { defLine = d; defFile = f; break; }
+    }
+    if (defLine) {
+      appendLine(dest, { type: "prototype", name: sym, signature: defLine.signature });
+      return { msg: "added prototype of '" + sym + "' (derived from definition in " + defFile + ") to " + dest, ok: true, flash: [dest] };
+    }
+    throw new Error("no prototype or definition of '" + sym + "' exists in the project. Use 'add prototype " + sym + " to " + dest + "' if you want a new one.");
+  }
+  function cmdAddPrototype(m) {
+    const sym = m[1], dest = m[2];
+    if (!fileExists(dest)) throw new Error("file '" + dest + "' does not exist");
+    if (findPrototype(dest, sym)) return { msg: "prototype of '" + sym + "' already in " + dest, ok: true, flash: [] };
+    // Generate a placeholder signature
+    let sig = "void " + sym + "(void)";
+    // If a definition exists, use that signature
+    for (const f of Object.keys(project)) {
+      const d = findDefinition(f, sym);
+      if (d) { sig = d.signature; break; }
+    }
+    appendLine(dest, { type: "prototype", name: sym, signature: sig });
+    return { msg: "added prototype '" + sig + ";' to " + dest, ok: true, flash: [dest] };
+  }
+  function cmdAddGuard(m) {
+    const macro = m[1], file = m[2];
+    if (!fileExists(file)) throw new Error("file '" + file + "' does not exist");
+    if (project[file].kind !== "header") throw new Error("include guards only belong in headers; '" + file + "' is a " + project[file].kind + " file");
+    const existing = findGuardStart(file);
+    if (existing) return { msg: "guard '" + existing.macro + "' already present on " + file, ok: true, flash: [] };
+    prependLine(file, { type: "guard_start", macro });
+    appendLine(file, { type: "guard_end", macro });
+    return { msg: "added include guard '" + macro + "' to " + file, ok: true, flash: [file] };
+  }
+  function cmdAddInclude(m) {
+    let target = m[1], dest = m[2];
+    // Normalize quotes / angle brackets
+    const isSystem = /^<.*>$/.test(target);
+    target = target.replace(/^["<]|[">]$/g, '');
+    if (!isSystem && !fileExists(target)) throw new Error("file '" + target + "' does not exist in this project");
+    if (!fileExists(dest)) throw new Error("file '" + dest + "' does not exist");
+    if (lines(dest).some(l => l.type === "include" && l.target === target)) {
+      return { msg: dest + " already includes " + target, ok: true, flash: [] };
+    }
+    prependLine(dest, { type: "include", target, system: isSystem });
+    return { msg: "added #include " + (isSystem ? "<" + target + ">" : '"' + target + '"') + " to " + dest, ok: true, flash: [dest] };
+  }
+  function cmdMarkStatic(m) {
+    const sym = m[1];
+    let count = 0, files = [];
+    for (const f of Object.keys(project)) {
+      const d = findDefinition(f, sym);
+      if (d) { d.isStatic = true; count++; files.push(f); }
+    }
+    if (count === 0) throw new Error("no definition of '" + sym + "' to mark static");
+    return { msg: "marked '" + sym + "' static in " + files.join(", "), ok: true, flash: files };
+  }
+  function cmdUnmarkStatic(m) {
+    const sym = m[1];
+    let count = 0, files = [];
+    for (const f of Object.keys(project)) {
+      const d = findDefinition(f, sym);
+      if (d && d.isStatic) { d.isStatic = false; count++; files.push(f); }
+    }
+    if (count === 0) throw new Error("no static definition of '" + sym + "' to unmark");
+    return { msg: "unmarked '" + sym + "' static in " + files.join(", "), ok: true, flash: files };
+  }
+  function cmdAddGlobal(m) {
+    const name = m[1], file = m[2];
+    if (!fileExists(file)) throw new Error("file '" + file + "' does not exist");
+    if (findGlobalDef(file, name) || findGlobalExtern(file, name))
+      return { msg: "global '" + name + "' already declared in " + file, ok: true, flash: [] };
+    appendLine(file, { type: "global_def", name, type_: "double", value: "9.81" });
+    return { msg: "added global definition 'const double " + name + " = 9.81;' to " + file, ok: true, flash: [file] };
+  }
+  function cmdConvertExtern(m) {
+    const name = m[1], file = m[2];
+    if (!fileExists(file)) throw new Error("file '" + file + "' does not exist");
+    const g = findGlobalDef(file, name);
+    if (!g) throw new Error("no global definition of '" + name + "' in " + file);
+    // Replace global_def with global_extern
+    const idx = lines(file).findIndex(l => l.type === "global_def" && l.name === name);
+    lines(file)[idx] = { type: "global_extern", name, type_: g.type_ };
+    return { msg: "converted '" + name + "' to extern declaration in " + file, ok: true, flash: [file] };
+  }
+  function cmdDefineIn(m) {
+    const name = m[1], file = m[2];
+    if (!fileExists(file)) throw new Error("file '" + file + "' does not exist");
+    if (project[file].kind === "header") throw new Error("globals should be defined in a .c file, not a header");
+    if (findGlobalDef(file, name)) return { msg: "global '" + name + "' is already defined in " + file, ok: true, flash: [] };
+    appendLine(file, { type: "global_def", name, type_: "double", value: "9.81" });
+    return { msg: "defined 'const double " + name + " = 9.81;' in " + file, ok: true, flash: [file] };
+  }
+  function cmdRemoveSymbol(m) {
+    const sym = m[1], file = m[2];
+    if (!fileExists(file)) throw new Error("file '" + file + "' does not exist");
+    const removed = removeLine(file, l => (l.type === "definition" || l.type === "prototype" || l.type === "global_def" || l.type === "global_extern") && l.name === sym);
+    if (!removed) throw new Error("no symbol '" + sym + "' found in " + file);
+    return { msg: "removed '" + sym + "' from " + file, ok: true, flash: [file] };
+  }
+  function cmdListFile(m) {
+    const file = m[1];
+    if (!fileExists(file)) throw new Error("file '" + file + "' does not exist");
+    const out = ['contents of ' + file + ':'];
+    for (const l of lines(file)) {
+      if (l.type === "include") out.push('  #include ' + (l.system ? '<' + l.target + '>' : '"' + l.target + '"'));
+      else if (l.type === "guard_start") out.push('  #ifndef ' + l.macro + ' / #define ' + l.macro);
+      else if (l.type === "guard_end") out.push('  #endif // ' + l.macro);
+      else if (l.type === "prototype") out.push('  ' + l.signature + ';');
+      else if (l.type === "definition") out.push('  ' + (l.isStatic ? 'static ' : '') + l.signature + ' { ' + (l.body || '/* body */') + ' }');
+      else if (l.type === "global_def") out.push('  const ' + l.type_ + ' ' + l.name + ' = ' + l.value + ';');
+      else if (l.type === "global_extern") out.push('  extern ' + l.type_ + ' ' + l.name + ';');
+      else if (l.type === "call") out.push('  call site: ' + l.name + '(...)');
+      else if (l.type === "comment") out.push('  /* ' + l.text + ' */');
+    }
+    return { msg: out.join("\n"), ok: true, flash: [] };
+  }
+  function cmdExplain() {
+    const errs = analyze();
+    if (!errs.length) return { msg: "no errors; nothing to explain. Look at the task card.", ok: true, flash: [] };
+    const e = errs[0];
+    const notes = {
+      multiple_definition:
+        "The linker found more than one definition of '" + e.symbol + "'. Function bodies and global variable definitions must live in exactly one .c file. If a body sits in a header, every .c that includes the header gets its own copy.",
+      undefined_reference:
+        "The linker saw a call to '" + e.symbol + "' but could not find a non-static definition that reaches the link. Either the .c with the definition is missing from the build, or the function is static and the caller is in a different .c.",
+      implicit_declaration:
+        "A .c file calls '" + e.symbol + "' without ever seeing a prototype. Add the right #include, or write a prototype for it.",
+      conflicting_types:
+        "The prototype and the definition of '" + e.symbol + "' disagree about types. Open both files and make the signatures identical.",
+    };
+    return { msg: (notes[e.kind] || "error: " + e.detail), ok: true, flash: [] };
+  }
+  function cmdClear() {
+    terminalEl.innerHTML = '';
+    return { msg: "", ok: true, flash: [] };
+  }
+  function cmdHelp() {
+    const out = [
+      "Commands (file names are bare, like stats.c or stats.h):",
+      "  move definition <name> to <file>",
+      "  move prototype <name> to <file>",
+      "  add prototype <name> to <file>",
+      "  add guard <MACRO> to <file>",
+      "  add include <header.h> to <file>",
+      "  mark <name> static",
+      "  unmark <name> static",
+      "  add global <NAME> to <file>      (creates const double NAME = ...;)",
+      "  convert <name> to extern in <file>",
+      "  define <name> in <file>          (re-add the global definition in a .c)",
+      "  remove <name> from <file>",
+      "  list <file>                       (show the file's contents)",
+      "  explain                           (talk through the first error)",
+      "  help                              (this list)",
+      "  clear                             (clear the terminal)",
+    ];
+    return { msg: out.join("\n"), ok: true, flash: [] };
+  }
+
+  function runCommand(line) {
+    const trimmed = line.trim();
+    if (!trimmed) return null;
+    // Reject anything that looks like a C statement -- this widget is about file organization
+    if (/^(int|double|float|char|short|long|void)\s+\w+\s*[=(;]/.test(trimmed)) {
+      throw new Error("this widget is about organizing files, not writing code. Try a command like 'move definition compute_mean to stats.c'. Type 'help' for the full list.");
+    }
+    if (/^(ls|cd|pwd|cat|echo|mkdir|rm|mv|cp|gcc|make)\b/.test(trimmed)) {
+      throw new Error("this is not a Linux shell. Type 'help' for the list of commands this widget understands.");
+    }
+    for (const c of commands) {
+      const m = trimmed.match(c.re);
+      if (m) return c.run(m);
+    }
+    throw new Error("don't know that command. Type 'help' to see what's available.");
+  }
+
+  // ============================================================
+  // Tasks
+  // Each task has: section, label, text, hint, matchPattern OR matchPredicate, note
+  // After a task's command runs, the analyzer may need to be in a specific state.
+  // ============================================================
+  const tasks = [
+    // --- Section 1: Declarations vs definitions ---
+    {
+      section: 'Section 1: Declarations vs definitions',
+      label: 'Task 1 of 9',
+      text: 'The errors panel on the right shows a multiple-definition error for compute_mean. Its body lives in stats.h. Move the definition out of the header into stats.c.',
+      hint: 'move definition compute_mean to stats.c',
+      matchPattern: /^move\s+definition\s+compute_mean\s+to\s+stats\.c\s*$/i,
+      note: 'A function body in a header gets copied into every .c that includes it. Move the body to one .c; the prototype can still live in the header.',
+    },
+    {
+      label: 'Task 2 of 9',
+      text: 'Now stats.h has no declaration for compute_mean at all, so main.c will not know about it. Add a prototype for compute_mean to stats.h.',
+      hint: 'move prototype compute_mean to stats.h',
+      matchPattern: /^(move|add)\s+prototype\s+compute_mean\s+to\s+stats\.h\s*$/i,
+      note: 'Headers expose declarations. Other .c files include the header to learn what they can call.',
+    },
+    {
+      label: 'Task 3 of 9',
+      text: 'main.c calls compute_max but does not see its prototype because main.c does not include the right header. Wait -- main.c already includes stats.h, where the prototype lives. List stats.h to verify the prototype is there.',
+      hint: 'list stats.h',
+      matchPattern: /^list\s+stats\.h\s*$/i,
+      note: 'Sometimes the fix is "actually nothing is wrong here." Reading a file is a real diagnostic step.',
+    },
+    // --- Section 2: Include guards and the preprocessor ---
+    {
+      section: 'Section 2: Include guards and the preprocessor',
+      label: 'Task 4 of 9',
+      text: 'units.h does not have an include guard yet. Add one named UNITS_H.',
+      hint: 'add guard UNITS_H to units.h',
+      matchPattern: /^add\s+guard\s+UNITS_H\s+to\s+units\.h\s*$/i,
+      note: 'Guards prevent the same header from being pasted twice into one translation unit. They will not prevent multi-definition errors across .c files; that takes the extern pattern.',
+    },
+    {
+      label: 'Task 5 of 9',
+      text: 'Add a global GRAVITY to units.h. This is the wrong place for a global definition; you will see the errors panel light up.',
+      hint: 'add global GRAVITY to units.h',
+      matchPattern: /^add\s+global\s+GRAVITY\s+to\s+units\.h\s*$/i,
+      note: 'Putting "const double GRAVITY = 9.81;" in a header copies the definition into every .c that includes it. The guard does not save you here; guards are per-translation-unit.',
+    },
+    {
+      label: 'Task 6 of 9',
+      text: 'Fix the GRAVITY error: convert the definition in units.h to an extern declaration.',
+      hint: 'convert GRAVITY to extern in units.h',
+      matchPattern: /^convert\s+GRAVITY\s+to\s+extern\s+in\s+units\.h\s*$/i,
+      note: 'extern in the header says "this exists somewhere." The actual definition has to live in exactly one .c. Next task will put it there.',
+    },
+    {
+      label: 'Task 7 of 9',
+      text: 'Now define GRAVITY in units.c so the extern declaration has something to point at.',
+      hint: 'define GRAVITY in units.c',
+      matchPattern: /^define\s+GRAVITY\s+in\s+units\.c\s*$/i,
+      note: 'The extern + single definition pattern is how C shares globals across files. It works for variables and (rarely) for functions.',
+    },
+    // --- Section 3: Static and visibility ---
+    {
+      section: 'Section 3: Static and visibility',
+      label: 'Task 8 of 9',
+      text: 'stats.c has a helper normalize() that nothing outside stats.c should call. Mark it static so its scope is restricted to stats.c.',
+      hint: 'mark normalize static',
+      matchPattern: /^mark\s+normalize\s+static\s*$/i,
+      note: 'static at file scope is C\'s way of saying "this is private to this .c". It is a signal to the next reader about how the function is meant to be used, and a real visibility constraint on callers.',
+    },
+    {
+      label: 'Task 9 of 9',
+      text: 'Final check: the errors panel should be clean. If it is, the project would compile and link successfully. Type "explain" to see what the analyzer is saying about your project.',
+      hint: 'explain',
+      matchPattern: /^explain\s*$/i,
+      note: 'You have organized declarations into headers, definitions into .c files, used include guards, applied the extern + single definition pattern for globals, and used static for file-private helpers. Every move you made was a design decision about visibility and ownership.',
+    },
+  ];
+
+  // ============================================================
+  // Task progression
+  // ============================================================
+  function checkTask(rawCmd) {
+    if (currentTaskIndex >= tasks.length) {
+      // After all tasks, treat input as free commands
+      processCommand(rawCmd);
+      return;
+    }
+    const t = tasks[currentTaskIndex];
+    if (t.matchPattern && t.matchPattern.test(rawCmd.trim())) {
+      // Run the command, advance
+      echoCommand(rawCmd);
+      try {
+        const r = runCommand(rawCmd);
+        if (r && r.msg) termLine('  ' + r.msg, r.ok ? 'ok' : 'err');
+        refresh(r ? r.flash : []);
+        if (t.note) termLine('  note: ' + t.note, 'note');
+        currentTaskIndex++;
+        consecutiveFails = 0;
+        hideHintPulse();
+        renderTask();
+        // If just completed final task, show completion overlay
+        if (currentTaskIndex >= tasks.length) {
+          renderCompletion();
+        }
+      } catch (e) {
+        termLine('  error: ' + e.message, 'err');
+      }
+    } else {
+      echoCommand(rawCmd);
+      // Try running the command anyway to give useful feedback
+      try {
+        const r = runCommand(rawCmd);
+        // The command parsed and ran, but it isn't this task
+        if (r && r.msg) termLine('  ' + r.msg, 'out');
+        refresh(r ? r.flash : []);
+        termLine('  that command ran, but the current task is asking for something different. Re-read the task card.', 'err');
+      } catch (e) {
+        termLine('  error: ' + e.message, 'err');
+      }
+      consecutiveFails++;
+      if (consecutiveFails >= 2) showHintPulse();
+    }
+  }
+  function processCommand(rawCmd) {
+    echoCommand(rawCmd);
+    try {
+      const r = runCommand(rawCmd);
+      if (r && r.msg) termLine('  ' + r.msg, r.ok ? 'ok' : 'err');
+      refresh(r ? r.flash : []);
+    } catch (e) {
+      termLine('  error: ' + e.message, 'err');
+    }
+  }
+
+  function renderTask() {
+    const fill = root.querySelector('#hf-progress-fill');
+    const label = root.querySelector('#hf-progress-label');
+    const card = root.querySelector('#hf-task-card');
+    const labelEl = root.querySelector('#hf-task-label');
+    const textEl = root.querySelector('#hf-task-text');
+    const hintEl = root.querySelector('#hf-task-hint');
+    const sectionEl = root.querySelector('#hf-section-header');
+
+    const pct = (currentTaskIndex / tasks.length) * 100;
+    fill.style.width = pct + '%';
+    label.textContent = 'Task ' + Math.min(currentTaskIndex + 1, tasks.length) + ' of ' + tasks.length;
+
+    if (currentTaskIndex >= tasks.length) {
+      card.className = 'task-card complete';
+      labelEl.textContent = 'Complete';
+      textEl.textContent = "You worked through Lesson 20's three movement patterns: declarations into headers, definitions into .c files, and extern + single definition for shared globals. You also marked a helper static so its scope is private. Ready for the lab.";
+      hintEl.textContent = '';
+      fill.style.width = '100%';
+      label.textContent = 'All tasks complete';
+      sectionEl.textContent = 'All done';
+      return;
+    }
+    card.className = 'task-card';
+    const t = tasks[currentTaskIndex];
+    if (t.section) sectionEl.textContent = t.section;
+    labelEl.textContent = t.label;
+    textEl.textContent = t.text;
+    hintEl.textContent = '';
+  }
+  function showHint() {
+    if (currentTaskIndex >= tasks.length) return;
+    const t = tasks[currentTaskIndex];
+    root.querySelector('#hf-task-hint').textContent = 'Hint: ' + (t.hint || '');
+    hideHintPulse();
+  }
+  function showHintPulse() { root.querySelector('#hf-hint-btn').classList.add('pulse'); }
+  function hideHintPulse() { root.querySelector('#hf-hint-btn').classList.remove('pulse'); }
+
+  function reset() {
+    project = defaultProject();
+    currentTaskIndex = 0;
+    consecutiveFails = 0;
+    hideHintPulse();
+    terminalEl.innerHTML = '';
+    termLine('Welcome to the header file walkthrough.', 'dim');
+    termLine('Follow the task card. Each command edits the project tree on the right.', 'dim');
+    termLine('Type "help" any time to see what commands are available.', 'dim');
+    termLine('', 'out');
+    const completionArea = root.querySelector('#hf-completion-area');
+    if (completionArea) completionArea.innerHTML = '';
+    refresh();
+    renderTask();
+  }
+
+  // ============================================================
+  // Completion screen
+  // ============================================================
+  function renderCompletion() {
+    const area = root.querySelector('#hf-completion-area');
+    if (!area) return;
+    if (root.querySelector('#hf-completion-overlay')) return;
+    const now = new Date();
+    const ts = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const safeName = escapeHtml(cadetName || 'Cadet');
+
+    area.innerHTML =
+      '<div class="completion-screen">' +
+        '<div class="cs-heading">Walkthrough complete</div>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value">' + CS210_CODE + '</div></div>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+      '</div>';
+
+    const overlay = document.createElement('div');
+    overlay.id = 'hf-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.style.background = 'rgba(27, 94, 32, 0.55)';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">Walkthrough complete</h2>' +
+        '<p>Take a screenshot of this box. You will need the code and a visual of this screen for the Blackboard reflection.</p>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value" id="hf-cs-code-value">' + CS210_CODE + '</div></div>' +
+          '<button class="cs-copy-btn" id="hf-cs-copy-btn" type="button">Copy code</button>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+        '<div class="cs-reminder">' +
+          '<strong>Next step:</strong> Open the Lesson 20 reflection in Blackboard. Enter this code, answer the reflection prompt, and attach your screenshot.' +
+        '</div>' +
+        '<div style="margin-top:14px;">' +
+          '<button class="name-modal-btn" id="hf-overlay-close" type="button" style="background:#2E7D32;">Got it &mdash; close this</button>' +
+        '</div>' +
+      '</div>';
+    root.appendChild(overlay);
+    overlay.querySelector('#hf-overlay-close').addEventListener('click', () => { overlay.style.display = 'none'; });
+    const copyBtn = overlay.querySelector('#hf-cs-copy-btn');
+    copyBtn.addEventListener('click', () => {
+      const text = CS210_CODE;
+      const ok = () => {
+        copyBtn.textContent = 'Copied';
+        copyBtn.classList.add('copied');
+        setTimeout(() => { copyBtn.textContent = 'Copy code'; copyBtn.classList.remove('copied'); }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(ok, () => { fallbackCopy(text); ok(); });
+      } else { fallbackCopy(text); ok(); }
+    });
+  }
+  function fallbackCopy(text) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e) {}
+  }
+
+  // ============================================================
+  // Input wiring
+  // ============================================================
+  const inputEl = root.querySelector('#hf-cli-input');
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const v = inputEl.value;
+      inputEl.value = '';
+      if (!v.trim()) return;
+      checkTask(v);
+    }
+  });
+  root.querySelector('#hf-hint-btn').addEventListener('click', showHint);
+  root.querySelector('#hf-reset-btn').addEventListener('click', reset);
+  root.querySelector('#hf-help-btn').addEventListener('click', () => {
+    // Echo the help output
+    echoCommand('help');
+    const r = cmdHelp();
+    termLine('  ' + r.msg.split('\n').join('\n  '), 'out');
+  });
+
+  // Boot
+  reset();
+})();
+</script>
+      <!-- END WIDGET 1 -->
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0;">Linker Error Diagnostic</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">Six error blocks. For each, identify the most likely cause. Pass at 70% or above. The completion code goes in your Lesson 20 reflection.</p>
+
+      <!-- WIDGET 2: LINKER ERROR QUIZ -->
+<!-- ============================================================
+     CS210 Lesson 20 - Linker Error Diagnostic Quiz Widget
+     Card/slide flow: one question per card, Submit + Next/Back.
+     Score card at the end with per-question recap and two-salt
+     completion code (passing >= 70% uses _completed salt;
+     non-passing uses _incomplete salt).
+     ============================================================ -->
+<style>
+.cs210-linkerror * { box-sizing: border-box; }
+.cs210-linkerror {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  position: relative;
+}
+.cs210-linkerror h1 {
+  color: #00205B;
+  font-size: 24px;
+  margin: 0 0 6px 0;
+}
+.cs210-linkerror .subtitle {
+  color: #4A5568;
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+
+.cs210-linkerror .dots {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+.cs210-linkerror .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #E5E7EB;
+  border: 1px solid #C7CFD9;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.cs210-linkerror .dot.current {
+  background: #003087;
+  border-color: #00205B;
+  transform: scale(1.25);
+}
+.cs210-linkerror .dot.correct {
+  background: #2E7D32;
+  border-color: #1B5E20;
+}
+.cs210-linkerror .dot.incorrect {
+  background: #B8002F;
+  border-color: #6B0000;
+}
+.cs210-linkerror .dot.score {
+  width: 16px;
+  height: 12px;
+  border-radius: 3px;
+  background: #F0B92C;
+  border-color: #6B5300;
+}
+
+.cs210-linkerror .card {
+  background: #ffffff;
+  border: 1px solid #D0D5DD;
+  border-radius: 6px;
+  padding: 22px 24px;
+  margin-bottom: 14px;
+}
+.cs210-linkerror .q-label {
+  font-size: 11.5px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.cs210-linkerror .q-text {
+  font-size: 15.5px;
+  color: #1a1a1a;
+  margin-bottom: 14px;
+}
+.cs210-linkerror .q-text code {
+  background: #F0F2F5;
+  padding: 1px 6px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13.5px;
+}
+
+/* Terminal-style error block at top of each card */
+.cs210-linkerror pre.error-block {
+  background: #1E2A3A;
+  color: #E8EDF5;
+  padding: 14px 18px;
+  border-radius: 4px;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 0 0 16px 0;
+  white-space: pre;
+  overflow-x: auto;
+  border-left: 4px solid #B8002F;
+}
+
+.cs210-linkerror .choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.cs210-linkerror .choice {
+  display: block;
+  text-align: left;
+  padding: 10px 14px;
+  border: 1px solid #C7CFD9;
+  border-radius: 4px;
+  background: #ffffff;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: inherit;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.cs210-linkerror .choice:hover { background: #F5F7FA; }
+.cs210-linkerror .choice.selected {
+  background: #E8EDF5;
+  border-color: #003087;
+}
+.cs210-linkerror .choice.locked { cursor: default; }
+.cs210-linkerror .choice.locked:hover { background: inherit; }
+.cs210-linkerror .choice.correct {
+  background: #E6F4EA;
+  border-color: #2E7D32;
+  color: #1B5E20;
+  font-weight: 600;
+}
+.cs210-linkerror .choice.incorrect {
+  background: #FCE7EA;
+  border-color: #B8002F;
+  color: #6B0000;
+  font-weight: 600;
+}
+.cs210-linkerror .choice code {
+  background: #F0F2F5;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+}
+.cs210-linkerror .choice.correct code,
+.cs210-linkerror .choice.incorrect code {
+  background: rgba(255,255,255,0.55);
+}
+
+.cs210-linkerror .feedback {
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  margin-bottom: 14px;
+  display: none;
+}
+.cs210-linkerror .feedback.visible { display: block; }
+.cs210-linkerror .feedback.correct {
+  background: #E6F4EA;
+  border-left: 4px solid #2E7D32;
+  color: #1B5E20;
+}
+.cs210-linkerror .feedback.incorrect {
+  background: #FCE7EA;
+  border-left: 4px solid #B8002F;
+  color: #6B0000;
+}
+.cs210-linkerror .feedback code {
+  background: rgba(255,255,255,0.6);
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+}
+
+.cs210-linkerror .btn-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+.cs210-linkerror .submit-btn,
+.cs210-linkerror .nav-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 9px 18px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-linkerror .submit-btn:hover,
+.cs210-linkerror .nav-btn:hover { background: #00205B; }
+.cs210-linkerror .submit-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-linkerror .nav-btn.back {
+  background: #ffffff;
+  color: #003087;
+  border: 1px solid #C7CFD9;
+}
+.cs210-linkerror .nav-btn.back:hover { background: #F5F7FA; color: #00205B; }
+.cs210-linkerror .nav-row { display: flex; gap: 8px; }
+
+/* Score card */
+.cs210-linkerror .score-card { text-align: center; }
+.cs210-linkerror .score-big {
+  font-size: 48px;
+  font-weight: 700;
+  color: #003087;
+  margin: 10px 0 4px 0;
+}
+.cs210-linkerror .score-card.full-correct .score-big { color: #1B5E20; }
+.cs210-linkerror .score-card.passing .score-big      { color: #2E7D32; }
+.cs210-linkerror .score-card.not-passing .score-big  { color: #6B0000; }
+.cs210-linkerror .score-label {
+  font-size: 13px;
+  color: #6B7280;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.cs210-linkerror .score-message {
+  font-size: 15px;
+  color: #4A5568;
+  margin-bottom: 18px;
+}
+.cs210-linkerror .score-message.good-job {
+  color: #1B5E20;
+  font-weight: 600;
+}
+.cs210-linkerror .recap {
+  text-align: left;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #E5E7EB;
+}
+.cs210-linkerror .recap-title {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #6B7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.cs210-linkerror .recap-item {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #F0F2F5;
+}
+.cs210-linkerror .recap-item:last-child { border-bottom: none; }
+.cs210-linkerror .recap-icon {
+  flex: 0 0 22px;
+  font-size: 16px;
+  font-weight: 700;
+}
+.cs210-linkerror .recap-icon.correct { color: #2E7D32; }
+.cs210-linkerror .recap-icon.incorrect { color: #B8002F; }
+.cs210-linkerror .recap-body { flex: 1; font-size: 13.5px; }
+.cs210-linkerror .recap-question { color: #1a1a1a; margin-bottom: 3px; }
+.cs210-linkerror .recap-explanation { color: #4A5568; font-size: 13px; }
+.cs210-linkerror .recap-explanation code {
+  background: #F0F2F5;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: Consolas, monospace;
+  font-size: 12.5px;
+}
+.cs210-linkerror .reset-row {
+  margin-top: 18px;
+  display: flex;
+  justify-content: center;
+}
+.cs210-linkerror .reset-btn {
+  background: #ffffff;
+  border: 1px solid #003087;
+  color: #003087;
+  padding: 8px 18px;
+  border-radius: 4px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-linkerror .reset-btn:hover { background: #F5F7FA; }
+
+.cs210-linkerror .help-note {
+  background: #F5F7FA;
+  border: 1px solid #D0D5DD;
+  padding: 12px 16px;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #4A5568;
+  margin-top: 12px;
+}
+.cs210-linkerror .help-note strong { color: #00205B; }
+
+/* Completion code block on the score card */
+.cs210-linkerror .code-block {
+  background: #F0F4FA;
+  border: 1px solid #003087;
+  border-radius: 4px;
+  padding: 14px 18px;
+  margin: 14px 0 6px 0;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.cs210-linkerror .code-block.fail {
+  background: #FFF1F3;
+  border-color: #B8002F;
+}
+.cs210-linkerror .code-block .code-left { text-align: left; }
+.cs210-linkerror .code-block .code-label {
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #4A5568;
+}
+.cs210-linkerror .code-block .code-value {
+  font-family: Consolas, monospace;
+  font-size: 26px;
+  font-weight: 700;
+  color: #00205B;
+  letter-spacing: 3px;
+}
+.cs210-linkerror .code-block.fail .code-value { color: #6B0000; }
+.cs210-linkerror .copy-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 7px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-linkerror .copy-btn:hover { background: #00205B; }
+.cs210-linkerror .copy-btn.copied { background: #2E7D32; }
+.cs210-linkerror .code-block.fail .copy-btn { background: #B8002F; }
+.cs210-linkerror .code-block.fail .copy-btn:hover { background: #6B0000; }
+
+.cs210-linkerror .inline-code-footer {
+  font-size: 12px;
+  color: #6B7280;
+  margin-top: 4px;
+}
+
+/* Name modal */
+.cs210-linkerror .name-modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.cs210-linkerror .name-modal {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-linkerror .name-modal h2 {
+  color: #00205B;
+  font-size: 20px;
+  margin: 0 0 10px 0;
+}
+.cs210-linkerror .name-modal p {
+  color: #4A5568;
+  font-size: 14px;
+  margin: 0 0 16px 0;
+}
+.cs210-linkerror .name-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #CBD5E0;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.cs210-linkerror .name-modal input:focus {
+  outline: none;
+  border-color: #003087;
+  box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+}
+.cs210-linkerror .name-modal-btn {
+  background: #003087;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cs210-linkerror .name-modal-btn:disabled {
+  background: #A0AEC0;
+  cursor: not-allowed;
+}
+.cs210-linkerror .name-modal-btn:not(:disabled):hover {
+  background: #00205B;
+}
+</style>
+
+<div class="cs210-linkerror">
+
+<div class="name-modal-backdrop" id="linkerror-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the score card so you can include it in your screenshot for the Blackboard reflection.</p>
+    <input type="text" id="linkerror-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="linkerror-cadet-name-btn" disabled>Start the quiz</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 20 &middot; Linker Error Diagnostic</h1>
+<div class="subtitle">Six error blocks. For each one, identify the most likely cause. Pass at 70% or above; below that, review the linker-error reference card and try again.</div>
+
+<div class="dots" id="linkerror-dots"></div>
+
+<div id="linkerror-card-area"></div>
+
+<div class="help-note">
+  <strong>How this works:</strong> Each card shows a real linker or compiler error block. Pick the cause that best explains it and click Submit. Feedback appears, then click Next. Answers lock once submitted. After all six, you get a score, a completion code, and a per-question recap.
+</div>
+</div>
+
+<script>
+(function() {
+  const root = document.querySelector('.cs210-linkerror');
+  if (!root) return;
+
+  // ============================================================
+  // Completion code generation (two-salt scheme: pass vs. fail)
+  // ============================================================
+  const CS210_SALT_PASS = "lesson20_linkerror_quiz_completed";
+  const CS210_SALT_FAIL = "lesson20_linkerror_quiz_incomplete";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const PASSING_THRESHOLD = 0.70;
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE_PASS = cs210CodeFromSalt(CS210_SALT_PASS);
+  const CS210_CODE_FAIL = cs210CodeFromSalt(CS210_SALT_FAIL);
+  let cadetName = '';
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+  function cs210Copy(text) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch (e) {}
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      return true;
+    } catch (e) { return false; }
+  }
+
+  // ============================================================
+  // Name modal
+  // ============================================================
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#linkerror-name-modal-backdrop');
+    const input = root.querySelector('#linkerror-cadet-name-input');
+    const btn = root.querySelector('#linkerror-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length > 0) {
+        cadetName = stored.trim();
+        backdrop.style.display = 'none';
+        return;
+      }
+    } catch (e) {}
+    function updateBtn() { btn.disabled = input.value.trim().length === 0; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', () => {
+      const n = input.value.trim();
+      if (!n) return;
+      cadetName = n;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', n); } catch (e) {}
+      backdrop.style.display = 'none';
+      // Dismiss any sibling widget modals on the same page.
+      const siblings = document.querySelectorAll(
+        '#name-modal-backdrop, #bw-name-modal-backdrop, #ptrmath-name-modal-backdrop, #duality-name-modal-backdrop, #headerfile-name-modal-backdrop'
+      );
+      siblings.forEach(function(m) { m.style.display = 'none'; });
+    });
+    setTimeout(() => { try { input.focus(); } catch (e) {} }, 50);
+  })();
+
+  // ============================================================
+  // Questions
+  // ============================================================
+  const questions = [
+    {
+      id: 'q1',
+      errorBlock:
+        "/usr/bin/ld: main.o: in function `main':\n" +
+        "main.c:(.text+0x1a): undefined reference to `compute_total'\n" +
+        "collect2: error: ld returned 1 exit status",
+      text: 'You wrote <code>compute_total</code> in a file called <code>stats.c</code>, declared its prototype in <code>stats.h</code>, and include <code>stats.h</code> from <code>main.c</code>. The build still fails with the error above. What is the most likely cause?',
+      options: [
+        '<code>stats.c</code> is missing from your Makefile, so its object file was never built.',
+        'The prototype in <code>stats.h</code> is misspelled.',
+        '<code>compute_total</code> needs to be declared <code>static</code>.',
+        'You need to <code>#include &lt;math.h&gt;</code> in <code>main.c</code>.',
+      ],
+      correct: 0,
+      correctFeedback: 'Right. <code>undefined reference</code> at link time means the linker cannot find the definition. The header is included, so the prototype was visible at compile time, but if <code>stats.c</code> never got compiled into an object file, the definition is nowhere in the link.',
+      incorrectFeedback: 'The correct answer is the first one. <code>undefined reference</code> from the linker means the definition was never seen at link time. The most common cause for cadet code is that the <code>.c</code> containing the definition is missing from the Makefile\'s source list.',
+      shortLabel: 'undefined reference to compute_total',
+    },
+    {
+      id: 'q2',
+      errorBlock:
+        "/usr/bin/ld: stats.o:(.text+0x0): multiple definition of `compute_mean';\n" +
+        "  main.o:(.text+0x0): first defined here\n" +
+        "collect2: error: ld returned 1 exit status",
+      text: 'The error above appears at link time. Both <code>main.c</code> and <code>stats.c</code> include <code>stats.h</code>. What is the most likely cause?',
+      options: [
+        'The <code>.c</code> file containing <code>compute_mean</code> is missing from the Makefile.',
+        '<strong>The body of <code>compute_mean</code> is in <code>stats.h</code> rather than <code>stats.c</code>.</strong>',
+        'The prototype for <code>compute_mean</code> is missing from <code>stats.h</code>.',
+        'The function name is misspelled in one of the two files.',
+      ],
+      correct: 1,
+      correctFeedback: 'Right. When a function body sits in a header, every <code>.c</code> that includes the header gets its own copy of the body. The linker sees two definitions and refuses to choose. Move the body to a <code>.c</code>; leave only the prototype in the header.',
+      incorrectFeedback: 'The correct answer is the second one. <code>multiple definition</code> means the linker found two definitions for the same function. The classic cause is putting a function body in a header that gets included from more than one <code>.c</code>. Each include pastes a fresh copy, so the linker sees several.',
+      shortLabel: 'multiple definition of compute_mean',
+    },
+    {
+      id: 'q3',
+      errorBlock:
+        "main.c:14:5: error: implicit declaration of function 'strlen'\n" +
+        "    [-Werror=implicit-function-declaration]\n" +
+        "   14 |     int n = strlen(name);\n" +
+        "      |             ^~~~~~",
+      text: 'The compiler stops with the error above. <code>strlen</code> is a real function in the standard library. What is the most likely cause?',
+      options: [
+        'You misspelled <code>strlen</code>.',
+        'You need to add <code>-lm</code> to your link flags.',
+        '<strong>You forgot to <code>#include &lt;string.h&gt;</code> in <code>main.c</code>.</strong>',
+        '<code>strlen</code> needs to be declared <code>static</code>.',
+      ],
+      correct: 2,
+      correctFeedback: 'Right. <code>implicit declaration</code> is a compile-time complaint: the compiler reached a call to <code>strlen</code> without ever seeing a prototype. <code>strlen</code> lives in <code>&lt;string.h&gt;</code>; including that header brings in the prototype.',
+      incorrectFeedback: 'The correct answer is the third one. <code>implicit declaration</code> means the compiler saw a function call without a prototype. The function itself exists; you just have not told the compiler about it. For standard-library calls, the prototype is in the matching header (<code>&lt;string.h&gt;</code> for <code>strlen</code>).',
+      shortLabel: 'implicit declaration of strlen',
+    },
+    {
+      id: 'q4',
+      errorBlock:
+        "stats.c:8:8: error: conflicting types for 'compute_mean';\n" +
+        "    have 'double(int *, int)'\n" +
+        "stats.h:3:8: note: previous declaration of 'compute_mean'\n" +
+        "    with type 'double(double *, int)'",
+      text: 'The compiler stops with the error above. Both <code>stats.h</code> and <code>stats.c</code> exist and <code>stats.c</code> includes its own header. What is the most likely cause?',
+      options: [
+        '<strong>You changed a parameter type in <code>stats.c</code> but forgot to update <code>stats.h</code>.</strong>',
+        '<code>stats.h</code> is missing an include guard.',
+        '<code>compute_mean</code> should be marked <code>static</code>.',
+        'The Makefile is missing <code>-Wall</code>.',
+      ],
+      correct: 0,
+      correctFeedback: 'Right. The header and the <code>.c</code> declare the same function with different signatures, and the compiler refuses to pick one. The <code>note:</code> line tells you exactly which file disagrees. Fix the signatures to match, character for character.',
+      incorrectFeedback: 'The correct answer is the first one. <code>conflicting types</code> means the header and the <code>.c</code> declare the same function with different signatures. The <code>note:</code> line below the error always names the other location. Make them match exactly.',
+      shortLabel: 'conflicting types for compute_mean',
+    },
+    {
+      id: 'q5',
+      errorBlock:
+        "/usr/bin/ld: main.o: in function `main':\n" +
+        "main.c:(.text+0x22): undefined reference to `sqrt'\n" +
+        "collect2: error: ld returned 1 exit status",
+      text: 'You called <code>sqrt</code> in <code>main.c</code> and added <code>#include &lt;math.h&gt;</code> at the top. The compile succeeded but the link fails with the error above. What is the most likely cause?',
+      options: [
+        'You forgot to <code>#include &lt;stdio.h&gt;</code>.',
+        '<code>math.h</code> is missing an include guard.',
+        '<strong>The Makefile is missing the <code>-lm</code> link flag.</strong>',
+        'You need to declare <code>sqrt</code> in your own header first.',
+      ],
+      correct: 2,
+      correctFeedback: 'Right. <code>math.h</code> provides the prototype, which is why the compile succeeded. But the actual definition lives in <code>libm</code>, the math library, which gcc does not link by default. Add <code>-lm</code> to the link line.',
+      incorrectFeedback: 'The correct answer is the third one. <code>math.h</code> gives the compiler the prototype, but the definition lives in a separate library (<code>libm</code>). For historical reasons, gcc does not link <code>libm</code> by default; you have to ask for it with <code>-lm</code> on the link command. If the include were missing, you would have seen <code>implicit declaration</code> at compile time, not <code>undefined reference</code> at link time.',
+      shortLabel: 'undefined reference to sqrt',
+    },
+    {
+      id: 'q6',
+      errorBlock:
+        "/usr/bin/ld: stats.o:(.data+0x0): multiple definition of `GRAVITY';\n" +
+        "  main.o:(.data+0x0): first defined here\n" +
+        "collect2: error: ld returned 1 exit status",
+      text: 'You put <code>const double GRAVITY = 9.81;</code> in <code>units.h</code>, which is included by both <code>main.c</code> and <code>stats.c</code>. The link fails with the error above. What is the cleanest fix?',
+      options: [
+        'Add an include guard to <code>units.h</code>.',
+        '<strong>Change <code>units.h</code> to <code>extern const double GRAVITY;</code> and put the definition in exactly one <code>.c</code> file.</strong>',
+        'Make <code>GRAVITY</code> <code>static</code> in <code>units.h</code>.',
+        'Wrap the line in <code>#ifdef __cplusplus</code>.',
+      ],
+      correct: 1,
+      correctFeedback: 'Right. A global variable definition in a header gets copied into every <code>.c</code> that includes it &mdash; just like a function body would. The fix is the same: put the declaration in the header (<code>extern</code>), put the definition in exactly one <code>.c</code>.',
+      incorrectFeedback: 'The correct answer is the second one. Include guards prevent a header from being included twice in the same translation unit, but they cannot prevent two different translation units from both including it &mdash; that is the whole point. Globals in a header need the <code>extern</code> declaration + single definition pattern. Marking it <code>static</code> would technically work but you would get a separate copy per <code>.c</code>, defeating the purpose of a shared constant.',
+      shortLabel: 'multiple definition of GRAVITY',
+    },
+  ];
+
+  // ============================================================
+  // State
+  // ============================================================
+  const state = questions.map(() => ({ answered: false, correct: false, choice: null }));
+  let currentIndex = 0;
+
+  const dotsArea = root.querySelector('#linkerror-dots');
+  const cardArea = root.querySelector('#linkerror-card-area');
+
+  // ============================================================
+  // Rendering: dots
+  // ============================================================
+  function renderDots() {
+    dotsArea.innerHTML = '';
+    for (let i = 0; i < questions.length; i++) {
+      const d = document.createElement('div');
+      d.className = 'dot';
+      if (i === currentIndex) d.classList.add('current');
+      if (state[i].answered) {
+        d.classList.add(state[i].correct ? 'correct' : 'incorrect');
+      }
+      dotsArea.appendChild(d);
+    }
+    const scoreDot = document.createElement('div');
+    scoreDot.className = 'dot score';
+    if (currentIndex === questions.length) scoreDot.classList.add('current');
+    dotsArea.appendChild(scoreDot);
+  }
+
+  // ============================================================
+  // Rendering: question card
+  // ============================================================
+  function buildQuestionCard(i) {
+    const q = questions[i];
+    const s = state[i];
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    const label = document.createElement('div');
+    label.className = 'q-label';
+    label.textContent = 'Question ' + (i + 1) + ' of ' + questions.length;
+    card.appendChild(label);
+
+    // Error block FIRST (the artifact under inspection)
+    if (q.errorBlock) {
+      const pre = document.createElement('pre');
+      pre.className = 'error-block';
+      pre.textContent = q.errorBlock;
+      card.appendChild(pre);
+    }
+
+    const text = document.createElement('div');
+    text.className = 'q-text';
+    text.innerHTML = q.text;
+    card.appendChild(text);
+
+    // Answer surface (choice only)
+    const choices = document.createElement('div');
+    choices.className = 'choices';
+    const buttons = [];
+    q.options.forEach((opt, idx) => {
+      const b = document.createElement('button');
+      b.className = 'choice';
+      b.innerHTML = opt;
+      b.type = 'button';
+      b.addEventListener('click', () => {
+        if (s.answered) return;
+        buttons.forEach(x => x.classList.remove('selected'));
+        b.classList.add('selected');
+        s.choice = idx;
+        submitBtn.disabled = false;
+      });
+      if (s.choice === idx) b.classList.add('selected');
+      if (s.answered) {
+        b.classList.add('locked');
+        if (idx === q.correct) b.classList.add('correct');
+        else if (idx === s.choice) b.classList.add('incorrect');
+      }
+      choices.appendChild(b);
+      buttons.push(b);
+    });
+    card.appendChild(choices);
+
+    // Feedback
+    const fb = document.createElement('div');
+    fb.className = 'feedback';
+    if (s.answered) {
+      fb.classList.add('visible');
+      fb.classList.add(s.correct ? 'correct' : 'incorrect');
+      fb.innerHTML = s.correct ? q.correctFeedback : q.incorrectFeedback;
+    }
+    card.appendChild(fb);
+
+    // Button row
+    const row = document.createElement('div');
+    row.className = 'btn-row';
+
+    const navL = document.createElement('div');
+    navL.className = 'nav-row';
+    if (i > 0) {
+      const back = document.createElement('button');
+      back.className = 'nav-btn back';
+      back.type = 'button';
+      back.innerHTML = '&larr; Back';
+      back.addEventListener('click', () => { currentIndex = i - 1; render(); });
+      navL.appendChild(back);
+    }
+    row.appendChild(navL);
+
+    const submitBtn = document.createElement('button');
+    submitBtn.type = 'button';
+    if (s.answered) {
+      submitBtn.className = 'nav-btn';
+      submitBtn.innerHTML = (i === questions.length - 1) ? 'See score &rarr;' : 'Next &rarr;';
+      submitBtn.addEventListener('click', () => { currentIndex = i + 1; render(); });
+    } else {
+      submitBtn.className = 'submit-btn';
+      submitBtn.textContent = 'Submit';
+      submitBtn.disabled = (s.choice === null);
+      submitBtn.addEventListener('click', () => {
+        const correct = (s.choice === q.correct);
+        s.answered = true;
+        s.correct = correct;
+        render();
+      });
+    }
+    row.appendChild(submitBtn);
+    card.appendChild(row);
+
+    return card;
+  }
+
+  // ============================================================
+  // Rendering: score card
+  // ============================================================
+  function buildScoreCard() {
+    const card = document.createElement('div');
+    card.className = 'card score-card';
+    const correctCount = state.filter(s => s.correct).length;
+    const pct = correctCount / questions.length;
+    const passed = pct >= PASSING_THRESHOLD;
+
+    if (correctCount === questions.length) card.classList.add('full-correct');
+    else if (passed) card.classList.add('passing');
+    else card.classList.add('not-passing');
+
+    const label = document.createElement('div');
+    label.className = 'q-label';
+    label.textContent = 'Quiz complete';
+    card.appendChild(label);
+
+    const msg = document.createElement('div');
+    msg.className = 'score-message';
+    if (correctCount === questions.length) {
+      msg.className = 'score-message good-job';
+      msg.textContent = 'Perfect score. You can read a linker error.';
+    } else if (passed) {
+      msg.className = 'score-message good-job';
+      msg.textContent = 'Passed.';
+    } else {
+      msg.style.color = '#6B0000';
+      msg.textContent = 'Below the 70% threshold. Re-read the linker-error reference card, then try again.';
+    }
+    card.appendChild(msg);
+
+    const scoreBig = document.createElement('div');
+    scoreBig.className = 'score-big';
+    scoreBig.textContent = correctCount + ' / ' + questions.length;
+    card.appendChild(scoreBig);
+
+    const scoreLabel = document.createElement('div');
+    scoreLabel.className = 'score-label';
+    scoreLabel.textContent = 'questions correct (' + Math.round(pct * 100) + '%)';
+    card.appendChild(scoreLabel);
+
+    const detail = document.createElement('div');
+    detail.className = 'score-message';
+    if (correctCount === questions.length) {
+      detail.textContent = 'You will be able to diagnose every common multi-file error in the lab.';
+    } else if (passed) {
+      detail.textContent = 'Review the questions you missed below before the lab.';
+    } else {
+      detail.textContent = 'The linker-error reference card walks through all four patterns. Read it again before retrying.';
+    }
+    card.appendChild(detail);
+
+    // Completion code block — passing vs non-passing salt
+    const code = passed ? CS210_CODE_PASS : CS210_CODE_FAIL;
+    const codeBlock = document.createElement('div');
+    codeBlock.className = 'code-block' + (passed ? '' : ' fail');
+    const left = document.createElement('div');
+    left.className = 'code-left';
+    const codeLabel = document.createElement('div');
+    codeLabel.className = 'code-label';
+    codeLabel.textContent = passed ? 'Passing code' : 'Non-passing code';
+    left.appendChild(codeLabel);
+    const codeValue = document.createElement('div');
+    codeValue.className = 'code-value';
+    codeValue.textContent = code;
+    left.appendChild(codeValue);
+    codeBlock.appendChild(left);
+    const copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.className = 'copy-btn';
+    copyBtn.textContent = 'Copy';
+    copyBtn.addEventListener('click', () => {
+      const ok = cs210Copy(code);
+      copyBtn.textContent = ok ? 'Copied!' : 'Copy failed';
+      if (ok) copyBtn.classList.add('copied');
+      setTimeout(() => { copyBtn.textContent = 'Copy'; copyBtn.classList.remove('copied'); }, 1500);
+    });
+    codeBlock.appendChild(copyBtn);
+    card.appendChild(codeBlock);
+
+    const now = new Date();
+    const pad = (n) => n.toString().padStart(2, '0');
+    const ts = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate()) +
+               ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+
+    const footer = document.createElement('div');
+    footer.className = 'inline-code-footer';
+    footer.innerHTML = '<strong>' + escapeHtml(cadetName || '(name not set)') + '</strong> &middot; ' + ts +
+                       (passed ? ' &middot; passing' : ' &middot; non-passing');
+    card.appendChild(footer);
+
+    // Recap
+    const recap = document.createElement('div');
+    recap.className = 'recap';
+    const recapTitle = document.createElement('div');
+    recapTitle.className = 'recap-title';
+    recapTitle.textContent = 'Question recap';
+    recap.appendChild(recapTitle);
+
+    state.forEach((s, i) => {
+      const item = document.createElement('div');
+      item.className = 'recap-item';
+      const icon = document.createElement('div');
+      icon.className = 'recap-icon ' + (s.correct ? 'correct' : 'incorrect');
+      icon.textContent = s.correct ? '\u2713' : '\u2717';
+      item.appendChild(icon);
+      const body = document.createElement('div');
+      body.className = 'recap-body';
+      const q = questions[i];
+      const qLine = document.createElement('div');
+      qLine.className = 'recap-question';
+      qLine.innerHTML = '<strong>Q' + (i + 1) + '.</strong> ' + q.shortLabel;
+      body.appendChild(qLine);
+      if (!s.correct) {
+        const exp = document.createElement('div');
+        exp.className = 'recap-explanation';
+        exp.innerHTML = q.incorrectFeedback;
+        body.appendChild(exp);
+      }
+      item.appendChild(body);
+      recap.appendChild(item);
+    });
+    card.appendChild(recap);
+
+    const resetRow = document.createElement('div');
+    resetRow.className = 'reset-row';
+    const resetBtn = document.createElement('button');
+    resetBtn.type = 'button';
+    resetBtn.className = 'reset-btn';
+    resetBtn.textContent = 'Take the quiz again';
+    resetBtn.addEventListener('click', reset);
+    resetRow.appendChild(resetBtn);
+    card.appendChild(resetRow);
+
+    return card;
+  }
+
+  function render() {
+    renderDots();
+    cardArea.innerHTML = '';
+    if (currentIndex >= questions.length) {
+      cardArea.appendChild(buildScoreCard());
+    } else {
+      cardArea.appendChild(buildQuestionCard(currentIndex));
+    }
+  }
+
+  function reset() {
+    state.forEach(s => { s.answered = false; s.correct = false; s.choice = null; });
+    currentIndex = 0;
+    render();
+  }
+
+  // Boot
+  render();
+})();
+</script>
+      <!-- END WIDGET 2 -->
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0;">After both widgets</h3>
+      <ol style="font-size: 14px; margin: 0; padding-left: 22px;">
+        <li style="margin-bottom: 6px;">Open the Lab 20 GitHub Classroom link above. Clone the repo to your machine.</li>
+        <li style="margin-bottom: 6px;">Read <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">provided.h</code> and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">README.md</code> end to end before writing any code.</li>
+        <li style="margin-bottom: 6px;">On paper, sketch your file split. What goes in <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">main.c</code>, what goes in your own <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">.c</code>, and which header declares what?</li>
+        <li style="margin-bottom: 6px;">Write the code. Test as you go &mdash; don't write everything and hope.</li>
+        <li style="margin-bottom: 0;">Run <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">make</code> and confirm zero warnings, then run both binaries before you push.</li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 6. AFTER CLASS ===================== -->
+  <details id="after-class" style="margin-bottom: 24px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      6. After Class
+    </summary>
+    <div style="padding: 18px 22px;">
+      <ul style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Finish Lab 20 if you did not complete it in class. Submit through GitHub Classroom and Gradescope before Lesson 21.</li>
+        <li style="margin-bottom: 6px;">Complete the Lesson 20 reflection on Blackboard. You need the completion codes from both widgets.</li>
+        <li style="margin-bottom: 6px;">Read Beej-C Chapter 19 (The C Preprocessor) sections 4 through 6 (conditional compilation, macros with arguments) for Lesson 21.</li>
+        <li style="margin-bottom: 6px;">Heads up: Lesson 21 extends today's project to read flight data from a file. The file structure you set up today is what L21 builds on.</li>
+        <li style="margin-bottom: 0;"><strong style="color: #00205B;">Upcoming graded events:</strong> PEX1 is due Lesson 21, and Quiz 8 (File I/O) is at Lesson 22. Block 3 is dense &mdash; plan your week accordingly.</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== HELP NOTE ===================== -->
+  <div style="background: #F5F7FA; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 3px; font-size: 13.5px; color: #4A5568;">
+    <strong style="color: #00205B;">Need help?</strong> Schedule EI with your instructor. Bring the exact linker or compiler error you are seeing and the contents of the file the error points to. The <a href="./linker_error_reference.html" style="color: #003087; text-decoration: underline;">linker error reference card</a> covers the four common patterns; the Resources section on Blackboard has the full DFCS C Programming Standard and the Git troubleshooting reference.
+  </div>
+
+</div>

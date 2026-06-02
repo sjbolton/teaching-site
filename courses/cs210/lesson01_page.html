@@ -1,0 +1,2652 @@
+<!-- ============================================================
+     CS210 — Lesson 1 (Linux VM variant)
+     Course Intro and Toolchain
+     Self-contained: all CSS inline. Native <details> for collapsing
+     (no JavaScript needed). Paste into Blackboard Ultra via
+     Document → Add HTML block.
+     ============================================================ -->
+
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 980px; margin: 0 auto; line-height: 1.6;">
+
+  <!-- ===================== LIGHT HEADER ===================== -->
+  <div style="border-left: 5px solid #003087; padding: 8px 0 8px 18px; margin-bottom: 24px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 2px;">CS210 &middot; Block 1 &middot; Lesson 1</div>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 600; color: #00205B;">Course Intro and Toolchain</h1>
+    <div style="font-size: 14px; color: #4A5568; margin-top: 4px;">Linux VM &middot; VSCode &middot; gcc &middot; Hello World &middot; Git basics</div>
+  </div>
+
+  <!-- ===================== AT A GLANCE ===================== -->
+  <div style="background: #F5F7FA; border-left: 4px solid #B5B7BA; padding: 14px 18px; margin-bottom: 22px; font-size: 14px;">
+    <strong style="color: #00205B;">At a glance:</strong> Set up your C development environment, write and compile your first program, and learn the Git commands you will use every lesson. Setup work happens <em>before class</em>; we walk through the concepts and your first compile in class together.
+  </div>
+
+  <!-- ===================== TABLE OF CONTENTS ===================== -->
+  <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 20px; margin-bottom: 24px; border-radius: 3px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Contents</div>
+    <ol style="margin: 0; padding-left: 22px; font-size: 14px;">
+      <li style="margin-bottom: 4px;"><a href="#objectives" style="color: #003087; text-decoration: none;">Lesson Objectives</a></li>
+      <li style="margin-bottom: 4px;"><a href="#readings" style="color: #003087; text-decoration: none;">Assigned Readings</a></li>
+      <li style="margin-bottom: 4px;"><a href="#pre-class" style="color: #003087; text-decoration: none;">Pre-Class Work</a></li>
+      <li style="margin-bottom: 4px;"><a href="#materials" style="color: #003087; text-decoration: none;">Lesson Materials and Overview</a></li>
+      <li style="margin-bottom: 4px;"><a href="#in-class" style="color: #003087; text-decoration: none;">In-Class Work</a></li>
+      <li style="margin-bottom: 0;"><a href="#after-class" style="color: #003087; text-decoration: none;">After Class</a></li>
+    </ol>
+  </div>
+
+  <!-- ===================== 1. OBJECTIVES ===================== -->
+  <details id="objectives" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      1. Lesson Objectives
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 10px 0; font-style: italic;">By the end of this lesson, cadets will be able to:</p>
+      <ol style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Configure a working C development environment using the CS210 Linux VM, VSCode, and gcc. <span style="color: #6B7280; font-size: 12px;">(Outcome 7)</span></li>
+        <li style="margin-bottom: 6px;">Compile and run a basic C program from the command line. <span style="color: #6B7280; font-size: 12px;">(Outcomes 2, 7)</span></li>
+        <li style="margin-bottom: 0;">Use Git to clone a repository, commit changes, and push to a remote. <span style="color: #6B7280; font-size: 12px;">(Outcome 7)</span></li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 2. READINGS ===================== -->
+  <details id="readings" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      2. Assigned Readings
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 12px 0;">Complete before class. These are short and set the vocabulary we will use.</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <thead>
+          <tr style="background: #E8EDF5; color: #00205B;">
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 130px;">Source</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9;">Sections</th>
+            <th style="padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #C7CFD9; width: 200px;">Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;"><a href="https://ubuntu.com/tutorials/command-line-for-beginners" style="color: #003087; text-decoration: underline;">Ubuntu CLI</a></td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Command Line for Beginners &mdash; Steps 1 to 3 (skip the later scripting sections)</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">What the terminal is and how to use it</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;"><a href="https://beej.us/guide/bgc/" style="color: #003087; text-decoration: underline;">Beej-C</a></td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB;">Chapters 1 to 2 (Foreword, Hello World)</td>
+            <td style="padding: 9px 12px; border-bottom: 1px solid #E5E7EB; color: #4A5568;">Orientation and your first C program</td>
+          </tr>
+          <tr>
+            <td style="padding: 9px 12px;"><a href="https://beej.us/guide/bggit/" style="color: #003087; text-decoration: underline;">Beej-Git</a></td>
+            <td style="padding: 9px 12px;">Chapters 1 to 3 (Foreword, Git Basics, GitHub: How To Use It)</td>
+            <td style="padding: 9px 12px; color: #4A5568;">Clone, commit, push fundamentals</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <!-- ===================== 3. PRE-CLASS WORK ===================== -->
+  <details id="pre-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      3. Pre-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <div style="background: #FFF8E1; border-left: 4px solid #F0B92C; padding: 14px 18px; margin-bottom: 18px; border-radius: 3px;">
+        <div style="font-weight: 600; color: #6B5300; font-size: 14px; margin-bottom: 4px;">Do this first</div>
+        <div style="font-size: 14px; color: #5A4B00;">Work through the setup checklist before our first meeting. Plan on 45 to 75 minutes the first time. If something goes wrong, write down where it failed and bring that note to class. You will not be the only one stuck.</div>
+      </div>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 0 0 10px 0;">Toolchain Setup Checklist</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 16px 0;">Run each verification command in your VM's terminal. The expected output gives you something concrete to compare against. If your output looks substantially different, that step failed and the rest will not work until you go back and fix it.</p>
+
+      <!-- Step 1: VMware + Linux VM -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">1</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Install VMware Workstation Pro and the CS210 VMs</div>
+            <div style="font-size: 14px; margin-bottom: 12px;">CS210 uses a department-provided Linux VM as your development environment. Running everyone in the same VM means when your code works on your machine it works on the grader's machine. The hypervisor is VMware Workstation Pro, which is free for personal use but requires a Broadcom account to download. Plan on 30 to 45 minutes for this step the first time, plus download time for the VM images.</div>
+
+            <div style="font-size: 13.5px; color: #00205B; font-weight: 600; margin-bottom: 4px;">1a. Create a Broadcom account</div>
+            <div style="font-size: 14px; margin-bottom: 10px;">Go to <a href="https://www.broadcom.com" style="color: #003087; text-decoration: underline;">broadcom.com</a>, click the <strong>LOGIN</strong> dropdown at the top right, and choose <strong>REGISTER</strong>. Create your account and then sign in.</div>
+
+            <div style="font-size: 13.5px; color: #00205B; font-weight: 600; margin-bottom: 4px;">1b. Download VMware Workstation Pro</div>
+            <div style="font-size: 14px; margin-bottom: 6px;">While signed in, navigate to <a href="https://www.vmware.com/products/desktop-hypervisor/workstation-and-fusion" style="color: #003087; text-decoration: underline;">Desktop Hypervisor Solutions</a> and click <strong>DOWNLOAD NOW</strong>. You should land on a Broadcom page titled <em>My Downloads</em>. If you do not see it, click <em>"Free Software Downloads available HERE"</em>.</div>
+            <div style="font-size: 14px; margin-bottom: 6px;">Find the <strong>VMware Workstation Pro</strong> link near the bottom of that page, or search for it by name. On the product page, select the latest Windows release.</div>
+            <div style="font-size: 14px; margin-bottom: 6px;">Open the <strong>Terms and Conditions</strong> link to un-grey the agreement box, then check the box. The download link will appear on the right. You will likely be asked for your address (export-control compliance) before the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">.exe</code> installer download starts.</div>
+            <div style="font-size: 13px; color: #6B5300; background: #FFF8E1; border-left: 3px solid #F0B92C; padding: 8px 12px; margin-bottom: 10px;">Heads up: Broadcom's pages change layout occasionally. If a link name looks slightly different from what is described here, follow the closest match. If you are stuck for more than a few minutes, bring a screenshot of where you got stuck to class.</div>
+
+            <div style="font-size: 13.5px; color: #00205B; font-weight: 600; margin-bottom: 4px;">1c. Install VMware Workstation Pro</div>
+            <div style="font-size: 14px; margin-bottom: 10px;">Run the installer and accept the defaults. If the installer offers <strong>Windows Hypervisor Platform (WHP)</strong>, enable it. WHP is required (alongside Hyper-V) to run both WSL and VMware on the same machine.</div>
+
+            <div style="font-size: 13.5px; color: #00205B; font-weight: 600; margin-bottom: 4px;">1d. Download the CS210 VM image</div>
+            <div style="font-size: 14px; margin-bottom: 6px;">Download the Hosts VM (about 2.77 GB zipped, 2.81 GB unzipped). This is the Linux development environment you will use all semester.</div>
+            <p style="margin: 0 0 10px 0;">
+              <a href="https://usafa0.sharepoint.com/:u:/s/dfcs/Eco1a2ZQc75Mk1GgjePOsXoBnutlGMkcSCme8MuKFRQzHw?e=lmtjbp&amp;isSPOFile=1" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 8px 16px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 13.5px;">Download Hosts VM &rarr;</a>
+              <span style="display: inline-block; margin-left: 10px; font-size: 12.5px; color: #6B7280;">SharePoint, opens in a new tab</span>
+            </p>
+            <div style="font-size: 14px; margin-bottom: 10px;">Unzip the archive to a folder you can find later (something like <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">C:\CS210\VMs\</code>). You may see a Routers VM listed alongside the Hosts VM on SharePoint; you will not need it for CS210.</div>
+
+            <div style="font-size: 13.5px; color: #00205B; font-weight: 600; margin-bottom: 4px;">1e. Open the Hosts VM in VMware</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">Launch VMware Workstation Pro. From the menu, choose <strong>File &gt; Open</strong>, navigate to the unzipped Hosts folder, and select the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">.vmx</code> file. The VM should appear in your library. Click the green <strong>Play</strong> button to boot it. If VMware asks whether you moved or copied the VM, choose <strong>I Copied It</strong>.</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">Log in with the credentials provided on Blackboard and change your password on first login.</div>
+
+            <div style="font-size: 13px; color: #00205B; font-weight: 600; margin-bottom: 4px;">Verify (run inside the VM terminal):</div>
+            <div style="background: #1E2A3A; color: #E8EDF5; padding: 10px 14px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.5;">
+              <span style="color: #7FB3D5;">$</span> lsb_release -a<br>
+              <span style="color: #6B7280;">Distributor ID: Ubuntu</span><br>
+              <span style="color: #6B7280;">Description:&nbsp;&nbsp;&nbsp;&nbsp;Ubuntu 22.04.x LTS</span> &nbsp;<span style="color: #6B7280;">(or newer)</span><br>
+              <span style="color: #7FB3D5;">$</span> uname -a<br>
+              <span style="color: #6B7280;">Linux cs210-vm 5.x.x ... x86_64 GNU/Linux</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: build tools -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">2</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Install the build tools</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">In your Ubuntu terminal, install the full toolchain in one shot:</div>
+            <div style="background: #1E2A3A; color: #E8EDF5; padding: 10px 14px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; margin-bottom: 10px;">
+              <span style="color: #7FB3D5;">$</span> sudo apt update<br>
+              <span style="color: #7FB3D5;">$</span> sudo apt install build-essential gdb valgrind git
+            </div>
+            <div style="font-size: 14px; margin-bottom: 8px;">This installs four things you will use throughout the course:</div>
+            <ul style="font-size: 13.5px; margin: 0 0 10px 0; padding-left: 20px;">
+              <li style="margin-bottom: 3px;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">build-essential</code> &mdash; gcc (the C compiler) and make (the build automation tool you will meet in Lesson 7)</li>
+              <li style="margin-bottom: 3px;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">gdb</code> &mdash; the GNU Debugger, used to step through your code and inspect program state when something goes wrong</li>
+              <li style="margin-bottom: 3px;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">valgrind</code> &mdash; memory error detector you will use heavily in Block 2</li>
+              <li style="margin-bottom: 0;"><code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">git</code> &mdash; the version control system you will use every lesson</li>
+            </ul>
+            <div style="font-size: 13px; color: #00205B; font-weight: 600; margin-bottom: 4px;">Verify:</div>
+            <div style="background: #1E2A3A; color: #E8EDF5; padding: 10px 14px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.5;">
+              <span style="color: #7FB3D5;">$</span> gcc --version<br>
+              <span style="color: #6B7280;">gcc (Ubuntu ...) 11.x.x or later</span><br>
+              <span style="color: #7FB3D5;">$</span> make --version<br>
+              <span style="color: #6B7280;">GNU Make 4.x</span><br>
+              <span style="color: #7FB3D5;">$</span> gdb --version<br>
+              <span style="color: #6B7280;">GNU gdb (Ubuntu ...) 12.x or later</span><br>
+              <span style="color: #7FB3D5;">$</span> valgrind --version<br>
+              <span style="color: #6B7280;">valgrind-3.x</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: VSCode -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">3</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Install VSCode inside the VM</div>
+            <div style="font-size: 14px; margin-bottom: 10px;">VSCode is the editor you will use for the rest of the semester. It runs inside your VM, alongside your code and toolchain, so everything you do happens in one consistent Linux environment.</div>
+
+            <div style="font-size: 13.5px; color: #00205B; font-weight: 600; margin-bottom: 4px;">3a. Install VSCode</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">Download the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">.deb</code> package from <a href="https://code.visualstudio.com/" style="color: #003087; text-decoration: underline;">code.visualstudio.com</a> using Firefox inside the VM, then install it from your terminal:</div>
+            <div style="background: #1E2A3A; color: #E8EDF5; padding: 10px 14px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; margin-bottom: 10px;">
+              <span style="color: #7FB3D5;">$</span> cd ~/Downloads<br>
+              <span style="color: #7FB3D5;">$</span> sudo apt install ./code_*.deb
+            </div>
+
+            <div style="font-size: 13.5px; color: #00205B; font-weight: 600; margin-bottom: 4px;">3b. Install the required extensions</div>
+            <div style="font-size: 14px; margin-bottom: 6px;">Launch VSCode from your applications menu or by running <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">code</code> in the terminal. Click the Extensions icon in the left sidebar (or press <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">Ctrl+Shift+X</code>), and install:</div>
+            <ul style="font-size: 13.5px; margin: 0 0 10px 0; padding-left: 20px;">
+              <li style="margin-bottom: 3px;"><strong>C/C++</strong> (publisher: Microsoft) &mdash; syntax highlighting, IntelliSense, and debugger integration</li>
+              <li style="margin-bottom: 0;"><strong>C/C++ Extension Pack</strong> (publisher: Microsoft) &mdash; bundles useful companions like CMake Tools (optional but recommended)</li>
+            </ul>
+
+            <div style="font-size: 13.5px; color: #00205B; font-weight: 600; margin-bottom: 4px;">3c. Open a project folder</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">From your terminal:</div>
+            <div style="background: #1E2A3A; color: #E8EDF5; padding: 10px 14px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; margin-bottom: 10px;">
+              <span style="color: #7FB3D5;">$</span> cd ~<br>
+              <span style="color: #7FB3D5;">$</span> code .
+            </div>
+
+            <div style="font-size: 13px; color: #00205B; font-weight: 600; margin-bottom: 4px;">Verify:</div>
+            <div style="background: #1E2A3A; color: #E8EDF5; padding: 10px 14px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.5;">
+              <span style="color: #6B7280;">VSCode opens. The integrated terminal (View &gt; Terminal)</span><br>
+              <span style="color: #6B7280;">opens a bash shell. Running 'gcc --version' inside that</span><br>
+              <span style="color: #6B7280;">terminal returns the same gcc you verified in step 2.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: Git config -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 12px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">4</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Configure Git with your identity</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">Git tags every commit with your name and email. Set them once, globally:</div>
+            <div style="background: #1E2A3A; color: #E8EDF5; padding: 10px 14px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; margin-bottom: 10px;">
+              <span style="color: #7FB3D5;">$</span> git config --global user.name "Last, First MI"<br>
+              <span style="color: #7FB3D5;">$</span> git config --global user.email "your.email@afacademy.af.edu"
+            </div>
+            <div style="font-size: 13px; color: #00205B; font-weight: 600; margin-bottom: 4px;">Verify:</div>
+            <div style="background: #1E2A3A; color: #E8EDF5; padding: 10px 14px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.5;">
+              <span style="color: #7FB3D5;">$</span> git config --global --list | grep user<br>
+              <span style="color: #6B7280;">user.name=Last, First MI</span><br>
+              <span style="color: #6B7280;">user.email=your.email@afacademy.af.edu</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5: GitHub account -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 8px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">5</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Create a GitHub account (if you do not already have one)</div>
+            <div style="font-size: 14px; margin-bottom: 8px;">Sign up at <a href="https://github.com/" style="color: #003087; text-decoration: underline;">github.com</a>. Use a username you would not be embarrassed to put on a resume; you may keep this account after graduation.</div>
+            <div style="font-size: 13px; color: #00205B; font-weight: 600; margin-bottom: 4px;">Verify:</div>
+            <div style="font-size: 14px;">You can sign in at github.com and see your profile page.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 6: Script Doggies CLI orientation -->
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; border-left: 4px solid #003087; padding: 16px 20px; margin-bottom: 8px; border-radius: 3px;">
+        <div style="display: table; width: 100%;">
+          <div style="display: table-cell; vertical-align: top; width: 40px; font-size: 22px; font-weight: 700; color: #003087;">6</div>
+          <div style="display: table-cell; vertical-align: top;">
+            <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Get yourself oriented to the command line (Script Doggies, pages 1 to 3)</div>
+            <div style="font-size: 14px; margin-bottom: 10px;">CS210 is the first course where you will live in a Linux shell. Before class, work through the first three pages of <a href="https://scriptdoggies.org/" style="color: #003087; text-decoration: underline;">Script Doggies</a>, a clickable filesystem-tree tutorial. Plan on 30 to 40 minutes total. The point is to arrive with <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">cd</code>, paths, and basic file operations already in your hands so we can move faster in class.</div>
+            <ul style="font-size: 13.5px; margin: 0 0 10px 0; padding-left: 22px;">
+              <li style="margin-bottom: 3px;"><strong>Path Practice</strong> &mdash; learn how a filesystem is laid out as a tree, and how a path names a node in that tree. About 10 minutes.</li>
+              <li style="margin-bottom: 3px;"><strong>Command Practice</strong> &mdash; the everyday Linux commands (<code style="background: #F0F2F5; padding: 1px 4px; font-family: Consolas, monospace; font-size: 12px;">pwd</code>, <code style="background: #F0F2F5; padding: 1px 4px; font-family: Consolas, monospace; font-size: 12px;">ls</code>, <code style="background: #F0F2F5; padding: 1px 4px; font-family: Consolas, monospace; font-size: 12px;">cd</code>). About 10 minutes.</li>
+              <li style="margin-bottom: 0;"><strong>Move &amp; Copy Files</strong> &mdash; <code style="background: #F0F2F5; padding: 1px 4px; font-family: Consolas, monospace; font-size: 12px;">mv</code>, <code style="background: #F0F2F5; padding: 1px 4px; font-family: Consolas, monospace; font-size: 12px;">cp</code>, and <code style="background: #F0F2F5; padding: 1px 4px; font-family: Consolas, monospace; font-size: 12px;">rm</code>. About 15 minutes.</li>
+            </ul>
+            <div style="font-size: 13px; color: #00205B; font-weight: 600; margin-bottom: 4px;">Verify:</div>
+            <div style="font-size: 14px;">You can complete all three pages without getting stuck. Pages 4 and 5 (Dwarf Mine Terminal and Typing Practice) are optional and listed in the After Class section as ongoing practice.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ===================== 4. LESSON MATERIALS AND OVERVIEW ===================== -->
+  <details id="materials" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      4. Lesson Materials and Overview
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 18px 0;">The setup you did has a story behind it. This section contains the concepts and reference material for the lesson: the slides we will use, the compilation pipeline that explains what <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">gcc</code> actually does, your first C program, and the Git workflow you will use every day. The hands-on practice with these commands lives in Section 5.</p>
+
+      <!-- Subsection navigation -->
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 18px; margin-bottom: 22px; border-radius: 3px;">
+        <div style="font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">Jump to</div>
+        <div style="font-size: 13.5px;">
+          <a href="#slides" style="color: #003087; text-decoration: none; margin-right: 14px;">Slides</a>
+          <a href="#cli-commands" style="color: #003087; text-decoration: none; margin-right: 14px;">CLI Commands</a>
+          <a href="#pipeline" style="color: #003087; text-decoration: none; margin-right: 14px;">Compilation Pipeline</a>
+          <a href="#hello-world" style="color: #003087; text-decoration: none; margin-right: 14px;">Your First C Program</a>
+          <a href="#git-workflow" style="color: #003087; text-decoration: none; margin-right: 14px;">Git Workflow</a>
+          <a href="#examples" style="color: #003087; text-decoration: none; margin-right: 14px;">Example Code</a>
+          <a href="#dfcs-standard" style="color: #003087; text-decoration: none;">DFCS Standard</a>
+        </div>
+      </div>
+
+      <!-- Slides subsection -->
+      <h3 id="slides" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0; scroll-margin-top: 16px;">Slides</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">The Lesson 1 deck covers course orientation, the toolchain, the compilation pipeline, and a live demo of writing and compiling hello.c. The slides are the spine of the in-class hour; the reference material below is the persistent companion you can return to any time.</p>
+
+      <!-- =========================================================
+           EDIT ME: Lesson 1 slide deck link
+           Replace href="#" below with the SharePoint share URL once the
+           deck is published (or relocated). Leave target="_blank" and
+           rel="noopener". Keep this comment in place for future updates.
+           ========================================================= -->
+      <p style="margin: 0 0 18px 0;">
+        <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 10px 20px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 14px;">Open Lesson 1 slides &rarr;</a>
+        <span style="display: inline-block; margin-left: 10px; font-size: 12.5px; color: #6B7280;">opens in a new tab</span>
+      </p>
+
+      <!-- Common CLI commands reference -->
+      <h3 id="cli-commands" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">Common Command-Line Commands</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">A reference for the commands you will use every day at the terminal. The Ubuntu reading covers what a terminal <em>is</em>; the table below is the quick lookup for what each command <em>does</em>. The practice terminals in Section 5 drill these.</p>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 14px;">
+        <thead>
+          <tr style="background: #00205B; color: #ffffff;">
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 180px;">Command</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 200px;">Example</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600;">What it does</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">pwd</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">pwd</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Print working directory (where am I right now)</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">ls</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">ls -la</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">List files in the current directory (<code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">-l</code> long format, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">-a</code> include hidden)</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">cd</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">cd cli_lab&nbsp;&nbsp;<span style="color: #6B7280;">cd ..</span></td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Change directory (<code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">..</code> goes up one level, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">~</code> jumps home)</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">mkdir</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">mkdir cli_lab</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Make a new directory</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">touch</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">touch notes.txt</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Create an empty file</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">cat</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">cat hello.c</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Print the entire contents of a file to the terminal</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">head / tail</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">head -n 5 file</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Print the first or last N lines (default 10)</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">echo</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">echo "Hello"</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Print text to the terminal</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">&gt; (redirect)</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">echo "hi" &gt; f.txt</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Send command output to a file instead of the terminal (overwrites)</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">cp</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">cp src.txt dst.txt</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Copy a file</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">mv</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">mv old.txt new.txt</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Move or rename a file</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">rm</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">rm notes.txt</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Remove a file (use <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">-r</code> for directories &mdash; permanent, no recycle bin)</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">man</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">man ls</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Manual page for any command (press <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">q</code> to quit)</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; font-family: Consolas, monospace; font-size: 13px;">clear</td>
+            <td style="padding: 8px 12px; font-family: Consolas, monospace; font-size: 13px;">clear</td>
+            <td style="padding: 8px 12px;">Clear the terminal screen</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p style="font-size: 13.5px; color: #4A5568; margin: 0 0 24px 0; font-style: italic;">Tab completion saves enormous time at the terminal: start typing a filename or command and press <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">Tab</code>. The shell completes it for you when there is only one match.</p>
+
+      <!-- The compilation pipeline -->
+      <h3 id="pipeline" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">The Compilation Pipeline</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">In Python, you ran <code style="background: #F0F2F5; padding: 1px 6px; border-radius: 2px; font-family: Consolas, monospace; font-size: 13px;">python hello.py</code> and the interpreter executed your code line by line. C does not work that way. Your <code style="background: #F0F2F5; padding: 1px 6px; border-radius: 2px; font-family: Consolas, monospace; font-size: 13px;">.c</code> source file must be translated into a machine-executable file before it can run.</p>
+
+      <p style="font-size: 14.5px; margin: 0 0 14px 0;">When you type <code style="background: #F0F2F5; padding: 1px 6px; border-radius: 2px; font-family: Consolas, monospace; font-size: 13px;">gcc hello.c -o hello</code>, four phases happen in sequence:</p>
+
+      <div style="background: #ffffff; border: 1px solid #D0D5DD; padding: 14px 18px; margin-bottom: 18px; font-size: 14px;">
+        <div style="margin-bottom: 8px;"><span style="display: inline-block; background: #003087; color: #ffffff; padding: 2px 8px; border-radius: 2px; font-weight: 600; font-size: 12px; margin-right: 8px;">1. PREPROCESS</span> Resolve <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">#include</code> and <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">#define</code> directives, producing pure C with no preprocessor lines left.</div>
+        <div style="margin-bottom: 8px;"><span style="display: inline-block; background: #003087; color: #ffffff; padding: 2px 8px; border-radius: 2px; font-weight: 600; font-size: 12px; margin-right: 8px;">2. COMPILE</span> Translate that C code into assembly language for your target CPU.</div>
+        <div style="margin-bottom: 8px;"><span style="display: inline-block; background: #003087; color: #ffffff; padding: 2px 8px; border-radius: 2px; font-weight: 600; font-size: 12px; margin-right: 8px;">3. ASSEMBLE</span> Translate the assembly into machine code (an object file, <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">.o</code>).</div>
+        <div><span style="display: inline-block; background: #003087; color: #ffffff; padding: 2px 8px; border-radius: 2px; font-weight: 600; font-size: 12px; margin-right: 8px;">4. LINK</span> Combine your object file with the C standard library and any other objects to produce the final executable.</div>
+      </div>
+
+      <p style="font-size: 13.5px; color: #4A5568; margin: 0 0 24px 0; font-style: italic;">We will dig into this pipeline in Lesson 7 when we introduce Make. For now, gcc handles all four phases for you with a single command.</p>
+
+      <!-- Hello World -->
+      <h3 id="hello-world" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0; scroll-margin-top: 16px;">Your First C Program</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Create a file called <code style="background: #F0F2F5; padding: 1px 6px; border-radius: 2px; font-family: Consolas, monospace; font-size: 13px;">hello.c</code> with the following contents:</p>
+
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 14px 18px; border-radius: 3px; font-family: Consolas, 'Courier New', monospace; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px;">
+        <span style="color: #C586C0;">#include</span> <span style="color: #CE9178;">&lt;stdio.h&gt;</span><br><br>
+        <span style="color: #569CD6;">int</span> <span style="color: #DCDCAA;">main</span>(<span style="color: #569CD6;">void</span>) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #DCDCAA;">printf</span>(<span style="color: #CE9178;">"Hello, CS210!\n"</span>);<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #C586C0;">return</span> <span style="color: #B5CEA8;">0</span>;<br>
+        }
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">Compile and run:</p>
+      <div style="background: #1E2A3A; color: #E8EDF5; padding: 10px 14px; border-radius: 3px; font-family: Consolas, monospace; font-size: 13px; margin-bottom: 14px;">
+        <span style="color: #7FB3D5;">$</span> gcc hello.c -o hello<br>
+        <span style="color: #7FB3D5;">$</span> ./hello<br>
+        <span style="color: #6B7280;">Hello, CS210!</span>
+      </div>
+
+      <p style="font-size: 14.5px; margin: 0 0 24px 0;">A few things to notice that we will return to repeatedly. Every C program starts at <code style="background: #F0F2F5; padding: 1px 6px; border-radius: 2px; font-family: Consolas, monospace; font-size: 13px;">main</code>. Statements end in semicolons. The <code style="background: #F0F2F5; padding: 1px 6px; border-radius: 2px; font-family: Consolas, monospace; font-size: 13px;">return 0;</code> at the end signals success to the operating system. The <code style="background: #F0F2F5; padding: 1px 6px; border-radius: 2px; font-family: Consolas, monospace; font-size: 13px;">\n</code> inside the string is a newline character; unlike Python's <code style="background: #F0F2F5; padding: 1px 6px; border-radius: 2px; font-family: Consolas, monospace; font-size: 13px;">print()</code>, <code style="background: #F0F2F5; padding: 1px 6px; border-radius: 2px; font-family: Consolas, monospace; font-size: 13px;">printf</code> does not add one for you.</p>
+
+      <!-- Git workflow -->
+      <h3 id="git-workflow" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0; scroll-margin-top: 16px;">The Git Workflow You Will Use Daily</h3>
+      <p style="font-size: 14.5px; margin: 0 0 14px 0;">Git is the version control system the entire software industry uses. Every assignment in CS210 lives in a Git repository, and you will go through this same five-command loop dozens of times this semester. Memorize it now.</p>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 14px;">
+        <thead>
+          <tr style="background: #00205B; color: #ffffff;">
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600; width: 220px;">Command</th>
+            <th style="padding: 9px 12px; text-align: left; font-weight: 600;">What it does</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">git clone &lt;url&gt;</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Download a repository to your machine. Once per assignment.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">git status</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Show what has changed since your last commit. Run this often.</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">git add &lt;file&gt;</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Mark a changed file to be included in the next commit.</td>
+          </tr>
+          <tr style="background: #F8FAFC;">
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB; font-family: Consolas, monospace; font-size: 13px;">git commit -m "msg"</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #E5E7EB;">Save a snapshot of your staged changes with a short message.</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; font-family: Consolas, monospace; font-size: 13px;">git push</td>
+            <td style="padding: 8px 12px;">Send your local commits up to GitHub.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p style="font-size: 13.5px; color: #4A5568; margin: 0 0 24px 0; font-style: italic;">Commit early, commit often. A commit every 15 to 30 minutes of work is a good rhythm. Cheap, frequent commits make it trivial to roll back when something breaks.</p>
+
+      <!-- Example code subsection -->
+      <h3 id="examples" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0; scroll-margin-top: 16px;">Example Code</h3>
+      <div style="background: #F8FAFC; border: 1px dashed #B5B7BA; padding: 14px 18px; border-radius: 3px; font-size: 13.5px; color: #4A5568;">
+        <strong style="color: #00205B;">Add example code links here.</strong> The <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">hello.c</code> snippet above is the only code we touch in class today; longer examples will live in a course GitHub repo. When that repo is set up, replace this callout with a link such as <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">&lt;a href="https://github.com/..."&gt;Lesson 1 examples&lt;/a&gt;</code>.
+      </div>
+
+      <!-- DFCS C Programming Standard reference -->
+      <h3 id="dfcs-standard" style="color: #00205B; font-size: 16px; margin: 24px 0 10px 0; scroll-margin-top: 16px;">DFCS C Programming Standard</h3>
+      <p style="font-size: 14.5px; margin: 0 0 12px 0;">CS210 follows the DFCS C Programming Standard for all code you write in this course. The standard is short and practical; you will meet a few sections at a time as new C concepts come up. Lesson 1 introduces three pieces:</p>
+      <ul style="font-size: 14.5px; margin: 0 0 12px 0; padding-left: 22px;">
+        <li style="margin-bottom: 6px;"><strong>&sect;2.1 Comment header block.</strong> Every C file you turn in starts with a header comment naming the file, the author, and a one-line description. The starter <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">hello.c</code> in your lab repo already shows the format.</li>
+        <li style="margin-bottom: 6px;"><strong>&sect;3.1 Line length.</strong> Keep lines at 100 characters or fewer. Long lines are hard to read in a terminal and hard to review on GitHub.</li>
+        <li style="margin-bottom: 0;"><strong>Compile-flag rule.</strong> Build with <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">gcc -Wall -Werror</code> from Lesson 1 onward. <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">-Wall</code> turns on the warnings that catch most bugs; <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">-Werror</code> turns those warnings into errors so you cannot ignore them. The autograder uses the same flags.</li>
+      </ul>
+      <p style="font-size: 14.5px; margin: 0;">The full standard is in the course Resources section. You do not need to read it cover to cover; treat it as a reference you check when a question comes up.</p>
+    </div>
+  </details>
+
+  <!-- ===================== 5. IN-CLASS WORK ===================== -->
+  <style>
+
+  .cs210-cli * { box-sizing: border-box; }
+  .cs210-cli {
+    position: relative;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: #1a1a1a;
+    line-height: 1.55;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 16px 0;
+  }
+  .cs210-cli h1 {
+    color: #00205B; font-size: 22px; margin: 0 0 4px 0;
+    border-bottom: 2px solid #003087; padding-bottom: 6px;
+  }
+  .cs210-cli .subtitle { color: #4A5568; font-size: 14px; margin-bottom: 14px; }
+  .cs210-cli .progress-bar {
+    background: #E5E7EB; height: 6px; border-radius: 3px; overflow: hidden;
+    margin: 12px 0 4px 0;
+  }
+  .cs210-cli .progress-fill {
+    background: #003087; height: 100%; width: 0%;
+    transition: width 220ms ease;
+  }
+  .cs210-cli .progress-label {
+    font-size: 12px; color: #4A5568; margin-bottom: 10px;
+  }
+  .cs210-cli .section-header {
+    background: #EEF2F8; color: #00205B;
+    font-size: 12px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
+    padding: 6px 12px; border-left: 4px solid #003087; border-radius: 2px;
+    margin: 8px 0 8px 0;
+  }
+  .cs210-cli .task-card {
+    background: #FFF8E1; border-left: 4px solid #F0B92C;
+    padding: 12px 16px; border-radius: 3px; margin-bottom: 12px;
+  }
+  .cs210-cli .task-card.complete {
+    background: #E6F4EA; border-left-color: #2E7D32;
+  }
+  .cs210-cli .task-label {
+    font-size: 12px; font-weight: 700; color: #6B5300; text-transform: uppercase;
+    letter-spacing: 1.2px; margin-bottom: 4px;
+  }
+  .cs210-cli .task-card.complete .task-label { color: #2E7D32; }
+  .cs210-cli .task-text { font-size: 14.5px; color: #1a1a1a; }
+  .cs210-cli .task-hint {
+    font-size: 13px; color: #6B5300; margin-top: 6px; font-style: italic;
+  }
+  .cs210-cli .panes {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+  }
+  .cs210-cli .terminal {
+    background: #1E2A3A; color: #E8EDF5;
+    border-radius: 4px; padding: 12px;
+    font-family: 'Consolas', 'Courier New', monospace; font-size: 13px;
+    line-height: 1.5; min-height: 320px; max-height: 380px; overflow-y: auto;
+    white-space: pre-wrap; word-break: break-all;
+  }
+  .cs210-cli .terminal .prompt { color: #7FB3D5; }
+  .cs210-cli .terminal .typed  { color: #FFFFFF; }
+  .cs210-cli .terminal .out    { color: #B5BEC8; }
+  .cs210-cli .terminal .err    { color: #F47A7A; }
+  .cs210-cli .terminal .ok     { color: #7FD17F; }
+  .cs210-cli .terminal .dim    { color: #6B7280; }
+  .cs210-cli .tree-pane {
+    background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 4px;
+    padding: 14px; min-height: 320px; max-height: 380px; overflow-y: auto;
+    font-family: 'Consolas', 'Courier New', monospace; font-size: 13px;
+    line-height: 1.65;
+  }
+  .cs210-cli .tree-header {
+    color: #00205B; font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 12px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
+    margin-bottom: 8px; border-bottom: 1px solid #D0D5DD; padding-bottom: 6px;
+  }
+  .cs210-cli .tree-node {
+    display: block; padding-left: 0;
+    transition: background-color 200ms ease, color 200ms ease, opacity 200ms ease;
+    border-radius: 2px;
+  }
+  .cs210-cli .tree-row { display: flex; align-items: baseline; }
+  .cs210-cli .tree-row .indent { color: #B0B7C3; white-space: pre; }
+  .cs210-cli .tree-row .label  { color: #1a1a1a; }
+  .cs210-cli .tree-row .preview {
+    color: #6B7280; font-size: 12px; margin-left: 6px; font-style: italic;
+  }
+  .cs210-cli .tree-row.dir .label { font-weight: 600; color: #003087; }
+  .cs210-cli .tree-row.current .label {
+    background: #FFF3CD; color: #6B5300; font-weight: 700;
+    padding: 1px 6px; border-radius: 2px;
+    box-shadow: inset 0 -2px 0 #F0B92C;
+  }
+  .cs210-cli .tree-row.ancestor .label { color: #003087; opacity: 0.85; }
+  .cs210-cli .tree-row.distant { opacity: 0.45; }
+  .cs210-cli .tree-row.new {
+    animation: cli-tree-flash 700ms ease-out;
+  }
+  @keyframes cli-tree-flash {
+    0%   { background-color: #FFF3CD; }
+    100% { background-color: transparent; }
+  }
+  .cs210-cli .input-row {
+    margin-top: 12px;
+    background: #1E2A3A; border-radius: 4px; padding: 8px 12px;
+    display: flex; align-items: center;
+    font-family: 'Consolas', 'Courier New', monospace;
+  }
+  .cs210-cli .input-row .prompt {
+    color: #7FB3D5; margin-right: 8px; font-size: 13px; white-space: nowrap;
+  }
+  .cs210-cli .input-row input {
+    flex: 1; background: transparent; border: none; outline: none;
+    color: #FFFFFF; font-family: inherit; font-size: 13px;
+  }
+  .cs210-cli .controls { display: flex; gap: 8px; margin-top: 10px; }
+  .cs210-cli .controls button {
+    background: #ffffff; border: 1px solid #D0D5DD; color: #1a1a1a;
+    padding: 6px 14px; border-radius: 3px; font-size: 13px; cursor: pointer;
+    font-family: inherit;
+  }
+  .cs210-cli .controls button:hover { background: #F0F2F5; }
+  .cs210-cli .controls button#hint-btn.pulse {
+    animation: cli-hint-pulse 1s infinite; border-color: #F0B92C;
+  }
+  @keyframes cli-hint-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0.6); }
+    50%      { box-shadow: 0 0 0 6px rgba(240, 185, 44, 0); }
+  }
+  .cs210-cli .help-note {
+    background: #F5F7FA; border: 1px solid #D0D5DD; padding: 10px 14px;
+    border-radius: 3px; font-size: 13px; color: #4A5568; margin-top: 12px;
+  }
+  .cs210-cli .help-note strong { color: #00205B; }
+  .cs210-cli .completion {
+    background: #E6F4EA; border: 1px solid #2E7D32; color: #1B5E20;
+    padding: 16px 20px; border-radius: 4px; text-align: center;
+    font-size: 15px; margin-top: 12px;
+  }
+  .cs210-cli .free-mode-banner {
+    background: #EEF2F8; border: 1px solid #003087; color: #00205B;
+    padding: 10px 14px; border-radius: 3px; font-size: 13.5px;
+    margin-top: 10px;
+  }
+  .cs210-cli .free-mode-banner strong { color: #00205B; }
+
+  /* Name modal overlay (scoped to widget) */
+  .cs210-cli .name-modal-backdrop {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 32, 91, 0.55);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 50;
+  }
+  .cs210-cli .name-modal {
+    background: #ffffff; border-radius: 6px;
+    padding: 28px 32px; max-width: 440px; width: 90%;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+    font-family: 'Segoe UI', Arial, sans-serif;
+  }
+  .cs210-cli .name-modal h2 { color: #00205B; font-size: 20px; margin: 0 0 10px 0; }
+  .cs210-cli .name-modal p { color: #4A5568; font-size: 14px; line-height: 1.5; margin: 0 0 16px 0; }
+  .cs210-cli .name-modal input {
+    width: 100%; padding: 10px 12px; font-size: 15px;
+    border: 1px solid #CBD5E0; border-radius: 4px; margin-bottom: 14px;
+    font-family: inherit;
+  }
+  .cs210-cli .name-modal input:focus {
+    outline: none; border-color: #003087;
+    box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+  }
+  .cs210-cli .name-modal-btn {
+    background: #003087; color: #ffffff; border: none;
+    padding: 10px 20px; border-radius: 4px;
+    font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
+  }
+  .cs210-cli .name-modal-btn:disabled { background: #A0AEC0; cursor: not-allowed; }
+  .cs210-cli .name-modal-btn:not(:disabled):hover { background: #00205B; }
+
+  /* Completion screen */
+  .cs210-cli .completion-screen {
+    background: #ffffff; border: 2px solid #2E7D32; border-radius: 6px;
+    padding: 24px 28px; margin-top: 16px;
+  }
+  .cs210-cli .completion-screen .cs-heading {
+    color: #1B5E20; font-size: 20px; font-weight: 600; margin: 0 0 6px 0;
+  }
+  .cs210-cli .completion-screen .cs-name-line {
+    font-size: 15px; color: #1a1a1a; margin-bottom: 16px;
+  }
+  .cs210-cli .completion-screen .cs-name-line strong { color: #00205B; }
+  .cs210-cli .completion-screen .cs-code-block {
+    background: #F0F4FA; border: 1px solid #003087; border-radius: 4px;
+    padding: 16px 20px; display: flex; align-items: center;
+    justify-content: space-between; gap: 16px; margin-bottom: 14px;
+  }
+  .cs210-cli .completion-screen .cs-code-label {
+    font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px;
+    color: #4A5568; margin-bottom: 4px;
+  }
+  .cs210-cli .completion-screen .cs-code-value {
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 28px; font-weight: 700; color: #00205B; letter-spacing: 3px;
+  }
+  .cs210-cli .completion-screen .cs-copy-btn {
+    background: #003087; color: #ffffff; border: none;
+    padding: 8px 14px; border-radius: 3px; font-size: 13px; cursor: pointer;
+    font-family: inherit;
+  }
+  .cs210-cli .completion-screen .cs-copy-btn:hover { background: #00205B; }
+  .cs210-cli .completion-screen .cs-copy-btn.copied { background: #2E7D32; }
+  .cs210-cli .completion-screen .cs-timestamp {
+    font-size: 13px; color: #6B7280; margin-bottom: 18px;
+  }
+  .cs210-cli .completion-screen .cs-reminder {
+    background: #FFF8E1; border-left: 4px solid #F0B92C;
+    padding: 12px 16px; border-radius: 3px;
+    font-size: 14px; color: #6B5300; line-height: 1.5;
+  }
+  .cs210-cli .completion-screen .cs-reminder strong { color: #4A3A00; }
+</style>
+<style>
+.cs210-git * { box-sizing: border-box; }
+  .cs210-git {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: #1a1a1a;
+    line-height: 1.55;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 20px;
+    background: #ffffff;
+  }
+  .cs210-git h1 {
+    color: #00205B;
+    font-size: 24px;
+    margin: 0 0 6px 0;
+  }
+  .cs210-git .subtitle {
+    color: #4A5568;
+    font-size: 14px;
+    margin-bottom: 22px;
+  }
+  .cs210-git .progress-bar {
+    background: #E5E7EB;
+    border-radius: 3px;
+    height: 8px;
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+  .cs210-git .progress-fill {
+    background: #003087;
+    height: 100%;
+    transition: width 0.3s ease;
+  }
+  .cs210-git .progress-label {
+    font-size: 12px;
+    color: #6B7280;
+    margin-bottom: 18px;
+  }
+  .cs210-git .task-card {
+    background: #FFF8E1;
+    border-left: 4px solid #F0B92C;
+    padding: 14px 18px;
+    margin-bottom: 14px;
+    border-radius: 3px;
+  }
+  .cs210-git .task-card.complete {
+    background: #E6F4EA;
+    border-left-color: #2E7D32;
+  }
+  .cs210-git .task-label {
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    color: #6B5300;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .cs210-git .task-card.complete .task-label {
+    color: #1B5E20;
+  }
+  .cs210-git .task-text {
+    font-size: 15px;
+    color: #1a1a1a;
+  }
+  .cs210-git .task-hint {
+    font-size: 12.5px;
+    color: #6B7280;
+    margin-top: 6px;
+    font-style: italic;
+  }
+  .cs210-git .terminal {
+    background: #1E2A3A;
+    color: #E8EDF5;
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 13.5px;
+    line-height: 1.5;
+    border-radius: 4px;
+    padding: 14px 18px;
+    min-height: 280px;
+    max-height: 420px;
+    overflow-y: auto;
+    margin-bottom: 12px;
+  }
+  .cs210-git .terminal .prompt { color: #7FB3D5; }
+  .cs210-git .terminal .typed { color: #FFFFFF; }
+  .cs210-git .terminal .out { color: #B5BEC8; }
+  .cs210-git .terminal .err { color: #F47A7A; }
+  .cs210-git .terminal .ok { color: #7FD17F; }
+  .cs210-git .terminal .dim { color: #6B7280; }
+  .cs210-git .input-row {
+    display: flex;
+    background: #1E2A3A;
+    border-radius: 4px;
+    padding: 8px 14px;
+    margin-bottom: 14px;
+    border: 1px solid #003087;
+  }
+  .cs210-git .input-prompt {
+    color: #7FB3D5;
+    font-family: Consolas, monospace;
+    font-size: 14px;
+    margin-right: 8px;
+    align-self: center;
+    white-space: nowrap;
+  }
+  .cs210-git .input-row input {
+    flex: 1;
+    background: transparent;
+    color: #FFFFFF;
+    border: none;
+    outline: none;
+    font-family: Consolas, monospace;
+    font-size: 14px;
+    padding: 4px 0;
+  }
+  .cs210-git .controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+  .cs210-git .btn {
+    background: #ffffff;
+    border: 1px solid #C7CFD9;
+    padding: 6px 14px;
+    border-radius: 3px;
+    font-size: 13px;
+    cursor: pointer;
+    color: #00205B;
+    font-family: inherit;
+    transition: box-shadow 0.2s ease;
+  }
+  .cs210-git .btn:hover { background: #F5F7FA; }
+  @keyframes pulse-hint {
+    0%   { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0.7); }
+    70%  { box-shadow: 0 0 0 10px rgba(240, 185, 44, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0); }
+  }
+  .cs210-git .btn.pulse {
+    background: #FFF8E1;
+    border-color: #F0B92C;
+    color: #6B5300;
+    font-weight: 600;
+    animation: pulse-hint 1.5s infinite;
+  }
+  .cs210-git .btn-primary {
+    background: #003087;
+    color: #ffffff;
+    border-color: #003087;
+  }
+  .cs210-git .btn-primary:hover { background: #002060; }
+  .cs210-git .help-note {
+    background: #F5F7FA;
+    border: 1px solid #D0D5DD;
+    padding: 12px 16px;
+    border-radius: 3px;
+    font-size: 13px;
+    color: #4A5568;
+    margin-top: 12px;
+  }
+  .cs210-git .help-note strong { color: #00205B; }
+  .cs210-git .completion {
+    background: #E6F4EA;
+    border: 1px solid #2E7D32;
+    color: #1B5E20;
+    padding: 16px 20px;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 15px;
+    margin-top: 12px;
+  }
+  /* Name modal overlay */
+  .cs210-git { position: relative; }
+  .cs210-git .name-modal-backdrop {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 32, 91, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+  }
+  .cs210-git .name-modal {
+    background: #ffffff;
+    border-radius: 6px;
+    padding: 28px 32px;
+    max-width: 440px;
+    width: 90%;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+    font-family: 'Segoe UI', Arial, sans-serif;
+  }
+  .cs210-git .name-modal h2 { color: #00205B; font-size: 20px; margin: 0 0 10px 0; }
+  .cs210-git .name-modal p { color: #4A5568; font-size: 14px; line-height: 1.5; margin: 0 0 16px 0; }
+  .cs210-git .name-modal input {
+    width: 100%; padding: 10px 12px; font-size: 15px;
+    border: 1px solid #CBD5E0; border-radius: 4px; margin-bottom: 14px;
+    font-family: inherit;
+  }
+  .cs210-git .name-modal input:focus {
+    outline: none; border-color: #003087;
+    box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.15);
+  }
+  .cs210-git .name-modal-btn {
+    background: #003087; color: #ffffff; border: none;
+    padding: 10px 20px; border-radius: 4px;
+    font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
+  }
+  .cs210-git .name-modal-btn:disabled { background: #A0AEC0; cursor: not-allowed; }
+  .cs210-git .name-modal-btn:not(:disabled):hover { background: #00205B; }
+  /* Completion screen (inline footer in widget body) */
+  .cs210-git .completion-screen {
+    background: #ffffff;
+    border: 2px solid #2E7D32;
+    border-radius: 6px;
+    padding: 24px 28px;
+    margin-top: 16px;
+  }
+  .cs210-git .completion-screen .cs-heading {
+    color: #1B5E20; font-size: 20px; font-weight: 600; margin: 0 0 6px 0;
+  }
+  .cs210-git .completion-screen .cs-name-line {
+    font-size: 15px; color: #1a1a1a; margin-bottom: 16px;
+  }
+  .cs210-git .completion-screen .cs-name-line strong { color: #00205B; }
+  .cs210-git .completion-screen .cs-code-block {
+    background: #F0F4FA; border: 1px solid #003087; border-radius: 4px;
+    padding: 16px 20px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    margin-bottom: 14px;
+  }
+  .cs210-git .completion-screen .cs-code-label {
+    font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px;
+    color: #4A5568; margin-bottom: 4px;
+  }
+  .cs210-git .completion-screen .cs-code-value {
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 28px; font-weight: 700; color: #00205B; letter-spacing: 3px;
+  }
+  .cs210-git .completion-screen .cs-copy-btn {
+    background: #003087; color: #ffffff; border: none;
+    padding: 8px 14px; border-radius: 3px;
+    font-size: 13px; cursor: pointer; font-family: inherit;
+  }
+  .cs210-git .completion-screen .cs-copy-btn:hover { background: #00205B; }
+  .cs210-git .completion-screen .cs-copy-btn.copied { background: #2E7D32; }
+  .cs210-git .completion-screen .cs-timestamp {
+    font-size: 13px; color: #6B7280; margin-bottom: 18px;
+  }
+  .cs210-git .completion-screen .cs-reminder {
+    background: #FFF8E1; border-left: 4px solid #F0B92C;
+    padding: 12px 16px; border-radius: 3px;
+    font-size: 14px; color: #6B5300; line-height: 1.5;
+  }
+  .cs210-git .completion-screen .cs-reminder strong { color: #4A3A00; }
+</style>
+
+  <details id="in-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      5. In-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 16px 0;">Five things to do in the remaining class time. Use this checklist to track your progress. Anything not done in class should be completed as homework before Lesson 2.</p>
+
+      <ul style="list-style: none; padding: 0; margin: 0 0 24px 0; font-size: 14.5px;">
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Finish your toolchain setup.</strong>
+          <span style="color: #4A5568;">If anything from Section 3 (Pre-Class Work) is still broken, fix it now while you have help available.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Work through the Filesystem CLI Walkthrough.</strong>
+          <span style="color: #4A5568;">Sixteen tasks. Builds your mental model of the filesystem as a tree and gives you the daily Linux commands in your hands. Embedded below.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Work through the Git Workflow Practice.</strong>
+          <span style="color: #4A5568;">Nine tasks. Walks the daily five-command Git cycle (status, add, commit, push, plus clone) end to end. Embedded below.</span>
+        </li>
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Complete Lab 01: Hello World.</strong>
+          <span style="color: #4A5568;">Your first push to GitHub. Accept the assignment from the link below; full instructions live in the repo README.</span>
+          <!-- =========================================================
+               EDIT ME: Lab 01 GitHub Classroom assignment link
+               Replace href="#" below with the GitHub Classroom invitation
+               URL once the assignment is created. Leave target="_blank"
+               and rel="noopener". Keep this comment in place for future
+               updates.
+               ========================================================= -->
+          <p style="margin: 8px 0 0 28px;">
+            <a href="#" target="_blank" rel="noopener" style="display: inline-block; background: #003087; color: #ffffff; padding: 7px 14px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 13px;">Accept Lab 01 on GitHub Classroom &rarr;</a>
+          </p>
+        </li>
+        <li style="margin-bottom: 0; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Submit the Lesson 1 reflection.</strong>
+          <span style="color: #4A5568;">As soon as both widgets are complete, open the Lesson 1 reflection in Blackboard. Enter the two completion codes from your widget screenshots, answer the short reflection prompt, and submit. Best done right after the widgets while the experience is fresh.</span>
+        </li>
+      </ul>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 18px 0 10px 0;">Practice Terminal 1: Filesystem CLI Walkthrough</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Sixteen tasks across four sections: locating yourself in the filesystem, paths two ways, navigating up and sideways, and building your CS210 working folder.</p>
+
+<!-- ===== Filesystem CLI walkthrough widget body ===== -->
+<div class="cs210-cli">
+
+<div class="name-modal-backdrop" id="cli-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Blackboard reflection quiz.</p>
+    <input type="text" id="cli-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="cli-cadet-name-btn" disabled>Start the walkthrough</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 1 &middot; Filesystem CLI Walkthrough</h1>
+<div class="subtitle">A guided tour through the Linux filesystem. The terminal is on the left, the tree of where you are is on the right. Type each command and watch the tree light up.</div>
+
+<div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width: 0%;"></div></div>
+<div class="progress-label" id="progress-label">Task 1 of 16</div>
+
+<div class="section-header" id="section-header">SECTION 1: WHERE AM I?</div>
+
+<div class="task-card" id="task-card">
+  <div class="task-label" id="task-label">TASK 1 OF 16</div>
+  <div class="task-text" id="task-text">Find out where you are in the filesystem. Print the working directory.</div>
+  <div class="task-hint" id="task-hint" style="display: none;"></div>
+</div>
+
+<div class="panes">
+  <div class="terminal" id="terminal"></div>
+  <div class="tree-pane">
+    <div class="tree-header">Filesystem &middot; <span id="tree-cwd">/home/cadet</span></div>
+    <div id="tree-render"></div>
+  </div>
+</div>
+
+<div class="input-row">
+  <span class="prompt" id="input-prompt">cadet@cs210:~$</span>
+  <input type="text" id="cli-input" autocomplete="off" spellcheck="false" placeholder="Type a command and press Enter">
+</div>
+
+<div class="controls">
+  <button id="hint-btn">Show hint</button>
+  <button id="reset-btn">Reset</button>
+</div>
+
+<div class="completion" id="completion-area" style="display: none;"></div>
+
+<div class="help-note">
+  <strong>How this works:</strong> This is a practice terminal, not a real one. The task card above tells you what command to run next. The tree on the right highlights where you are; new directories and files appear as you create them. Type <code>help</code> any time to see the commands available.
+</div>
+
+</div>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 32px 0 10px 0;">Practice Terminal 2: Git Workflow</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Nine tasks walking through the full daily Git cycle: clone, navigate, inspect, edit, stage, commit, push.</p>
+
+<!-- ===== Git workflow widget body ===== -->
+<div class="cs210-git">
+
+<div class="name-modal-backdrop" id="git-name-modal-backdrop">
+  <div class="name-modal">
+    <h2>Before you begin</h2>
+    <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Blackboard reflection quiz.</p>
+    <input type="text" id="git-cadet-name-input" placeholder="First and last name" autocomplete="off">
+    <button class="name-modal-btn" id="git-cadet-name-btn" disabled>Start the walkthrough</button>
+  </div>
+</div>
+
+<h1>CS210 Lesson 1 &middot; Git Workflow Practice</h1>
+<div class="subtitle">Practice the commands you will use every day in CS210. Follow each task. Type the command and press Enter.</div>
+
+<div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width: 0%;"></div></div>
+<div class="progress-label" id="progress-label">Task 0 of 9</div>
+
+<div class="task-card" id="task-card">
+  <div class="task-label" id="task-label">Current task</div>
+  <div class="task-text" id="task-text">Loading...</div>
+  <div class="task-hint" id="task-hint"></div>
+</div>
+
+<div class="terminal" id="terminal"></div>
+
+<div class="input-row">
+  <span class="input-prompt" id="input-prompt">cadet@cs210:~$</span>
+  <input type="text" id="cli-input" autocomplete="off" spellcheck="false" autofocus>
+</div>
+
+<div class="controls">
+  <button class="btn" id="hint-btn">Show hint</button>
+  <button class="btn" id="reset-btn">Reset</button>
+</div>
+
+<div class="help-note">
+  <strong>How this works:</strong> This is a practice terminal, not a real one. Free-form commands like <code>ls</code> and <code>cd</code> work for exploration. The task card above tells you what command to run next. Get it right and you move to the next task. Type <code>help</code> any time to see available commands.
+</div>
+
+<div id="completion-area"></div>
+</div>
+
+    </div>
+  </details>
+
+<!-- ===== Both widgets' scripts, scoped via IIFE ===== -->
+<script>
+(function() {
+  const root = document.querySelector('.cs210-cli');
+  if (!root) return;
+
+  // ============================================================
+  // CS210 widget completion utilities
+  // ============================================================
+  const CS210_SALT = "lesson01_cli_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  // Name modal
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#cli-name-modal-backdrop');
+    const input = root.querySelector('#cli-cadet-name-input');
+    const btn = root.querySelector('#cli-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored) input.value = stored;
+    } catch (e) {}
+    function updateBtn() { btn.disabled = input.value.trim().length < 2; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('focus', function() {
+      try {
+        const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+        if (stored && !input.value.trim()) { input.value = stored; updateBtn(); }
+      } catch (e) {}
+    });
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', function() {
+      const name = input.value.trim();
+      if (name.length < 2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+      const cli = root.querySelector('#cli-input');
+      if (cli) cli.focus();
+    });
+  })();
+
+  function cs210EscapeName(s) {
+    return (s || 'Cadet').replace(/[<>&"']/g, function(c) {
+      return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function cs210FallbackCopy(text) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+    } catch (e) {}
+  }
+  function cs210RenderCompletion(area) {
+    if (!area) return;
+    if (root.querySelector('#cs210-completion-overlay')) return;
+    const now = new Date();
+    const ts = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const safeName = cs210EscapeName(cs210CadetName);
+    area.style.display = 'block';
+    area.innerHTML =
+      '<div class="completion-screen">' +
+        '<div class="cs-heading">Walkthrough complete</div>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value">' + CS210_CODE + '</div></div>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+      '</div>';
+    const overlay = document.createElement('div');
+    overlay.id = 'cs210-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.style.background = 'rgba(27, 94, 32, 0.55)';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">Walkthrough complete</h2>' +
+        '<p>Take a screenshot of this box. You will need the code and a visual of this screen for the Blackboard reflection quiz.</p>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value" id="cs-code-value">' + CS210_CODE + '</div></div>' +
+          '<button class="cs-copy-btn" id="cs-copy-btn" type="button">Copy code</button>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+        '<div class="cs-reminder" style="margin-bottom:14px;">' +
+          '<strong>Next step:</strong> Open the Lesson 1 reflection quiz in Blackboard. Enter this code, answer the reflection prompt, and attach your screenshot.' +
+        '</div>' +
+        '<button class="name-modal-btn" id="cs-overlay-close" type="button" style="background:#2E7D32;">Got it &mdash; close this</button>' +
+      '</div>';
+    root.appendChild(overlay);
+    const closeBtn = overlay.querySelector('#cs-overlay-close');
+    if (closeBtn) closeBtn.addEventListener('click', function() { overlay.remove(); });
+    const copyBtn = overlay.querySelector('#cs-copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function() {
+        const ok = function() {
+          copyBtn.textContent = 'Copied'; copyBtn.classList.add('copied');
+          setTimeout(function() {
+            copyBtn.textContent = 'Copy code'; copyBtn.classList.remove('copied');
+          }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(CS210_CODE).then(ok, function() { cs210FallbackCopy(CS210_CODE); ok(); });
+        } else { cs210FallbackCopy(CS210_CODE); ok(); }
+      });
+    }
+  }
+
+// ============================================================
+// Filesystem model
+//
+// Each directory is { type:'dir', name, children:{} }.
+// Each file is      { type:'file', name, content:'' }.
+// The root is '/'. cwd is an array of path segments (no leading '/').
+// ============================================================
+
+function initialFS() {
+  return {
+    type: 'dir', name: '/',
+    children: {
+      'home': { type: 'dir', name: 'home', children: {
+        'cadet': { type: 'dir', name: 'cadet', children: {
+          'Documents': { type: 'dir', name: 'Documents', children: {
+            'syllabus.pdf': { type: 'file', name: 'syllabus.pdf', content: '(PDF binary)' },
+            'notes.txt':    { type: 'file', name: 'notes.txt', content: 'Lecture notes from CS110' }
+          }},
+          'Downloads': { type: 'dir', name: 'Downloads', children: {
+            'installer.zip': { type: 'file', name: 'installer.zip', content: '(archive)' }
+          }},
+          'Pictures': { type: 'dir', name: 'Pictures', children: {} },
+          '.bashrc':  { type: 'file', name: '.bashrc', content: '# shell config' },
+          '.profile': { type: 'file', name: '.profile', content: '# login profile' }
+        }}
+      }}
+    }
+  };
+}
+
+let fs = initialFS();
+let cwd = ['home', 'cadet'];      // segments; absolute path is '/' + cwd.join('/')
+let currentTaskIndex = 0;
+let consecutiveFails = 0;
+let freeMode = false;
+let lastCreatedPath = null;       // for "new" animation flag
+
+const HOME = ['home', 'cadet'];
+
+// ---- Path helpers ----
+function pathSegmentsToString(segs) {
+  if (segs.length === 0) return '/';
+  return '/' + segs.join('/');
+}
+function homeShortPath(segs) {
+  // Render with ~ when inside /home/cadet
+  if (segs.length >= 2 && segs[0] === 'home' && segs[1] === 'cadet') {
+    const rest = segs.slice(2);
+    return rest.length === 0 ? '~' : '~/' + rest.join('/');
+  }
+  return pathSegmentsToString(segs);
+}
+function getNode(segs) {
+  let n = fs;
+  for (const s of segs) {
+    if (!n || n.type !== 'dir') return null;
+    n = n.children[s];
+  }
+  return n || null;
+}
+function getParentAndName(segs) {
+  if (segs.length === 0) return [null, null];
+  return [getNode(segs.slice(0, -1)), segs[segs.length - 1]];
+}
+function resolvePath(input) {
+  // Returns { ok, segs, error }
+  if (input == null) return { ok: false, error: 'no path' };
+  let s = String(input).trim();
+  if (s === '') return { ok: false, error: 'empty path' };
+
+  let segs;
+  if (s === '~' || s === '~/') {
+    segs = HOME.slice();
+  } else if (s.startsWith('~/')) {
+    segs = HOME.slice().concat(s.slice(2).split('/').filter(Boolean));
+  } else if (s === '~') {
+    segs = HOME.slice();
+  } else if (s.startsWith('/')) {
+    segs = s.split('/').filter(Boolean);
+  } else {
+    segs = cwd.slice().concat(s.split('/').filter(Boolean));
+  }
+  // Process . and ..
+  const out = [];
+  for (const seg of segs) {
+    if (seg === '.') continue;
+    if (seg === '..') {
+      if (out.length > 0) out.pop();
+      continue;
+    }
+    out.push(seg);
+  }
+  return { ok: true, segs: out };
+}
+
+// ---- Tree rendering ----
+function renderTree() {
+  const container = root.querySelector('#tree-render');
+  const cwdLabel = root.querySelector('#tree-cwd');
+  cwdLabel.textContent = pathSegmentsToString(cwd);
+
+  const cwdSet = new Set(cwd.map((_, i) => cwd.slice(0, i + 1).join('|')));
+  const cwdKey = cwd.join('|');
+
+  const lines = [];
+  function walk(node, segs, depth, isLast, prefixLines) {
+    const key = segs.join('|');
+    const isCurrent = key === cwdKey;
+    const isAncestor = !isCurrent && (segs.length === 0 || cwd.join('|').startsWith(key) && cwd.length >= segs.length && cwd.slice(0, segs.length).join('|') === key);
+    const onPath = isCurrent || isAncestor;
+    const indentBits = prefixLines.join('') + (depth > 0 ? (isLast ? '└── ' : '├── ') : '');
+    const label = node.name === '/' ? '/' : (node.type === 'dir' ? node.name + '/' : node.name);
+    const isNew = lastCreatedPath && lastCreatedPath === key;
+    let rowClass = 'tree-row ' + (node.type === 'dir' ? 'dir' : 'file');
+    if (isCurrent) rowClass += ' current';
+    else if (isAncestor) rowClass += ' ancestor';
+    else if (!onPath) rowClass += ' distant';
+    if (isNew) rowClass += ' new';
+
+    let previewHtml = '';
+    if (node.type === 'file' && node.content) {
+      const preview = node.content.length > 30 ? node.content.slice(0, 27) + '...' : node.content;
+      previewHtml = '<span class="preview">&mdash; "' + escapeHtml(preview) + '"</span>';
+    }
+    lines.push(
+      '<div class="' + rowClass + '"><span class="indent">' + escapeHtml(indentBits) +
+      '</span><span class="label">' + escapeHtml(label) + '</span>' + previewHtml + '</div>'
+    );
+
+    if (node.type === 'dir') {
+      const childNames = Object.keys(node.children).sort(function(a, b) {
+        // dirs first, then files; alpha within
+        const aDir = node.children[a].type === 'dir';
+        const bDir = node.children[b].type === 'dir';
+        if (aDir !== bDir) return aDir ? -1 : 1;
+        return a.localeCompare(b);
+      });
+      const newPrefix = prefixLines.concat(depth > 0 ? (isLast ? '    ' : '│   ') : '');
+      childNames.forEach(function(cn, i) {
+        const last = i === childNames.length - 1;
+        walk(node.children[cn], segs.concat(cn), depth + 1, last, newPrefix);
+      });
+    }
+  }
+  walk(fs, [], 0, true, []);
+
+  container.innerHTML = lines.join('');
+  // clear flag after render so animation only runs once
+  lastCreatedPath = null;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[<>&"']/g, function(c) {
+    return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+
+// ---- Terminal rendering ----
+const terminalEl = root.querySelector('#terminal');
+function termLine(text, cls) {
+  const span = document.createElement('span');
+  if (cls) span.className = cls;
+  span.textContent = text + '\n';
+  terminalEl.appendChild(span);
+  terminalEl.scrollTop = terminalEl.scrollHeight;
+}
+function promptString() {
+  return 'cadet@cs210:' + homeShortPath(cwd) + '$';
+}
+function echoCmd(cmd) {
+  const line = document.createElement('div');
+  line.innerHTML = '<span class="prompt">' + escapeHtml(promptString()) + '</span> ' +
+                   '<span class="typed">' + escapeHtml(cmd) + '</span>';
+  terminalEl.appendChild(line);
+  terminalEl.scrollTop = terminalEl.scrollHeight;
+}
+
+// ---- Tasks ----
+// Each task: { section, label, text, hint, check(cmd, parsed) -> bool, advanceOnSuccess: true }
+// Tasks may also have onSuccess() to perform any side effect after success.
+
+const tasks = [
+  // Section 1: Where am I?
+  { section: 'SECTION 1: WHERE AM I?', label: 'Task 1 of 16',
+    text: 'Find out where you are in the filesystem. Print the working directory.',
+    hint: 'The command is short: pwd',
+    check: (cmd, p) => p.argv[0] === 'pwd' },
+  { section: 'SECTION 1: WHERE AM I?', label: 'Task 2 of 16',
+    text: 'List what is inside your home directory.',
+    hint: 'Use ls to see the contents of the current directory.',
+    check: (cmd, p) => p.argv[0] === 'ls' },
+  { section: 'SECTION 1: WHERE AM I?', label: 'Task 3 of 16',
+    text: 'Move into the Documents directory.',
+    hint: 'cd Documents',
+    check: (cmd, p) => p.argv[0] === 'cd' && p.argv[1] === 'Documents' &&
+                       cwd.length === 3 && cwd[2] === 'Documents' },
+
+  // Section 2: Paths, two ways
+  { section: 'SECTION 2: PATHS, TWO WAYS', label: 'Task 4 of 16',
+    text: 'You are in Documents. Print the working directory to confirm.',
+    hint: 'pwd will show /home/cadet/Documents',
+    check: (cmd, p) => p.argv[0] === 'pwd' },
+  { section: 'SECTION 2: PATHS, TWO WAYS', label: 'Task 5 of 16',
+    text: 'Move back up one level using a RELATIVE path.',
+    hint: 'cd .. moves to the parent directory.',
+    check: (cmd, p) => p.argv[0] === 'cd' && p.argv[1] === '..' &&
+                       cwd.length === 2 && cwd[1] === 'cadet' },
+  { section: 'SECTION 2: PATHS, TWO WAYS', label: 'Task 6 of 16',
+    text: 'Now go back into Documents using an ABSOLUTE path that starts at /.',
+    hint: 'cd /home/cadet/Documents',
+    check: (cmd, p) => p.argv[0] === 'cd' && (p.argv[1] || '').startsWith('/') &&
+                       cwd.length === 3 && cwd[2] === 'Documents' },
+
+  // Section 3: Up, sideways, home
+  { section: 'SECTION 3: UP, SIDEWAYS, HOME', label: 'Task 7 of 16',
+    text: 'Go up to your home directory using the tilde shortcut.',
+    hint: 'cd ~ jumps to /home/cadet from anywhere.',
+    check: (cmd, p) => p.argv[0] === 'cd' && (p.argv[1] === '~' || p.argv[1] === '~/') &&
+                       cwd.length === 2 && cwd[1] === 'cadet' },
+  { section: 'SECTION 3: UP, SIDEWAYS, HOME', label: 'Task 8 of 16',
+    text: 'Move sideways into the Downloads directory.',
+    hint: 'cd Downloads (you are still at home, so a relative path works)',
+    check: (cmd, p) => p.argv[0] === 'cd' && p.argv[1] === 'Downloads' &&
+                       cwd.length === 3 && cwd[2] === 'Downloads' },
+  { section: 'SECTION 3: UP, SIDEWAYS, HOME', label: 'Task 9 of 16',
+    text: 'Go home with NO arguments. Just type cd.',
+    hint: 'cd (alone) returns you to your home directory.',
+    check: (cmd, p) => p.argv[0] === 'cd' && (p.argv.length === 1) &&
+                       cwd.length === 2 && cwd[1] === 'cadet' },
+
+  // Section 4: Build a workspace, write a file
+  { section: 'SECTION 4: BUILD YOUR WORKSPACE', label: 'Task 10 of 16',
+    text: 'Build your CS210 working folder in one shot: ~/cs210/lesson01/lab. Use the -p flag so mkdir creates parent directories as needed.',
+    hint: 'mkdir -p cs210/lesson01/lab',
+    check: (cmd, p) => p.argv[0] === 'mkdir' && p.flags.has('p') &&
+                       getNode(['home','cadet','cs210','lesson01','lab']) !== null },
+  { section: 'SECTION 4: BUILD YOUR WORKSPACE', label: 'Task 11 of 16',
+    text: 'Move into your new lab folder using a tilde-anchored path.',
+    hint: 'cd ~/cs210/lesson01/lab',
+    check: (cmd, p) => p.argv[0] === 'cd' &&
+                       cwd.length === 5 && cwd[2] === 'cs210' && cwd[3] === 'lesson01' && cwd[4] === 'lab' },
+  { section: 'SECTION 4: BUILD YOUR WORKSPACE', label: 'Task 12 of 16',
+    text: 'Create an empty file called hello.c using touch.',
+    hint: 'touch hello.c',
+    check: (cmd, p) => p.argv[0] === 'touch' && p.argv[1] === 'hello.c' &&
+                       getNode(cwd.concat('hello.c')) !== null },
+  { section: 'SECTION 4: BUILD YOUR WORKSPACE', label: 'Task 13 of 16',
+    text: 'Write a one-line greeting into hello.c using echo and output redirection. The message must start with the word Hello.',
+    hint: 'echo "Hello, CS210!" > hello.c',
+    check: (cmd, p) => {
+      if (p.argv[0] !== 'echo' || !p.redirectTo) return false;
+      const f = getNode(cwd.concat(p.redirectTo));
+      if (!f || f.type !== 'file') return false;
+      return /^Hello/.test(f.content || '');
+    }},
+  { section: 'SECTION 4: BUILD YOUR WORKSPACE', label: 'Task 14 of 16',
+    text: 'Read the file you just wrote to confirm the greeting is there.',
+    hint: 'cat hello.c',
+    check: (cmd, p) => p.argv[0] === 'cat' && p.argv[1] === 'hello.c' },
+  { section: 'SECTION 4: BUILD YOUR WORKSPACE', label: 'Task 15 of 16',
+    text: 'Copy hello.c to hello_backup.c so you have a safety copy.',
+    hint: 'cp hello.c hello_backup.c',
+    check: (cmd, p) => p.argv[0] === 'cp' && p.argv[1] === 'hello.c' && p.argv[2] === 'hello_backup.c' &&
+                       getNode(cwd.concat('hello_backup.c')) !== null },
+  { section: 'SECTION 4: BUILD YOUR WORKSPACE', label: 'Task 16 of 16',
+    text: 'Remove the backup file, then list the directory to confirm only hello.c remains.',
+    hint: 'rm hello_backup.c then ls',
+    // Two-step: track removal in a flag; final check is "rm succeeded AND ls run"
+    check: (cmd, p) => p.argv[0] === 'ls' &&
+                       getNode(cwd.concat('hello_backup.c')) === null &&
+                       getNode(cwd.concat('hello.c')) !== null }
+];
+
+// ---- Parser ----
+//
+// Subset of POSIX shell. Supports:
+//   - argv tokens separated by whitespace
+//   - single or double-quoted strings preserve spaces; inner quotes not escaped
+//   - flags: -p, -R, -a, -r, -l (just collected into a Set)
+//   - output redirect: > FILE (must be at end), with optional whitespace
+function parseCommand(line) {
+  const out = { argv: [], flags: new Set(), redirectTo: null, raw: line };
+  if (!line || !line.trim()) return out;
+
+  // Split off redirect first
+  let body = line;
+  const redirMatch = body.match(/\s>\s*(\S+)\s*$/);
+  if (redirMatch) {
+    out.redirectTo = redirMatch[1];
+    body = body.slice(0, redirMatch.index);
+  } else {
+    // also handle "echo foo>bar" without space
+    const tight = body.match(/>\s*(\S+)\s*$/);
+    if (tight) {
+      out.redirectTo = tight[1];
+      body = body.slice(0, tight.index);
+    }
+  }
+
+  // Tokenize
+  const tokens = [];
+  let cur = '', quote = null;
+  for (let i = 0; i < body.length; i++) {
+    const c = body[i];
+    if (quote) {
+      if (c === quote) { quote = null; continue; }
+      cur += c;
+    } else if (c === '"' || c === "'") {
+      quote = c;
+    } else if (/\s/.test(c)) {
+      if (cur.length) { tokens.push(cur); cur = ''; }
+    } else {
+      cur += c;
+    }
+  }
+  if (cur.length) tokens.push(cur);
+
+  // Pull flags out of tokens (anything starting with - that is short flags)
+  for (const t of tokens) {
+    if (t.length > 1 && t[0] === '-' && t[1] !== '-' && /^-[a-zA-Z]+$/.test(t)) {
+      for (const ch of t.slice(1)) out.flags.add(ch);
+    } else {
+      out.argv.push(t);
+    }
+  }
+  return out;
+}
+
+// ---- Commands ----
+const COMMANDS = {
+  pwd: function(p) {
+    termLine(pathSegmentsToString(cwd), 'out');
+    return true;
+  },
+  ls: function(p) {
+    const target = p.argv[1] ? resolvePath(p.argv[1]) : { ok: true, segs: cwd.slice() };
+    if (!target.ok) { termLine('ls: ' + (target.error || 'bad path'), 'err'); return false; }
+    const node = getNode(target.segs);
+    if (!node) { termLine('ls: ' + p.argv[1] + ': No such file or directory', 'err'); return false; }
+    if (node.type === 'file') { termLine(node.name, 'out'); return true; }
+    const showHidden = p.flags.has('a');
+    const names = Object.keys(node.children).filter(function(n) {
+      return showHidden || !n.startsWith('.');
+    }).sort();
+    termLine(names.join('  '), 'out');
+    return true;
+  },
+  cd: function(p) {
+    let target;
+    if (p.argv.length === 1) {
+      target = { ok: true, segs: HOME.slice() };
+    } else {
+      target = resolvePath(p.argv[1]);
+    }
+    if (!target.ok) { termLine('cd: ' + (target.error || 'bad path'), 'err'); return false; }
+    const node = getNode(target.segs);
+    if (!node) { termLine('cd: ' + p.argv[1] + ': No such file or directory', 'err'); return false; }
+    if (node.type !== 'dir') { termLine('cd: ' + p.argv[1] + ': Not a directory', 'err'); return false; }
+    cwd = target.segs;
+    root.querySelector('#input-prompt').textContent = promptString();
+    return true;
+  },
+  mkdir: function(p) {
+    const targets = p.argv.slice(1);
+    if (targets.length === 0) { termLine('mkdir: missing operand', 'err'); return false; }
+    const withP = p.flags.has('p');
+    let anySuccess = false;
+    for (const t of targets) {
+      const r = resolvePath(t);
+      if (!r.ok) { termLine('mkdir: invalid path ' + t, 'err'); continue; }
+      const segs = r.segs;
+      if (withP) {
+        // Walk down, creating as needed.
+        let n = fs;
+        for (let i = 0; i < segs.length; i++) {
+          const name = segs[i];
+          if (n.children[name]) {
+            if (n.children[name].type !== 'dir') {
+              termLine('mkdir: cannot create directory ' + name + ': File exists', 'err');
+              return anySuccess;
+            }
+          } else {
+            n.children[name] = { type: 'dir', name: name, children: {} };
+            lastCreatedPath = segs.slice(0, i + 1).join('|');
+            anySuccess = true;
+          }
+          n = n.children[name];
+        }
+      } else {
+        const [parent, name] = getParentAndName(segs);
+        if (!parent || parent.type !== 'dir') {
+          termLine('mkdir: cannot create directory ' + t + ': No such file or directory', 'err');
+          continue;
+        }
+        if (parent.children[name]) {
+          termLine('mkdir: cannot create directory ' + t + ': File exists', 'err');
+          continue;
+        }
+        parent.children[name] = { type: 'dir', name: name, children: {} };
+        lastCreatedPath = segs.join('|');
+        anySuccess = true;
+      }
+    }
+    return anySuccess;
+  },
+  touch: function(p) {
+    const targets = p.argv.slice(1);
+    if (targets.length === 0) { termLine('touch: missing file operand', 'err'); return false; }
+    for (const t of targets) {
+      const r = resolvePath(t);
+      if (!r.ok) { termLine('touch: invalid path ' + t, 'err'); continue; }
+      const [parent, name] = getParentAndName(r.segs);
+      if (!parent || parent.type !== 'dir') {
+        termLine('touch: cannot touch ' + t + ': No such file or directory', 'err');
+        continue;
+      }
+      if (!parent.children[name]) {
+        parent.children[name] = { type: 'file', name: name, content: '' };
+        lastCreatedPath = r.segs.join('|');
+      }
+    }
+    return true;
+  },
+  echo: function(p) {
+    // Argv after argv[0] is the text. Join with spaces.
+    const text = p.argv.slice(1).join(' ');
+    if (p.redirectTo) {
+      const r = resolvePath(p.redirectTo);
+      if (!r.ok) { termLine('echo: invalid path ' + p.redirectTo, 'err'); return false; }
+      const [parent, name] = getParentAndName(r.segs);
+      if (!parent || parent.type !== 'dir') {
+        termLine('bash: ' + p.redirectTo + ': No such file or directory', 'err');
+        return false;
+      }
+      const existing = parent.children[name];
+      if (existing && existing.type === 'dir') {
+        termLine('bash: ' + p.redirectTo + ': Is a directory', 'err');
+        return false;
+      }
+      if (existing) {
+        existing.content = text;
+      } else {
+        parent.children[name] = { type: 'file', name: name, content: text };
+        lastCreatedPath = r.segs.join('|');
+      }
+    } else {
+      termLine(text, 'out');
+    }
+    return true;
+  },
+  cat: function(p) {
+    if (p.argv.length < 2) { termLine('cat: missing file operand', 'err'); return false; }
+    let any = false;
+    for (let i = 1; i < p.argv.length; i++) {
+      const r = resolvePath(p.argv[i]);
+      if (!r.ok) { termLine('cat: invalid path ' + p.argv[i], 'err'); continue; }
+      const node = getNode(r.segs);
+      if (!node) { termLine('cat: ' + p.argv[i] + ': No such file or directory', 'err'); continue; }
+      if (node.type === 'dir') { termLine('cat: ' + p.argv[i] + ': Is a directory', 'err'); continue; }
+      termLine(node.content || '', 'out');
+      any = true;
+    }
+    return any;
+  },
+  cp: function(p) {
+    if (p.argv.length < 3) { termLine('cp: missing destination file operand', 'err'); return false; }
+    const src = resolvePath(p.argv[1]);
+    const dst = resolvePath(p.argv[2]);
+    if (!src.ok || !dst.ok) { termLine('cp: bad path', 'err'); return false; }
+    const srcNode = getNode(src.segs);
+    if (!srcNode) { termLine('cp: cannot stat ' + p.argv[1] + ': No such file or directory', 'err'); return false; }
+    if (srcNode.type !== 'file') { termLine('cp: -r not supported in this practice terminal', 'err'); return false; }
+    const [dstParent, dstName] = getParentAndName(dst.segs);
+    if (!dstParent || dstParent.type !== 'dir') {
+      termLine('cp: cannot create regular file ' + p.argv[2] + ': No such file or directory', 'err');
+      return false;
+    }
+    dstParent.children[dstName] = { type: 'file', name: dstName, content: srcNode.content };
+    lastCreatedPath = dst.segs.join('|');
+    return true;
+  },
+  mv: function(p) {
+    if (p.argv.length < 3) { termLine('mv: missing destination file operand', 'err'); return false; }
+    const src = resolvePath(p.argv[1]);
+    const dst = resolvePath(p.argv[2]);
+    if (!src.ok || !dst.ok) { termLine('mv: bad path', 'err'); return false; }
+    const [srcParent, srcName] = getParentAndName(src.segs);
+    const srcNode = getNode(src.segs);
+    if (!srcNode || !srcParent) { termLine('mv: cannot stat ' + p.argv[1] + ': No such file or directory', 'err'); return false; }
+    const [dstParent, dstName] = getParentAndName(dst.segs);
+    if (!dstParent || dstParent.type !== 'dir') {
+      termLine('mv: cannot move to ' + p.argv[2] + ': No such file or directory', 'err');
+      return false;
+    }
+    dstParent.children[dstName] = Object.assign({}, srcNode, { name: dstName });
+    delete srcParent.children[srcName];
+    lastCreatedPath = dst.segs.join('|');
+    return true;
+  },
+  rm: function(p) {
+    const targets = p.argv.slice(1);
+    if (targets.length === 0) { termLine('rm: missing operand', 'err'); return false; }
+    let any = false;
+    for (const t of targets) {
+      const r = resolvePath(t);
+      if (!r.ok) { termLine('rm: invalid path ' + t, 'err'); continue; }
+      const [parent, name] = getParentAndName(r.segs);
+      const node = getNode(r.segs);
+      if (!node || !parent) { termLine('rm: cannot remove ' + t + ': No such file or directory', 'err'); continue; }
+      if (node.type === 'dir' && !p.flags.has('r')) {
+        termLine('rm: cannot remove ' + t + ': Is a directory', 'err');
+        continue;
+      }
+      delete parent.children[name];
+      any = true;
+    }
+    return any;
+  },
+  help: function(p) {
+    termLine('Available commands:', 'dim');
+    termLine('  pwd                  print working directory', 'out');
+    termLine('  ls [path] [-a]       list directory contents', 'out');
+    termLine('  cd [path]            change directory (no args = home)', 'out');
+    termLine('  mkdir [-p] dir...    make directory; -p creates parents', 'out');
+    termLine('  touch file...        create empty file (or update timestamp)', 'out');
+    termLine('  echo text [> file]   print text; or write to file with >', 'out');
+    termLine('  cat file...          print file contents', 'out');
+    termLine('  cp src dst           copy file', 'out');
+    termLine('  mv src dst           move or rename', 'out');
+    termLine('  rm [-r] target...    remove file (or directory with -r)', 'out');
+    termLine('  clear                clear the terminal', 'out');
+    termLine('  help                 show this list', 'out');
+    return true;
+  },
+  clear: function(p) {
+    terminalEl.innerHTML = '';
+    return true;
+  }
+};
+
+// ---- Run loop ----
+function runCommand(line) {
+  if (!line.trim()) return;
+  echoCmd(line);
+  const parsed = parseCommand(line);
+  if (parsed.argv.length === 0 && !parsed.redirectTo) return;
+  // bare redirect (e.g. "> foo") is unusual; just treat as no-op.
+  const name = parsed.argv[0];
+  const fn = COMMANDS[name];
+  let success = false;
+  if (!fn) {
+    termLine('bash: ' + name + ': command not found', 'err');
+    success = false;
+  } else {
+    try { success = !!fn(parsed); }
+    catch (e) { termLine('error: ' + e.message, 'err'); success = false; }
+  }
+
+  // Always re-render tree state after a command (even errors don't move tree, but cwd may change for cd)
+  renderTree();
+
+  // Task progression
+  if (!freeMode) {
+    const task = tasks[currentTaskIndex];
+    if (task && success && task.check(line, parsed)) {
+      advanceTask();
+    } else if (!success || (task && !task.check(line, parsed))) {
+      consecutiveFails++;
+      if (consecutiveFails >= 2) showHintPulse();
+    }
+  }
+}
+
+function showHintPulse() { root.querySelector('#hint-btn').classList.add('pulse'); }
+function hideHintPulse()  { root.querySelector('#hint-btn').classList.remove('pulse'); }
+
+function advanceTask() {
+  consecutiveFails = 0;
+  hideHintPulse();
+  currentTaskIndex++;
+  renderTask();
+}
+
+function renderTask() {
+  const card = root.querySelector('#task-card');
+  const label = root.querySelector('#task-label');
+  const text = root.querySelector('#task-text');
+  const hint = root.querySelector('#task-hint');
+  const section = root.querySelector('#section-header');
+  const fill = root.querySelector('#progress-fill');
+  const progLabel = root.querySelector('#progress-label');
+  const completionArea = root.querySelector('#completion-area');
+
+  fill.style.width = (currentTaskIndex / tasks.length * 100) + '%';
+  hint.style.display = 'none';
+
+  if (currentTaskIndex >= tasks.length) {
+    card.classList.add('complete');
+    label.textContent = 'COMPLETE';
+    text.innerHTML = '<strong>You worked through every CLI task.</strong> You built ~/cs210/lesson01/lab, wrote and read your first file, and walked the tree using relative paths, absolute paths, and the tilde shortcut.';
+    section.textContent = 'WALKTHROUGH COMPLETE';
+    fill.style.width = '100%';
+    progLabel.textContent = 'All tasks complete';
+    cs210RenderCompletion(completionArea);
+    enterFreeMode();
+    return;
+  }
+
+  const t = tasks[currentTaskIndex];
+  card.classList.remove('complete');
+  label.textContent = t.label.toUpperCase();
+  text.textContent = t.text;
+  section.textContent = t.section;
+  progLabel.textContent = t.label;
+}
+
+function enterFreeMode() {
+  freeMode = true;
+  const banner = document.createElement('div');
+  banner.className = 'free-mode-banner';
+  banner.innerHTML = '<strong>Free mode:</strong> all commands are unlocked. Try navigating anywhere, creating files, or running <code>help</code> to see the full list. Click Reset to start the guided walkthrough again.';
+  root.querySelector('#completion-area').appendChild(banner);
+}
+
+function reset() {
+  const overlay = root.querySelector('#cs210-completion-overlay');
+  if (overlay) overlay.remove();
+  fs = initialFS();
+  cwd = ['home', 'cadet'];
+  currentTaskIndex = 0;
+  consecutiveFails = 0;
+  freeMode = false;
+  lastCreatedPath = null;
+  hideHintPulse();
+  terminalEl.innerHTML = '';
+  root.querySelector('#completion-area').innerHTML = '';
+  root.querySelector('#completion-area').style.display = 'none';
+  termLine('Welcome to the CS210 filesystem walkthrough.', 'dim');
+  termLine('Type "help" any time to see available commands.', 'dim');
+  termLine('', 'out');
+  root.querySelector('#input-prompt').textContent = promptString();
+  renderTask();
+  renderTree();
+}
+
+// ---- Wire up input ----
+const inputEl = root.querySelector('#cli-input');
+inputEl.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    const line = inputEl.value;
+    inputEl.value = '';
+    runCommand(line);
+  }
+});
+root.querySelector('#hint-btn').addEventListener('click', function() {
+  hideHintPulse();
+  const t = tasks[currentTaskIndex];
+  if (!t) return;
+  const hintEl = root.querySelector('#task-hint');
+  hintEl.style.display = 'block';
+  hintEl.textContent = 'Hint: ' + t.hint;
+});
+root.querySelector('#reset-btn').addEventListener('click', reset);
+
+// ---- Initial render ----
+termLine('Welcome to the CS210 filesystem walkthrough.', 'dim');
+termLine('Type "help" any time to see available commands.', 'dim');
+termLine('', 'out');
+renderTask();
+renderTree();
+
+})();
+
+(function() {
+  const root = document.querySelector('.cs210-git');
+  if (!root) return;
+
+  // ============================================================
+  // CS210 widget completion utilities
+  // Salt -> deterministic 6-char code via FNV-1a.
+  // Alphabet excludes 0, 1, O, I (uppercase only output).
+  // ============================================================
+  const CS210_SALT = "lesson01_git_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) {
+      out += CS210_ALPHABET[Number(pool & 31n)];
+      pool >>= 5n;
+    }
+    return out;
+  }
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  // Name-modal gating
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#git-name-modal-backdrop');
+    const input = root.querySelector('#git-cadet-name-input');
+    const btn = root.querySelector('#git-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored) input.value = stored;
+    } catch (e) { /* localStorage may be disabled */ }
+
+    function updateBtn() { btn.disabled = input.value.trim().length < 2; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('focus', function() {
+      // Pick up a name saved by another widget on the same page since load.
+      try {
+        const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+        if (stored && !input.value.trim()) { input.value = stored; updateBtn(); }
+      } catch (e) {}
+    });
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', function() {
+      const name = input.value.trim();
+      if (name.length < 2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+      const cli = root.querySelector('#cli-input');
+      if (cli) cli.focus();
+    });
+    // Note: no autofocus on load. With two widgets on the page, autofocus
+    // would scroll the viewport to whichever widget loaded last.
+  })();
+
+  function cs210EscapeName(s) {
+    return (s || 'Cadet').replace(/[<>&"']/g, function(c) {
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+  }
+  function cs210FallbackCopy(text) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+    } catch (e) { /* nothing else to do */ }
+  }
+  function cs210RenderCompletion(area) {
+    if (!area) return;
+    if (root.querySelector('#cs210-completion-overlay')) return;
+    const now = new Date();
+    const ts = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const safeName = cs210EscapeName(cs210CadetName);
+    area.innerHTML =
+      '<div class="completion-screen">' +
+        '<div class="cs-heading">Walkthrough complete</div>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value">' + CS210_CODE + '</div></div>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+      '</div>';
+    const overlay = document.createElement('div');
+    overlay.id = 'cs210-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.style.background = 'rgba(27, 94, 32, 0.55)';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">Walkthrough complete</h2>' +
+        '<p>Take a screenshot of this box. You will need the code and a visual of this screen for the Blackboard reflection quiz.</p>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block">' +
+          '<div><div class="cs-code-label">Completion code</div>' +
+          '<div class="cs-code-value" id="cs-code-value">' + CS210_CODE + '</div></div>' +
+          '<button class="cs-copy-btn" id="cs-copy-btn" type="button">Copy code</button>' +
+        '</div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div>' +
+        '<div class="cs-reminder" style="margin-bottom:14px;">' +
+          '<strong>Next step:</strong> Open the Lesson 1 reflection quiz in Blackboard. Enter this code, answer the reflection prompt, and attach your screenshot.' +
+        '</div>' +
+        '<button class="name-modal-btn" id="cs-overlay-close" type="button" style="background:#2E7D32;">Got it &mdash; close this</button>' +
+      '</div>';
+    root.appendChild(overlay);
+    const closeBtn = overlay.querySelector('#cs-overlay-close');
+    if (closeBtn) closeBtn.addEventListener('click', function() { overlay.remove(); });
+    const copyBtn = overlay.querySelector('#cs-copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function() {
+        const ok = function() {
+          copyBtn.textContent = 'Copied';
+          copyBtn.classList.add('copied');
+          setTimeout(function() {
+            copyBtn.textContent = 'Copy code';
+            copyBtn.classList.remove('copied');
+          }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(CS210_CODE).then(ok, function() { cs210FallbackCopy(CS210_CODE); ok(); });
+        } else {
+          cs210FallbackCopy(CS210_CODE); ok();
+        }
+      });
+    }
+  }
+
+// ============================================================
+// CS210 Lesson 1 CLI Practice
+// Faked filesystem + scripted scenario.
+// ============================================================
+
+// ---- Filesystem state ----
+// Each "directory" is an object whose keys are entries.
+// File values are strings (their contents). Subdirs are nested objects.
+const initialFS = {
+  '/': {
+    home: {
+      cadet: {
+        // empty home; the clone will populate this
+      }
+    }
+  }
+};
+
+// Deep clone helper so reset works cleanly
+function clone(obj) { return JSON.parse(JSON.stringify(obj)); }
+
+let fs = clone(initialFS);
+let cwd = ['/', 'home', 'cadet'];  // path components
+let gitState = {
+  cloned: false,
+  modified: [],   // files modified since last commit
+  staged: [],     // files git add'd
+  commits: 0,
+  pushed: 0       // commit count last pushed
+};
+
+// ---- Tasks ----
+const tasks = [
+  {
+    label: 'Task 1 of 9',
+    text: 'Check where you are. Print the working directory.',
+    hint: 'The command stands for "print working directory."',
+    expected: ['pwd'],
+    onComplete: () => {}
+  },
+  {
+    label: 'Task 2 of 9',
+    text: 'List the contents of your home directory.',
+    hint: 'Two letters. Lists files and folders.',
+    expected: ['ls'],
+    onComplete: () => {}
+  },
+  {
+    label: 'Task 3 of 9',
+    text: 'Clone the lesson 1 starter repo: https://github.com/cs210/lesson01-starter.git',
+    hint: 'Syntax: git clone <url>',
+    expected: [
+      'git clone https://github.com/cs210/lesson01-starter.git',
+      'git clone https://github.com/cs210/lesson01-starter'
+    ],
+    onComplete: () => {
+      // Create the cloned directory in the filesystem
+      const cadetDir = fs['/'].home.cadet;
+      cadetDir['lesson01-starter'] = {
+        'hello.c': '#include <stdio.h>\n\nint main(void) {\n    printf("Hello, world!\\n");\n    return 0;\n}\n',
+        'README.md': '# Lesson 1 Starter\n\nEdit hello.c to print your name, then commit and push.\n',
+        '.git': { /* opaque; we just track gitState */ }
+      };
+      gitState.cloned = true;
+    }
+  },
+  {
+    label: 'Task 4 of 9',
+    text: 'Change into the lesson01-starter directory.',
+    hint: 'cd is for "change directory."',
+    expected: ['cd lesson01-starter', 'cd lesson01-starter/', 'cd ./lesson01-starter'],
+    onComplete: () => {
+      cwd = ['/', 'home', 'cadet', 'lesson01-starter'];
+    }
+  },
+  {
+    label: 'Task 5 of 9',
+    text: 'List the files in this directory to see what you have to work with.',
+    hint: 'Same command as Task 2.',
+    expected: ['ls', 'ls -l', 'ls -la', 'ls -al', 'ls -a'],
+    onComplete: () => {}
+  },
+  {
+    label: 'Task 6 of 9',
+    text: 'Show the contents of hello.c so you know what you are editing.',
+    hint: 'cat is short for "concatenate" but is mostly used to print file contents.',
+    expected: ['cat hello.c', 'cat ./hello.c'],
+    onComplete: () => {}
+  },
+  {
+    label: 'Task 7 of 9',
+    text: 'Edit hello.c. (In this practice terminal, that just marks it as modified.)',
+    hint: 'nano is one common editor. So is vim. Either works here.',
+    expected: ['nano hello.c', 'vim hello.c', 'vi hello.c', 'code hello.c', 'edit hello.c'],
+    onComplete: () => {
+      if (!gitState.modified.includes('hello.c')) gitState.modified.push('hello.c');
+    }
+  },
+  {
+    label: 'Task 8 of 9',
+    text: 'Check what git thinks has changed.',
+    hint: 'git status',
+    expected: ['git status'],
+    onComplete: () => {}
+  },
+  {
+    label: 'Task 9 of 9',
+    text: 'Stage hello.c, commit it with a message, then push to GitHub.',
+    hint: 'git add hello.c',
+    multistep: [
+      {
+        expected: ['git add hello.c', 'git add .', 'git add -A', 'git add *', 'git add hello*'],
+        text: 'First, stage hello.c with git add.',
+        hint: 'git add hello.c',
+        onComplete: () => {
+          gitState.staged.push('hello.c');
+          gitState.modified = gitState.modified.filter(f => f !== 'hello.c');
+        }
+      },
+      {
+        expected: null,  // pattern match required
+        pattern: /^git commit -m ["'].+["']$/,
+        text: 'Now commit. Use git commit -m "your message here".',
+        hint: 'git commit -m "your message"',
+        onComplete: () => {
+          gitState.commits++;
+          gitState.staged = [];
+        }
+      },
+      {
+        expected: ['git push', 'git push origin main', 'git push origin master'],
+        text: 'Finally, push your commit to GitHub.',
+        hint: 'git push',
+        onComplete: () => {
+          gitState.pushed = gitState.commits;
+        }
+      }
+    ],
+    multistepIndex: 0,
+    onComplete: () => {}
+  }
+];
+
+let currentTaskIndex = 0;
+let consecutiveFails = 0;
+
+// ---- Filesystem helpers ----
+function getDir(pathArr) {
+  let node = fs['/'];
+  for (let i = 1; i < pathArr.length; i++) {
+    if (node[pathArr[i]] === undefined) return null;
+    node = node[pathArr[i]];
+  }
+  return node;
+}
+
+function cwdString() {
+  if (cwd.length === 1) return '/';
+  const tail = cwd.slice(1).join('/');
+  if (cwd[1] === 'home' && cwd[2] === 'cadet') {
+    if (cwd.length === 3) return '~';
+    return '~/' + cwd.slice(3).join('/');
+  }
+  return '/' + tail;
+}
+
+function promptString() {
+  return 'cadet@cs210:' + cwdString() + '$';
+}
+
+// ---- Terminal output ----
+const terminalEl = root.querySelector('#terminal');
+
+function termWrite(text, cls) {
+  const span = document.createElement('span');
+  if (cls) span.className = cls;
+  span.textContent = text;
+  terminalEl.appendChild(span);
+}
+
+function termLine(text, cls) {
+  termWrite(text, cls);
+  terminalEl.appendChild(document.createElement('br'));
+  terminalEl.scrollTop = terminalEl.scrollHeight;
+}
+
+function echoCommand(cmd) {
+  termWrite(promptString() + ' ', 'prompt');
+  termLine(cmd, 'typed');
+}
+
+// ---- Command implementations ----
+function cmdPwd() {
+  const p = cwd.length === 1 ? '/' : '/' + cwd.slice(1).join('/');
+  termLine(p, 'out');
+}
+
+function cmdLs(args) {
+  const dir = getDir(cwd);
+  if (!dir) { termLine('ls: cannot access directory', 'err'); return; }
+  const showHidden = args.includes('-a') || args.includes('-la') || args.includes('-al');
+  const longFormat = args.includes('-l') || args.includes('-la') || args.includes('-al');
+  let entries = Object.keys(dir).filter(k => showHidden || !k.startsWith('.'));
+  entries.sort();
+  if (entries.length === 0) { termLine('', 'out'); return; }
+  if (longFormat) {
+    for (const e of entries) {
+      const isDir = typeof dir[e] === 'object';
+      termLine((isDir ? 'drwxr-xr-x' : '-rw-r--r--') + ' 1 cadet cadet  ' + (isDir ? '4096' : '128') + ' May 10 09:30 ' + e, 'out');
+    }
+  } else {
+    termLine(entries.join('  '), 'out');
+  }
+}
+
+function cmdCd(args) {
+  if (args.length === 0 || args[0] === '~') {
+    cwd = ['/', 'home', 'cadet'];
+    return;
+  }
+  let target = args[0].replace(/\/$/, '');  // strip trailing slash
+  if (target === '..') {
+    if (cwd.length > 1) cwd.pop();
+    return;
+  }
+  if (target.startsWith('./')) target = target.slice(2);
+  if (target.startsWith('/')) {
+    // absolute path
+    const parts = target.split('/').filter(p => p);
+    const newCwd = ['/', ...parts];
+    if (getDir(newCwd) === null) {
+      termLine('cd: ' + target + ': No such file or directory', 'err');
+      return;
+    }
+    cwd = newCwd;
+    return;
+  }
+  // relative path
+  const dir = getDir(cwd);
+  if (!dir || dir[target] === undefined || typeof dir[target] !== 'object') {
+    termLine('cd: ' + target + ': No such file or directory', 'err');
+    return;
+  }
+  cwd.push(target);
+}
+
+function cmdCat(args) {
+  if (args.length === 0) { termLine('cat: missing file operand', 'err'); return; }
+  const target = args[0].replace(/^\.\//, '');
+  const dir = getDir(cwd);
+  if (!dir || dir[target] === undefined) {
+    termLine('cat: ' + target + ': No such file or directory', 'err');
+    return;
+  }
+  if (typeof dir[target] === 'object') {
+    termLine('cat: ' + target + ': Is a directory', 'err');
+    return;
+  }
+  // print file contents line by line
+  const lines = dir[target].split('\n');
+  for (const line of lines) termLine(line, 'out');
+}
+
+function cmdEcho(args) {
+  termLine(args.join(' '), 'out');
+}
+
+function cmdGit(args, raw) {
+  if (args.length === 0) { termLine('usage: git <command> [args]', 'err'); return; }
+  const sub = args[0];
+
+  if (sub === 'clone') {
+    termLine("Cloning into 'lesson01-starter'...", 'out');
+    termLine('remote: Enumerating objects: 5, done.', 'out');
+    termLine('remote: Counting objects: 100% (5/5), done.', 'out');
+    termLine('Receiving objects: 100% (5/5), done.', 'out');
+    return;
+  }
+
+  if (sub === 'status') {
+    if (!gitState.cloned) { termLine('fatal: not a git repository', 'err'); return; }
+    termLine('On branch main', 'out');
+    termLine("Your branch is up to date with 'origin/main'.", 'out');
+    termLine('', 'out');
+    if (gitState.modified.length === 0 && gitState.staged.length === 0) {
+      termLine('nothing to commit, working tree clean', 'out');
+      return;
+    }
+    if (gitState.staged.length > 0) {
+      termLine('Changes to be committed:', 'out');
+      termLine('  (use "git restore --staged <file>..." to unstage)', 'dim');
+      for (const f of gitState.staged) termLine('        modified:   ' + f, 'ok');
+      termLine('', 'out');
+    }
+    if (gitState.modified.length > 0) {
+      termLine('Changes not staged for commit:', 'out');
+      termLine('  (use "git add <file>..." to update what will be committed)', 'dim');
+      for (const f of gitState.modified) termLine('        modified:   ' + f, 'err');
+    }
+    return;
+  }
+
+  if (sub === 'add') {
+    if (!gitState.cloned) { termLine('fatal: not a git repository', 'err'); return; }
+    // silent success in real git
+    return;
+  }
+
+  if (sub === 'commit') {
+    if (!gitState.cloned) { termLine('fatal: not a git repository', 'err'); return; }
+    if (gitState.staged.length === 0) {
+      termLine('On branch main\nnothing to commit, working tree clean', 'out');
+      return;
+    }
+    termLine('[main 7f3a2b1] ' + (raw.match(/-m\s+["']([^"']+)["']/)?.[1] ?? 'commit'), 'out');
+    termLine(' 1 file changed, 1 insertion(+), 1 deletion(-)', 'out');
+    return;
+  }
+
+  if (sub === 'push') {
+    if (!gitState.cloned) { termLine('fatal: not a git repository', 'err'); return; }
+    if (gitState.commits === gitState.pushed) {
+      termLine('Everything up-to-date', 'out');
+      return;
+    }
+    termLine('Enumerating objects: 5, done.', 'out');
+    termLine('Counting objects: 100% (5/5), done.', 'out');
+    termLine('Writing objects: 100% (3/3), 320 bytes | 320.00 KiB/s, done.', 'out');
+    termLine('To https://github.com/cs210/lesson01-starter.git', 'out');
+    termLine('   a1b2c3d..7f3a2b1  main -> main', 'out');
+    return;
+  }
+
+  termLine("git: '" + sub + "' is not a git command. See 'git --help'.", 'err');
+}
+
+function cmdEdit(file) {
+  // For the practice terminal, nano/vim just mark the file modified
+  if (!file) { termLine('usage: <editor> <file>', 'err'); return; }
+  const dir = getDir(cwd);
+  if (!dir || dir[file] === undefined) {
+    termLine('error: cannot open ' + file, 'err');
+    return;
+  }
+  termLine('[' + file + ' opened in practice editor. Pretend you made changes.]', 'dim');
+  termLine('[Saved. ' + file + ' is now modified.]', 'dim');
+}
+
+function cmdHelp() {
+  termLine('Available commands in this practice terminal:', 'out');
+  termLine('  pwd                    print working directory', 'out');
+  termLine('  ls [-l] [-a]           list files', 'out');
+  termLine('  cd <dir>               change directory', 'out');
+  termLine('  cat <file>             show file contents', 'out');
+  termLine('  echo <text>            print text', 'out');
+  termLine('  nano <file>            edit a file (simulated)', 'out');
+  termLine('  git <subcommand>       clone, status, add, commit, push', 'out');
+  termLine('  clear                  clear the terminal', 'out');
+  termLine('  help                   show this list', 'out');
+}
+
+function cmdClear() {
+  terminalEl.innerHTML = '';
+}
+
+// ---- Command dispatch ----
+function runCommand(raw) {
+  echoCommand(raw);
+  const trimmed = raw.trim();
+  if (!trimmed) return;
+
+  // Parse: respect quoted strings as single arguments
+  const tokens = [];
+  const re = /"([^"]*)"|'([^']*)'|(\S+)/g;
+  let m;
+  while ((m = re.exec(trimmed)) !== null) {
+    tokens.push(m[1] ?? m[2] ?? m[3]);
+  }
+  const cmd = tokens[0];
+  const args = tokens.slice(1);
+
+  switch (cmd) {
+    case 'pwd':   cmdPwd(); break;
+    case 'ls':    cmdLs(args); break;
+    case 'cd':    cmdCd(args); break;
+    case 'cat':   cmdCat(args); break;
+    case 'echo':  cmdEcho(args); break;
+    case 'nano':
+    case 'vim':
+    case 'vi':
+    case 'edit':
+    case 'code':  cmdEdit(args[0]); break;
+    case 'git':   cmdGit(args, trimmed); break;
+    case 'help':  cmdHelp(); break;
+    case 'clear': cmdClear(); break;
+    default:
+      termLine(cmd + ': command not found', 'err');
+  }
+
+  // Update the input prompt (cwd may have changed)
+  root.querySelector('#input-prompt').textContent = promptString();
+}
+
+// ---- Task evaluation ----
+function normalize(cmd) {
+  return cmd.trim().replace(/\s+/g, ' ');
+}
+
+function checkTask(rawCommand) {
+  const task = tasks[currentTaskIndex];
+  if (!task) return;
+  const normalized = normalize(rawCommand);
+
+  // Handle multistep tasks
+  if (task.multistep) {
+    const step = task.multistep[task.multistepIndex];
+    let matched = false;
+    if (step.pattern) {
+      matched = step.pattern.test(normalized);
+    } else if (step.expected) {
+      matched = step.expected.some(e => normalize(e) === normalized);
+    }
+    if (matched) {
+      consecutiveFails = 0;
+      hideHintPulse();
+      if (step.onComplete) step.onComplete();
+      task.multistepIndex++;
+      if (task.multistepIndex >= task.multistep.length) {
+        completeTask();
+      } else {
+        renderTask();
+      }
+    } else {
+      consecutiveFails++;
+      if (consecutiveFails >= 2) showHintPulse();
+    }
+    return;
+  }
+
+  // Single-command tasks
+  if (task.expected && task.expected.some(e => normalize(e) === normalized)) {
+    consecutiveFails = 0;
+    hideHintPulse();
+    if (task.onComplete) task.onComplete();
+    completeTask();
+  } else {
+    consecutiveFails++;
+    if (consecutiveFails >= 2) showHintPulse();
+  }
+}
+
+function showHintPulse() {
+  root.querySelector('#hint-btn').classList.add('pulse');
+}
+function hideHintPulse() {
+  root.querySelector('#hint-btn').classList.remove('pulse');
+}
+
+function completeTask() {
+  currentTaskIndex++;
+  if (currentTaskIndex >= tasks.length) {
+    renderTask();  // will show completion
+    return;
+  }
+  renderTask();
+}
+
+function renderTask() {
+  const fill = root.querySelector('#progress-fill');
+  const label = root.querySelector('#progress-label');
+  const card = root.querySelector('#task-card');
+  const labelEl = root.querySelector('#task-label');
+  const textEl = root.querySelector('#task-text');
+  const hintEl = root.querySelector('#task-hint');
+  const completionArea = root.querySelector('#completion-area');
+
+  const pct = (currentTaskIndex / tasks.length) * 100;
+  fill.style.width = pct + '%';
+  label.textContent = 'Task ' + Math.min(currentTaskIndex + 1, tasks.length) + ' of ' + tasks.length;
+
+  if (currentTaskIndex >= tasks.length) {
+    card.className = 'task-card complete';
+    labelEl.textContent = 'Complete';
+    textEl.textContent = 'You worked through the full daily workflow.';
+    hintEl.textContent = '';
+    fill.style.width = '100%';
+    label.textContent = 'All tasks complete';
+    cs210RenderCompletion(completionArea);
+    return;
+  }
+
+  completionArea.innerHTML = '';
+  card.className = 'task-card';
+
+  const t = tasks[currentTaskIndex];
+  if (t.multistep) {
+    const step = t.multistep[t.multistepIndex];
+    labelEl.textContent = t.label + ' (' + (t.multistepIndex + 1) + '/' + t.multistep.length + ')';
+    textEl.textContent = step.text;
+  } else {
+    labelEl.textContent = t.label;
+    textEl.textContent = t.text;
+  }
+  hintEl.textContent = '';  // hidden until requested
+}
+
+function showHint() {
+  const t = tasks[currentTaskIndex];
+  if (!t) return;
+  const hintEl = root.querySelector('#task-hint');
+  if (t.multistep) {
+    const step = t.multistep[t.multistepIndex];
+    hintEl.textContent = 'Hint: ' + (step.hint || t.hint || '');
+  } else {
+    hintEl.textContent = 'Hint: ' + (t.hint || '');
+  }
+  hideHintPulse();
+}
+
+function reset() {
+  const overlay = root.querySelector('#cs210-completion-overlay');
+  if (overlay) overlay.remove();
+  fs = clone(initialFS);
+  cwd = ['/', 'home', 'cadet'];
+  gitState = { cloned: false, modified: [], staged: [], commits: 0, pushed: 0 };
+  currentTaskIndex = 0;
+  consecutiveFails = 0;
+  hideHintPulse();
+  terminalEl.innerHTML = '';
+  termLine('Welcome to the CS210 practice terminal.', 'dim');
+  termLine('Type "help" any time to see the commands available.', 'dim');
+  termLine('', 'out');
+  root.querySelector('#input-prompt').textContent = promptString();
+  renderTask();
+}
+
+// ---- Wire up input ----
+const inputEl = root.querySelector('#cli-input');
+inputEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    const cmd = inputEl.value;
+    inputEl.value = '';
+    if (cmd.trim()) {
+      runCommand(cmd);
+      checkTask(cmd);
+    }
+  }
+});
+
+root.querySelector('#hint-btn').addEventListener('click', showHint);
+root.querySelector('#reset-btn').addEventListener('click', reset);
+
+// ---- Boot ----
+reset();
+})();
+</script>
+
+  <!-- ===================== 6. AFTER CLASS ===================== -->
+  <details id="after-class" style="margin-bottom: 24px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      6. After Class
+    </summary>
+    <div style="padding: 18px 22px;">
+      <ul style="margin: 0 0 16px 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Complete Lab 1 if you did not finish it in class.</li>
+        <li style="margin-bottom: 6px;">Finish the In-Class CLI walkthrough or Git Workflow Practice widget if you ran out of class time. Both should be complete before Lesson 2.</li>
+        <li style="margin-bottom: 6px;">Submit the Lesson 1 reflection on Blackboard if you did not submit it in class. You will need the completion codes from both widget screenshots.</li>
+        <li style="margin-bottom: 6px;">If any setup step failed during the pre-class checklist, fix it before Lesson 2. Everything from here on assumes a working toolchain.</li>
+        <li style="margin-bottom: 6px;">Read Beej-C Chapter 3 (Variables and Statements) before Lesson 2.</li>
+        <li style="margin-bottom: 0;"><strong>Heads-up:</strong> Quiz 1 is at Lesson 4 and covers Lessons 1 through 3 (toolchain and CLI from L1, variables and types from L2, operators and <code style="background: #F0F2F5; padding: 1px 4px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">scanf</code> from L3).</li>
+      </ul>
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 14px; border-radius: 3px; font-size: 13.5px; color: #4A5568;">
+        <strong style="color: #00205B;">Optional ongoing CLI practice.</strong> The last two pages of <a href="https://scriptdoggies.org/" style="color: #003087; text-decoration: underline;">Script Doggies</a> &mdash; <em>Dwarf Mine Terminal</em> and <em>Typing Practice</em> &mdash; are good places to keep your command-line reflexes sharp throughout the semester. Not required; come back when you want a quick drill.
+      </div>
+    </div>
+  </details>
+
+  <!-- ===================== HELP NOTE ===================== -->
+  <div style="background: #F5F7FA; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 3px; font-size: 13.5px; color: #4A5568;">
+    <strong style="color: #00205B;">Need help?</strong> Schedule EI with your instructor. Bring specific code or specific screenshots, and the exact error message or output you do not understand. Check the course Resources before scheduling if you want to try one more thing first. Specific questions get unstuck quickly.
+  </div>
+
+</div>

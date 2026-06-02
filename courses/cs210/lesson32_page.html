@@ -1,0 +1,1154 @@
+<!-- ============================================================
+     CS210 - Lesson 32
+     Recursion II: with pointers and dynamic structures
+     Self-contained: all CSS inline. Native <details> for collapsing.
+     Recursion list trace widget embedded inline in section 5.
+     Paste into Blackboard Ultra via Document -> Add HTML block.
+     ============================================================ -->
+
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 980px; margin: 0 auto; line-height: 1.6;">
+
+  <!-- ===================== LIGHT HEADER ===================== -->
+  <div style="border-left: 5px solid #003087; padding: 8px 0 8px 18px; margin-bottom: 24px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 2px;">CS210 &middot; Block 4 &middot; Lesson 32</div>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 600; color: #00205B;">Recursion on a Linked List</h1>
+    <div style="font-size: 14px; color: #4A5568; margin-top: 4px;">Recursion over dynamic structures &middot; the deferred operation on the stack &middot; working tail to head &middot; recursive free &middot; the bridge to trees</div>
+  </div>
+
+  <!-- ===================== AT A GLANCE ===================== -->
+  <div style="background: #F5F7FA; border-left: 4px solid #B5B7BA; padding: 14px 18px; margin-bottom: 22px; font-size: 14px;">
+    <strong style="color: #00205B;">At a glance:</strong> Recursion meets a real data structure. A linked list is recursive by definition, so most list operations transcribe straight into a base case (the empty list) plus one step of work on the rest. The idea worth the lesson is where that work lives: each suspended frame holds a deferred operation on the stack, and whether the work runs before or after the recursive call decides everything. The in-class trace widget makes that stack of deferred work visible; the lab has you write the toolkit and fix one recursive bug.
+  </div>
+
+  <!-- ===================== TABLE OF CONTENTS ===================== -->
+  <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 14px 20px; margin-bottom: 24px; border-radius: 3px;">
+    <div style="font-size: 12px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Contents</div>
+    <ol style="margin: 0; padding-left: 22px; font-size: 14px;">
+      <li style="margin-bottom: 4px;"><a href="#objectives" style="color: #003087; text-decoration: none;">Lesson Objectives</a></li>
+      <li style="margin-bottom: 4px;"><a href="#readings" style="color: #003087; text-decoration: none;">Assigned Readings</a></li>
+      <li style="margin-bottom: 4px;"><a href="#pre-class" style="color: #003087; text-decoration: none;">Pre-Class Work</a></li>
+      <li style="margin-bottom: 4px;"><a href="#materials" style="color: #003087; text-decoration: none;">Lesson Materials and Overview</a></li>
+      <li style="margin-bottom: 4px;"><a href="#in-class" style="color: #003087; text-decoration: none;">In-Class Work</a></li>
+      <li style="margin-bottom: 0;"><a href="#after-class" style="color: #003087; text-decoration: none;">After Class</a></li>
+    </ol>
+  </div>
+
+  <!-- ===================== 1. OBJECTIVES ===================== -->
+  <details id="objectives" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      1. Lesson Objectives
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 10px 0; font-style: italic;">By the end of this lesson, cadets will be able to:</p>
+      <ol style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Implement recursive functions that operate on linked data structures. <span style="color: #6B7280; font-size: 12px;">(Outcomes 1, 2)</span></li>
+        <li style="margin-bottom: 6px;">Trace recursive operations on dynamic structures through the call stack. <span style="color: #6B7280; font-size: 12px;">(Outcomes 1, 3)</span></li>
+        <li style="margin-bottom: 0;">Manage memory correctly in recursive functions involving dynamic allocation. <span style="color: #6B7280; font-size: 12px;">(Outcomes 2, 3)</span></li>
+      </ol>
+    </div>
+  </details>
+
+  <!-- ===================== 2. READINGS ===================== -->
+  <details id="readings" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      2. Assigned Readings
+    </summary>
+    <div style="padding: 18px 22px;">
+      <p style="font-size: 14px; margin: 0 0 10px 0;">The reading for this lesson is the instructor-written supplementary notes. There is no Beej chapter assigned; the notes are the source.</p>
+      <ul style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 0;"><strong>Lesson 32 Supplementary Notes: Recursion on a Linked List.</strong> Covers why a list is recursive by definition, the deferred operation each frame holds on the stack, the difference between doing work before versus after the recursive call, recursive freeing and the use-after-free order trap, the pitfalls specific to this lesson, and the bridge to trees. Read it before class.</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== 3. PRE-CLASS ===================== -->
+  <details id="pre-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      3. Pre-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+      <ul style="list-style: none; padding: 0; margin: 0; font-size: 14.5px;">
+        <li style="margin-bottom: 12px; padding: 12px 16px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Read the supplementary notes</div>
+          <div style="font-size: 14px; color: #4A5568;">Plan on about 30 minutes. Pay special attention to section 3 (the deferred operation on the stack) and section 4 (working tail to head). The in-class widget will make those two ideas concrete, so come having seen them once.</div>
+        </li>
+        <li style="margin-bottom: 0; padding: 12px 16px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <div style="font-weight: 600; color: #00205B; font-size: 15px; margin-bottom: 6px;">Recall your linked list and recursion work</div>
+          <div style="font-size: 14px; color: #4A5568;">This lesson sits on top of the linked lists you built in the last three lessons and the recursion you met at Lesson 11. If the node-and-pointer picture or the base-case / recursive-case split feels rusty, review before class. Schedule EI if it does not come back quickly.</div>
+        </li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== 4. MATERIALS AND OVERVIEW ===================== -->
+  <details id="materials" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      4. Lesson Materials and Overview
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 18px 0;">Recursion on a linked list is mostly transcription: the structure is recursive, so the function is too. The reference material below previews the concepts; the in-class trace widget shows them in motion, and the lab is where you write them.</p>
+
+      <!-- Subsection navigation -->
+      <div style="background: #F8FAFC; border: 1px solid #D0D5DD; padding: 12px 18px; margin-bottom: 22px; border-radius: 3px;">
+        <div style="font-size: 11px; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">Jump to</div>
+        <div style="font-size: 13.5px;">
+          <a href="#slides" style="color: #003087; text-decoration: none; margin-right: 14px;">Slides</a>
+          <a href="#recursive-structure" style="color: #003087; text-decoration: none; margin-right: 14px;">A list is recursive</a>
+          <a href="#deferred" style="color: #003087; text-decoration: none; margin-right: 14px;">The deferred operation</a>
+          <a href="#tail-to-head" style="color: #003087; text-decoration: none; margin-right: 14px;">Working tail to head</a>
+          <a href="#free" style="color: #003087; text-decoration: none; margin-right: 14px;">Freeing a list</a>
+          <a href="#dfcs" style="color: #003087; text-decoration: none;">DFCS standard</a>
+        </div>
+      </div>
+
+      <!-- Slides -->
+      <h3 id="slides" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0; scroll-margin-top: 16px;">Slides</h3>
+      <p style="font-size: 14px; margin: 0 0 12px 0;">The Lesson 32 deck walks through the recursive structure of a list, the deferred operation each frame holds, the before-versus-after-the-call distinction, recursive freeing and the order trap, and the bridge to trees. Roughly 30 to 40 minutes of lecture, then into the trace widget and the lab.</p>
+      <!-- =========================================================
+           EDIT ME: Lesson 32 slide deck link
+           Replace href="#" with the SharePoint share URL once the
+           deck is published. Leave target="_blank" and rel="noopener".
+           ========================================================= -->
+      <p style="font-size: 14px; margin: 0 0 20px 0;"><a href="#" target="_blank" rel="noopener" style="color: #003087; font-weight: 600;">Lesson 32 slide deck (PDF)</a> <span style="color: #6B7280; font-size: 12.5px;">&mdash; opens in a new tab</span></p>
+
+      <h3 id="recursive-structure" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0; scroll-margin-top: 16px;">A list is recursive by definition</h3>
+      <p style="font-size: 14px; margin: 0 0 18px 0;">A linked list is either empty (a NULL pointer) or one node followed by another linked list, the part <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">next</code> points at. That second half is itself a list, so the structure is defined in terms of a smaller version of itself. The base case is the empty list; the thing that shrinks is the list, because each call passes <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">node-&gt;next</code>; and it terminates because a finite list ends at NULL.</p>
+
+      <h3 id="deferred" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0; scroll-margin-top: 16px;">The deferred operation on the stack</h3>
+      <p style="font-size: 14px; margin: 0 0 18px 0;">When a function reaches <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">return 1 + list_length(node-&gt;next);</code> it cannot finish until the recursive call returns, so it suspends and the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">1 +</code> it still owes is saved in its stack frame. Go several nodes deep and several frames stack up, each holding its own deferred operation, waiting. The answer is assembled on the way back up as the calls return, not on the way down. The trace widget draws this directly, showing each suspended frame holding <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">1 + ?</code> and then resolving it.</p>
+
+      <h3 id="tail-to-head" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0; scroll-margin-top: 16px;">Working tail to head</h3>
+      <p style="font-size: 14px; margin: 0 0 18px 0;">For length and sum you would normally use a loop, and Lesson 33 takes up that tradeoff. The place recursion clearly wins on a singly linked list is any operation that must run from the tail back toward the head, because the list has no backward pointer. Putting the work after the recursive call gives you tail-first order for free: the deepest frame acts first. That is the shape of reverse printing and of the <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">collect_reverse</code> function in the lab.</p>
+
+      <h3 id="free" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0; scroll-margin-top: 16px;">Freeing a list, and the order trap</h3>
+      <p style="font-size: 14px; margin: 0 0 18px 0;">Recursive freeing also acts after the call: free the rest of the list first, then this node's <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">word</code> string, then the node itself. The order is not optional. Freeing the node first and then reaching for <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">node-&gt;next</code> reads memory you just returned, which is a use after free. Each node owns two heap allocations, the node and its <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">word</code>, and both must be freed.</p>
+
+      <!-- DFCS standard paragraph -->
+      <h3 id="dfcs" style="color: #00205B; font-size: 16px; margin: 0 0 10px 0; scroll-margin-top: 16px;">DFCS C Programming Standard</h3>
+      <p style="font-size: 14px; margin: 0 0 8px 0;">This lesson revisits two standing rules rather than introducing a new section. Section 8.5 (always free dynamically allocated memory) returns with a twist: when a struct member is itself a heap pointer, freeing the struct means freeing that member first, so <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">free_list</code> must free each node's <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">word</code> before the node. Section 2.4 (inline comments) earns its keep in recursive code: a one-line comment naming the base case and what shrinks makes a recursive function far easier for the next reader. See the standard in the course Resources for the full text.</p>
+
+    </div>
+  </details>
+
+  <!-- ===================== 5. IN-CLASS ===================== -->
+  <details id="in-class" style="margin-bottom: 12px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      5. In-Class Work
+    </summary>
+    <div style="padding: 18px 22px;">
+
+      <p style="font-size: 14px; margin: 0 0 16px 0;">Two things to do in class. Use the checklist to track your progress.</p>
+
+      <ul style="list-style: none; padding: 0; margin: 0 0 24px 0; font-size: 14.5px;">
+        <li style="margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Work through the recursion list trace below.</strong>
+          <span style="color: #4A5568;">Five recursive functions traced over a linked list of structs, each ending in a prediction. Watch the deferred operation stack up and resolve. About 20 minutes.</span>
+        </li>
+        <li style="margin-bottom: 0; padding: 10px 14px; background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 3px;">
+          <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #003087; margin-right: 12px; vertical-align: middle;"></span>
+          <strong style="color: #00205B;">Complete the Lesson 32 lab: recursion on a linked list.</strong>
+          <!-- =========================================================
+               EDIT ME: Lesson 32 lab GitHub Classroom invite link
+               Replace href="#" with the GitHub Classroom assignment
+               invite URL once created. Leave target="_blank".
+               ========================================================= -->
+          <span style="color: #4A5568;">Implement five recursive functions and fix one recursive bug. Auto-graded through GitHub Classroom; <a href="#" target="_blank" rel="noopener" style="color: #003087;">accept the assignment here</a>. Full instructions in the lab repo README.</span>
+        </li>
+      </ul>
+
+      <h3 style="color: #00205B; font-size: 16px; margin: 18px 0 10px 0;">Recursion List Trace</h3>
+      <p style="font-size: 14px; color: #4A5568; margin: 0 0 14px 0;">Five functions: list_length, list_sum, find, print_reverse, and free_list. Step through each one and watch two things: the call stack growing on the left with each frame holding its deferred work, and the heap below with the node the active frame points at lit up. Answer the prediction at the end of each trace to mark it complete.</p>
+
+<!-- ============================================================
+     CS210 Lesson 32 - Recursive Linked List Trace Widget
+     Visualizes the call stack AND the heap (linked list nodes)
+     side by side, with arrows from each live frame's pointer
+     parameter to the node it references. Built on the Lesson 2
+     widget patterns (name modal, FNV-1a completion code, overlay,
+     help-note, hint pulse) and the Lesson 11 prediction-gate model.
+
+     Scoped to .cs210-lltrace so it can coexist with other widgets.
+     Paste as a block; runs anywhere the parent page allows <script>.
+     ============================================================ -->
+<style>
+.cs210-lltrace {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1a1a1a;
+  position: relative;
+  border: 1px solid #D0D5DD;
+  border-radius: 6px;
+  padding: 20px;
+  background: #ffffff;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+.cs210-lltrace * { box-sizing: border-box; }
+.cs210-lltrace h3.llt-title {
+  color: #00205B; font-size: 18px; margin: 0 0 4px 0;
+}
+.cs210-lltrace .llt-sub {
+  color: #4A5568; font-size: 13px; margin: 0 0 14px 0;
+}
+
+/* Example tabs */
+.cs210-lltrace .llt-tabs {
+  display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px;
+}
+.cs210-lltrace .llt-tab {
+  border: 1px solid #CBD5E0; background: #F5F7FA; color: #00205B;
+  padding: 6px 12px; border-radius: 4px; font-size: 13px; cursor: pointer;
+  font-family: inherit;
+}
+.cs210-lltrace .llt-tab.active {
+  background: #003087; color: #fff; border-color: #003087;
+}
+.cs210-lltrace .llt-tab .llt-check { color: #2E7D32; font-weight: 700; margin-left: 4px; }
+.cs210-lltrace .llt-tab.active .llt-check { color: #B7E4C7; }
+
+/* Task card */
+.cs210-lltrace .llt-task {
+  background: #FFF8E1; border-left: 4px solid #F0B92C;
+  padding: 10px 14px; border-radius: 3px; font-size: 14px;
+  color: #4A3A00; margin-bottom: 14px; line-height: 1.5;
+}
+.cs210-lltrace .llt-task strong { color: #00205B; }
+
+/* Two-pane layout */
+.cs210-lltrace .llt-panes {
+  display: flex; gap: 14px; align-items: stretch;
+}
+.cs210-lltrace .llt-code-pane {
+  flex: 0 0 50%; background: #0B1B33; border-radius: 5px;
+  padding: 14px 16px; font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 13.5px; line-height: 1.55; overflow-x: auto;
+}
+/* Static struct definition shown above the function (not steppable). */
+.cs210-lltrace .llt-struct-line { white-space: pre; color: #8FA6C4; padding: 0 4px; }
+.cs210-lltrace .llt-struct-line .llt-kw { color: #5E86C9; }
+.cs210-lltrace .llt-struct-line .llt-cmt { color: #5B6B82; font-style: italic; }
+.cs210-lltrace .llt-code-divider { height: 1px; background: #25395A; margin: 8px 0; }
+.cs210-lltrace .llt-code-line {
+  white-space: pre; color: #C7D2E0; border-radius: 3px; padding: 0 4px;
+}
+.cs210-lltrace .llt-code-line.active {
+  background: #F0B92C; color: #0B1B33; font-weight: 600;
+}
+.cs210-lltrace .llt-code-line .llt-kw { color: #7FB2FF; }
+.cs210-lltrace .llt-code-line.active .llt-kw { color: #0B1B33; }
+
+.cs210-lltrace .llt-right {
+  flex: 1 1 auto; position: relative; min-width: 0;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.cs210-lltrace .llt-pane-label {
+  font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: #6B7280; font-weight: 600; margin-bottom: 4px;
+}
+
+/* Call stack pane */
+.cs210-lltrace .llt-stack {
+  background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 5px;
+  padding: 10px; min-height: 120px;
+  display: flex; flex-direction: column-reverse; gap: 6px; justify-content: flex-end;
+}
+.cs210-lltrace .llt-frame {
+  border: 1px solid #B5B7BA; background: #fff; border-radius: 4px;
+  padding: 6px 10px; font-size: 12.5px; position: relative;
+  transition: opacity 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+.cs210-lltrace .llt-frame .llt-frame-head { display: flex; align-items: center; gap: 10px; }
+/* Non-active frames sit quietly in the background. */
+.cs210-lltrace .llt-frame:not(.active) { opacity: 0.6; }
+/* Active (top) frame is gold, matching the lit heap node it points at. */
+.cs210-lltrace .llt-frame.active { border-color: #F0B92C; background: #FFF8E1; box-shadow: 0 0 0 2px rgba(240,185,44,0.4); }
+/* When the active frame is returning, it (and its node) go green. */
+.cs210-lltrace .llt-frame.active.returning { border-color: #2E7D32; background: #E6F4EA; box-shadow: 0 0 0 2px rgba(46,125,50,0.35); }
+.cs210-lltrace .llt-frame .llt-fn {
+  font-family: 'Consolas', monospace; font-weight: 700; color: #00205B;
+}
+.cs210-lltrace .llt-frame .llt-ptr-badge {
+  font-family: 'Consolas', monospace; font-size: 12px; color: #003087;
+  background: #E8EEFB; border: 1px solid #B9CCF0; border-radius: 3px;
+  padding: 1px 6px;
+}
+/* The active frame's pointer badge picks up the gold accent. */
+.cs210-lltrace .llt-frame.active .llt-ptr-badge { color: #6B5300; background: #FFEFC2; border-color: #F0B92C; }
+.cs210-lltrace .llt-frame.active.returning .llt-ptr-badge { color: #1B5E20; background: #D7EEDC; border-color: #2E7D32; }
+.cs210-lltrace .llt-frame .llt-ret {
+  margin-left: auto; font-family: 'Consolas', monospace; font-size: 12px;
+  color: #1B5E20; font-weight: 600;
+}
+.cs210-lltrace .llt-frame .llt-null-mark {
+  font-family: 'Consolas', monospace; font-size: 12px; color: #B45309;
+}
+/* Deferred-work line: the pending operation this frame holds on the stack. */
+.cs210-lltrace .llt-frame .llt-frame-pending {
+  margin-top: 4px; font-family: 'Consolas', monospace; font-size: 11.5px;
+  color: #6B5300; padding-left: 2px;
+}
+.cs210-lltrace .llt-frame .llt-frame-pending .llt-pending-tag {
+  font-size: 9.5px; letter-spacing: 0.5px; text-transform: uppercase; color: #9A7B1E;
+  border: 1px solid #E3C870; border-radius: 3px; padding: 0 4px; margin-right: 6px; background: #FFFBF0;
+}
+.cs210-lltrace .llt-frame.active.returning .llt-frame-pending { color: #1B5E20; }
+.cs210-lltrace .llt-frame.active.returning .llt-frame-pending .llt-pending-tag { color: #2E7D32; border-color: #9FCBA5; background: #EAF5EC; }
+
+
+/* Heap pane */
+.cs210-lltrace .llt-heap {
+  background: #F8FAFC; border: 1px solid #D0D5DD; border-radius: 5px;
+  padding: 18px 12px 12px; min-height: 96px; overflow-x: auto;
+}
+.cs210-lltrace .llt-heap-row {
+  display: flex; align-items: flex-start; gap: 0;
+}
+/* A node is a node_t struct: a DATA cell (its fields) and a NEXT cell (the pointer). */
+.cs210-lltrace .llt-node {
+  display: flex; border: 2px solid #00205B; border-radius: 6px;
+  background: #fff; overflow: hidden;
+  transition: opacity 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+.cs210-lltrace .llt-node .llt-cell {
+  padding: 8px 10px; font-family: 'Consolas', monospace; font-size: 12px;
+}
+.cs210-lltrace .llt-node .llt-data {
+  border-right: 2px solid #00205B; text-align: left; line-height: 1.6; white-space: nowrap;
+}
+.cs210-lltrace .llt-node .llt-data .llt-field-type { color: #7B8794; }
+.cs210-lltrace .llt-node .llt-data .llt-field-name { color: #00205B; font-weight: 600; }
+.cs210-lltrace .llt-node .llt-data .llt-field-val { color: #B45309; }
+.cs210-lltrace .llt-node .llt-next {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-width: 46px; color: #6B7280; gap: 3px;
+}
+.cs210-lltrace .llt-node .llt-next .llt-next-tag { font-size: 10px; color: #9AA5B1; }
+.cs210-lltrace .llt-node .llt-next .llt-dot {
+  width: 9px; height: 9px; border-radius: 50%; background: #00205B; display: inline-block;
+}
+.cs210-lltrace .llt-node .llt-next .llt-null-x { font-size: 11px; color: #6B7280; }
+/* Active node: the one the top frame currently points at. */
+.cs210-lltrace .llt-node.active {
+  border-color: #F0B92C; background: #FFFBF0;
+  box-shadow: 0 0 0 3px rgba(240, 185, 44, 0.45);
+}
+.cs210-lltrace .llt-node.active .llt-data { border-right-color: #E0A92C; }
+.cs210-lltrace .llt-node.active .llt-next .llt-dot { background: #B45309; }
+/* Active node during a returning step (work happens on the way back). */
+.cs210-lltrace .llt-node.active-return {
+  border-color: #2E7D32; background: #F0F9F1;
+  box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.4);
+}
+.cs210-lltrace .llt-node.active-return .llt-data { border-right-color: #2E7D32; }
+.cs210-lltrace .llt-node.active-return .llt-next .llt-dot { background: #2E7D32; }
+/* Dimmed nodes: everything that is not the active node. */
+.cs210-lltrace .llt-node.dim { opacity: 0.4; }
+.cs210-lltrace .llt-node.freed {
+  border-color: #C0392B; background: #FBEAE8; opacity: 0.6;
+}
+.cs210-lltrace .llt-node.freed .llt-data { border-right-color: #C0392B; }
+.cs210-lltrace .llt-node.freed .llt-data .llt-field-name,
+.cs210-lltrace .llt-node.freed .llt-data .llt-field-val,
+.cs210-lltrace .llt-node.freed .llt-data .llt-field-type { color: #C0392B; text-decoration: line-through; }
+.cs210-lltrace .llt-node.freed .llt-next .llt-dot { background: #C0392B; }
+/* node title above the box (NODE A style) */
+.cs210-lltrace .llt-node-wrap { display: flex; flex-direction: column; align-items: center; }
+.cs210-lltrace .llt-node-title {
+  font-size: 11px; font-weight: 700; color: #00205B; letter-spacing: 0.5px;
+  margin-bottom: 4px; text-transform: uppercase;
+}
+.cs210-lltrace .llt-node.freed ~ .llt-node-title { color: #C0392B; }
+.cs210-lltrace .llt-arrow {
+  width: 30px; height: 2px; background: #00205B; position: relative; flex: 0 0 auto;
+  align-self: center;
+}
+.cs210-lltrace .llt-arrow::after {
+  content: ''; position: absolute; right: -1px; top: -3px;
+  border-left: 7px solid #00205B; border-top: 4px solid transparent; border-bottom: 4px solid transparent;
+}
+.cs210-lltrace .llt-arrow.dead { background: #C0392B; opacity: 0.5; }
+.cs210-lltrace .llt-arrow.dead::after { border-left-color: #C0392B; }
+.cs210-lltrace .llt-ground {
+  font-family: 'Consolas', monospace; font-size: 12px; color: #6B7280; margin-left: 6px;
+  border-radius: 3px; padding: 2px 6px; align-self: center;
+}
+.cs210-lltrace .llt-ground.active {
+  color: #6B5300; background: #FFF8E1; box-shadow: 0 0 0 2px rgba(240, 185, 44, 0.45);
+}
+.cs210-lltrace .llt-node-id {
+  font-size: 10px; color: #9AA5B1; text-align: center; font-family: 'Consolas', monospace;
+}
+
+/* Status + output */
+.cs210-lltrace .llt-status {
+  background: #EEF2F7; border: 1px solid #D0D5DD; border-radius: 5px;
+  padding: 10px 14px; font-size: 13.5px; color: #1a1a1a; margin-top: 12px;
+  line-height: 1.5; min-height: 44px;
+}
+.cs210-lltrace .llt-status strong { color: #00205B; }
+.cs210-lltrace .llt-output {
+  background: #0B1B33; color: #9CDCFE; border-radius: 5px; padding: 10px 14px;
+  font-family: 'Consolas', monospace; font-size: 13px; margin-top: 8px; white-space: pre-wrap;
+}
+.cs210-lltrace .llt-output .llt-out-label { color: #6B7280; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; display: block; margin-bottom: 4px; }
+
+/* Controls */
+.cs210-lltrace .llt-controls { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; }
+.cs210-lltrace .btn {
+  border: 1px solid #CBD5E0; background: #fff; color: #00205B;
+  padding: 8px 16px; border-radius: 4px; font-size: 14px; cursor: pointer;
+  font-family: inherit; transition: box-shadow 0.2s ease, background 0.2s ease;
+}
+.cs210-lltrace .btn:hover { background: #F5F7FA; }
+.cs210-lltrace .btn:disabled { color: #A0AEC0; cursor: not-allowed; background: #F5F7FA; }
+.cs210-lltrace .btn.primary { background: #003087; color: #fff; border-color: #003087; }
+.cs210-lltrace .btn.primary:hover { background: #00205B; }
+@keyframes cs210-lltrace-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(240, 185, 44, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(240, 185, 44, 0); }
+}
+.cs210-lltrace .btn.pulse {
+  background: #FFF8E1; border-color: #F0B92C; color: #6B5300; font-weight: 600;
+  animation: cs210-lltrace-pulse 1.5s infinite;
+}
+
+/* Prediction card */
+.cs210-lltrace .llt-pred {
+  margin-top: 14px; border: 1px solid #003087; border-radius: 5px;
+  background: #F0F4FA; padding: 14px 16px;
+}
+.cs210-lltrace .llt-pred h4 { margin: 0 0 8px 0; color: #00205B; font-size: 15px; }
+.cs210-lltrace .llt-pred p { margin: 0 0 10px 0; font-size: 13.5px; color: #1a1a1a; }
+.cs210-lltrace .llt-pred .llt-pred-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.cs210-lltrace .llt-pred input {
+  padding: 8px 10px; font-size: 14px; border: 1px solid #CBD5E0; border-radius: 4px;
+  font-family: 'Consolas', monospace; min-width: 160px;
+}
+.cs210-lltrace .llt-pred .llt-feedback { font-size: 13px; margin-top: 8px; }
+.cs210-lltrace .llt-pred .llt-feedback.wrong { color: #C0392B; }
+.cs210-lltrace .llt-pred .llt-feedback.right { color: #1B5E20; font-weight: 600; }
+.cs210-lltrace .llt-pred .llt-hint-text {
+  margin-top: 8px; font-size: 13px; color: #6B5300; font-style: italic;
+  background: #FFF8E1; border-left: 3px solid #F0B92C; padding: 8px 10px; border-radius: 3px;
+}
+
+/* help note + reused modal/completion (Lesson 2 tokens) */
+.cs210-lltrace .help-note {
+  background: #F5F7FA; border: 1px solid #D0D5DD; padding: 12px 16px;
+  border-radius: 3px; font-size: 13px; color: #4A5568; margin-top: 14px; line-height: 1.5;
+}
+.cs210-lltrace .help-note strong { color: #00205B; }
+.cs210-lltrace .name-modal-backdrop {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 32, 91, 0.55); display: flex; align-items: center; justify-content: center; z-index: 9999;
+}
+.cs210-lltrace .name-modal {
+  background: #fff; border-radius: 6px; padding: 28px 32px; max-width: 440px; width: 90%;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.25); font-family: 'Segoe UI', Arial, sans-serif;
+}
+.cs210-lltrace .name-modal h2 { color: #00205B; font-size: 20px; margin: 0 0 10px 0; }
+.cs210-lltrace .name-modal p { color: #4A5568; font-size: 14px; line-height: 1.5; margin: 0 0 16px 0; }
+.cs210-lltrace .name-modal input {
+  width: 100%; padding: 10px 12px; font-size: 15px; border: 1px solid #CBD5E0;
+  border-radius: 4px; margin-bottom: 14px; font-family: inherit;
+}
+.cs210-lltrace .name-modal input:focus { outline: none; border-color: #003087; box-shadow: 0 0 0 2px rgba(0,48,135,0.15); }
+.cs210-lltrace .name-modal-btn {
+  background: #003087; color: #fff; border: none; padding: 10px 20px; border-radius: 4px;
+  font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.cs210-lltrace .name-modal-btn:disabled { background: #A0AEC0; cursor: not-allowed; }
+.cs210-lltrace .name-modal-btn:not(:disabled):hover { background: #00205B; }
+.cs210-lltrace .completion-screen { background: #fff; border: 2px solid #2E7D32; border-radius: 6px; padding: 24px 28px; margin-top: 16px; }
+.cs210-lltrace .completion-screen .cs-heading { color: #1B5E20; font-size: 20px; font-weight: 600; margin: 0 0 6px 0; }
+.cs210-lltrace .completion-screen .cs-name-line { font-size: 15px; color: #1a1a1a; margin-bottom: 16px; }
+.cs210-lltrace .completion-screen .cs-name-line strong { color: #00205B; }
+.cs210-lltrace .completion-screen .cs-code-block { background: #F0F4FA; border: 1px solid #003087; border-radius: 4px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+.cs210-lltrace .completion-screen .cs-code-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: #4A5568; margin-bottom: 4px; }
+.cs210-lltrace .completion-screen .cs-code-value { font-family: 'Consolas', monospace; font-size: 28px; font-weight: 700; color: #00205B; letter-spacing: 3px; }
+.cs210-lltrace .completion-screen .cs-copy-btn { background: #003087; color: #fff; border: none; padding: 8px 14px; border-radius: 3px; font-size: 13px; cursor: pointer; font-family: inherit; }
+.cs210-lltrace .completion-screen .cs-copy-btn:hover { background: #00205B; }
+.cs210-lltrace .completion-screen .cs-copy-btn.copied { background: #2E7D32; }
+.cs210-lltrace .completion-screen .cs-timestamp { font-size: 13px; color: #6B7280; }
+</style>
+
+<div class="cs210-lltrace">
+  <div class="name-modal-backdrop" id="llt-name-modal-backdrop">
+    <div class="name-modal">
+      <h2>Before you start</h2>
+      <p>Enter your name. It will appear on the completion screen so you can include it in your screenshot for the Blackboard reflection quiz.</p>
+      <input type="text" id="llt-cadet-name-input" placeholder="Your name" autocomplete="off" />
+      <button class="name-modal-btn" id="llt-cadet-name-btn" disabled>Start the trace</button>
+    </div>
+  </div>
+
+  <h3 class="llt-title">Recursion on a linked list</h3>
+  <p class="llt-sub">Step through five recursive functions over a linked list of structs. The call stack grows on the left; each suspended frame shows the deferred work it is holding (for example <code>1 + ?</code>). The heap is below, and the node the active frame points at lights up. At the end of each trace, answer one prediction to mark it complete.</p>
+
+  <div class="llt-tabs" id="llt-tabs"></div>
+
+  <div class="llt-task" id="llt-task"></div>
+
+  <div class="llt-panes">
+    <div class="llt-code-pane" id="llt-code"></div>
+    <div class="llt-right" id="llt-right">
+      <div>
+        <div class="llt-pane-label">Call stack (most recent on top)</div>
+        <div class="llt-stack" id="llt-stack"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="llt-heap-section">
+    <div class="llt-pane-label" style="margin-top:12px;">Heap &mdash; the linked list of <code>node_t</code> nodes</div>
+    <div style="font-size:11.5px;color:#6B7280;margin:-2px 0 6px 0;">Each node is a <code>node_t</code> struct: its <code>num</code> and <code>word</code> fields sit in the DATA cell, and <code>next</code> holds the address of the following node (or NULL). The lit node is the one the active frame points at.</div>
+    <div class="llt-heap" id="llt-heap"></div>
+  </div>
+
+  <div class="llt-status" id="llt-status">Press <strong>Step</strong> to begin.</div>
+  <div class="llt-output" id="llt-output" style="display:none;"><span class="llt-out-label">printf output</span><span id="llt-output-text"></span></div>
+
+  <div id="llt-pred-container"></div>
+
+  <div class="llt-controls">
+    <button class="btn primary" id="llt-step">Step</button>
+    <button class="btn" id="llt-run">Run to end</button>
+    <button class="btn" id="llt-back">Back</button>
+    <button class="btn" id="llt-reset">Reset this trace</button>
+    <button class="btn" id="llt-hint" style="display:none;">Show hint</button>
+  </div>
+
+  <div class="help-note">
+    <strong>How to read it:</strong> the highlighted line in the code pane is what is about to run. Each call pushes a frame onto the stack; the arrow from a frame points to the node that frame is working on. A frame turns green and shows its return value as it returns, then pops. In <code>print_reverse</code> and <code>free_list</code>, watch how the work happens <em>after</em> the recursive call, on the way back up the stack. Miss a prediction twice and the hint button pulses. Stuck on the concept? Schedule EI.
+  </div>
+
+  <div id="llt-completion-area"></div>
+</div>
+
+<script>
+(function () {
+  const root = document.querySelector('.cs210-lltrace');
+  if (!root) return;
+
+  // ============================================================
+  // Completion utilities (FNV-1a -> 6-char code), Lesson 2 pattern
+  // ============================================================
+  const CS210_SALT = "lesson32_lltrace_completed";
+  const CS210_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  function cs210Fnv1a(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function cs210CodeFromSalt(salt) {
+    const h1 = cs210Fnv1a(salt);
+    const h2 = cs210Fnv1a(salt + '|cs210');
+    let pool = BigInt(h1) | (BigInt(h2) << 32n);
+    let out = '';
+    for (let i = 0; i < 6; i++) { out += CS210_ALPHABET[Number(pool & 31n)]; pool >>= 5n; }
+    return out;
+  }
+  const CS210_CODE = cs210CodeFromSalt(CS210_SALT);
+  let cs210CadetName = '';
+
+  (function setupNameModal() {
+    const backdrop = root.querySelector('#llt-name-modal-backdrop');
+    const input = root.querySelector('#llt-cadet-name-input');
+    const btn = root.querySelector('#llt-cadet-name-btn');
+    if (!backdrop || !input || !btn) return;
+    try {
+      const stored = window.localStorage && window.localStorage.getItem('cs210_cadet_name');
+      if (stored && stored.trim().length >= 2) { cs210CadetName = stored.trim(); backdrop.style.display = 'none'; return; }
+    } catch (e) {}
+    function updateBtn() { btn.disabled = input.value.trim().length < 2; }
+    updateBtn();
+    input.addEventListener('input', updateBtn);
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !btn.disabled) { e.preventDefault(); btn.click(); } });
+    btn.addEventListener('click', function () {
+      const name = input.value.trim(); if (name.length < 2) return;
+      cs210CadetName = name;
+      try { window.localStorage && window.localStorage.setItem('cs210_cadet_name', name); } catch (e) {}
+      backdrop.style.display = 'none';
+      document.querySelectorAll('#bw-name-modal-backdrop, #ptrmath-name-modal-backdrop, #duality-name-modal-backdrop, #name-modal-backdrop').forEach(function (m) { m.style.display = 'none'; });
+    });
+    setTimeout(function () { input.focus(); }, 50);
+  })();
+
+  function cs210FallbackCopy(text) {
+    try { const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); } catch (e) {}
+  }
+  function cs210RenderCompletion(area) {
+    if (!area || root.querySelector('#cs210-completion-overlay')) return;
+    const now = new Date();
+    const ts = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const safeName = (cs210CadetName || 'Cadet').replace(/[<>&"']/g, function (c) { return { '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c]; });
+    area.innerHTML =
+      '<div class="completion-screen">' +
+        '<div class="cs-heading">Trace complete</div>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block"><div><div class="cs-code-label">Completion code</div>' +
+        '<div class="cs-code-value">' + CS210_CODE + '</div></div></div>' +
+        '<div class="cs-timestamp">Completed: ' + ts + '</div></div>';
+    const overlay = document.createElement('div');
+    overlay.id = 'cs210-completion-overlay';
+    overlay.className = 'name-modal-backdrop';
+    overlay.style.background = 'rgba(27, 94, 32, 0.55)';
+    overlay.innerHTML =
+      '<div class="name-modal" style="max-width:520px;border-top:6px solid #2E7D32;">' +
+        '<h2 style="color:#1B5E20;">All five traces complete</h2>' +
+        '<p>Take a screenshot of this box. You will need the code and a visual of this screen for the Blackboard reflection quiz.</p>' +
+        '<div class="cs-name-line">Cadet: <strong>' + safeName + '</strong></div>' +
+        '<div class="cs-code-block"><div><div class="cs-code-label">Completion code</div>' +
+        '<div class="cs-code-value" id="cs-code-value">' + CS210_CODE + '</div></div>' +
+        '<button class="cs-copy-btn" id="cs-copy-btn" type="button">Copy code</button></div>' +
+        '<div class="cs-timestamp" style="margin-bottom:14px;">Completed: ' + ts + '</div>' +
+        '<button class="name-modal-btn" id="cs-overlay-close" type="button" style="background:#2E7D32;">Got it &mdash; close this</button>' +
+      '</div>';
+    root.appendChild(overlay);
+    const closeBtn = overlay.querySelector('#cs-overlay-close');
+    if (closeBtn) closeBtn.addEventListener('click', function () { overlay.style.display = 'none'; });
+    const copyBtn = overlay.querySelector('#cs-copy-btn');
+    if (copyBtn) copyBtn.addEventListener('click', function () {
+      const ok = function () { copyBtn.textContent = 'Copied'; copyBtn.classList.add('copied'); setTimeout(function () { copyBtn.textContent = 'Copy code'; copyBtn.classList.remove('copied'); }, 1500); };
+      if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(CS210_CODE).then(ok, function () { cs210FallbackCopy(CS210_CODE); ok(); }); }
+      else { cs210FallbackCopy(CS210_CODE); ok(); }
+    });
+  }
+
+  // ============================================================
+  // Trace engine: each example precomputes an ordered list of
+  // immutable snapshots. Step/Back/Reset just move an index.
+  // A snapshot = { line, status, stack[], heap{nodes[],pointers[]}, output[] }
+  // ============================================================
+  function makeList(items) {
+    // items: [{num, word}], returns node array with ids n0..n(k-1), last.next=null
+    return items.map(function (it, i) {
+      return { id: 'n' + i, num: it.num, word: it.word, next: (i < items.length - 1) ? ('n' + (i + 1)) : null };
+    });
+  }
+
+  // Builder: walks a recursion and emits snapshots.
+  // Each live frame holds: fn, ptrLabel, ptr, ret, returning, and `pending` --
+  // the deferred work this frame is holding while its recursive call runs
+  // (e.g. "1 + ?"). That pending operation is the thing saved on the stack.
+  function Tracer(nodes) {
+    this.nodes = nodes;
+    this.frames = [];
+    this.freed = {};
+    this.output = [];
+    this.snaps = [];
+  }
+  Tracer.prototype.nodeById = function (id) { return this.nodes.find(function (n) { return n.id === id; }); };
+  Tracer.prototype.snap = function (line, status) {
+    const stack = this.frames.map(function (f) { return { fn: f.fn, ptrLabel: f.ptrLabel, ptr: f.ptr, ret: f.ret, returning: !!f.returning, pending: f.pending || null }; });
+    const heapNodes = this.nodes.map((n) => ({ id: n.id, num: n.num, word: n.word, next: n.next, freed: !!this.freed[n.id] }));
+    const pointers = this.frames.map(function (f, i) { return { frameIdx: i, label: f.ptrLabel, target: f.ptr }; });
+    this.snaps.push({ line: line, status: status, stack: stack, heap: { nodes: heapNodes, pointers: pointers }, output: this.output.slice() });
+  };
+  Tracer.prototype.push = function (fn, ptrLabel, ptr) { this.frames.push({ fn: fn, ptrLabel: ptrLabel, ptr: ptr, ret: undefined, returning: false, pending: null }); };
+  Tracer.prototype.top = function () { return this.frames[this.frames.length - 1]; };
+  Tracer.prototype.pop = function () { return this.frames.pop(); };
+
+  function nodeName(t, id) { if (id === null) return 'NULL'; const n = t.nodeById(id); return n ? ('the node holding "' + n.word + '"') : 'NULL'; }
+
+  // ---- Example 1: list_length ----
+  function buildLength() {
+    const nodes = makeList([{ num: 5, word: 'red' }, { num: 3, word: 'green' }, { num: 8, word: 'blue' }]);
+    const code = [
+      'int list_length(node_t *node) {',
+      '    if (node == NULL)',
+      '        return 0;',
+      '    return 1 + list_length(node->next);',
+      '}'
+    ];
+    const t = new Tracer(nodes);
+    t.push('main', 'head', nodes[0].id);
+    t.snap(-1, 'main holds <strong>head</strong>, pointing at ' + nodeName(t, nodes[0].id) + '. It calls list_length(head).');
+    function rec(id) {
+      t.push('list_length', 'node', id);
+      const f = t.top();
+      t.snap(0, 'list_length called. <strong>node</strong> points at ' + nodeName(t, id) + '.');
+      t.snap(1, 'Is node NULL? ' + (id === null ? 'Yes.' : 'No.'));
+      if (id === null) { t.snap(2, 'Base case reached. Return 0.'); f.ret = 0; f.returning = true; t.snap(2, 'list_length returns <strong>0</strong>.'); t.pop(); return 0; }
+      f.pending = '1 + ?';
+      t.snap(3, 'To finish, this frame must compute <strong>1 + list_length(node->next)</strong>. It makes the recursive call and SUSPENDS, holding the deferred <strong>1 + ?</strong>. That pending work is saved in this frame on the stack.');
+      const sub = rec(t.nodeById(id).next);
+      f.pending = '1 + ' + sub + ' = ' + (1 + sub);
+      f.ret = 1 + sub; f.returning = true;
+      t.snap(3, 'The call returned <strong>' + sub + '</strong>. The frame resumes its deferred work: 1 + ' + sub + ' = <strong>' + (1 + sub) + '</strong>. Return ' + (1 + sub) + '.');
+      t.pop();
+      return 1 + sub;
+    }
+    const result = rec(nodes[0].id);
+    t.top().ret = result; t.top().returning = true;
+    t.snap(-1, 'main receives <strong>' + result + '</strong>. The list has ' + result + ' nodes.');
+    return { code: code, snaps: t.snaps, prediction: { question: 'This list has three nodes. What does list_length(head) return?', accept: ['3'], hint: 'Each non-NULL frame adds 1 to whatever comes back; the NULL base case returns 0. The deferred 1 + ? values resolve to 0, 1, 2, 3 on the way back up.', placeholder: 'a number' } };
+  }
+
+  // ---- Example 2: list_sum ----
+  function buildSum() {
+    const nodes = makeList([{ num: 5, word: 'red' }, { num: 3, word: 'green' }, { num: 8, word: 'blue' }]);
+    const code = [
+      'int list_sum(node_t *node) {',
+      '    if (node == NULL)',
+      '        return 0;',
+      '    return node->num + list_sum(node->next);',
+      '}'
+    ];
+    const t = new Tracer(nodes);
+    t.push('main', 'head', nodes[0].id);
+    t.snap(-1, 'main calls list_sum(head) to total the <strong>num</strong> field across all nodes.');
+    function rec(id) {
+      t.push('list_sum', 'node', id);
+      const f = t.top();
+      t.snap(0, 'list_sum called. <strong>node</strong> points at ' + nodeName(t, id) + '.');
+      t.snap(1, 'Is node NULL? ' + (id === null ? 'Yes.' : 'No.'));
+      if (id === null) { t.snap(2, 'Base case. An empty list sums to 0. Return 0.'); f.ret = 0; f.returning = true; t.snap(2, 'list_sum returns <strong>0</strong>.'); t.pop(); return 0; }
+      const d = t.nodeById(id).num;
+      f.pending = d + ' + ?';
+      t.snap(3, 'This frame must compute <strong>node->num + list_sum(node->next)</strong>. node->num is <strong>' + d + '</strong> (shown in the lit node). It makes the recursive call and SUSPENDS, holding the deferred <strong>' + d + ' + ?</strong> on the stack.');
+      const sub = rec(t.nodeById(id).next);
+      f.pending = d + ' + ' + sub + ' = ' + (d + sub);
+      f.ret = d + sub; f.returning = true;
+      t.snap(3, 'The call returned <strong>' + sub + '</strong>. Resume the deferred work: ' + d + ' + ' + sub + ' = <strong>' + (d + sub) + '</strong>. Return ' + (d + sub) + '.');
+      t.pop();
+      return d + sub;
+    }
+    const result = rec(nodes[0].id);
+    t.top().ret = result; t.top().returning = true;
+    t.snap(-1, 'main receives <strong>' + result + '</strong>. The deferred additions resolved 0, 8, 11, 16 on the way back up.');
+    return { code: code, snaps: t.snaps, prediction: { question: 'The nodes hold num values of 5, 3, and 8. What does list_sum(head) return?', accept: ['16'], hint: 'Each frame held num + ? on the stack. They resolve on the way back: 0, then 8, then 3+8, then 5+(3+8).', placeholder: 'a number' } };
+  }
+
+  // ---- Example 3: find ----
+  function buildFind() {
+    const nodes = makeList([{ num: 5, word: 'red' }, { num: 3, word: 'green' }, { num: 8, word: 'blue' }]);
+    const code = [
+      'int find(node_t *node, const char *target) {',
+      '    if (node == NULL)',
+      '        return 0;',
+      '    if (strcmp(node->word, target) == 0)',
+      '        return 1;',
+      '    return find(node->next, target);',
+      '}'
+    ];
+    const TARGET = 'green';
+    const t = new Tracer(nodes);
+    t.push('main', 'head', nodes[0].id);
+    t.snap(-1, 'main calls find(head, "' + TARGET + '"). We are looking for a node whose <strong>word</strong> field is "' + TARGET + '".');
+    function rec(id) {
+      t.push('find', 'node', id);
+      const f = t.top();
+      t.snap(0, 'find called. <strong>node</strong> points at ' + nodeName(t, id) + '. target is "' + TARGET + '".');
+      t.snap(1, 'Is node NULL? ' + (id === null ? 'Yes.' : 'No.'));
+      if (id === null) { t.snap(2, 'Ran off the end without a match. Return 0.'); f.ret = 0; f.returning = true; t.pop(); return 0; }
+      const w = t.nodeById(id).word;
+      t.snap(3, 'Does node->word ("' + w + '") match target ("' + TARGET + '")? ' + (w === TARGET ? 'Yes \u2014 strcmp returns 0.' : 'No.'));
+      if (w === TARGET) { t.snap(4, 'Match found. Return 1 immediately \u2014 no recursive call, nothing deferred. The frames below this one are never created.'); f.ret = 1; f.returning = true; t.snap(4, 'find returns <strong>1</strong>.'); t.pop(); return 1; }
+      f.pending = 'pass back ?';
+      t.snap(5, 'No match here. This frame recurses on node->next and SUSPENDS, holding only "return whatever the call gives me" \u2014 there is no arithmetic to defer, just the pending return.');
+      const sub = rec(t.nodeById(id).next);
+      f.pending = 'pass back ' + sub;
+      f.ret = sub; f.returning = true;
+      t.snap(5, 'The call returned <strong>' + sub + '</strong>. This frame passes it straight back unchanged.');
+      t.pop();
+      return sub;
+    }
+    const result = rec(nodes[0].id);
+    t.top().ret = result; t.top().returning = true;
+    t.snap(-1, 'main receives <strong>' + result + '</strong>. ' + (result ? 'The word was found.' : 'The word was not in the list.'));
+    return { code: code, snaps: t.snaps, prediction: { question: 'Searching for "green" in a list of red, green, blue \u2014 does find return 1 (found) or 0 (not found)?', accept: ['1', 'found', 'yes'], hint: 'The second node holds "green". find returns 1 as soon as strcmp matches, before reaching the end.', placeholder: '1 or 0' } };
+  }
+
+  // ---- Example 4: print_reverse (the centerpiece) ----
+  function buildReverse() {
+    const nodes = makeList([{ num: 5, word: 'red' }, { num: 3, word: 'green' }, { num: 8, word: 'blue' }, { num: 2, word: 'gold' }]);
+    const code = [
+      'void print_reverse(node_t *node) {',
+      '    if (node == NULL)',
+      '        return;',
+      '    print_reverse(node->next);',
+      '    printf("%s\\n", node->word);',
+      '}'
+    ];
+    const t = new Tracer(nodes);
+    t.push('main', 'head', nodes[0].id);
+    t.snap(-1, 'The list holds red, green, blue, gold (head to tail). We want to print them in reverse. main calls print_reverse(head).');
+    function rec(id) {
+      t.push('print_reverse', 'node', id);
+      const f = t.top();
+      t.snap(0, 'print_reverse called. <strong>node</strong> points at ' + nodeName(t, id) + '.');
+      t.snap(1, 'Is node NULL? ' + (id === null ? 'Yes.' : 'No.'));
+      if (id === null) { t.snap(2, 'Base case: end of the list. Return with nothing printed yet.'); f.returning = true; t.pop(); return; }
+      const w = t.nodeById(id).word;
+      f.pending = 'then print "' + w + '"';
+      t.snap(3, 'Recurse on node->next FIRST. The printf is deferred: this frame SUSPENDS holding <strong>then print "' + w + '"</strong>, waiting for the rest of the list to print before it does.');
+      rec(t.nodeById(id).next);
+      f.pending = 'printing "' + w + '"';
+      t.snap(4, 'The recursive call has returned. NOW the deferred work runs: print "' + w + '". The print happens on the way back up.');
+      t.output.push(w);
+      t.snap(4, 'Printed "' + w + '". This frame is done; it returns and pops.');
+      f.returning = true;
+      t.pop();
+    }
+    rec(nodes[0].id);
+    t.top().returning = true;
+    t.snap(-1, 'All frames have returned. Output order is gold, blue, green, red \u2014 the reverse of storage order. Each frame held its print deferred until the deeper calls finished.');
+    return { code: code, snaps: t.snaps, prediction: { question: 'The list is red, green, blue, gold (head to tail). Which word prints FIRST?', accept: ['gold'], hint: 'Every frame defers its printf until after the recursive call, so the deepest frame (the tail) prints first.', placeholder: 'a word' } };
+  }
+
+  // ---- Example 5: free_list ----
+  function buildFree() {
+    const nodes = makeList([{ num: 5, word: 'red' }, { num: 3, word: 'green' }, { num: 8, word: 'blue' }]);
+    const code = [
+      'void free_list(node_t *node) {',
+      '    if (node == NULL)',
+      '        return;',
+      '    free_list(node->next);',
+      '    free(node);',
+      '}'
+    ];
+    const t = new Tracer(nodes);
+    t.push('main', 'head', nodes[0].id);
+    t.snap(-1, 'main calls free_list(head) to tear down the whole list and return its memory.');
+    function rec(id) {
+      t.push('free_list', 'node', id);
+      const f = t.top();
+      t.snap(0, 'free_list called. <strong>node</strong> points at ' + nodeName(t, id) + '.');
+      t.snap(1, 'Is node NULL? ' + (id === null ? 'Yes.' : 'No.'));
+      if (id === null) { t.snap(2, 'Base case: nothing to free. Return.'); f.returning = true; t.pop(); return; }
+      f.pending = 'then free this node';
+      t.snap(3, 'Free the REST of the list first (recurse on node->next). The free is deferred: this frame SUSPENDS holding <strong>then free this node</strong>. We must not free it yet \u2014 we still need its next pointer.');
+      rec(t.nodeById(id).next);
+      f.pending = 'freeing this node';
+      t.snap(4, 'The rest is freed. NOW the deferred work runs: free ' + nodeName(t, id) + '. It is safe because we already used its next pointer.');
+      t.freed[id] = true;
+      t.snap(4, 'Freed ' + nodeName(t, id) + '. Frame returns and pops.');
+      f.returning = true;
+      t.pop();
+    }
+    rec(nodes[0].id);
+    t.top().returning = true;
+    t.snap(-1, 'Every node has been freed, tail first. If a frame freed its node BEFORE recursing, node->next would read freed memory \u2014 a use-after-free bug.');
+    return { code: code, snaps: t.snaps, prediction: { question: 'free_list frees nodes in what order? Type the word of the node freed FIRST.', accept: ['blue'], hint: 'Each frame defers its free until after the recursive call, so the tail (the deepest frame) is freed first.', placeholder: 'a word' } };
+  }
+
+  const EXAMPLES = [
+    { key: 'length', label: 'list_length', task: '<strong>list_length</strong> counts the nodes. Each frame defers a <code>1 + ?</code> while it recurses; the deferred sums resolve on the way back. Predict the return value.', build: buildLength },
+    { key: 'sum', label: 'list_sum', task: '<strong>list_sum</strong> totals the <code>num</code> field. Each frame holds <code>num + ?</code> on the stack until the rest of the list comes back. Predict the final sum.', build: buildSum },
+    { key: 'find', label: 'find', task: '<strong>find</strong> stops the moment it matches \u2014 an early return with nothing deferred. Notice the frames below the match are never created. Predict the result.', build: buildFind },
+    { key: 'reverse', label: 'print_reverse', task: '<strong>print_reverse</strong> is where recursion earns its keep. A singly linked list cannot walk backward, so each frame defers its <code>printf</code> until the deeper calls finish. Predict which word prints first.', build: buildReverse },
+    { key: 'free', label: 'free_list', task: '<strong>free_list</strong> tears the list down. Each frame defers its <code>free</code> until the rest is gone, so the tail is freed first. Predict which word is freed first.', build: buildFree }
+  ];
+
+  // Precompute all snapshots once.
+  EXAMPLES.forEach(function (ex) { const out = ex.build(); ex.code = out.code; ex.snaps = out.snaps; ex.prediction = out.prediction; });
+
+  // ============================================================
+  // State + rendering
+  // ============================================================
+  const completed = EXAMPLES.map(function () { return false; });
+  let curEx = 0;
+  let stepIdx = 0;       // index into current example's snaps
+  let wrongStreak = 0;
+  let predictionShown = false;
+
+  const elTabs = root.querySelector('#llt-tabs');
+  const elTask = root.querySelector('#llt-task');
+  const elCode = root.querySelector('#llt-code');
+  const elStack = root.querySelector('#llt-stack');
+  const elHeap = root.querySelector('#llt-heap');
+  const elStatus = root.querySelector('#llt-status');
+  const elOutput = root.querySelector('#llt-output');
+  const elOutputText = root.querySelector('#llt-output-text');
+  const elPred = root.querySelector('#llt-pred-container');
+  const btnStep = root.querySelector('#llt-step');
+  const btnRun = root.querySelector('#llt-run');
+  const btnBack = root.querySelector('#llt-back');
+  const btnReset = root.querySelector('#llt-reset');
+  const btnHint = root.querySelector('#llt-hint');
+
+  function curSnaps() { return EXAMPLES[curEx].snaps; }
+  function atEnd() { return stepIdx >= curSnaps().length - 1; }
+
+  function renderTabs() {
+    elTabs.innerHTML = '';
+    EXAMPLES.forEach(function (ex, i) {
+      const b = document.createElement('button');
+      b.className = 'llt-tab' + (i === curEx ? ' active' : '');
+      b.innerHTML = ex.label + (completed[i] ? ' <span class="llt-check">\u2713</span>' : '');
+      b.addEventListener('click', function () { loadExample(i); });
+      elTabs.appendChild(b);
+    });
+  }
+
+  // The struct every example operates on, shown statically above the function.
+  const STRUCT_DEF = [
+    'typedef struct node {',
+    '    int   num;          // an integer payload',
+    '    char *word;         // a string payload',
+    '    struct node *next;  // next node, or NULL',
+    '} node_t;'
+  ];
+  function renderStructHeader() {
+    const KW = /\b(typedef|struct|char|int|NULL)\b/g;
+    return STRUCT_DEF.map(function (ln) {
+      const cmtSplit = ln.split('//');
+      let codePart = cmtSplit[0];
+      const cmtPart = cmtSplit.length > 1 ? '//' + cmtSplit.slice(1).join('//') : '';
+      let safe = codePart.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      safe = safe.replace(KW, '<span class="llt-kw">$1</span>');
+      const cmtSafe = cmtPart ? '<span class="llt-cmt">' + cmtPart.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</span>' : '';
+      return '<div class="llt-struct-line">' + safe + cmtSafe + '</div>';
+    }).join('') + '<div class="llt-code-divider"></div>';
+  }
+
+  function renderCode(activeLine) {
+    const lines = EXAMPLES[curEx].code;
+    const KW = /\b(int|void|return|if|else|NULL|node_t|free|strcmp|char|const)\b/g;
+    const fnHtml = lines.map(function (ln, i) {
+      const safe = ln.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const colored = safe.replace(KW, '<span class="llt-kw">$1</span>');
+      return '<div class="llt-code-line' + (i === activeLine ? ' active' : '') + '">' + colored + '</div>';
+    }).join('');
+    elCode.innerHTML = renderStructHeader() + fnHtml;
+  }
+
+  function nodeLabelById(snap, id) {
+    if (id === null) return null;
+    const n = snap.heap.nodes.find(function (x) { return x.id === id; });
+    return n ? n.word : null;
+  }
+
+  function renderStack(snap) {
+    elStack.innerHTML = '';
+    snap.stack.forEach(function (f, i) {
+      const isTop = (i === snap.stack.length - 1);
+      const div = document.createElement('div');
+      div.className = 'llt-frame' + (isTop ? ' top active' : '') + (f.returning ? ' returning' : '');
+      div.setAttribute('data-frame-idx', i);
+      let head = '<span class="llt-fn">' + f.fn + '</span>';
+      if (f.ptr === null) {
+        head += '<span class="llt-null-mark">' + f.ptrLabel + ' = NULL</span>';
+      } else {
+        // Pointer relationship shown in TEXT: which node this frame points at.
+        const tgt = nodeLabelById(snap, f.ptr);
+        head += '<span class="llt-ptr-badge">' + f.ptrLabel + ' \u2192 ' + (tgt || f.ptr) + '</span>';
+      }
+      if (f.ret !== undefined) head += '<span class="llt-ret">returns ' + f.ret + '</span>';
+      else if (f.returning) head += '<span class="llt-ret">returns</span>';
+      let html = '<div class="llt-frame-head">' + head + '</div>';
+      // The deferred work this frame is holding while its recursive call runs.
+      if (f.pending) {
+        html += '<div class="llt-frame-pending"><span class="llt-pending-tag">deferred</span> ' + f.pending + '</div>';
+      }
+      div.innerHTML = html;
+      elStack.appendChild(div);
+    });
+  }
+
+  function renderHeap(snap) {
+    elHeap.innerHTML = '';
+    // The active frame is the top of the stack; the node it points at is "lit".
+    const topFrame = snap.stack[snap.stack.length - 1];
+    const activeId = topFrame ? topFrame.ptr : null;        // null => base case (NULL)
+    const activeIsReturning = topFrame ? topFrame.returning : false;
+    const anyLive = snap.heap.nodes.some(function (n) { return !n.freed; });
+    const row = document.createElement('div');
+    row.className = 'llt-heap-row';
+    const NODE_TITLES = ['NODE A', 'NODE B', 'NODE C', 'NODE D', 'NODE E'];
+    snap.heap.nodes.forEach(function (n, i) {
+      const wrap = document.createElement('div');
+      wrap.className = 'llt-node-wrap';
+      const isActive = (n.id === activeId) && !n.freed;
+      const dim = anyLive && activeId !== null && !isActive && !n.freed;
+      const title = document.createElement('div');
+      title.className = 'llt-node-title';
+      title.textContent = NODE_TITLES[i] || ('NODE ' + i);
+      if (n.freed) title.style.color = '#C0392B';
+      wrap.appendChild(title);
+      const nodeDiv = document.createElement('div');
+      nodeDiv.className = 'llt-node'
+        + (n.freed ? ' freed' : '')
+        + (isActive ? (activeIsReturning ? ' active-return' : ' active') : '')
+        + (dim ? ' dim' : '');
+      nodeDiv.setAttribute('data-node-id', n.id);
+      const nextCell = (n.next === null)
+        ? '<div class="llt-cell llt-next"><span class="llt-next-tag">next</span><span class="llt-null-x">NULL</span></div>'
+        : '<div class="llt-cell llt-next"><span class="llt-next-tag">next</span><span class="llt-dot"></span></div>';
+      nodeDiv.innerHTML =
+        '<div class="llt-cell llt-data">' +
+          '<div><span class="llt-field-type">int </span><span class="llt-field-name">num</span> = <span class="llt-field-val">' + n.num + '</span></div>' +
+          '<div><span class="llt-field-type">char *</span><span class="llt-field-name">word</span> = <span class="llt-field-val">"' + n.word + '"</span></div>' +
+        '</div>' + nextCell;
+      wrap.appendChild(nodeDiv);
+      const idLabel = document.createElement('div');
+      idLabel.className = 'llt-node-id';
+      idLabel.textContent = n.id;
+      wrap.appendChild(idLabel);
+      row.appendChild(wrap);
+      if (n.next !== null && i < snap.heap.nodes.length - 1) {
+        const arr = document.createElement('div');
+        arr.className = 'llt-arrow' + (n.freed ? ' dead' : '');
+        row.appendChild(arr);
+      } else if (n.next === null) {
+        const arr = document.createElement('div');
+        arr.className = 'llt-arrow' + (n.freed ? ' dead' : '');
+        row.appendChild(arr);
+        const g = document.createElement('span');
+        // Light the NULL terminator when the active frame has reached the base case.
+        g.className = 'llt-ground' + (activeId === null && anyLive ? ' active' : '');
+        g.textContent = 'NULL';
+        row.appendChild(g);
+      }
+    });
+    elHeap.appendChild(row);
+  }
+
+  function render() {
+    const snap = curSnaps()[stepIdx];
+    renderCode(snap.line);
+    renderStack(snap);
+    renderHeap(snap);
+    elStatus.innerHTML = snap.status;
+    if (snap.output && snap.output.length) {
+      elOutput.style.display = 'block';
+      elOutputText.textContent = snap.output.join('\n');
+    } else {
+      elOutput.style.display = 'none';
+      elOutputText.textContent = '';
+    }
+    btnBack.disabled = (stepIdx === 0);
+    btnStep.disabled = atEnd();
+    btnRun.disabled = atEnd();
+    // prediction gate
+    if (atEnd() && !completed[curEx] && !predictionShown) { showPrediction(); }
+    if (!atEnd()) { clearPrediction(); }
+  }
+
+  function clearPrediction() {
+    elPred.innerHTML = '';
+    predictionShown = false;
+    btnHint.style.display = 'none';
+    btnHint.classList.remove('pulse');
+  }
+
+  function showPrediction() {
+    predictionShown = true;
+    wrongStreak = 0;
+    const pred = EXAMPLES[curEx].prediction;
+    elPred.innerHTML =
+      '<div class="llt-pred">' +
+        '<h4>Predict before you move on</h4>' +
+        '<p>' + pred.question + '</p>' +
+        '<div class="llt-pred-row">' +
+          '<input type="text" id="llt-pred-input" placeholder="' + (pred.placeholder || 'your answer') + '" autocomplete="off" />' +
+          '<button class="btn primary" id="llt-pred-submit" type="button">Check</button>' +
+        '</div>' +
+        '<div class="llt-feedback" id="llt-pred-feedback"></div>' +
+        '<div id="llt-pred-hint"></div>' +
+      '</div>';
+    btnHint.style.display = 'inline-block';
+    const input = root.querySelector('#llt-pred-input');
+    const submit = root.querySelector('#llt-pred-submit');
+    const feedback = root.querySelector('#llt-pred-feedback');
+    function check() {
+      const val = (input.value || '').trim().toLowerCase().replace(/[."']/g, '');
+      const ok = pred.accept.some(function (a) { return a.toLowerCase() === val; });
+      if (ok) {
+        feedback.className = 'llt-feedback right';
+        feedback.textContent = 'Correct. This trace is complete.';
+        input.disabled = true; submit.disabled = true;
+        btnHint.style.display = 'none'; btnHint.classList.remove('pulse');
+        completed[curEx] = true;
+        renderTabs();
+        maybeFinish();
+      } else {
+        wrongStreak++;
+        feedback.className = 'llt-feedback wrong';
+        feedback.textContent = 'Not quite. Re-read the trace and try again.';
+        if (wrongStreak >= 2) { btnHint.classList.add('pulse'); }
+      }
+    }
+    submit.addEventListener('click', check);
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); check(); } });
+    setTimeout(function () { input.focus(); }, 30);
+  }
+
+  function maybeFinish() {
+    if (completed.every(Boolean)) {
+      cs210RenderCompletion(root.querySelector('#llt-completion-area'));
+    }
+  }
+
+  function loadExample(i) {
+    curEx = i; stepIdx = 0; predictionShown = false; wrongStreak = 0;
+    elTask.innerHTML = EXAMPLES[i].task;
+    clearPrediction();
+    renderTabs();
+    render();
+  }
+
+  btnStep.addEventListener('click', function () { if (!atEnd()) { stepIdx++; render(); } });
+  btnBack.addEventListener('click', function () { if (stepIdx > 0) { stepIdx--; render(); } });
+  btnReset.addEventListener('click', function () { stepIdx = 0; clearPrediction(); render(); });
+  btnRun.addEventListener('click', function () { stepIdx = curSnaps().length - 1; render(); });
+  btnHint.addEventListener('click', function () {
+    const hintBox = root.querySelector('#llt-pred-hint');
+    if (hintBox) hintBox.innerHTML = '<div class="llt-hint-text">' + EXAMPLES[curEx].prediction.hint + '</div>';
+    btnHint.classList.remove('pulse');
+  });
+
+  // Expose minimal state for headless testing.
+  root.__llt = {
+    code: function () { return CS210_CODE; },
+    step: function () { if (!atEnd()) { stepIdx++; render(); } return stepIdx; },
+    runEnd: function () { stepIdx = curSnaps().length - 1; render(); return stepIdx; },
+    load: function (i) { loadExample(i); },
+    snapCount: function () { return curSnaps().length; },
+    current: function () { const s = curSnaps()[stepIdx]; const top = s.stack[s.stack.length-1]; const tgt = top && top.ptr ? (s.heap.nodes.find(function(n){return n.id===top.ptr;})||{}).word : null; return { line: s.line, status: s.status.replace(/<[^>]+>/g, ''), stackDepth: s.stack.length, output: s.output.slice(), freed: s.heap.nodes.filter(function (n) { return n.freed; }).map(function (n) { return n.word; }), pending: top ? (top.pending||null) : null, activeNode: tgt || (top && top.ptr === null ? 'NULL' : null) }; },
+    answer: function (txt) {
+      const input = root.querySelector('#llt-pred-input');
+      const submit = root.querySelector('#llt-pred-submit');
+      if (!input || !submit) return false;
+      input.value = txt; submit.click();
+      return completed[curEx];
+    },
+    completedAll: function () { return completed.every(Boolean); },
+    overlayShown: function () { return !!root.querySelector('#cs210-completion-overlay'); }
+  };
+
+  loadExample(0);
+})();
+</script>
+
+
+    </div>
+  </details>
+
+  <!-- ===================== 6. AFTER CLASS ===================== -->
+  <details id="after-class" style="margin-bottom: 24px; border: 1px solid #D0D5DD; border-radius: 3px; background: #ffffff;">
+    <summary style="cursor: pointer; padding: 14px 20px; background: #F5F7FA; border-bottom: 1px solid #D0D5DD; font-weight: 600; color: #00205B; font-size: 17px;">
+      6. After Class
+    </summary>
+    <div style="padding: 18px 22px;">
+      <ul style="margin: 0; padding-left: 22px; font-size: 14.5px;">
+        <li style="margin-bottom: 6px;">Finish the lab if you did not complete it in class. Submit through GitHub Classroom before the next lesson. Run <code style="background: #F0F2F5; padding: 1px 5px; border-radius: 2px; font-family: Consolas, monospace; font-size: 12.5px;">valgrind --leak-check=full</code> on your demo before you submit; the autograder will.</li>
+        <li style="margin-bottom: 6px;">Complete the Lesson 32 reflection in Blackboard: enter the widget completion code and answer the reflection prompt. Attach your screenshot of the completion screen.</li>
+        <li style="margin-bottom: 6px;">Read the Lesson 33 supplementary notes (recursion versus iteration, and the tradeoffs) for next time. Lesson 33 answers the question this lesson raised: when should you actually reach for recursion?</li>
+        <li style="margin-bottom: 0;">Heads up: Quiz 10 at Lesson 34 covers Recursion II and III together.</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- ===================== HELP NOTE ===================== -->
+  <div style="background: #F5F7FA; border: 1px solid #D0D5DD; padding: 14px 18px; border-radius: 3px; font-size: 13.5px; color: #4A5568;">
+    <strong style="color: #00205B;">Need help?</strong> Schedule EI with your instructor. Bring specific code, the exact error or valgrind output, and the input you ran. If a push or pull is giving you trouble, see the <a href="#" target="_blank" rel="noopener" style="color: #003087;">Git troubleshooting reference card</a> in the course Resources. <!-- EDIT ME: confirm the Git troubleshooting reference card link in Resources -->
+  </div>
+
+</div>
